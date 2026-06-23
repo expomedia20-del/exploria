@@ -4,6 +4,7 @@ namespace App\Http\Requests\Consent;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\In;
 
 class AcceptConsentRequest extends FormRequest
 {
@@ -12,6 +13,7 @@ class AcceptConsentRequest extends FormRequest
         return $this->user() !== null;
     }
 
+    /** @return array<string, list<string|In>> */
     public function rules(): array
     {
         return [
@@ -21,6 +23,7 @@ class AcceptConsentRequest extends FormRequest
         ];
     }
 
+    /** @return array<string, string> */
     public function messages(): array
     {
         return [

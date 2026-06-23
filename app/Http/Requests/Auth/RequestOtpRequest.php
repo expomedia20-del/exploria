@@ -11,11 +11,13 @@ class RequestOtpRequest extends FormRequest
         return true;
     }
 
+    /** @return array<string, list<string>> */
     public function rules(): array
     {
         return ['mobile' => ['required', 'string', 'regex:/^09\d{9}$/'], 'sourceQrCode' => ['nullable', 'string', 'max:100']];
     }
 
+    /** @return array<string, string> */
     public function messages(): array
     {
         return ['mobile.required' => 'وارد کردن شماره موبایل الزامی است.', 'mobile.regex' => 'شماره موبایل معتبر نیست.'];

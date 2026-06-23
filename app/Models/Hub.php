@@ -8,22 +8,35 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property string $id
+ * @property string $zone_id
+ * @property string $code
+ * @property string $name
+ * @property string $hub_type
+ * @property RecordStatus $status
+ * @property array<string, mixed>|null $metadata
+ * @property-read Zone|null $zone
+ */
 class Hub extends Model
 {
     use HasUuids;
 
     protected $fillable = ['zone_id', 'code', 'name', 'hub_type', 'status', 'metadata'];
 
+    /** @return array<string, string> */
     protected function casts(): array
     {
         return ['status' => RecordStatus::class, 'metadata' => 'array'];
     }
 
+    /** @return BelongsTo<Zone, $this> */
     public function zone(): BelongsTo
     {
         return $this->belongsTo(Zone::class);
     }
 
+    /** @return HasMany<Touchpoint, $this> */
     public function touchpoints(): HasMany
     {
         return $this->hasMany(Touchpoint::class);

@@ -2,9 +2,20 @@
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property string $id
+ * @property string $mobile
+ * @property string $mobile_hash
+ * @property string $code_hash
+ * @property string|null $source_qr_code
+ * @property int $attempts
+ * @property CarbonImmutable|null $expires_at
+ * @property CarbonImmutable|null $verified_at
+ */
 class OtpRequest extends Model
 {
     use HasUuids;
@@ -16,6 +27,7 @@ class OtpRequest extends Model
 
     protected $hidden = ['mobile', 'mobile_hash', 'code_hash'];
 
+    /** @return array<string, string> */
     protected function casts(): array
     {
         return [

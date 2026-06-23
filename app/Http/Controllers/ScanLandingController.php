@@ -17,16 +17,24 @@ class ScanLandingController extends Controller
 
         abort_unless($qr->isAvailableForLanding(), 404);
 
+        $venue = $qr->venue;
+        $touchpoint = $qr->touchpoint;
+        $hub = $touchpoint?->hub;
+        $zone = $hub?->zone;
+        $campaign = $qr->campaign;
+
+        abort_unless($venue && $touchpoint && $hub && $zone && $campaign, 404);
+
         return Inertia::render('scan/landing', [
             'qr' => [
                 'code' => $qr->code,
                 'label' => $qr->label,
-                'venueName' => $qr->venue->name,
-                'city' => $qr->venue->city,
-                'zoneName' => $qr->touchpoint->hub->zone->name,
-                'hubName' => $qr->touchpoint->hub->name,
-                'touchpointLabel' => $qr->touchpoint->label,
-                'campaignName' => $qr->campaign->name,
+                'venueName' => $venue->name,
+                'city' => $venue->city,
+                'zoneName' => $zone->name,
+                'hubName' => $hub->name,
+                'touchpointLabel' => $touchpoint->label,
+                'campaignName' => $campaign->name,
                 'isDemo' => (bool) data_get($qr->metadata, 'is_demo', false),
             ],
         ]);
