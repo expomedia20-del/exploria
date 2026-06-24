@@ -92,10 +92,11 @@ For a fresh repeat of the same flow, use another valid Iranian-format mobile num
 15. Enter OTP `123456`.
 16. Accept the Persian consent page.
 17. Show the visit experience page created from the QR flow.
-18. Open the dashboard and show operational counters.
-19. Open `/admin/qr-codes` and show the QR registry row, binding, status, and scan link.
-20. Open `/admin/campaigns` and show that campaigns can be created and linked to QR codes.
-21. Open `/admin/missions` and show the real database-backed mission, treasure, point, and reward foundation.
+18. On the visit experience page, start/complete real database-backed missions and show issued rewards in the wallet area.
+19. Open the dashboard and show operational counters.
+20. Open `/admin/qr-codes` and show the QR registry row, binding, status, and scan link.
+21. Open `/admin/campaigns` and show that campaigns can be created and linked to QR codes.
+22. Open `/admin/missions` and show the real database-backed mission, treasure, point, and reward foundation.
 
 ## What Is Ready To Claim
 
@@ -104,6 +105,7 @@ For a fresh repeat of the same flow, use another valid Iranian-format mobile num
 - Full mock ecosystem page exists at `/demo/ecosystem` for visitor, shop, ravaq manager, admin, treasures, rewards, discounts, partner offers, standalone ads, sponsors, and rules.
 - Standalone advertising requirements are recorded in `docs/features/STANDALONE_ADVERTISING_REQUIREMENTS.md` so upload, approval, fixed/mobile display publishing, scheduling, and reporting are not missed in real development.
 - A confirmed visit is created after QR consent acceptance.
+- The visit experience page can now start and complete real mission records, award points, unlock the locked challenge, and issue rewards to the visitor wallet.
 - Dashboard counters are backed by database records, not static placeholders.
 - QR registry page exists for `admin`, `operator`, and `viewer` roles; `admin` and `operator` can create new QR records.
 - Campaign registry page exists for `admin`, `operator`, `viewer`, and `hub_manager` roles; `admin` and `operator` can create campaign records.
@@ -132,7 +134,7 @@ http://127.0.0.1:8000/demo
 Last completed commit:
 
 ```text
-758c0b4 feat: add venue registry foundation
+56b815c feat: add mission reward foundation
 ```
 
 Latest verified quality gates:

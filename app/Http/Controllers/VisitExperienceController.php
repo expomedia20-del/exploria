@@ -2,16 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Models\Visit;
+use App\Services\MissionFlowService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class VisitExperienceController extends Controller
 {
-    public function __invoke(Request $request, Visit $visit): Response
+    public function __invoke(Request $request, Visit $visit, MissionFlowService $missionFlow): Response
     {
-        abort_unless($request->user()?->id === $visit->user_id, 403);
+        $user = $request->user();
+
+        abort_unless($user instanceof User && $user->id === $visit->user_id, 403);
 
         $visit->load(['venue', 'touchpoint.hub.zone', 'campaign', 'qrCode']);
 
@@ -29,6 +33,7 @@ class VisitExperienceController extends Controller
                 'campaignName' => $visit->campaign?->name,
                 'isDemo' => (bool) data_get($visit->metadata, 'is_demo', false),
             ],
+            'missionFlow' => $missionFlow->visitMissionSummary($user, $visit),
         ]);
     }
 }

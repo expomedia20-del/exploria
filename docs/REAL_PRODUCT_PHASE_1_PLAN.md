@@ -374,3 +374,11 @@ docs/features/STANDALONE_ADVERTISING_REQUIREMENTS.md
 - مسیرهای `GET /admin/missions` و `GET /api/v1/admin/missions` اضافه شدند.
 - صفحه admin برای مشاهده ماموریت‌ها، گنج‌ها، امتیازها و پاداش‌ها اضافه شد.
 - لینک «ماموریت و پاداش» به sidebar پنل اصلی اضافه شد.
+
+ادامه Sprint 1.4 انجام شد:
+
+- مسیرهای `GET /api/v1/visits/{visit}/missions`, `POST /api/v1/visits/{visit}/missions/{mission}/start`, `POST /api/v1/visits/{visit}/missions/{mission}/complete` اضافه شدند.
+- مسیر `GET /api/v1/rewards/wallet` برای کیف پاداش کاربر اضافه شد.
+- صفحه تجربه بازدید (`/visits/{visit}`) به ماموریت‌های واقعی، شروع/تکمیل ماموریت، امتیاز و کیف پاداش متصل شد.
+- تکمیل ماموریت پاداش متناظر را از `reward_definitions` به `user_rewards` صادر می‌کند.
+- ماموریت قفل‌شده با rule امتیازی (`min_points`) کنترل می‌شود.

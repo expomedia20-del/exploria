@@ -243,6 +243,7 @@ class PilotLocationSeeder extends Seeder
                 'hub' => $hub,
                 'touchpoint' => $touchpoint,
                 'reward' => 'نشان ورود پایلوت',
+                'reward_code' => 'pilot-entry-badge',
             ],
             [
                 'code' => 'discover-route-guide',
@@ -254,6 +255,7 @@ class PilotLocationSeeder extends Seeder
                 'hub' => $hub,
                 'touchpoint' => $touchpoint,
                 'reward' => 'کوپن نوشیدنی کوچک',
+                'reward_code' => 'small-drink-coupon',
             ],
             [
                 'code' => 'watch-place-story',
@@ -265,6 +267,7 @@ class PilotLocationSeeder extends Seeder
                 'hub' => $scienceHub,
                 'touchpoint' => null,
                 'reward' => 'باز شدن ماموریت ویژه',
+                'reward_code' => 'special-mission-unlock',
             ],
             [
                 'code' => 'photo-memory-challenge',
@@ -276,6 +279,7 @@ class PilotLocationSeeder extends Seeder
                 'hub' => $ravaqHub,
                 'touchpoint' => null,
                 'reward' => 'قرعه‌کشی جایزه پایلوت',
+                'reward_code' => 'pilot-prize-draw',
                 'unlock_rule' => ['min_points' => 520],
             ],
         ];
@@ -313,7 +317,11 @@ class PilotLocationSeeder extends Seeder
                     'starts_at' => '2026-06-20 00:00:00',
                     'ends_at' => '2027-03-20 23:59:59',
                     'unlock_rule' => $missionData['unlock_rule'] ?? null,
-                    'metadata' => ['is_demo' => true, 'layer_reward' => $missionData['reward']],
+                    'metadata' => [
+                        'is_demo' => true,
+                        'layer_reward' => $missionData['reward'],
+                        'reward_code' => $missionData['reward_code'],
+                    ],
                 ],
             );
         }
