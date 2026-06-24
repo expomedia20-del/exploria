@@ -2,6 +2,8 @@
 
 This guide is the shortest reliable path for presenting the current EXPLORIA local demo.
 
+For the step-by-step board presentation script, use `docs/PRESENTATION_RUNBOOK.md`.
+
 ## Demo URLs
 
 Use these URLs on the current machine:
