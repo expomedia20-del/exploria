@@ -9,6 +9,7 @@ use App\Http\Controllers\VisitExperienceController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
+Route::inertia('/board', 'demo/board')->name('demo.board');
 Route::inertia('/demo', 'welcome')->name('demo');
 Route::inertia('/demo/missions', 'demo/missions')->name('demo.missions');
 Route::inertia('/demo/proposal', 'demo/proposal')->name('demo.proposal');

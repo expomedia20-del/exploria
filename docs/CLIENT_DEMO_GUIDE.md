@@ -7,6 +7,9 @@ This guide is the shortest reliable path for presenting the current EXPLORIA loc
 Use these URLs on the current machine:
 
 ```text
+Board-facing entry:
+http://127.0.0.1:8000/board
+
 Employer demo hub:
 http://127.0.0.1:8000/demo
 
@@ -43,29 +46,31 @@ For a fresh repeat of the same flow, use another valid Iranian-format mobile num
 
 ## Presentation Flow
 
-1. Open the employer demo hub:
-   `http://127.0.0.1:8000/demo`
-2. Open the proposal coverage page:
+1. Open the board-facing entry:
+   `http://127.0.0.1:8000/board`
+2. Show that the board can enter the demo as a complete product site, with board role, visitor role, QR path, mission path, dashboard, and QR registry.
+3. Open the proposal coverage page:
    `http://127.0.0.1:8000/demo/proposal`
-3. Show how the demo covers the board proposal: visitor journey, treasure campaign, touchpoints, hub scenarios, business value, and KPI.
-4. Show the live demo cards and the complete QR -> OTP -> Consent -> Visit -> Dashboard flow.
-5. Open the mission simulator:
+4. Show how the demo covers the board proposal: visitor journey, treasure campaign, touchpoints, hub scenarios, business value, and KPI.
+5. Show the live demo cards and the complete QR -> OTP -> Consent -> Visit -> Dashboard flow.
+6. Open the mission simulator:
    `http://127.0.0.1:8000/demo/missions`
-6. Complete the first missions and show that points, rewards, level, and the locked challenge update live.
-7. Open the QR landing page:
+7. Complete the first missions and show that points, rewards, level, and the locked challenge update live.
+8. Open the QR landing page:
    `http://127.0.0.1:8000/scan/ep1405-a7f3k9m2q8x4`
-8. Show that the QR is bound to the Abbasabad Eco Park pilot location.
-9. Click the start/continue action to go to mobile OTP.
-10. Enter `09120000000` or another valid demo mobile number.
-11. Enter OTP `123456`.
-12. Accept the Persian consent page.
-13. Show the visit experience page created from the QR flow.
-14. Open the dashboard and show operational counters.
-15. Open `/admin/qr-codes` and show the QR registry row, binding, status, and scan link.
+9. Show that the QR is bound to the Abbasabad Eco Park pilot location.
+10. Click the start/continue action to go to mobile OTP.
+11. Enter `09120000000` or another valid demo mobile number.
+12. Enter OTP `123456`.
+13. Accept the Persian consent page.
+14. Show the visit experience page created from the QR flow.
+15. Open the dashboard and show operational counters.
+16. Open `/admin/qr-codes` and show the QR registry row, binding, status, and scan link.
 
 ## What Is Ready To Claim
 
 - Persian RTL visitor flow exists from QR landing to OTP, consent, visit experience, and dashboard.
+- Board-facing entry page exists at `/board` so the meeting starts from a polished product-style gateway.
 - A confirmed visit is created after QR consent acceptance.
 - Dashboard counters are backed by database records, not static placeholders.
 - QR registry page exists for `admin`, `operator`, and `viewer` roles.

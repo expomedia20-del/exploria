@@ -2,6 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import {
     ArrowLeft,
     BarChart3,
+    Building2,
     CheckCircle2,
     ClipboardCheck,
     Fingerprint,
@@ -19,6 +20,13 @@ import { dashboard } from '@/routes';
 const demoQrCode = 'ep1405-a7f3k9m2q8x4';
 
 const liveLinks = [
+    {
+        title: 'ورود رسمی هیئت‌مدیره',
+        description: 'ورود شکیل به نسخه جلسه، نقش مدیریتی و مسیر کامل محصول',
+        href: '/board',
+        icon: Building2,
+        tone: 'bg-slate-50 text-slate-950 border-slate-200',
+    },
     {
         title: 'شروع تجربه بازدیدکننده',
         description: 'اسکن QR، ورود موبایلی، رضایت نامه و ثبت بازدید',
@@ -139,11 +147,11 @@ export default function Welcome() {
                             </div>
                             <nav className="flex flex-wrap gap-2 text-sm">
                                 <Link
-                                    href={`/scan/${demoQrCode}`}
+                                    href="/board"
                                     className="inline-flex h-9 items-center gap-2 rounded-md bg-white px-3 text-slate-950"
                                 >
-                                    <Smartphone className="size-4" />
-                                    شروع مسیر
+                                    <Building2 className="size-4" />
+                                    ورود جلسه
                                 </Link>
                                 <Link
                                     href="/admin/qr-codes"
@@ -172,10 +180,10 @@ export default function Welcome() {
                                 </p>
                                 <div className="mt-7 flex flex-wrap gap-3">
                                     <Link
-                                        href={`/scan/${demoQrCode}`}
+                                        href="/board"
                                         className="inline-flex h-11 items-center gap-2 rounded-md bg-emerald-400 px-4 text-sm font-semibold text-slate-950 hover:bg-emerald-300"
                                     >
-                                        اجرای دموی زنده
+                                        ورود رسمی هیئت‌مدیره
                                         <ArrowLeft className="size-4" />
                                     </Link>
                                     <Link
@@ -224,7 +232,7 @@ export default function Welcome() {
                             </div>
                         </div>
 
-                        <div className="grid gap-3 pb-4 sm:grid-cols-2 lg:grid-cols-5">
+                        <div className="grid gap-3 pb-4 sm:grid-cols-2 lg:grid-cols-6">
                             {liveLinks.map((item) => (
                                 <Link
                                     key={item.title}
