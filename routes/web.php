@@ -4,11 +4,13 @@ use App\Http\Controllers\Admin\CampaignRegistryController;
 use App\Http\Controllers\Admin\MissionRewardRegistryController;
 use App\Http\Controllers\Admin\PartnerRegistryController;
 use App\Http\Controllers\Admin\QrRegistryController;
+use App\Http\Controllers\Admin\RewardApprovalController;
 use App\Http\Controllers\Admin\VenueRegistryController;
 use App\Http\Controllers\Auth\OtpController;
 use App\Http\Controllers\ConsentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Partner\PartnerDashboardController;
+use App\Http\Controllers\Partner\PartnerOfferController;
 use App\Http\Controllers\Partner\RewardRedemptionController;
 use App\Http\Controllers\RewardWalletController;
 use App\Http\Controllers\ScanLandingController;
@@ -37,6 +39,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/partner/redemptions/confirm', [RewardRedemptionController::class, 'confirm'])
         ->middleware('role:shop_partner,sponsor')
         ->name('partner.redemptions.confirm');
+    Route::post('/partner/offers', [PartnerOfferController::class, 'store'])
+        ->middleware('role:shop_partner,sponsor')
+        ->name('partner.offers.store');
 });
 
 Route::prefix('api/v1/auth/otp')->middleware('throttle:5,1')->group(function () {
@@ -68,6 +73,14 @@ Route::get('/admin/campaigns', [CampaignRegistryController::class, 'page'])
 Route::get('/admin/missions', [MissionRewardRegistryController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
     ->name('admin.missions.page');
+
+Route::post('/admin/rewards/{reward}/approve', [RewardApprovalController::class, 'approve'])
+    ->middleware(['auth', 'role:admin,operator,hub_manager'])
+    ->name('admin.rewards.approve');
+
+Route::post('/admin/rewards/{reward}/reject', [RewardApprovalController::class, 'reject'])
+    ->middleware(['auth', 'role:admin,operator,hub_manager'])
+    ->name('admin.rewards.reject');
 
 Route::post('/admin/campaigns', [CampaignRegistryController::class, 'store'])
     ->middleware(['auth', 'role:admin,operator'])
@@ -101,6 +114,14 @@ Route::post('/api/v1/admin/campaigns', [CampaignRegistryController::class, 'stor
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.campaigns.api.store');
 
+Route::post('/api/v1/admin/rewards/{reward}/approve', [RewardApprovalController::class, 'approve'])
+    ->middleware(['auth', 'role:admin,operator,hub_manager'])
+    ->name('admin.rewards.api.approve');
+
+Route::post('/api/v1/admin/rewards/{reward}/reject', [RewardApprovalController::class, 'reject'])
+    ->middleware(['auth', 'role:admin,operator,hub_manager'])
+    ->name('admin.rewards.api.reject');
+
 Route::get('/api/v1/admin/venues', [VenueRegistryController::class, 'index'])
     ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
     ->name('admin.venues.index');
@@ -123,6 +144,9 @@ Route::get('/api/v1/partner/dashboard', [PartnerDashboardController::class, 'ind
 Route::post('/api/v1/partner/redemptions/confirm', [RewardRedemptionController::class, 'confirm'])
     ->middleware(['auth', 'role:shop_partner,sponsor'])
     ->name('partner.redemptions.api.confirm');
+Route::post('/api/v1/partner/offers', [PartnerOfferController::class, 'store'])
+    ->middleware(['auth', 'role:shop_partner,sponsor'])
+    ->name('partner.offers.api.store');
 
 Route::middleware(['auth', 'verified'])->get('dashboard', DashboardController::class)->name('dashboard');
 

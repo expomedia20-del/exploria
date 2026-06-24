@@ -108,6 +108,7 @@ For a fresh repeat of the same flow, use another valid Iranian-format mobile num
 21. Open `/admin/campaigns` and show that campaigns can be created and linked to QR codes.
 22. Open `/admin/missions` and show the real database-backed mission, treasure, point, and reward foundation.
 23. Open `/partner/dashboard` as `cafe.eco@example.test` and show partner reward definitions, pending redemption codes, and code confirmation.
+24. Submit a new partner offer from `/partner/dashboard`, then open `/admin/missions` as admin and approve or reject the pending offer.
 
 ## What Is Ready To Claim
 
@@ -121,7 +122,8 @@ For a fresh repeat of the same flow, use another valid Iranian-format mobile num
 - QR registry page exists for `admin`, `operator`, and `viewer` roles; `admin` and `operator` can create new QR records.
 - Campaign registry page exists for `admin`, `operator`, `viewer`, and `hub_manager` roles; `admin` and `operator` can create campaign records.
 - Mission/reward registry page exists for `admin`, `operator`, `viewer`, and `hub_manager` roles, backed by database records for mission templates, mission instances, treasures, rewards, user progress, reward wallet, and redemption skeleton.
-- Partner dashboard exists for `shop_partner` and `sponsor` roles. It shows the partner's own reward definitions, issued rewards, pending/confirmed redemptions, and supports confirming a customer redemption code.
+- Partner dashboard exists for `shop_partner` and `sponsor` roles. It shows the partner's own reward definitions, issued rewards, pending/confirmed redemptions, supports confirming a customer redemption code, and lets the partner submit a new offer/discount for admin review.
+- Admin mission/reward registry can approve or reject partner-submitted offers. Submitted offers remain `draft` until approved and become `active` only after review.
 - Venue/hub registry page exists for `admin`, `operator`, `viewer`, and `hub_manager` roles.
 - Mission/reward simulator shows points, rewards, levels, locked missions, and next experience layers.
 - Proposal coverage page maps the 22-slide Eco Park board proposal to the current demo and pilot minimums.

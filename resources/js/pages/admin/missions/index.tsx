@@ -1,12 +1,15 @@
-import { Head } from '@inertiajs/react';
+import { Form, Head } from '@inertiajs/react';
 import {
     BadgeCheck,
     CalendarClock,
+    CheckCircle2,
     Gift,
     MapPin,
     Sparkles,
     Trophy,
+    XCircle,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 type RegistryEntity = {
     id: string;
@@ -40,6 +43,8 @@ type RewardItem = {
     name: string;
     rewardType: string;
     status: string;
+    approvalStatus: string;
+    description: string | null;
     pointCost: number | null;
     stockQuantity: number | null;
     awardedCount: number;
@@ -78,6 +83,9 @@ const statusLabels: Record<string, string> = {
     draft: 'پیش نویس',
     inactive: 'غیرفعال',
     placeholder: 'نمونه کنترل شده',
+    pending_review: 'در انتظار تایید',
+    approved: 'تایید شده',
+    rejected: 'رد شده',
 };
 
 const statusClasses: Record<string, string> = {
@@ -317,12 +325,34 @@ export default function MissionRewardRegistryIndex({
                                                 {reward.rewardType}
                                             </p>
                                         </div>
-                                        <span className="shrink-0 text-xs text-muted-foreground">
-                                            {reward.pointCost
-                                                ? `${reward.pointCost.toLocaleString('fa-IR')} امتیاز`
-                                                : 'بدون هزینه'}
-                                        </span>
+                                        <div className="flex shrink-0 items-center gap-2">
+                                            <span
+                                                className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                                                    statusClasses[
+                                                        reward.status
+                                                    ] ?? statusClasses.inactive
+                                                }`}
+                                            >
+                                                {statusLabels[
+                                                    reward.approvalStatus
+                                                ] ??
+                                                    statusLabels[
+                                                        reward.status
+                                                    ] ??
+                                                    reward.status}
+                                            </span>
+                                            <span className="text-xs text-muted-foreground">
+                                                {reward.pointCost
+                                                    ? `${reward.pointCost.toLocaleString('fa-IR')} امتیاز`
+                                                    : 'بدون هزینه'}
+                                            </span>
+                                        </div>
                                     </div>
+                                    {reward.description ? (
+                                        <p className="line-clamp-2 text-xs text-muted-foreground">
+                                            {reward.description}
+                                        </p>
+                                    ) : null}
                                     <p className="text-xs text-muted-foreground">
                                         شریک: {reward.partner?.name ?? 'پلتفرم'}{' '}
                                         · موجودی:{' '}
@@ -330,6 +360,46 @@ export default function MissionRewardRegistryIndex({
                                             'fa-IR',
                                         ) ?? 'نامحدود'}
                                     </p>
+                                    {reward.approvalStatus ===
+                                    'pending_review' ? (
+                                        <div className="flex flex-wrap gap-2 pt-1">
+                                            <Form
+                                                action={`/admin/rewards/${reward.id}/approve`}
+                                                method="post"
+                                                options={{
+                                                    preserveScroll: true,
+                                                }}
+                                            >
+                                                {({ processing }) => (
+                                                    <Button
+                                                        size="sm"
+                                                        disabled={processing}
+                                                    >
+                                                        <CheckCircle2 className="size-4" />
+                                                        تایید
+                                                    </Button>
+                                                )}
+                                            </Form>
+                                            <Form
+                                                action={`/admin/rewards/${reward.id}/reject`}
+                                                method="post"
+                                                options={{
+                                                    preserveScroll: true,
+                                                }}
+                                            >
+                                                {({ processing }) => (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        disabled={processing}
+                                                    >
+                                                        <XCircle className="size-4" />
+                                                        رد
+                                                    </Button>
+                                                )}
+                                            </Form>
+                                        </div>
+                                    ) : null}
                                 </article>
                             ))}
                         </div>

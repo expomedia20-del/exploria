@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Enums\RecordStatus;
+use App\Models\Campaign;
 use App\Models\PartnerAccount;
 use App\Models\PartnerUser;
+use App\Models\RewardDefinition;
 use App\Models\RewardRedemption;
 use App\Models\User;
 use App\Models\UserReward;
@@ -39,7 +41,7 @@ class PartnerDashboardService
         $rewardDefinitions = $partner->rewardDefinitions()
             ->with(['campaign:id,code,name'])
             ->withCount(['userRewards', 'userRewards as awarded_count' => fn ($query) => $query->where('status', 'awarded')])
-            ->orderBy('created_at')
+            ->latest('created_at')
             ->get()
             ->map(fn ($reward): array => [
                 'id' => $reward->id,
@@ -52,6 +54,8 @@ class PartnerDashboardService
                 'userRewardsCount' => (int) $reward->getAttribute('user_rewards_count'),
                 'awardedCount' => (int) $reward->getAttribute('awarded_count'),
                 'campaignName' => $reward->campaign?->name,
+                'approvalStatus' => $reward->metadata['approval_status'] ?? $reward->status->value,
+                'description' => $reward->metadata['description'] ?? null,
             ]);
         $redemptions = $partner->rewardRedemptions()
             ->with(['user:id,name,email', 'userReward.rewardDefinition:id,code,name,reward_type'])
@@ -86,6 +90,32 @@ class PartnerDashboardService
             'rewardDefinitions' => $rewardDefinitions,
             'redemptions' => $redemptions,
         ];
+    }
+
+    /** @param array<string, mixed> $data */
+    public function createOffer(User $partnerUser, array $data): RewardDefinition
+    {
+        $partner = $this->partnerForUser($partnerUser);
+        $campaign = $this->activeCampaignForPartner($partner);
+
+        return DB::transaction(fn (): RewardDefinition => RewardDefinition::query()->create([
+            'campaign_id' => $campaign->id,
+            'venue_id' => $partner->venue_id,
+            'partner_account_id' => $partner->id,
+            'code' => $this->uniqueOfferCode($campaign->id, $partner->code),
+            'name' => $data['name'],
+            'reward_type' => $data['reward_type'],
+            'point_cost' => $data['point_cost'] ?? null,
+            'stock_quantity' => $data['stock_quantity'] ?? null,
+            'status' => RecordStatus::Draft,
+            'metadata' => [
+                'source' => 'partner_offer_submission',
+                'approval_status' => 'pending_review',
+                'submitted_by_user_id' => $partnerUser->id,
+                'description' => $data['description'] ?? null,
+                'terms' => $data['terms'] ?? null,
+            ],
+        ]));
     }
 
     public function ensureRedemptionForReward(UserReward $userReward): RewardRedemption
@@ -152,6 +182,35 @@ class PartnerDashboardService
         do {
             $code = Str::upper(Str::random(10));
         } while (RewardRedemption::query()->where('redemption_code', $code)->exists());
+
+        return $code;
+    }
+
+    private function activeCampaignForPartner(PartnerAccount $partner): Campaign
+    {
+        $campaign = Campaign::query()
+            ->where('venue_id', $partner->venue_id)
+            ->where('status', RecordStatus::Active)
+            ->latest('created_at')
+            ->first();
+
+        if (! $campaign) {
+            throw ValidationException::withMessages([
+                'campaign' => 'برای مکان این فروشگاه کمپین فعال ثبت نشده است.',
+            ]);
+        }
+
+        return $campaign;
+    }
+
+    private function uniqueOfferCode(string $campaignId, string $partnerCode): string
+    {
+        do {
+            $code = Str::slug($partnerCode).'-offer-'.Str::lower(Str::random(6));
+        } while (RewardDefinition::query()
+            ->where('campaign_id', $campaignId)
+            ->where('code', $code)
+            ->exists());
 
         return $code;
     }

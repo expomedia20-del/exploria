@@ -5,6 +5,7 @@ namespace Tests\Feature\Partner;
 use App\Enums\UserRole;
 use App\Models\MissionInstance;
 use App\Models\QrCode;
+use App\Models\RewardDefinition;
 use App\Models\RewardRedemption;
 use App\Models\User;
 use App\Models\Visit;
@@ -135,6 +136,74 @@ class PartnerRewardRedemptionTest extends TestCase
             ->assertJsonPath('data.stats.confirmedRedemptions', 1);
     }
 
+    public function test_partner_can_submit_offer_for_admin_review(): void
+    {
+        $partnerUser = User::query()->where('email', 'cafe.eco@example.test')->firstOrFail();
+
+        $this->actingAs($partnerUser)
+            ->postJson(route('partner.offers.api.store'), [
+                'name' => 'تخفیف نوشیدنی خانوادگی',
+                'reward_type' => 'discount',
+                'point_cost' => 250,
+                'stock_quantity' => 30,
+                'description' => 'برای خانواده‌هایی که مسیر اکوپارک را کامل می‌کنند.',
+                'terms' => 'هر کاربر فقط یک بار.',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.status', 'draft');
+
+        $offer = RewardDefinition::query()
+            ->where('name', 'تخفیف نوشیدنی خانوادگی')
+            ->with('partnerAccount')
+            ->firstOrFail();
+
+        $this->assertSame('cafe-eco', $offer->partnerAccount->code);
+        $this->assertSame('draft', $offer->status->value);
+        $this->assertSame('pending_review', $offer->metadata['approval_status']);
+        $this->assertSame('partner_offer_submission', $offer->metadata['source']);
+    }
+
+    public function test_admin_can_approve_partner_offer(): void
+    {
+        $offer = $this->submitPartnerOffer();
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.rewards.api.approve', $offer))
+            ->assertOk()
+            ->assertJsonPath('data.status', 'active')
+            ->assertJsonPath('data.approvalStatus', 'approved');
+
+        $offer->refresh();
+
+        $this->assertSame('active', $offer->status->value);
+        $this->assertSame('approved', $offer->metadata['approval_status']);
+        $this->assertSame($admin->id, $offer->metadata['approved_by_user_id']);
+    }
+
+    public function test_hub_manager_can_reject_partner_offer_and_viewer_cannot_approve_it(): void
+    {
+        $offer = $this->submitPartnerOffer();
+        $viewer = User::factory()->create(['role' => UserRole::Viewer]);
+
+        $this->actingAs($viewer)
+            ->postJson(route('admin.rewards.api.approve', $offer))
+            ->assertForbidden();
+
+        $manager = User::query()->where('email', 'ravaq.manager@example.test')->firstOrFail();
+
+        $this->actingAs($manager)
+            ->postJson(route('admin.rewards.api.reject', $offer))
+            ->assertOk()
+            ->assertJsonPath('data.status', 'inactive')
+            ->assertJsonPath('data.approvalStatus', 'rejected');
+
+        $offer->refresh();
+
+        $this->assertSame('inactive', $offer->status->value);
+        $this->assertSame('rejected', $offer->metadata['approval_status']);
+    }
+
     private function completeMission(string $code): void
     {
         $mission = MissionInstance::query()->where('code', $code)->firstOrFail();
@@ -142,5 +211,21 @@ class PartnerRewardRedemptionTest extends TestCase
         $this->actingAs($this->visitor)
             ->post(route('visits.missions.complete', [$this->visit, $mission]))
             ->assertRedirect();
+    }
+
+    private function submitPartnerOffer(): RewardDefinition
+    {
+        $partnerUser = User::query()->where('email', 'cafe.eco@example.test')->firstOrFail();
+
+        $this->actingAs($partnerUser)
+            ->postJson(route('partner.offers.api.store'), [
+                'name' => 'پیشنهاد تستی فروشگاه',
+                'reward_type' => 'partner_coupon',
+                'point_cost' => 120,
+                'stock_quantity' => 10,
+            ])
+            ->assertCreated();
+
+        return RewardDefinition::query()->where('name', 'پیشنهاد تستی فروشگاه')->firstOrFail();
     }
 }

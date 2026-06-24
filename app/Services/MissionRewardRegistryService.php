@@ -108,6 +108,8 @@ class MissionRewardRegistryService
             'name' => $reward->name,
             'rewardType' => $reward->reward_type,
             'status' => $reward->status->value,
+            'approvalStatus' => $reward->metadata['approval_status'] ?? $reward->status->value,
+            'description' => $reward->metadata['description'] ?? null,
             'pointCost' => $reward->point_cost,
             'stockQuantity' => $reward->stock_quantity,
             'awardedCount' => (int) $reward->getAttribute('user_rewards_count'),
