@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
 Route::inertia('/demo', 'welcome')->name('demo');
+Route::inertia('/demo/missions', 'demo/missions')->name('demo.missions');
 Route::get('/scan/{code}', ScanLandingController::class)->where('code', '[A-Za-z0-9-]+')->name('scan.landing');
 Route::inertia('/access', 'auth/otp')->name('visitor.otp');
 Route::middleware('auth')->group(function () {

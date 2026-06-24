@@ -7,6 +7,7 @@ import {
     Fingerprint,
     LayoutDashboard,
     MapPin,
+    Medal,
     QrCode,
     RadioTower,
     ShieldCheck,
@@ -23,6 +24,13 @@ const liveLinks = [
         href: `/scan/${demoQrCode}`,
         icon: Smartphone,
         tone: 'bg-emerald-50 text-emerald-900 border-emerald-200',
+    },
+    {
+        title: 'ماموریت و پاداش',
+        description: 'تکمیل ماموریت، امتیاز، پاداش، سطح و لایه های بعدی',
+        href: '/demo/missions',
+        icon: Medal,
+        tone: 'bg-rose-50 text-rose-950 border-rose-200',
     },
     {
         title: 'داشبورد عملیاتی',
@@ -207,7 +215,7 @@ export default function Welcome() {
                             </div>
                         </div>
 
-                        <div className="grid gap-3 pb-4 sm:grid-cols-3">
+                        <div className="grid gap-3 pb-4 sm:grid-cols-2 lg:grid-cols-4">
                             {liveLinks.map((item) => (
                                 <Link
                                     key={item.title}
