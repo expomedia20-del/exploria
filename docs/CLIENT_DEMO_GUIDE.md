@@ -143,10 +143,10 @@ http://127.0.0.1:8000/demo
 
 ## Current Technical Checkpoint
 
-Last completed commit:
+Last completed product-code commit:
 
 ```text
-67b1fc1 feat: add partner reward redemption dashboard
+5bb0db8 feat: add partner reward redemption dashboard
 ```
 
 Latest verified quality gates:
