@@ -6,6 +6,7 @@ import {
     MapPinned,
     Megaphone,
     QrCode,
+    ShoppingBag,
     Store,
     Trophy,
 } from 'lucide-react';
@@ -55,6 +56,11 @@ const mainNavItems: NavItem[] = [
         title: 'مدیریت شرکا',
         href: '/admin/partners',
         icon: Store,
+    },
+    {
+        title: 'پنل فروشگاه',
+        href: '/partner/dashboard',
+        icon: ShoppingBag,
     },
 ];
 

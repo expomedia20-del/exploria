@@ -242,7 +242,7 @@ class MissionFlowService
             return null;
         }
 
-        return UserReward::query()->firstOrCreate(
+        $userReward = UserReward::query()->firstOrCreate(
             [
                 'user_id' => $user->id,
                 'reward_definition_id' => $rewardDefinition->id,
@@ -254,6 +254,12 @@ class MissionFlowService
                 'metadata' => ['source' => 'mission_completed', 'mission_code' => $mission->code],
             ],
         );
+
+        if ($rewardDefinition->partner_account_id) {
+            app(PartnerDashboardService::class)->ensureRedemptionForReward($userReward);
+        }
+
+        return $userReward;
     }
 
     private function existingRewardForMission(User $user, MissionInstance $mission): ?UserReward

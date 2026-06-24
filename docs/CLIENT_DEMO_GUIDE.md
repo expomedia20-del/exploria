@@ -42,6 +42,9 @@ http://127.0.0.1:8000/admin/missions
 Partner registry:
 http://127.0.0.1:8000/admin/partners
 
+Partner dashboard:
+http://127.0.0.1:8000/partner/dashboard
+
 Venue and hub registry:
 http://127.0.0.1:8000/admin/venues
 ```
@@ -52,6 +55,13 @@ Admin panel:
 
 ```text
 Email: admin@example.test
+Password: password
+```
+
+Shop partner panel:
+
+```text
+Email: cafe.eco@example.test
 Password: password
 ```
 
@@ -97,6 +107,7 @@ For a fresh repeat of the same flow, use another valid Iranian-format mobile num
 20. Open `/admin/qr-codes` and show the QR registry row, binding, status, and scan link.
 21. Open `/admin/campaigns` and show that campaigns can be created and linked to QR codes.
 22. Open `/admin/missions` and show the real database-backed mission, treasure, point, and reward foundation.
+23. Open `/partner/dashboard` as `cafe.eco@example.test` and show partner reward definitions, pending redemption codes, and code confirmation.
 
 ## What Is Ready To Claim
 
@@ -110,6 +121,7 @@ For a fresh repeat of the same flow, use another valid Iranian-format mobile num
 - QR registry page exists for `admin`, `operator`, and `viewer` roles; `admin` and `operator` can create new QR records.
 - Campaign registry page exists for `admin`, `operator`, `viewer`, and `hub_manager` roles; `admin` and `operator` can create campaign records.
 - Mission/reward registry page exists for `admin`, `operator`, `viewer`, and `hub_manager` roles, backed by database records for mission templates, mission instances, treasures, rewards, user progress, reward wallet, and redemption skeleton.
+- Partner dashboard exists for `shop_partner` and `sponsor` roles. It shows the partner's own reward definitions, issued rewards, pending/confirmed redemptions, and supports confirming a customer redemption code.
 - Venue/hub registry page exists for `admin`, `operator`, `viewer`, and `hub_manager` roles.
 - Mission/reward simulator shows points, rewards, levels, locked missions, and next experience layers.
 - Proposal coverage page maps the 22-slide Eco Park board proposal to the current demo and pilot minimums.
@@ -134,7 +146,7 @@ http://127.0.0.1:8000/demo
 Last completed commit:
 
 ```text
-56b815c feat: add mission reward foundation
+67b1fc1 feat: add partner reward redemption dashboard
 ```
 
 Latest verified quality gates:

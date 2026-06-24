@@ -8,6 +8,8 @@ use App\Http\Controllers\Admin\VenueRegistryController;
 use App\Http\Controllers\Auth\OtpController;
 use App\Http\Controllers\ConsentController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Partner\PartnerDashboardController;
+use App\Http\Controllers\Partner\RewardRedemptionController;
 use App\Http\Controllers\RewardWalletController;
 use App\Http\Controllers\ScanLandingController;
 use App\Http\Controllers\VisitExperienceController;
@@ -29,6 +31,12 @@ Route::middleware('auth')->group(function () {
         ->name('visits.missions.start');
     Route::post('/visits/{visit}/missions/{mission}/complete', [VisitMissionController::class, 'complete'])
         ->name('visits.missions.complete');
+    Route::get('/partner/dashboard', [PartnerDashboardController::class, 'page'])
+        ->middleware('role:shop_partner,sponsor')
+        ->name('partner.dashboard');
+    Route::post('/partner/redemptions/confirm', [RewardRedemptionController::class, 'confirm'])
+        ->middleware('role:shop_partner,sponsor')
+        ->name('partner.redemptions.confirm');
 });
 
 Route::prefix('api/v1/auth/otp')->middleware('throttle:5,1')->group(function () {
@@ -109,6 +117,12 @@ Route::post('/api/v1/visits/{visit}/missions/{mission}/complete', [VisitMissionC
 Route::get('/api/v1/rewards/wallet', RewardWalletController::class)
     ->middleware('auth')
     ->name('rewards.wallet');
+Route::get('/api/v1/partner/dashboard', [PartnerDashboardController::class, 'index'])
+    ->middleware(['auth', 'role:shop_partner,sponsor'])
+    ->name('partner.dashboard.index');
+Route::post('/api/v1/partner/redemptions/confirm', [RewardRedemptionController::class, 'confirm'])
+    ->middleware(['auth', 'role:shop_partner,sponsor'])
+    ->name('partner.redemptions.api.confirm');
 
 Route::middleware(['auth', 'verified'])->get('dashboard', DashboardController::class)->name('dashboard');
 
