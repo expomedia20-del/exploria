@@ -148,7 +148,7 @@ http://127.0.0.1:8000/demo
 Last completed product-code commit:
 
 ```text
-5bb0db8 feat: add partner reward redemption dashboard
+c3b503f feat: add partner offer approval flow
 ```
 
 Latest verified quality gates:
