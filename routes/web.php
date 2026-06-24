@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\CampaignRegistryController;
 use App\Http\Controllers\Admin\PartnerRegistryController;
 use App\Http\Controllers\Admin\QrRegistryController;
 use App\Http\Controllers\Admin\VenueRegistryController;
@@ -37,9 +38,21 @@ Route::get('/admin/qr-codes', [QrRegistryController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer'])
     ->name('admin.qr-codes.page');
 
+Route::post('/admin/qr-codes', [QrRegistryController::class, 'store'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.qr-codes.store');
+
 Route::get('/admin/partners', [PartnerRegistryController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
     ->name('admin.partners.page');
+
+Route::get('/admin/campaigns', [CampaignRegistryController::class, 'page'])
+    ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
+    ->name('admin.campaigns.page');
+
+Route::post('/admin/campaigns', [CampaignRegistryController::class, 'store'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.campaigns.store');
 
 Route::get('/admin/venues', [VenueRegistryController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
@@ -49,9 +62,21 @@ Route::get('/api/v1/admin/qr-codes', [QrRegistryController::class, 'index'])
     ->middleware(['auth', 'role:admin,operator,viewer'])
     ->name('admin.qr-codes.index');
 
+Route::post('/api/v1/admin/qr-codes', [QrRegistryController::class, 'store'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.qr-codes.api.store');
+
 Route::get('/api/v1/admin/partners', [PartnerRegistryController::class, 'index'])
     ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
     ->name('admin.partners.index');
+
+Route::get('/api/v1/admin/campaigns', [CampaignRegistryController::class, 'index'])
+    ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
+    ->name('admin.campaigns.index');
+
+Route::post('/api/v1/admin/campaigns', [CampaignRegistryController::class, 'store'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.campaigns.api.store');
 
 Route::get('/api/v1/admin/venues', [VenueRegistryController::class, 'index'])
     ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])

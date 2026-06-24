@@ -351,3 +351,15 @@ docs/features/STANDALONE_ADVERTISING_REQUIREMENTS.md
 - سرویس رجیستری مکان، زون، هاب، نقاط تماس، شرکا و مدیران هاب اضافه شد.
 - صفحه admin برای مشاهده ساختار Venue/Zone/Hub/Touchpoint اضافه شد.
 - لینک «مدیریت مکان‌ها» به sidebar پنل اصلی اضافه شد.
+
+## وضعیت اجرای Sprint 1.3
+
+شروع اجرای Sprint 1.3 انجام شد:
+
+- مسیرهای `GET /admin/campaigns` و `GET /api/v1/admin/campaigns` اضافه شدند.
+- مسیرهای `POST /admin/campaigns` و `POST /api/v1/admin/campaigns` برای ساخت کمپین اضافه شدند.
+- مسیرهای `POST /admin/qr-codes` و `POST /api/v1/admin/qr-codes` برای ساخت QR اضافه شدند.
+- ساخت QR فقط وقتی پذیرفته می‌شود که `venue`، `campaign` و `touchpoint` با یکدیگر هم‌محدوده باشند.
+- صفحه admin کمپین‌ها ساخته شد و فرم ساخت کمپین دارد.
+- صفحه admin QR با فرم ساخت QR، بازه اعتبار و تنظیمات ضدتکرار تکمیل شد.
+- لینک «کمپین‌ها» به sidebar پنل اصلی اضافه شد.

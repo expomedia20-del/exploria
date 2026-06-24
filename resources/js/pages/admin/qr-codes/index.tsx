@@ -1,11 +1,17 @@
-import { Head, Link } from '@inertiajs/react';
+import { Form, Head, Link, usePage } from '@inertiajs/react';
 import {
     CalendarClock,
     ExternalLink,
     MapPin,
+    Plus,
     QrCode as QrCodeIcon,
     RadioTower,
 } from 'lucide-react';
+import InputError from '@/components/input-error';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 type RegistryEntity = {
     id: string;
@@ -25,10 +31,34 @@ type QrRegistryItem = {
     campaign: RegistryEntity | null;
     validFrom: string | null;
     validUntil: string | null;
+    maxScansPerUserPerWindow: number;
+    duplicateWindowSeconds: number;
+};
+
+type OptionItem = RegistryEntity & {
+    venueId?: string | null;
+    venueName?: string | null;
+    hubName?: string | null;
 };
 
 type Props = {
     qrCodes: QrRegistryItem[];
+    formOptions: {
+        venues: RegistryEntity[];
+        campaigns: OptionItem[];
+        touchpoints: OptionItem[];
+    };
+};
+
+type SharedProps = {
+    flash?: {
+        success?: string;
+    };
+    auth: {
+        user: {
+            role?: string;
+        };
+    };
 };
 
 const statusLabels: Record<string, string> = {
@@ -64,7 +94,12 @@ function entityLabel(entity: RegistryEntity | null, fallback: string) {
     return entity.name ?? entity.label ?? entity.code;
 }
 
-export default function QrRegistryIndex({ qrCodes }: Props) {
+function canMutate(role?: string) {
+    return role === 'admin' || role === 'operator';
+}
+
+export default function QrRegistryIndex({ qrCodes, formOptions }: Props) {
+    const { flash, auth } = usePage<SharedProps>().props;
     const activeCount = qrCodes.filter((qr) => qr.status === 'active').length;
 
     return (
@@ -103,13 +138,233 @@ export default function QrRegistryIndex({ qrCodes }: Props) {
                     </div>
                 </header>
 
+                {flash?.success ? (
+                    <Alert>
+                        <AlertDescription>{flash.success}</AlertDescription>
+                    </Alert>
+                ) : null}
+
+                {canMutate(auth.user.role) ? (
+                    <section className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
+                        <div className="mb-4 flex items-center gap-2">
+                            <Plus className="size-4 text-muted-foreground" />
+                            <h2 className="font-semibold">ثبت QR جدید</h2>
+                        </div>
+                        <Form
+                            action="/admin/qr-codes"
+                            method="post"
+                            options={{ preserveScroll: true }}
+                            className="grid gap-4 md:grid-cols-6"
+                        >
+                            {({ processing, errors }) => (
+                                <>
+                                    <div className="grid gap-2 md:col-span-2">
+                                        <Label htmlFor="venue_id">مکان</Label>
+                                        <select
+                                            id="venue_id"
+                                            name="venue_id"
+                                            required
+                                            defaultValue={
+                                                formOptions.venues[0]?.id ?? ''
+                                            }
+                                            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                        >
+                                            {formOptions.venues.map((venue) => (
+                                                <option
+                                                    key={venue.id}
+                                                    value={venue.id}
+                                                >
+                                                    {venue.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <InputError message={errors.venue_id} />
+                                    </div>
+                                    <div className="grid gap-2 md:col-span-2">
+                                        <Label htmlFor="campaign_id">
+                                            کمپین
+                                        </Label>
+                                        <select
+                                            id="campaign_id"
+                                            name="campaign_id"
+                                            required
+                                            defaultValue={
+                                                formOptions.campaigns[0]?.id ??
+                                                ''
+                                            }
+                                            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                        >
+                                            {formOptions.campaigns.map(
+                                                (campaign) => (
+                                                    <option
+                                                        key={campaign.id}
+                                                        value={campaign.id}
+                                                    >
+                                                        {campaign.name} ·{' '}
+                                                        {campaign.venueName}
+                                                    </option>
+                                                ),
+                                            )}
+                                        </select>
+                                        <InputError
+                                            message={errors.campaign_id}
+                                        />
+                                    </div>
+                                    <div className="grid gap-2 md:col-span-2">
+                                        <Label htmlFor="touchpoint_id">
+                                            نقطه تماس
+                                        </Label>
+                                        <select
+                                            id="touchpoint_id"
+                                            name="touchpoint_id"
+                                            required
+                                            defaultValue={
+                                                formOptions.touchpoints[0]
+                                                    ?.id ?? ''
+                                            }
+                                            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                        >
+                                            {formOptions.touchpoints.map(
+                                                (touchpoint) => (
+                                                    <option
+                                                        key={touchpoint.id}
+                                                        value={touchpoint.id}
+                                                    >
+                                                        {touchpoint.label ??
+                                                            touchpoint.name}{' '}
+                                                        · {touchpoint.hubName}
+                                                    </option>
+                                                ),
+                                            )}
+                                        </select>
+                                        <InputError
+                                            message={errors.touchpoint_id}
+                                        />
+                                    </div>
+                                    <div className="grid gap-2 md:col-span-2">
+                                        <Label htmlFor="label">عنوان</Label>
+                                        <Input
+                                            id="label"
+                                            name="label"
+                                            placeholder="مثلا QR ورودی رواق"
+                                        />
+                                        <InputError message={errors.label} />
+                                    </div>
+                                    <div className="grid gap-2 md:col-span-2">
+                                        <Label htmlFor="code">کد QR</Label>
+                                        <Input
+                                            id="code"
+                                            name="code"
+                                            required
+                                            dir="ltr"
+                                            placeholder="ep1405-ravaq-01"
+                                        />
+                                        <InputError message={errors.code} />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="status">وضعیت</Label>
+                                        <select
+                                            id="status"
+                                            name="status"
+                                            required
+                                            defaultValue="draft"
+                                            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                        >
+                                            <option value="draft">
+                                                پیش نویس
+                                            </option>
+                                            <option value="active">فعال</option>
+                                            <option value="inactive">
+                                                غیرفعال
+                                            </option>
+                                        </select>
+                                        <InputError message={errors.status} />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="valid_from">شروع</Label>
+                                        <Input
+                                            id="valid_from"
+                                            type="datetime-local"
+                                            name="valid_from"
+                                        />
+                                        <InputError
+                                            message={errors.valid_from}
+                                        />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="valid_until">
+                                            پایان
+                                        </Label>
+                                        <Input
+                                            id="valid_until"
+                                            type="datetime-local"
+                                            name="valid_until"
+                                        />
+                                        <InputError
+                                            message={errors.valid_until}
+                                        />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="max_scans_per_user_per_window">
+                                            سقف تکرار
+                                        </Label>
+                                        <Input
+                                            id="max_scans_per_user_per_window"
+                                            type="number"
+                                            name="max_scans_per_user_per_window"
+                                            min={1}
+                                            max={1000}
+                                            required
+                                            defaultValue={1}
+                                        />
+                                        <InputError
+                                            message={
+                                                errors.max_scans_per_user_per_window
+                                            }
+                                        />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="duplicate_window_seconds">
+                                            بازه ضدتکرار
+                                        </Label>
+                                        <Input
+                                            id="duplicate_window_seconds"
+                                            type="number"
+                                            name="duplicate_window_seconds"
+                                            min={30}
+                                            max={86400}
+                                            required
+                                            defaultValue={300}
+                                        />
+                                        <InputError
+                                            message={
+                                                errors.duplicate_window_seconds
+                                            }
+                                        />
+                                    </div>
+                                    <div className="flex items-end">
+                                        <Button
+                                            disabled={processing}
+                                            className="w-full"
+                                        >
+                                            <Plus className="size-4" />
+                                            ثبت QR
+                                        </Button>
+                                    </div>
+                                </>
+                            )}
+                        </Form>
+                    </section>
+                ) : null}
+
                 <section className="rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border">
-                    <div className="grid min-w-[860px] grid-cols-[1.25fr_1fr_1fr_1.15fr_1fr_auto] gap-3 border-b border-sidebar-border/70 px-4 py-3 text-xs font-medium text-muted-foreground dark:border-sidebar-border">
+                    <div className="grid min-w-[980px] grid-cols-[1.25fr_1fr_1fr_1.15fr_1fr_0.8fr_auto] gap-3 border-b border-sidebar-border/70 px-4 py-3 text-xs font-medium text-muted-foreground dark:border-sidebar-border">
                         <span>کد و وضعیت</span>
                         <span>مکان</span>
                         <span>نقطه تماس</span>
                         <span>کمپین</span>
                         <span>اعتبار</span>
+                        <span>ضدتکرار</span>
                         <span className="text-left">عملیات</span>
                     </div>
 
@@ -118,11 +373,11 @@ export default function QrRegistryIndex({ qrCodes }: Props) {
                             هنوز کد QR ثبت نشده است.
                         </div>
                     ) : (
-                        <div className="min-w-[860px] divide-y divide-sidebar-border/70 dark:divide-sidebar-border">
+                        <div className="min-w-[980px] divide-y divide-sidebar-border/70 dark:divide-sidebar-border">
                             {qrCodes.map((qr) => (
                                 <article
                                     key={qr.id}
-                                    className="grid grid-cols-[1.25fr_1fr_1fr_1.15fr_1fr_auto] items-center gap-3 px-4 py-3 text-sm"
+                                    className="grid grid-cols-[1.25fr_1fr_1fr_1.15fr_1fr_0.8fr_auto] items-center gap-3 px-4 py-3 text-sm"
                                 >
                                     <div className="min-w-0">
                                         <div className="flex items-center gap-2">
@@ -212,6 +467,21 @@ export default function QrRegistryIndex({ qrCodes }: Props) {
                                         </div>
                                         <p className="mt-1 truncate text-xs text-muted-foreground">
                                             تا {formatDate(qr.validUntil)}
+                                        </p>
+                                    </div>
+
+                                    <div className="min-w-0 text-xs">
+                                        <p>
+                                            {qr.maxScansPerUserPerWindow.toLocaleString(
+                                                'fa-IR',
+                                            )}{' '}
+                                            اسکن
+                                        </p>
+                                        <p className="mt-1 text-muted-foreground">
+                                            {qr.duplicateWindowSeconds.toLocaleString(
+                                                'fa-IR',
+                                            )}{' '}
+                                            ثانیه
                                         </p>
                                     </div>
 

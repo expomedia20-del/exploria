@@ -4,6 +4,7 @@ import {
     FolderGit2,
     LayoutGrid,
     MapPinned,
+    Megaphone,
     QrCode,
     Store,
 } from 'lucide-react';
@@ -33,6 +34,11 @@ const mainNavItems: NavItem[] = [
         title: 'مدیریت QR',
         href: '/admin/qr-codes',
         icon: QrCode,
+    },
+    {
+        title: 'کمپین‌ها',
+        href: '/admin/campaigns',
+        icon: Megaphone,
     },
     {
         title: 'مدیریت مکان‌ها',

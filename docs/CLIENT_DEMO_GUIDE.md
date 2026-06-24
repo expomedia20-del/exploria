@@ -33,6 +33,9 @@ http://127.0.0.1:8000/dashboard
 QR registry:
 http://127.0.0.1:8000/admin/qr-codes
 
+Campaign registry:
+http://127.0.0.1:8000/admin/campaigns
+
 Partner registry:
 http://127.0.0.1:8000/admin/partners
 
@@ -88,6 +91,7 @@ For a fresh repeat of the same flow, use another valid Iranian-format mobile num
 17. Show the visit experience page created from the QR flow.
 18. Open the dashboard and show operational counters.
 19. Open `/admin/qr-codes` and show the QR registry row, binding, status, and scan link.
+20. Open `/admin/campaigns` and show that campaigns can be created and linked to QR codes.
 
 ## What Is Ready To Claim
 
@@ -97,7 +101,8 @@ For a fresh repeat of the same flow, use another valid Iranian-format mobile num
 - Standalone advertising requirements are recorded in `docs/features/STANDALONE_ADVERTISING_REQUIREMENTS.md` so upload, approval, fixed/mobile display publishing, scheduling, and reporting are not missed in real development.
 - A confirmed visit is created after QR consent acceptance.
 - Dashboard counters are backed by database records, not static placeholders.
-- QR registry page exists for `admin`, `operator`, and `viewer` roles.
+- QR registry page exists for `admin`, `operator`, and `viewer` roles; `admin` and `operator` can create new QR records.
+- Campaign registry page exists for `admin`, `operator`, `viewer`, and `hub_manager` roles; `admin` and `operator` can create campaign records.
 - Venue/hub registry page exists for `admin`, `operator`, `viewer`, and `hub_manager` roles.
 - Mission/reward simulator shows points, rewards, levels, locked missions, and next experience layers.
 - Proposal coverage page maps the 22-slide Eco Park board proposal to the current demo and pilot minimums.
@@ -122,7 +127,7 @@ http://127.0.0.1:8000/demo
 Last completed commit:
 
 ```text
-6ee6f3d chore: add demo admin and partner navigation
+758c0b4 feat: add venue registry foundation
 ```
 
 Latest verified quality gates:
