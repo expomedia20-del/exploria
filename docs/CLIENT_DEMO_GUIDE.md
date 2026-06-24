@@ -32,6 +32,9 @@ http://127.0.0.1:8000/dashboard
 
 QR registry:
 http://127.0.0.1:8000/admin/qr-codes
+
+Partner registry:
+http://127.0.0.1:8000/admin/partners
 ```
 
 ## Demo Credentials

@@ -10,19 +10,30 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property string $id
- * @property string $zone_id
+ * @property string $venue_id
  * @property string $code
  * @property string $name
- * @property string $hub_type
+ * @property string $partner_type
  * @property RecordStatus $status
+ * @property string|null $contact_name
+ * @property string|null $contact_mobile
  * @property array<string, mixed>|null $metadata
- * @property-read Zone|null $zone
+ * @property-read Venue|null $venue
  */
-class Hub extends Model
+class PartnerAccount extends Model
 {
     use HasUuids;
 
-    protected $fillable = ['zone_id', 'code', 'name', 'hub_type', 'status', 'metadata'];
+    protected $fillable = [
+        'venue_id',
+        'code',
+        'name',
+        'partner_type',
+        'status',
+        'contact_name',
+        'contact_mobile',
+        'metadata',
+    ];
 
     /** @return array<string, string> */
     protected function casts(): array
@@ -30,27 +41,21 @@ class Hub extends Model
         return ['status' => RecordStatus::class, 'metadata' => 'array'];
     }
 
-    /** @return BelongsTo<Zone, $this> */
-    public function zone(): BelongsTo
+    /** @return BelongsTo<Venue, $this> */
+    public function venue(): BelongsTo
     {
-        return $this->belongsTo(Zone::class);
-    }
-
-    /** @return HasMany<Touchpoint, $this> */
-    public function touchpoints(): HasMany
-    {
-        return $this->hasMany(Touchpoint::class);
+        return $this->belongsTo(Venue::class);
     }
 
     /** @return HasMany<PartnerLocation, $this> */
-    public function partnerLocations(): HasMany
+    public function locations(): HasMany
     {
         return $this->hasMany(PartnerLocation::class);
     }
 
-    /** @return HasMany<HubManagementAssignment, $this> */
-    public function managementAssignments(): HasMany
+    /** @return HasMany<PartnerUser, $this> */
+    public function partnerUsers(): HasMany
     {
-        return $this->hasMany(HubManagementAssignment::class);
+        return $this->hasMany(PartnerUser::class);
     }
 }

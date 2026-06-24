@@ -328,7 +328,17 @@ docs/features/STANDALONE_ADVERTISING_REQUIREMENTS.md
 شروع از Sprint 1.1:
 
 1. گسترش `UserRole`
-2. افزودن جدول‌های `partner_accounts`, `partner_users`, `hub_management_assignments`
+2. افزودن جدول‌های `partner_accounts`, `partner_locations`, `partner_users`, `hub_management_assignments`
 3. seed چند partner برای اکوپارک
 4. ایجاد admin page/API بسیار ساده برای مشاهده partnerها
 5. تست role middleware برای نقش‌های جدید
+
+## وضعیت اجرای Sprint 1.1
+
+شروع اجرای Sprint 1.1 انجام شد:
+
+- نقش‌های `visitor`, `shop_partner`, `hub_manager`, `sponsor` به `UserRole` اضافه شدند.
+- جدول‌های `partner_accounts`, `partner_locations`, `partner_users`, `hub_management_assignments` اضافه شدند.
+- seed اکوپارک با کافه اکو، فروشگاه رواق و اسپانسر مسیر خانوادگی تکمیل شد.
+- مسیرهای `GET /admin/partners` و `GET /api/v1/admin/partners` اضافه شدند.
+- صفحه ساده admin برای مشاهده partnerها اضافه شد.

@@ -51,4 +51,10 @@ class Venue extends Model
     {
         return $this->hasMany(Visit::class);
     }
+
+    /** @return HasMany<PartnerAccount, $this> */
+    public function partnerAccounts(): HasMany
+    {
+        return $this->hasMany(PartnerAccount::class);
+    }
 }
