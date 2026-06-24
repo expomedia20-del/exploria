@@ -158,7 +158,7 @@ http://127.0.0.1:8000/demo
 Last completed product-code commit:
 
 ```text
-c3b503f feat: add partner offer approval flow
+37b01e0 feat: add standalone advertising skeleton
 ```
 
 Latest verified quality gates:
