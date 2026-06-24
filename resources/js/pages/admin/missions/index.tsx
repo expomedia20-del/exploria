@@ -1,0 +1,395 @@
+import { Head } from '@inertiajs/react';
+import {
+    BadgeCheck,
+    CalendarClock,
+    Gift,
+    MapPin,
+    Sparkles,
+    Trophy,
+} from 'lucide-react';
+
+type RegistryEntity = {
+    id: string;
+    code: string;
+    name?: string;
+    label?: string;
+};
+
+type MissionItem = {
+    id: string;
+    code: string;
+    title: string | null;
+    status: string;
+    missionType: string | null;
+    triggerType: string | null;
+    points: number;
+    startsAt: string | null;
+    endsAt: string | null;
+    unlockRule: Record<string, unknown> | null;
+    progressCount: number;
+    campaign: RegistryEntity | null;
+    venue: RegistryEntity | null;
+    hub: RegistryEntity | null;
+    touchpoint: RegistryEntity | null;
+    treasure: (RegistryEntity & { treasureType: string }) | null;
+};
+
+type RewardItem = {
+    id: string;
+    code: string;
+    name: string;
+    rewardType: string;
+    status: string;
+    pointCost: number | null;
+    stockQuantity: number | null;
+    awardedCount: number;
+    campaign: RegistryEntity | null;
+    venue: RegistryEntity | null;
+    partner: (RegistryEntity & { partnerType: string }) | null;
+};
+
+type TreasureItem = {
+    id: string;
+    code: string;
+    name: string;
+    treasureType: string;
+    status: string;
+    revealRule: Record<string, unknown> | null;
+    campaign: RegistryEntity | null;
+    venue: RegistryEntity | null;
+    missionCode: string | null;
+};
+
+type Props = {
+    stats: {
+        missions: number;
+        activeMissions: number;
+        totalPoints: number;
+        rewards: number;
+        treasures: number;
+    };
+    missions: MissionItem[];
+    rewards: RewardItem[];
+    treasures: TreasureItem[];
+};
+
+const statusLabels: Record<string, string> = {
+    active: 'فعال',
+    draft: 'پیش نویس',
+    inactive: 'غیرفعال',
+    placeholder: 'نمونه کنترل شده',
+};
+
+const statusClasses: Record<string, string> = {
+    active: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200',
+    draft: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200',
+    inactive: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200',
+    placeholder: 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-200',
+};
+
+function formatDate(value: string | null) {
+    if (!value) {
+        return 'بدون محدودیت';
+    }
+
+    return new Intl.DateTimeFormat('fa-IR', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+    }).format(new Date(value));
+}
+
+function Stat({
+    label,
+    value,
+    icon: Icon,
+}: {
+    label: string;
+    value: number;
+    icon: typeof Trophy;
+}) {
+    return (
+        <div className="rounded-lg border border-sidebar-border/70 px-3 py-2 dark:border-sidebar-border">
+            <div className="flex items-center gap-2 text-muted-foreground">
+                <Icon className="size-4" />
+                <p>{label}</p>
+            </div>
+            <p className="mt-1 font-semibold">
+                {value.toLocaleString('fa-IR')}
+            </p>
+        </div>
+    );
+}
+
+export default function MissionRewardRegistryIndex({
+    stats,
+    missions,
+    rewards,
+    treasures,
+}: Props) {
+    return (
+        <>
+            <Head title="ماموریت و پاداش" />
+            <div
+                dir="rtl"
+                className="flex h-full flex-1 flex-col gap-5 overflow-x-auto p-4"
+            >
+                <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                    <div>
+                        <p className="text-sm text-muted-foreground">
+                            اسکلت واقعی Sprint 1.4
+                        </p>
+                        <h1 className="mt-1 text-2xl font-semibold">
+                            ماموریت، گنج، امتیاز و پاداش
+                        </h1>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-5">
+                        <Stat
+                            icon={Trophy}
+                            label="ماموریت"
+                            value={stats.missions}
+                        />
+                        <Stat
+                            icon={BadgeCheck}
+                            label="فعال"
+                            value={stats.activeMissions}
+                        />
+                        <Stat
+                            icon={Sparkles}
+                            label="امتیاز"
+                            value={stats.totalPoints}
+                        />
+                        <Stat icon={Gift} label="پاداش" value={stats.rewards} />
+                        <Stat
+                            icon={MapPin}
+                            label="گنج"
+                            value={stats.treasures}
+                        />
+                    </div>
+                </header>
+
+                <section className="rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border">
+                    <div className="grid min-w-[980px] grid-cols-[1.3fr_0.9fr_0.9fr_0.9fr_0.75fr_1fr_0.8fr] gap-3 border-b border-sidebar-border/70 px-4 py-3 text-xs font-medium text-muted-foreground dark:border-sidebar-border">
+                        <span>ماموریت</span>
+                        <span>کمپین</span>
+                        <span>مکان/هاب</span>
+                        <span>نوع/تریگر</span>
+                        <span>امتیاز</span>
+                        <span>اعتبار</span>
+                        <span>گنج</span>
+                    </div>
+
+                    {missions.length === 0 ? (
+                        <div className="p-8 text-center text-sm text-muted-foreground">
+                            هنوز ماموریتی ثبت نشده است.
+                        </div>
+                    ) : (
+                        <div className="min-w-[980px] divide-y divide-sidebar-border/70 dark:divide-sidebar-border">
+                            {missions.map((mission) => (
+                                <article
+                                    key={mission.id}
+                                    className="grid grid-cols-[1.3fr_0.9fr_0.9fr_0.9fr_0.75fr_1fr_0.8fr] items-center gap-3 px-4 py-3 text-sm"
+                                >
+                                    <div className="min-w-0">
+                                        <div className="flex items-center gap-2">
+                                            <Trophy className="size-4 shrink-0 text-muted-foreground" />
+                                            <span className="truncate font-medium">
+                                                {mission.title}
+                                            </span>
+                                        </div>
+                                        <div className="mt-2 flex items-center gap-2">
+                                            <span
+                                                className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
+                                                    statusClasses[
+                                                        mission.status
+                                                    ] ?? statusClasses.inactive
+                                                }`}
+                                            >
+                                                {statusLabels[mission.status] ??
+                                                    mission.status}
+                                            </span>
+                                            <span
+                                                className="truncate text-xs text-muted-foreground"
+                                                dir="ltr"
+                                            >
+                                                {mission.code}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="min-w-0">
+                                        <p className="truncate">
+                                            {mission.campaign?.name ?? '-'}
+                                        </p>
+                                        <p
+                                            className="mt-1 truncate text-xs text-muted-foreground"
+                                            dir="ltr"
+                                        >
+                                            {mission.campaign?.code ?? '-'}
+                                        </p>
+                                    </div>
+
+                                    <div className="min-w-0">
+                                        <p className="truncate">
+                                            {mission.venue?.name ?? '-'}
+                                        </p>
+                                        <p className="mt-1 truncate text-xs text-muted-foreground">
+                                            {mission.hub?.name ??
+                                                mission.touchpoint?.label ??
+                                                '-'}
+                                        </p>
+                                    </div>
+
+                                    <div className="min-w-0 text-xs">
+                                        <p dir="ltr">{mission.missionType}</p>
+                                        <p
+                                            className="mt-1 text-muted-foreground"
+                                            dir="ltr"
+                                        >
+                                            {mission.triggerType}
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <p className="font-semibold">
+                                            {mission.points.toLocaleString(
+                                                'fa-IR',
+                                            )}
+                                        </p>
+                                        <p className="mt-1 text-xs text-muted-foreground">
+                                            انجام:{' '}
+                                            {mission.progressCount.toLocaleString(
+                                                'fa-IR',
+                                            )}
+                                        </p>
+                                    </div>
+
+                                    <div className="min-w-0">
+                                        <div className="flex items-center gap-2 text-xs">
+                                            <CalendarClock className="size-4 shrink-0 text-muted-foreground" />
+                                            <span className="truncate">
+                                                {formatDate(mission.startsAt)}
+                                            </span>
+                                        </div>
+                                        <p className="mt-1 truncate text-xs text-muted-foreground">
+                                            تا {formatDate(mission.endsAt)}
+                                        </p>
+                                    </div>
+
+                                    <div className="min-w-0">
+                                        <p className="truncate">
+                                            {mission.treasure?.name ?? '-'}
+                                        </p>
+                                        <p
+                                            className="mt-1 truncate text-xs text-muted-foreground"
+                                            dir="ltr"
+                                        >
+                                            {mission.treasure?.treasureType ??
+                                                '-'}
+                                        </p>
+                                    </div>
+                                </article>
+                            ))}
+                        </div>
+                    )}
+                </section>
+
+                <section className="grid gap-4 lg:grid-cols-2">
+                    <div className="rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border">
+                        <div className="border-b border-sidebar-border/70 px-4 py-3 dark:border-sidebar-border">
+                            <h2 className="font-semibold">تعریف پاداش‌ها</h2>
+                        </div>
+                        <div className="divide-y divide-sidebar-border/70 dark:divide-sidebar-border">
+                            {rewards.map((reward) => (
+                                <article
+                                    key={reward.id}
+                                    className="grid gap-2 px-4 py-3 text-sm"
+                                >
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div className="min-w-0">
+                                            <p className="truncate font-medium">
+                                                {reward.name}
+                                            </p>
+                                            <p
+                                                className="mt-1 truncate text-xs text-muted-foreground"
+                                                dir="ltr"
+                                            >
+                                                {reward.code} ·{' '}
+                                                {reward.rewardType}
+                                            </p>
+                                        </div>
+                                        <span className="shrink-0 text-xs text-muted-foreground">
+                                            {reward.pointCost
+                                                ? `${reward.pointCost.toLocaleString('fa-IR')} امتیاز`
+                                                : 'بدون هزینه'}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                        شریک: {reward.partner?.name ?? 'پلتفرم'}{' '}
+                                        · موجودی:{' '}
+                                        {reward.stockQuantity?.toLocaleString(
+                                            'fa-IR',
+                                        ) ?? 'نامحدود'}
+                                    </p>
+                                </article>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border">
+                        <div className="border-b border-sidebar-border/70 px-4 py-3 dark:border-sidebar-border">
+                            <h2 className="font-semibold">گنج‌ها</h2>
+                        </div>
+                        <div className="divide-y divide-sidebar-border/70 dark:divide-sidebar-border">
+                            {treasures.map((treasure) => (
+                                <article
+                                    key={treasure.id}
+                                    className="grid gap-2 px-4 py-3 text-sm"
+                                >
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div className="min-w-0">
+                                            <p className="truncate font-medium">
+                                                {treasure.name}
+                                            </p>
+                                            <p
+                                                className="mt-1 truncate text-xs text-muted-foreground"
+                                                dir="ltr"
+                                            >
+                                                {treasure.code} ·{' '}
+                                                {treasure.treasureType}
+                                            </p>
+                                        </div>
+                                        <span
+                                            className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${
+                                                statusClasses[
+                                                    treasure.status
+                                                ] ?? statusClasses.inactive
+                                            }`}
+                                        >
+                                            {statusLabels[treasure.status] ??
+                                                treasure.status}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                        ماموریت:{' '}
+                                        <span dir="ltr">
+                                            {treasure.missionCode ?? '-'}
+                                        </span>
+                                    </p>
+                                </article>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </>
+    );
+}
+
+MissionRewardRegistryIndex.layout = {
+    breadcrumbs: [
+        {
+            title: 'ماموریت و پاداش',
+            href: '/admin/missions',
+        },
+    ],
+};

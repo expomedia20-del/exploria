@@ -6,6 +6,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property string $id
@@ -88,5 +89,11 @@ class Visit extends Model
     public function consentLog(): BelongsTo
     {
         return $this->belongsTo(ConsentLog::class);
+    }
+
+    /** @return HasMany<UserMissionProgress, $this> */
+    public function missionProgress(): HasMany
+    {
+        return $this->hasMany(UserMissionProgress::class);
     }
 }

@@ -7,6 +7,7 @@ import {
     Megaphone,
     QrCode,
     Store,
+    Trophy,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
@@ -39,6 +40,11 @@ const mainNavItems: NavItem[] = [
         title: 'کمپین‌ها',
         href: '/admin/campaigns',
         icon: Megaphone,
+    },
+    {
+        title: 'ماموریت و پاداش',
+        href: '/admin/missions',
+        icon: Trophy,
     },
     {
         title: 'مدیریت مکان‌ها',

@@ -57,4 +57,22 @@ class Venue extends Model
     {
         return $this->hasMany(PartnerAccount::class);
     }
+
+    /** @return HasMany<MissionInstance, $this> */
+    public function missionInstances(): HasMany
+    {
+        return $this->hasMany(MissionInstance::class);
+    }
+
+    /** @return HasMany<Treasure, $this> */
+    public function treasures(): HasMany
+    {
+        return $this->hasMany(Treasure::class);
+    }
+
+    /** @return HasMany<RewardDefinition, $this> */
+    public function rewardDefinitions(): HasMany
+    {
+        return $this->hasMany(RewardDefinition::class);
+    }
 }

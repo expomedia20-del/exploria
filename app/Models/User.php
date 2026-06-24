@@ -78,4 +78,22 @@ class User extends Authenticatable implements PasskeyUser
     {
         return $this->hasMany(HubManagementAssignment::class);
     }
+
+    /** @return HasMany<UserMissionProgress, $this> */
+    public function missionProgress(): HasMany
+    {
+        return $this->hasMany(UserMissionProgress::class);
+    }
+
+    /** @return HasMany<UserReward, $this> */
+    public function rewards(): HasMany
+    {
+        return $this->hasMany(UserReward::class);
+    }
+
+    /** @return HasMany<RewardRedemption, $this> */
+    public function rewardRedemptions(): HasMany
+    {
+        return $this->hasMany(RewardRedemption::class);
+    }
 }

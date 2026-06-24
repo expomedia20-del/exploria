@@ -58,4 +58,16 @@ class PartnerAccount extends Model
     {
         return $this->hasMany(PartnerUser::class);
     }
+
+    /** @return HasMany<RewardDefinition, $this> */
+    public function rewardDefinitions(): HasMany
+    {
+        return $this->hasMany(RewardDefinition::class);
+    }
+
+    /** @return HasMany<RewardRedemption, $this> */
+    public function rewardRedemptions(): HasMany
+    {
+        return $this->hasMany(RewardRedemption::class);
+    }
 }

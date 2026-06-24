@@ -36,6 +36,9 @@ http://127.0.0.1:8000/admin/qr-codes
 Campaign registry:
 http://127.0.0.1:8000/admin/campaigns
 
+Mission, treasure, and reward registry:
+http://127.0.0.1:8000/admin/missions
+
 Partner registry:
 http://127.0.0.1:8000/admin/partners
 
@@ -92,6 +95,7 @@ For a fresh repeat of the same flow, use another valid Iranian-format mobile num
 18. Open the dashboard and show operational counters.
 19. Open `/admin/qr-codes` and show the QR registry row, binding, status, and scan link.
 20. Open `/admin/campaigns` and show that campaigns can be created and linked to QR codes.
+21. Open `/admin/missions` and show the real database-backed mission, treasure, point, and reward foundation.
 
 ## What Is Ready To Claim
 
@@ -103,6 +107,7 @@ For a fresh repeat of the same flow, use another valid Iranian-format mobile num
 - Dashboard counters are backed by database records, not static placeholders.
 - QR registry page exists for `admin`, `operator`, and `viewer` roles; `admin` and `operator` can create new QR records.
 - Campaign registry page exists for `admin`, `operator`, `viewer`, and `hub_manager` roles; `admin` and `operator` can create campaign records.
+- Mission/reward registry page exists for `admin`, `operator`, `viewer`, and `hub_manager` roles, backed by database records for mission templates, mission instances, treasures, rewards, user progress, reward wallet, and redemption skeleton.
 - Venue/hub registry page exists for `admin`, `operator`, `viewer`, and `hub_manager` roles.
 - Mission/reward simulator shows points, rewards, levels, locked missions, and next experience layers.
 - Proposal coverage page maps the 22-slide Eco Park board proposal to the current demo and pilot minimums.

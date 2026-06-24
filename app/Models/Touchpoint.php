@@ -49,4 +49,10 @@ class Touchpoint extends Model
     {
         return $this->hasMany(Visit::class);
     }
+
+    /** @return HasMany<MissionInstance, $this> */
+    public function missionInstances(): HasMany
+    {
+        return $this->hasMany(MissionInstance::class);
+    }
 }

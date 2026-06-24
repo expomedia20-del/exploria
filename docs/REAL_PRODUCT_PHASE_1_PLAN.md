@@ -363,3 +363,14 @@ docs/features/STANDALONE_ADVERTISING_REQUIREMENTS.md
 - صفحه admin کمپین‌ها ساخته شد و فرم ساخت کمپین دارد.
 - صفحه admin QR با فرم ساخت QR، بازه اعتبار و تنظیمات ضدتکرار تکمیل شد.
 - لینک «کمپین‌ها» به sidebar پنل اصلی اضافه شد.
+
+## وضعیت اجرای Sprint 1.4
+
+شروع اجرای Sprint 1.4 انجام شد:
+
+- جدول‌های `mission_templates`, `mission_instances`, `treasures`, `reward_definitions`, `user_mission_progress`, `user_rewards`, `reward_redemptions` اضافه شدند.
+- مدل‌ها و relationهای اصلی برای ماموریت، گنج، پاداش، کیف پاداش و مصرف پاداش اضافه شدند.
+- seed پایلوت اکوپارک چهار ماموریت معادل دموی فعلی، یک گنج خانوادگی/تیمی و چهار پاداش واقعی دیتابیسی می‌سازد.
+- مسیرهای `GET /admin/missions` و `GET /api/v1/admin/missions` اضافه شدند.
+- صفحه admin برای مشاهده ماموریت‌ها، گنج‌ها، امتیازها و پاداش‌ها اضافه شد.
+- لینک «ماموریت و پاداش» به sidebar پنل اصلی اضافه شد.

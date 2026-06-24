@@ -7,11 +7,15 @@ use App\Enums\UserRole;
 use App\Models\Campaign;
 use App\Models\Hub;
 use App\Models\HubManagementAssignment;
+use App\Models\MissionInstance;
+use App\Models\MissionTemplate;
 use App\Models\PartnerAccount;
 use App\Models\PartnerLocation;
 use App\Models\PartnerUser;
 use App\Models\QrCode;
+use App\Models\RewardDefinition;
 use App\Models\Touchpoint;
+use App\Models\Treasure;
 use App\Models\User;
 use App\Models\Venue;
 use App\Models\Zone;
@@ -227,5 +231,161 @@ class PilotLocationSeeder extends Seeder
                 'metadata' => ['is_demo' => true],
             ],
         );
+
+        $missionTemplates = [
+            [
+                'code' => 'scan-entry-qr',
+                'title' => 'ورود از QR در دروازه اصلی',
+                'description' => 'بازدیدکننده از QR ورودی اصلی وارد مسیر پایلوت می‌شود.',
+                'mission_type' => 'qr_check_in',
+                'trigger_type' => 'qr_scan',
+                'point_value' => 120,
+                'hub' => $hub,
+                'touchpoint' => $touchpoint,
+                'reward' => 'نشان ورود پایلوت',
+            ],
+            [
+                'code' => 'discover-route-guide',
+                'title' => 'کشف نقطه راهنمای مسیر',
+                'description' => 'بازدیدکننده اولین راهنمای مسیر را در محدوده ورودی پیدا می‌کند.',
+                'mission_type' => 'location_discovery',
+                'trigger_type' => 'manual_check',
+                'point_value' => 180,
+                'hub' => $hub,
+                'touchpoint' => $touchpoint,
+                'reward' => 'کوپن نوشیدنی کوچک',
+            ],
+            [
+                'code' => 'watch-place-story',
+                'title' => 'مشاهده روایت مکان',
+                'description' => 'بازدیدکننده روایت یا محتوای معرفی هاب را مشاهده می‌کند.',
+                'mission_type' => 'content_view',
+                'trigger_type' => 'content_complete',
+                'point_value' => 220,
+                'hub' => $scienceHub,
+                'touchpoint' => null,
+                'reward' => 'باز شدن ماموریت ویژه',
+            ],
+            [
+                'code' => 'photo-memory-challenge',
+                'title' => 'چالش عکس و ثبت خاطره',
+                'description' => 'ماموریت لایه عمیق‌تر برای مشارکت کاربر و تولید خاطره کمپین.',
+                'mission_type' => 'participation_challenge',
+                'trigger_type' => 'admin_approval',
+                'point_value' => 260,
+                'hub' => $ravaqHub,
+                'touchpoint' => null,
+                'reward' => 'قرعه‌کشی جایزه پایلوت',
+                'unlock_rule' => ['min_points' => 520],
+            ],
+        ];
+
+        $missionInstances = [];
+
+        foreach ($missionTemplates as $missionData) {
+            /** @var Hub $missionHub */
+            $missionHub = $missionData['hub'];
+            /** @var Touchpoint|null $missionTouchpoint */
+            $missionTouchpoint = $missionData['touchpoint'];
+
+            $template = MissionTemplate::query()->updateOrCreate(
+                ['code' => $missionData['code']],
+                [
+                    'title' => $missionData['title'],
+                    'description' => $missionData['description'],
+                    'mission_type' => $missionData['mission_type'],
+                    'trigger_type' => $missionData['trigger_type'],
+                    'point_value' => $missionData['point_value'],
+                    'status' => RecordStatus::Active,
+                    'metadata' => ['is_demo' => true, 'demo_reward' => $missionData['reward']],
+                ],
+            );
+
+            $missionInstances[$missionData['code']] = MissionInstance::query()->updateOrCreate(
+                ['campaign_id' => $campaign->id, 'code' => $missionData['code']],
+                [
+                    'mission_template_id' => $template->id,
+                    'venue_id' => $ecoPark->id,
+                    'hub_id' => $missionHub->id,
+                    'touchpoint_id' => $missionTouchpoint?->id,
+                    'title_override' => null,
+                    'status' => RecordStatus::Active,
+                    'starts_at' => '2026-06-20 00:00:00',
+                    'ends_at' => '2027-03-20 23:59:59',
+                    'unlock_rule' => $missionData['unlock_rule'] ?? null,
+                    'metadata' => ['is_demo' => true, 'layer_reward' => $missionData['reward']],
+                ],
+            );
+        }
+
+        Treasure::query()->updateOrCreate(
+            ['campaign_id' => $campaign->id, 'code' => 'eco-family-route-treasure'],
+            [
+                'venue_id' => $ecoPark->id,
+                'mission_instance_id' => $missionInstances['photo-memory-challenge']->id,
+                'name' => 'گنج مسیر خانوادگی اکوپارک',
+                'treasure_type' => 'family_team',
+                'status' => RecordStatus::Active,
+                'reveal_rule' => ['required_completed_missions' => 3, 'team_or_family_bonus' => true],
+                'metadata' => ['is_demo' => true, 'demo_layer' => 'team_family_incentive'],
+            ],
+        );
+
+        $cafePartner = PartnerAccount::query()->where('code', 'cafe-eco')->first();
+        $sponsorPartner = PartnerAccount::query()->where('code', 'family-route-sponsor')->first();
+
+        $rewardDefinitions = [
+            [
+                'code' => 'pilot-entry-badge',
+                'name' => 'نشان ورود پایلوت',
+                'reward_type' => 'badge',
+                'partner' => null,
+                'point_cost' => null,
+                'stock_quantity' => null,
+            ],
+            [
+                'code' => 'small-drink-coupon',
+                'name' => 'کوپن نوشیدنی کوچک',
+                'reward_type' => 'partner_coupon',
+                'partner' => $cafePartner,
+                'point_cost' => 180,
+                'stock_quantity' => 500,
+            ],
+            [
+                'code' => 'special-mission-unlock',
+                'name' => 'باز شدن ماموریت ویژه',
+                'reward_type' => 'mission_unlock',
+                'partner' => null,
+                'point_cost' => null,
+                'stock_quantity' => null,
+            ],
+            [
+                'code' => 'pilot-prize-draw',
+                'name' => 'قرعه‌کشی جایزه پایلوت',
+                'reward_type' => 'sponsor_prize_draw',
+                'partner' => $sponsorPartner,
+                'point_cost' => 520,
+                'stock_quantity' => 100,
+            ],
+        ];
+
+        foreach ($rewardDefinitions as $rewardData) {
+            /** @var PartnerAccount|null $rewardPartner */
+            $rewardPartner = $rewardData['partner'];
+
+            RewardDefinition::query()->updateOrCreate(
+                ['campaign_id' => $campaign->id, 'code' => $rewardData['code']],
+                [
+                    'venue_id' => $ecoPark->id,
+                    'partner_account_id' => $rewardPartner?->id,
+                    'name' => $rewardData['name'],
+                    'reward_type' => $rewardData['reward_type'],
+                    'point_cost' => $rewardData['point_cost'],
+                    'stock_quantity' => $rewardData['stock_quantity'],
+                    'status' => RecordStatus::Active,
+                    'metadata' => ['is_demo' => true],
+                ],
+            );
+        }
     }
 }
