@@ -5,6 +5,7 @@ namespace Tests\Feature\Consent;
 use App\Models\ConsentVersion;
 use App\Models\User;
 use Database\Seeders\ConsentVersionSeeder;
+use Database\Seeders\PilotLocationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -65,6 +66,34 @@ class ConsentFlowTest extends TestCase
         $this->assertSame(64, strlen($log->getRawOriginal('session_hash')));
     }
 
+    public function test_acceptance_from_qr_records_a_visit_and_returns_next_url(): void
+    {
+        $this->withoutVite();
+        $this->seed(PilotLocationSeeder::class);
+
+        $user = User::factory()->create();
+        $version = ConsentVersion::query()->where('is_active', true)->firstOrFail();
+
+        $response = $this->actingAs($user)
+            ->postJson('/api/v1/consents/accept', [
+                'consentVersionId' => $version->id,
+                'source' => 'qr_landing',
+                'sourceQrCode' => PilotLocationSeeder::DEMO_QR_CODE,
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.consentVersionId', $version->id)
+            ->assertJsonStructure(['data' => ['visitId', 'nextUrl']]);
+
+        $this->assertDatabaseCount('visits', 1);
+        $this->assertDatabaseHas('visits', [
+            'user_id' => $user->id,
+            'status' => 'confirmed',
+            'source' => 'qr_landing',
+        ]);
+
+        $this->get($response->json('data.nextUrl'))->assertOk();
+    }
+
     public function test_accepting_the_same_version_twice_is_idempotent(): void
     {
         $user = User::factory()->create();
@@ -75,6 +104,25 @@ class ConsentFlowTest extends TestCase
         $this->actingAs($user)->postJson('/api/v1/consents/accept', $payload)->assertCreated();
 
         $this->assertDatabaseCount('consent_logs', 1);
+    }
+
+    public function test_accepting_the_same_qr_visit_twice_is_idempotent(): void
+    {
+        $this->seed(PilotLocationSeeder::class);
+
+        $user = User::factory()->create();
+        $version = ConsentVersion::query()->where('is_active', true)->firstOrFail();
+        $payload = [
+            'consentVersionId' => $version->id,
+            'source' => 'qr_landing',
+            'sourceQrCode' => PilotLocationSeeder::DEMO_QR_CODE,
+        ];
+
+        $this->actingAs($user)->postJson('/api/v1/consents/accept', $payload)->assertCreated();
+        $this->actingAs($user)->postJson('/api/v1/consents/accept', $payload)->assertCreated();
+
+        $this->assertDatabaseCount('consent_logs', 1);
+        $this->assertDatabaseCount('visits', 1);
     }
 
     public function test_inactive_consent_cannot_be_accepted(): void

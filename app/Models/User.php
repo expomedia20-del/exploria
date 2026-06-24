@@ -60,4 +60,10 @@ class User extends Authenticatable implements PasskeyUser
     {
         return $this->hasMany(ConsentLog::class);
     }
+
+    /** @return HasMany<Visit, $this> */
+    public function visits(): HasMany
+    {
+        return $this->hasMany(Visit::class);
+    }
 }

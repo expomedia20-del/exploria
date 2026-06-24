@@ -7,6 +7,7 @@ use App\Enums\UserRole;
 use App\Models\QrCode;
 use App\Models\User;
 use App\Models\Venue;
+use App\Models\Visit;
 use Database\Seeders\PilotLocationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -82,6 +83,27 @@ class PilotLocationQrTest extends TestCase
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.venue.code', 'ecopark-abbasabad')
             ->assertJsonPath('data.0.touchpoint.code', 'main-gate-qr-stand');
+    }
+
+    public function test_visit_experience_page_requires_the_visit_owner(): void
+    {
+        $this->withoutVite();
+        $owner = User::factory()->create();
+        $other = User::factory()->create();
+        $qr = QrCode::query()->firstOrFail();
+        $visit = Visit::query()->create([
+            'user_id' => $owner->id,
+            'qr_code_id' => $qr->id,
+            'venue_id' => $qr->venue_id,
+            'touchpoint_id' => $qr->touchpoint_id,
+            'campaign_id' => $qr->campaign_id,
+            'source' => 'qr_landing',
+            'status' => 'confirmed',
+            'occurred_at' => now(),
+        ]);
+
+        $this->actingAs($owner)->get(route('visits.show', $visit))->assertOk();
+        $this->actingAs($other)->get(route('visits.show', $visit))->assertForbidden();
     }
 
     public function test_milad_remains_a_controlled_placeholder(): void

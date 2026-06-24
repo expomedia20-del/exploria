@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Consent\AcceptConsentAction;
+use App\Actions\Visits\RecordVisitAction;
 use App\Http\Requests\Consent\AcceptConsentRequest;
 use App\Models\ConsentVersion;
 use Illuminate\Http\JsonResponse;
@@ -33,15 +34,22 @@ class ConsentController extends Controller
         ]);
     }
 
-    public function accept(AcceptConsentRequest $request, AcceptConsentAction $action): JsonResponse
-    {
-        $log = $action->execute(
+    public function accept(
+        AcceptConsentRequest $request,
+        AcceptConsentAction $acceptConsent,
+        RecordVisitAction $recordVisit,
+    ): JsonResponse {
+        $log = $acceptConsent->execute(
             $request->user(),
             $request->string('consentVersionId')->toString(),
             $request->session()->getId(),
             $request->string('source', 'pwa')->toString(),
             $request->input('venueId'),
         );
+        $sourceQrCode = $request->string('sourceQrCode')->toString();
+        $visit = $sourceQrCode !== ''
+            ? $recordVisit->execute($request->user(), $sourceQrCode, $log, $request->session()->getId())
+            : null;
 
         return response()->json([
             'status' => 'success',
@@ -50,6 +58,8 @@ class ConsentController extends Controller
                 'id' => $log->id,
                 'consentVersionId' => $log->consent_version_id,
                 'acceptedAt' => $log->accepted_at->toIso8601String(),
+                'visitId' => $visit?->id,
+                'nextUrl' => $visit ? route('visits.show', $visit) : route('dashboard'),
             ],
         ], 201);
     }

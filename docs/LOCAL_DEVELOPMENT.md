@@ -120,6 +120,31 @@ Smoke endpoints after starting a local server:
 GET /up
 GET /api/v1/consents/current
 GET /scan/ep1405-a7f3k9m2q8x4
+GET /dashboard
 ```
 
-All three should return HTTP 200 after local migration and seed.
+The browser flow to verify after local migration and seed:
+
+```text
+QR landing -> OTP request -> OTP verify -> Consent accept -> Visit experience -> Dashboard
+```
+
+Use this local-only OTP code:
+
+```text
+123456
+```
+
+After consent is accepted from the QR flow, the app creates one confirmed visit for the authenticated user and redirects to:
+
+```text
+/visits/{visit}
+```
+
+The dashboard should show non-placeholder operational stats, including:
+
+- venues
+- active QR codes
+- OTP requests
+- consent logs
+- confirmed visits

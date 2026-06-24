@@ -18,7 +18,12 @@ type ConsentVersion = {
 
 type ApiResponse = {
     message?: string;
-    data?: ConsentVersion | null;
+    data?:
+        | ConsentVersion
+        | {
+              nextUrl?: string;
+          }
+        | null;
     errors?: Record<string, string[]>;
 };
 
@@ -57,7 +62,7 @@ export default function Consent() {
                 return;
             }
 
-            if (!response.ok || !payload.data) {
+            if (!response.ok || !payload.data || !('body' in payload.data)) {
                 throw new Error(
                     payload.message ??
                         'دریافت رضایت‌نامه ممکن نشد. لطفاً دوباره تلاش کنید.',
@@ -94,6 +99,10 @@ export default function Consent() {
             const hasQrSource = new URLSearchParams(window.location.search).has(
                 'sourceQrCode',
             );
+            const sourceQrCode =
+                new URLSearchParams(window.location.search).get(
+                    'sourceQrCode',
+                ) ?? undefined;
             const response = await fetch('/api/v1/consents/accept', {
                 method: 'POST',
                 credentials: 'same-origin',
@@ -105,6 +114,7 @@ export default function Consent() {
                 body: JSON.stringify({
                     consentVersionId: version.id,
                     source: hasQrSource ? 'qr_landing' : 'pwa',
+                    sourceQrCode,
                 }),
             });
             const payload = (await response.json()) as ApiResponse;
@@ -115,6 +125,12 @@ export default function Consent() {
                         payload.message ??
                         'ثبت رضایت انجام نشد. لطفاً دوباره تلاش کنید.',
                 );
+            }
+
+            if (payload.data && 'nextUrl' in payload.data && payload.data.nextUrl) {
+                window.location.assign(payload.data.nextUrl);
+
+                return;
             }
 
             setState('success');

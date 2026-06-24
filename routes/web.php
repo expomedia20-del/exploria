@@ -3,7 +3,9 @@
 use App\Http\Controllers\Admin\QrRegistryController;
 use App\Http\Controllers\Auth\OtpController;
 use App\Http\Controllers\ConsentController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ScanLandingController;
+use App\Http\Controllers\VisitExperienceController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
@@ -11,6 +13,7 @@ Route::get('/scan/{code}', ScanLandingController::class)->where('code', '[A-Za-z
 Route::inertia('/access', 'auth/otp')->name('visitor.otp');
 Route::middleware('auth')->group(function () {
     Route::inertia('/consent', 'consent')->name('visitor.consent');
+    Route::get('/visits/{visit}', VisitExperienceController::class)->name('visits.show');
 });
 
 Route::prefix('api/v1/auth/otp')->middleware('throttle:5,1')->group(function () {
@@ -27,8 +30,6 @@ Route::get('/api/v1/admin/qr-codes', [QrRegistryController::class, 'index'])
     ->middleware(['auth', 'role:admin,operator,viewer'])
     ->name('admin.qr-codes.index');
 
-Route::middleware(['auth', 'verified'])->group(function () {
-    Route::inertia('dashboard', 'dashboard')->name('dashboard');
-});
+Route::middleware(['auth', 'verified'])->get('dashboard', DashboardController::class)->name('dashboard');
 
 require __DIR__.'/settings.php';

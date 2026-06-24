@@ -43,4 +43,10 @@ class Touchpoint extends Model
     {
         return $this->hasMany(QrCode::class);
     }
+
+    /** @return HasMany<Visit, $this> */
+    public function visits(): HasMany
+    {
+        return $this->hasMany(Visit::class);
+    }
 }

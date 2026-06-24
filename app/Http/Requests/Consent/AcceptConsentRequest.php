@@ -20,6 +20,7 @@ class AcceptConsentRequest extends FormRequest
             'consentVersionId' => ['required', 'uuid', 'exists:consent_versions,id'],
             'source' => ['nullable', Rule::in(['pwa', 'qr_landing'])],
             'venueId' => ['nullable', 'uuid'],
+            'sourceQrCode' => ['nullable', 'string', 'max:128', 'exists:qr_codes,code'],
         ];
     }
 
