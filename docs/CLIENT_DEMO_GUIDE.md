@@ -7,6 +7,9 @@ This guide is the shortest reliable path for presenting the current EXPLORIA loc
 Use these URLs on the current machine:
 
 ```text
+Employer demo hub:
+http://127.0.0.1:8000/demo
+
 Visitor QR landing:
 http://127.0.0.1:8000/scan/ep1405-a7f3k9m2q8x4
 
@@ -34,16 +37,19 @@ For a fresh repeat of the same flow, use another valid Iranian-format mobile num
 
 ## Presentation Flow
 
-1. Open the QR landing page:
+1. Open the employer demo hub:
+   `http://127.0.0.1:8000/demo`
+2. Show the live demo cards and the complete QR -> OTP -> Consent -> Visit -> Dashboard flow.
+3. Open the QR landing page:
    `http://127.0.0.1:8000/scan/ep1405-a7f3k9m2q8x4`
-2. Show that the QR is bound to the Abbasabad Eco Park pilot location.
-3. Click the start/continue action to go to mobile OTP.
-4. Enter `09120000000` or another valid demo mobile number.
-5. Enter OTP `123456`.
-6. Accept the Persian consent page.
-7. Show the visit experience page created from the QR flow.
-8. Open the dashboard and show operational counters.
-9. Open `/admin/qr-codes` and show the QR registry row, binding, status, and scan link.
+4. Show that the QR is bound to the Abbasabad Eco Park pilot location.
+5. Click the start/continue action to go to mobile OTP.
+6. Enter `09120000000` or another valid demo mobile number.
+7. Enter OTP `123456`.
+8. Accept the Persian consent page.
+9. Show the visit experience page created from the QR flow.
+10. Open the dashboard and show operational counters.
+11. Open `/admin/qr-codes` and show the QR registry row, binding, status, and scan link.
 
 ## What Is Ready To Claim
 
@@ -64,7 +70,7 @@ If the local server is closed, run this from the project root:
 Then open:
 
 ```text
-http://127.0.0.1:8000/admin/qr-codes
+http://127.0.0.1:8000/demo
 ```
 
 ## Current Technical Checkpoint
