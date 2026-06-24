@@ -72,9 +72,7 @@ export default function VisitShow({ visit }: Props) {
                     </div>
                     <div className="flex justify-between gap-4">
                         <dt className="text-slate-500">نقطه تعامل</dt>
-                        <dd className="font-medium">
-                            {visit.touchpointLabel}
-                        </dd>
+                        <dd className="font-medium">{visit.touchpointLabel}</dd>
                     </div>
                     <div className="flex justify-between gap-4">
                         <dt className="text-slate-500">کد QR</dt>

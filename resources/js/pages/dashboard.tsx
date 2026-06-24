@@ -78,7 +78,8 @@ export default function Dashboard({ stats, latestVisits }: Props) {
                             آخرین بازدیدهای ثبت‌شده
                         </h2>
                         <p className="mt-1 text-sm text-muted-foreground">
-                            این فهرست پس از پذیرش رضایت‌نامه و ثبت QR تکمیل می‌شود.
+                            این فهرست پس از پذیرش رضایت‌نامه و ثبت QR تکمیل
+                            می‌شود.
                         </p>
                     </div>
 

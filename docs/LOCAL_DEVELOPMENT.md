@@ -114,6 +114,13 @@ npm run lint:check
 npm run build
 ```
 
+When running `npm run build`, keep the local PHP directory in `PATH` because the Wayfinder Vite plugin calls `php artisan wayfinder:generate --with-form`:
+
+```powershell
+$env:PATH='E:\exploria-toolchain-local\php;E:\فایل 1 اصلی پروژه اکسپلوریا\فایل های تکمیلی قبل از کدنویسی\.toolchain\node;' + $env:PATH
+npm run build
+```
+
 Smoke endpoints after starting a local server:
 
 ```text
@@ -121,6 +128,7 @@ GET /up
 GET /api/v1/consents/current
 GET /scan/ep1405-a7f3k9m2q8x4
 GET /dashboard
+GET /admin/qr-codes
 ```
 
 The browser flow to verify after local migration and seed:
@@ -148,3 +156,19 @@ The dashboard should show non-placeholder operational stats, including:
 - OTP requests
 - consent logs
 - confirmed visits
+
+## Admin QR Registry
+
+The local admin/operator/viewer QR registry page is:
+
+```text
+/admin/qr-codes
+```
+
+It reuses `App\Services\QrRegistryService`, while the JSON API remains available at:
+
+```text
+/api/v1/admin/qr-codes
+```
+
+The UI uses the local `@fontsource-variable/vazirmatn` package. Keep `npm install` in the setup flow so the Persian font is available without a CDN.

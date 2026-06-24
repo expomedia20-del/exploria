@@ -85,6 +85,21 @@ class PilotLocationQrTest extends TestCase
             ->assertJsonPath('data.0.touchpoint.code', 'main-gate-qr-stand');
     }
 
+    public function test_viewer_can_open_the_qr_registry_page(): void
+    {
+        $this->withoutVite();
+        $viewer = User::factory()->create(['role' => UserRole::Viewer]);
+
+        $this->actingAs($viewer)
+            ->get(route('admin.qr-codes.page'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('admin/qr-codes/index')
+                ->has('qrCodes', 1)
+                ->where('qrCodes.0.venue.code', 'ecopark-abbasabad')
+                ->where('qrCodes.0.touchpoint.code', 'main-gate-qr-stand'));
+    }
+
     public function test_visit_experience_page_requires_the_visit_owner(): void
     {
         $this->withoutVite();

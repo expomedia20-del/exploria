@@ -26,6 +26,10 @@ Route::prefix('api/v1/consents')->middleware('throttle:30,1')->group(function ()
     Route::post('accept', [ConsentController::class, 'accept'])->middleware('auth')->name('consents.accept');
 });
 
+Route::get('/admin/qr-codes', [QrRegistryController::class, 'page'])
+    ->middleware(['auth', 'role:admin,operator,viewer'])
+    ->name('admin.qr-codes.page');
+
 Route::get('/api/v1/admin/qr-codes', [QrRegistryController::class, 'index'])
     ->middleware(['auth', 'role:admin,operator,viewer'])
     ->name('admin.qr-codes.index');

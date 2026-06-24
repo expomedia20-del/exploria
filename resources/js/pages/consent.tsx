@@ -127,7 +127,11 @@ export default function Consent() {
                 );
             }
 
-            if (payload.data && 'nextUrl' in payload.data && payload.data.nextUrl) {
+            if (
+                payload.data &&
+                'nextUrl' in payload.data &&
+                payload.data.nextUrl
+            ) {
                 window.location.assign(payload.data.nextUrl);
 
                 return;
