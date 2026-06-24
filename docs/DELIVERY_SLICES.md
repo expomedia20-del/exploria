@@ -13,14 +13,24 @@
 
 ## برش‌های تحویل
 
-| Slice | خروجی قابل تحویل | شرط عبور |
-|---|---|---|
-| P0 | زیرساخت، تست ایزوله و Authentication پایه | تست و Build سبز |
-| P1 | OTP و Consent فارسی/RTL | مسیر ورود و رضایت قابل اثبات |
-| P2 | EcoPark: Venue/Zone/Hub/Touchpoint و QR دمو | اسکن معتبر و Attribution صحیح |
-| P3 | Admin Summary حداقلی EcoPark | KPIهای Must و Authorization |
-| P4 | افزودن Eram با هسته موجود | بدون Fork یا منطق اختصاصی غیرضروری |
-| P5 | آماده‌سازی Milad و تصمیم توسعه | تأیید Product Owner بر اساس شواهد پایلوت |
+| Slice | خروجی قابل تحویل                            | شرط عبور                                 |
+| ----- | ------------------------------------------- | ---------------------------------------- |
+| P0    | زیرساخت، تست ایزوله و Authentication پایه   | تست و Build سبز                          |
+| P1    | OTP و Consent فارسی/RTL                     | مسیر ورود و رضایت قابل اثبات             |
+| P2    | EcoPark: Venue/Zone/Hub/Touchpoint و QR دمو | اسکن معتبر و Attribution صحیح            |
+| P3    | Admin Summary حداقلی EcoPark                | KPIهای Must و Authorization              |
+| P4    | افزودن Eram با هسته موجود                   | بدون Fork یا منطق اختصاصی غیرضروری       |
+| P5    | آماده‌سازی Milad و تصمیم توسعه              | تأیید Product Owner بر اساس شواهد پایلوت |
+
+## مسیر توسعه واقعی پس از دمو
+
+برنامه اجرایی فاز ۱ واقعی در این سند ثبت شده است:
+
+```text
+docs/REAL_PRODUCT_PHASE_1_PLAN.md
+```
+
+این برنامه، mock demo را به backlog واقعی تبدیل می‌کند و ترتیب پیاده‌سازی نقش‌ها، partnerها، hub/ravaq manager، ماموریت، گنج، پاداش، تبلیغات مستقل و نمایشگرها را مشخص می‌کند.
 
 ## محدودیت رشد
 
