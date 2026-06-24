@@ -54,7 +54,7 @@ For a fresh repeat of the same flow, use another valid Iranian-format mobile num
 2. Open the full mock ecosystem demo:
    `http://127.0.0.1:8000/demo/ecosystem`
 3. Show the four role panels: visitor, shop/partner, ravaq manager, and platform admin.
-4. Show mock definitions for treasures, rewards, discounts, partner offers, ravaq capacity, rules, and anti-fraud controls.
+4. Show mock definitions for treasures, rewards, discounts, partner offers, standalone ads, sponsor placements, ravaq capacity, rules, and anti-fraud controls.
 5. Explain that this page is front-end mock data for the complete product vision, while the QR/OTP/consent/dashboard flow is the working MVP core.
 6. Open the proposal coverage page:
    `http://127.0.0.1:8000/demo/proposal`
@@ -78,7 +78,7 @@ For a fresh repeat of the same flow, use another valid Iranian-format mobile num
 
 - Persian RTL visitor flow exists from QR landing to OTP, consent, visit experience, and dashboard.
 - Board-facing entry page exists at `/board` so the meeting starts from a polished product-style gateway.
-- Full mock ecosystem page exists at `/demo/ecosystem` for visitor, shop, ravaq manager, admin, treasures, rewards, discounts, partner offers, and rules.
+- Full mock ecosystem page exists at `/demo/ecosystem` for visitor, shop, ravaq manager, admin, treasures, rewards, discounts, partner offers, standalone ads, sponsors, and rules.
 - A confirmed visit is created after QR consent acceptance.
 - Dashboard counters are backed by database records, not static placeholders.
 - QR registry page exists for `admin`, `operator`, and `viewer` roles.

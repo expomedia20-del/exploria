@@ -1,12 +1,14 @@
 import { Head, Link } from '@inertiajs/react';
 import {
     ArrowLeft,
+    BadgeCheck,
     BadgePercent,
     BarChart3,
     Building2,
     ChevronLeft,
     Crown,
     Gift,
+    Megaphone,
     MapPinned,
     Settings2,
     ShieldCheck,
@@ -15,6 +17,7 @@ import {
     Sparkles,
     Store,
     TicketPercent,
+    Timer,
     Trophy,
     UsersRound,
     WalletCards,
@@ -116,6 +119,68 @@ const partnerOffers = [
         used: '۱۲ مصرف',
         approval: 'فعال',
     },
+];
+
+const adPlacements = [
+    {
+        title: 'بنر رواق تجاری',
+        surface: 'صفحه نقشه و مسیر',
+        owner: 'فروشگاه عضو',
+        format: 'کارت تصویری + CTA',
+        status: 'فعال',
+    },
+    {
+        title: 'اسپانسر مسیر خانوادگی',
+        surface: 'پس از تکمیل ماموریت خانوادگی',
+        owner: 'اسپانسر رسمی',
+        format: 'نام‌گذاری مسیر + نشان برند',
+        status: 'نیازمند تایید ادمین',
+    },
+    {
+        title: 'تبلیغ برند غیرعضو',
+        surface: 'اسلات پیشنهادی در صفحه پاداش',
+        owner: 'برند غیرعضو',
+        format: 'تبلیغ زمان‌دار با بودجه روزانه',
+        status: 'در انتظار بررسی',
+    },
+];
+
+const adRequests = [
+    {
+        advertiser: 'کافه اکو',
+        type: 'فروشگاه عضو',
+        goal: 'افزایش مراجعه عصرگاهی',
+        budget: '۱۸ م',
+        schedule: '۷ روز',
+        approval: 'تایید مدیر رواق',
+    },
+    {
+        advertiser: 'برند نوشیدنی کوهستان',
+        type: 'برند غیرعضو',
+        goal: 'نمایش در مسیر طبیعت',
+        budget: '۴۵ م',
+        schedule: '۱۴ روز',
+        approval: 'در انتظار ادمین',
+    },
+    {
+        advertiser: 'اسپانسر رویداد خانوادگی',
+        type: 'اسپانسر',
+        goal: 'نام‌گذاری گنج خانوادگی',
+        budget: '۱۲۰ م',
+        schedule: '۳۰ روز',
+        approval: 'نیازمند قرارداد',
+    },
+];
+
+const adReports = [
+    ['نمایش تبلیغ', '۹۶,۴۰۰', 'کل نمایش در جایگاه‌های فعال'],
+    ['کلیک/تعامل', '۸,۷۳۰', 'تعامل با CTA یا مشاهده جزئیات'],
+    [
+        'مراجعه قابل انتساب',
+        '۱,۱۸۰',
+        'کاربرانی که به فروشگاه یا مسیر هدایت شدند',
+    ],
+    ['درآمد تبلیغاتی', '۱۸۳ م', 'درآمد ماک از تبلیغات و اسپانسرینگ'],
 ];
 
 const treasures = [
@@ -222,15 +287,17 @@ const roleContent: Record<
     admin: {
         title: 'پنل مدیر کل اکسپلوریا',
         summary:
-            'مدیر کل گنج‌ها، قوانین امتیاز، QRها، سطوح دسترسی، KPI و گزارش مالی کل اکوسیستم را مدیریت می‌کند.',
+            'مدیر کل گنج‌ها، قوانین امتیاز، تبلیغات مستقل، QRها، سطوح دسترسی، KPI و گزارش مالی کل اکوسیستم را مدیریت می‌کند.',
         metrics: [
             'QR فعال: ۴۸',
             'کمپین فعال: ۳',
+            'تبلیغ در انتظار تایید: ۲',
             'نرخ تکمیل سفر: ۴۶٪',
             'درآمد قابل انتساب: ۴۸۲ م',
         ],
         actions: [
             'تعریف گنج جدید',
+            'بررسی تبلیغ مستقل',
             'تنظیم قانون امتیاز',
             'خروجی گزارش هیئت‌مدیره',
         ],
@@ -451,6 +518,130 @@ export default function EcosystemDemo() {
                 </section>
 
                 <section className="border-y border-slate-200 bg-white">
+                    <div className="mx-auto grid max-w-7xl gap-6 px-5 py-10 sm:px-8 lg:grid-cols-[0.9fr_1.1fr] lg:px-10">
+                        <article>
+                            <div className="flex items-center gap-2">
+                                <Megaphone className="size-5 text-rose-700" />
+                                <h2 className="text-2xl font-semibold">
+                                    تبلیغات مستقل از کمپین
+                                </h2>
+                            </div>
+                            <p className="mt-3 text-sm leading-7 text-slate-600">
+                                فروشگاه‌های عضو، برندهای غیرعضو و اسپانسرها
+                                می‌توانند خارج از کمپین اصلی درخواست تبلیغ ثبت
+                                کنند؛ انتشار نهایی با تایید مدیر رواق یا ادمین
+                                انجام می‌شود.
+                            </p>
+                            <div className="mt-5 grid gap-3">
+                                {adRequests.map((request) => (
+                                    <div
+                                        key={request.advertiser}
+                                        className="rounded-lg border border-slate-200 p-4"
+                                    >
+                                        <div className="flex flex-wrap items-start justify-between gap-3">
+                                            <div>
+                                                <p className="font-semibold">
+                                                    {request.advertiser}
+                                                </p>
+                                                <p className="mt-1 text-sm text-slate-500">
+                                                    {request.type} ·{' '}
+                                                    {request.goal}
+                                                </p>
+                                            </div>
+                                            <StatusPill
+                                                value={request.approval}
+                                            />
+                                        </div>
+                                        <div className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
+                                            <span className="rounded-md bg-stone-50 px-3 py-2">
+                                                بودجه: {request.budget}
+                                            </span>
+                                            <span className="rounded-md bg-stone-50 px-3 py-2">
+                                                زمان‌بندی: {request.schedule}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </article>
+
+                        <article>
+                            <div className="flex items-center gap-2">
+                                <BadgeCheck className="size-5 text-emerald-700" />
+                                <h2 className="text-2xl font-semibold">
+                                    جایگاه، تایید و گزارش تبلیغ
+                                </h2>
+                            </div>
+                            <div className="mt-5 overflow-hidden rounded-lg border border-slate-200">
+                                <table className="w-full min-w-[720px] text-right text-sm">
+                                    <thead className="bg-stone-50 text-slate-500">
+                                        <tr>
+                                            <th className="px-4 py-3 font-medium">
+                                                جایگاه
+                                            </th>
+                                            <th className="px-4 py-3 font-medium">
+                                                سطح نمایش
+                                            </th>
+                                            <th className="px-4 py-3 font-medium">
+                                                مالک
+                                            </th>
+                                            <th className="px-4 py-3 font-medium">
+                                                قالب
+                                            </th>
+                                            <th className="px-4 py-3 font-medium">
+                                                وضعیت
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-200">
+                                        {adPlacements.map((placement) => (
+                                            <tr key={placement.title}>
+                                                <td className="px-4 py-3 font-semibold">
+                                                    {placement.title}
+                                                </td>
+                                                <td className="px-4 py-3 text-slate-600">
+                                                    {placement.surface}
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    {placement.owner}
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    {placement.format}
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <StatusPill
+                                                        value={placement.status}
+                                                    />
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                                {adReports.map(([label, value, note]) => (
+                                    <div
+                                        key={label}
+                                        className="rounded-md border border-slate-200 bg-stone-50 p-3"
+                                    >
+                                        <div className="flex items-center gap-2 text-sm text-slate-500">
+                                            <Timer className="size-4" />
+                                            {label}
+                                        </div>
+                                        <p className="mt-2 text-xl font-semibold">
+                                            {value}
+                                        </p>
+                                        <p className="mt-1 text-xs text-slate-500">
+                                            {note}
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+                        </article>
+                    </div>
+                </section>
+
+                <section className="border-y border-slate-200 bg-white">
                     <div className="mx-auto grid max-w-7xl gap-5 px-5 py-10 sm:px-8 lg:grid-cols-[1.05fr_0.95fr] lg:px-10">
                         <article>
                             <div className="flex items-center gap-2">
@@ -611,6 +802,7 @@ export default function EcosystemDemo() {
                                 'تخفیف، تایید کد، گزارش فروش',
                             ],
                             [BadgePercent, 'پاداش‌ها', 'کوپن، هدیه، قرعه‌کشی'],
+                            [Megaphone, 'تبلیغات', 'عضو، غیرعضو، اسپانسر'],
                             [BarChart3, 'مدیریت', 'KPI، ضدتقلب، تصمیم‌سازی'],
                         ].map(([Icon, title, body]) => {
                             const TypedIcon = Icon as LucideIcon;
