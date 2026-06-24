@@ -5,6 +5,7 @@ import {
     CheckCircle2,
     ClipboardCheck,
     Fingerprint,
+    Layers3,
     LayoutDashboard,
     MapPin,
     Medal,
@@ -31,6 +32,14 @@ const liveLinks = [
         href: '/demo/missions',
         icon: Medal,
         tone: 'bg-rose-50 text-rose-950 border-rose-200',
+    },
+    {
+        title: 'پوشش پروپوزال',
+        description:
+            'تطبیق دمو با سفر، کمپین، touchpoint، KPI و مدل ارزش اقتصادی',
+        href: '/demo/proposal',
+        icon: Layers3,
+        tone: 'bg-violet-50 text-violet-950 border-violet-200',
     },
     {
         title: 'داشبورد عملیاتی',
@@ -215,7 +224,7 @@ export default function Welcome() {
                             </div>
                         </div>
 
-                        <div className="grid gap-3 pb-4 sm:grid-cols-2 lg:grid-cols-4">
+                        <div className="grid gap-3 pb-4 sm:grid-cols-2 lg:grid-cols-5">
                             {liveLinks.map((item) => (
                                 <Link
                                     key={item.title}

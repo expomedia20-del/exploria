@@ -10,6 +10,9 @@ Use these URLs on the current machine:
 Employer demo hub:
 http://127.0.0.1:8000/demo
 
+Proposal coverage:
+http://127.0.0.1:8000/demo/proposal
+
 Mission and rewards simulator:
 http://127.0.0.1:8000/demo/missions
 
@@ -42,20 +45,23 @@ For a fresh repeat of the same flow, use another valid Iranian-format mobile num
 
 1. Open the employer demo hub:
    `http://127.0.0.1:8000/demo`
-2. Show the live demo cards and the complete QR -> OTP -> Consent -> Visit -> Dashboard flow.
-3. Open the mission simulator:
+2. Open the proposal coverage page:
+   `http://127.0.0.1:8000/demo/proposal`
+3. Show how the demo covers the board proposal: visitor journey, treasure campaign, touchpoints, hub scenarios, business value, and KPI.
+4. Show the live demo cards and the complete QR -> OTP -> Consent -> Visit -> Dashboard flow.
+5. Open the mission simulator:
    `http://127.0.0.1:8000/demo/missions`
-4. Complete the first missions and show that points, rewards, level, and the locked challenge update live.
-5. Open the QR landing page:
+6. Complete the first missions and show that points, rewards, level, and the locked challenge update live.
+7. Open the QR landing page:
    `http://127.0.0.1:8000/scan/ep1405-a7f3k9m2q8x4`
-6. Show that the QR is bound to the Abbasabad Eco Park pilot location.
-7. Click the start/continue action to go to mobile OTP.
-8. Enter `09120000000` or another valid demo mobile number.
-9. Enter OTP `123456`.
-10. Accept the Persian consent page.
-11. Show the visit experience page created from the QR flow.
-12. Open the dashboard and show operational counters.
-13. Open `/admin/qr-codes` and show the QR registry row, binding, status, and scan link.
+8. Show that the QR is bound to the Abbasabad Eco Park pilot location.
+9. Click the start/continue action to go to mobile OTP.
+10. Enter `09120000000` or another valid demo mobile number.
+11. Enter OTP `123456`.
+12. Accept the Persian consent page.
+13. Show the visit experience page created from the QR flow.
+14. Open the dashboard and show operational counters.
+15. Open `/admin/qr-codes` and show the QR registry row, binding, status, and scan link.
 
 ## What Is Ready To Claim
 
@@ -64,6 +70,7 @@ For a fresh repeat of the same flow, use another valid Iranian-format mobile num
 - Dashboard counters are backed by database records, not static placeholders.
 - QR registry page exists for `admin`, `operator`, and `viewer` roles.
 - Mission/reward simulator shows points, rewards, levels, locked missions, and next experience layers.
+- Proposal coverage page maps the 22-slide Eco Park board proposal to the current demo and pilot minimums.
 - Demo uses local SQLite and local Persian font assets, so it does not depend on external font CDNs.
 
 ## Safe Restart
