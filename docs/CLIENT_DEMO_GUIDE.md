@@ -79,6 +79,7 @@ For a fresh repeat of the same flow, use another valid Iranian-format mobile num
 - Persian RTL visitor flow exists from QR landing to OTP, consent, visit experience, and dashboard.
 - Board-facing entry page exists at `/board` so the meeting starts from a polished product-style gateway.
 - Full mock ecosystem page exists at `/demo/ecosystem` for visitor, shop, ravaq manager, admin, treasures, rewards, discounts, partner offers, standalone ads, sponsors, and rules.
+- Standalone advertising requirements are recorded in `docs/features/STANDALONE_ADVERTISING_REQUIREMENTS.md` so upload, approval, fixed/mobile display publishing, scheduling, and reporting are not missed in real development.
 - A confirmed visit is created after QR consent acceptance.
 - Dashboard counters are backed by database records, not static placeholders.
 - QR registry page exists for `admin`, `operator`, and `viewer` roles.
