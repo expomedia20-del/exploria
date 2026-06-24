@@ -39,6 +39,13 @@ http://127.0.0.1:8000/admin/partners
 
 ## Demo Credentials
 
+Admin panel:
+
+```text
+Email: admin@example.test
+Password: password
+```
+
 The local OTP provider uses a fixed test code only in local/test environments:
 
 ```text

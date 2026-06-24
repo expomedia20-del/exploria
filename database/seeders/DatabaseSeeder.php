@@ -2,9 +2,11 @@
 
 namespace Database\Seeders;
 
+use App\Enums\UserRole;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -20,9 +22,24 @@ class DatabaseSeeder extends Seeder
 
         // User::factory(10)->create();
 
-        User::factory()->create([
-            'name' => 'کاربر نمایشی اکسپلوریا',
-            'email' => 'demo@example.test',
-        ]);
+        User::query()->updateOrCreate(
+            ['email' => 'admin@example.test'],
+            [
+                'name' => 'مدیر نمایشی اکسپلوریا',
+                'email_verified_at' => now(),
+                'password' => Hash::make('password'),
+                'role' => UserRole::Admin,
+            ],
+        );
+
+        User::query()->updateOrCreate(
+            ['email' => 'demo@example.test'],
+            [
+                'name' => 'کاربر نمایشی اکسپلوریا',
+                'email_verified_at' => now(),
+                'password' => Hash::make('password'),
+                'role' => UserRole::Viewer,
+            ],
+        );
     }
 }
