@@ -70,4 +70,10 @@ class PartnerAccount extends Model
     {
         return $this->hasMany(RewardRedemption::class);
     }
+
+    /** @return HasMany<AdRequest, $this> */
+    public function adRequests(): HasMany
+    {
+        return $this->hasMany(AdRequest::class);
+    }
 }

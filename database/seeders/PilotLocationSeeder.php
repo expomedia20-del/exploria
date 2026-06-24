@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Enums\RecordStatus;
 use App\Enums\UserRole;
 use App\Models\Campaign;
+use App\Models\DisplayDevice;
 use App\Models\Hub;
 use App\Models\HubManagementAssignment;
 use App\Models\MissionInstance;
@@ -229,6 +230,34 @@ class PilotLocationSeeder extends Seeder
                 'valid_from' => '2026-06-20 00:00:00',
                 'valid_until' => '2027-03-20 23:59:59',
                 'metadata' => ['is_demo' => true],
+            ],
+        );
+
+        DisplayDevice::query()->updateOrCreate(
+            ['code' => 'ecopark-entry-fixed-display'],
+            [
+                'venue_id' => $ecoPark->id,
+                'hub_id' => $hub->id,
+                'touchpoint_id' => $touchpoint->id,
+                'name' => 'نمایشگر ثابت ورودی اکوپارک',
+                'device_type' => 'fixed_display',
+                'status' => RecordStatus::Active,
+                'supported_media_formats' => ['image', 'video', 'display_banner'],
+                'metadata' => ['is_demo' => true, 'inventory_role' => 'entry_awareness'],
+            ],
+        );
+
+        DisplayDevice::query()->updateOrCreate(
+            ['code' => 'ecopark-mobile-promo-display'],
+            [
+                'venue_id' => $ecoPark->id,
+                'hub_id' => $ravaqHub->id,
+                'touchpoint_id' => null,
+                'name' => 'نمایشگر سیار تبلیغات محیطی',
+                'device_type' => 'mobile_display',
+                'status' => RecordStatus::Active,
+                'supported_media_formats' => ['image', 'video'],
+                'metadata' => ['is_demo' => true, 'inventory_role' => 'mobile_campaign'],
             ],
         );
 

@@ -59,4 +59,16 @@ class Hub extends Model
     {
         return $this->hasMany(MissionInstance::class);
     }
+
+    /** @return HasMany<AdRequest, $this> */
+    public function adRequests(): HasMany
+    {
+        return $this->hasMany(AdRequest::class);
+    }
+
+    /** @return HasMany<DisplayDevice, $this> */
+    public function displayDevices(): HasMany
+    {
+        return $this->hasMany(DisplayDevice::class);
+    }
 }

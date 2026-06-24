@@ -45,6 +45,12 @@ http://127.0.0.1:8000/admin/partners
 Partner dashboard:
 http://127.0.0.1:8000/partner/dashboard
 
+Standalone advertising admin:
+http://127.0.0.1:8000/admin/ads
+
+Partner advertising submission:
+http://127.0.0.1:8000/partner/ads
+
 Venue and hub registry:
 http://127.0.0.1:8000/admin/venues
 ```
@@ -109,6 +115,7 @@ For a fresh repeat of the same flow, use another valid Iranian-format mobile num
 22. Open `/admin/missions` and show the real database-backed mission, treasure, point, and reward foundation.
 23. Open `/partner/dashboard` as `cafe.eco@example.test` and show partner reward definitions, pending redemption codes, and code confirmation.
 24. Submit a new partner offer from `/partner/dashboard`, then open `/admin/missions` as admin and approve or reject the pending offer.
+25. Open `/partner/ads` as `cafe.eco@example.test`, submit a standalone ad request, then open `/admin/ads` and approve or reject it.
 
 ## What Is Ready To Claim
 
@@ -124,6 +131,9 @@ For a fresh repeat of the same flow, use another valid Iranian-format mobile num
 - Mission/reward registry page exists for `admin`, `operator`, `viewer`, and `hub_manager` roles, backed by database records for mission templates, mission instances, treasures, rewards, user progress, reward wallet, and redemption skeleton.
 - Partner dashboard exists for `shop_partner` and `sponsor` roles. It shows the partner's own reward definitions, issued rewards, pending/confirmed redemptions, supports confirming a customer redemption code, and lets the partner submit a new offer/discount for admin review.
 - Admin mission/reward registry can approve or reject partner-submitted offers. Submitted offers remain `draft` until approved and become `active` only after review.
+- Standalone advertising skeleton exists with real tables for ad requests, creatives, display devices, placements, approvals, and events.
+- Partner advertising page exists at `/partner/ads`; a partner or sponsor can submit an ad request for fixed/mobile displays, QR landing, reward page, map/route, or post-mission placement.
+- Admin advertising page exists at `/admin/ads`; admin/operator/hub manager can approve or reject pending ad requests and see fixed/mobile display inventory.
 - Venue/hub registry page exists for `admin`, `operator`, `viewer`, and `hub_manager` roles.
 - Mission/reward simulator shows points, rewards, levels, locked missions, and next experience layers.
 - Proposal coverage page maps the 22-slide Eco Park board proposal to the current demo and pilot minimums.

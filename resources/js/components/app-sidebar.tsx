@@ -58,6 +58,11 @@ const mainNavItems: NavItem[] = [
         icon: Store,
     },
     {
+        title: 'تبلیغات مستقل',
+        href: '/admin/ads',
+        icon: Megaphone,
+    },
+    {
         title: 'پنل فروشگاه',
         href: '/partner/dashboard',
         icon: ShoppingBag,

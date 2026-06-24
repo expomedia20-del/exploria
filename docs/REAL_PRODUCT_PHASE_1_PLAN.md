@@ -28,8 +28,8 @@
 - پنل مدیر کل کامل
 - تعریف گنج‌ها
 - ضدتقلب پیشرفته پاداش و تسویه تجاری
-- تبلیغات مستقل از کمپین
-- نمایشگر ثابت/سیار
+- آپلود واقعی فایل تبلیغاتی و اعتبارسنجی media
+- انتشار واقعی روی client نمایشگر ثابت/سیار
 - اسپانسرینگ
 - گزارش‌های مالی و attribution تجاری
 
@@ -403,3 +403,19 @@ docs/features/STANDALONE_ADVERTISING_REQUIREMENTS.md
 - ادمین، اپراتور و مدیر رواق می‌توانند پیشنهاد را تایید یا رد کنند؛ viewer اجازه تایید ندارد.
 - تایید پیشنهاد، status را `active` و رد پیشنهاد، status را `inactive` می‌کند.
 - پنل فروشگاه فرم ثبت پیشنهاد/تخفیف دارد و صفحه admin mission/reward دکمه‌های تایید/رد برای پیشنهادهای در انتظار نشان می‌دهد.
+
+## وضعیت اجرای Sprint 1.6
+
+شروع اجرای Sprint 1.6 انجام شد:
+
+- جدول‌های `ad_requests`, `ad_creatives`, `display_devices`, `ad_placements`, `ad_approvals`, و `ad_events` اضافه شدند.
+- مدل‌های `AdRequest`, `AdCreative`, `DisplayDevice`, `AdPlacement`, `AdApproval`, و `AdEvent` اضافه شدند.
+- seed پایلوت اکوپارک دو نمایشگر نمونه می‌سازد: نمایشگر ثابت ورودی و نمایشگر سیار تبلیغات محیطی.
+- مسیرهای `GET /partner/ads`, `POST /partner/ads`, `GET /api/v1/partner/ads`, و `POST /api/v1/partner/ads` اضافه شدند.
+- فروشگاه یا اسپانسر می‌تواند درخواست تبلیغ مستقل با عنوان، متن، CTA، لینک مقصد، نوع creative، نوع placement، بازه زمانی، بودجه و سقف نمایش ثبت کند.
+- درخواست تبلیغ با status `pending_review` ساخته می‌شود و creative و placement اولیه هم با وضعیت در انتظار تایید ذخیره می‌شوند.
+- مسیرهای `GET /admin/ads`, `GET /api/v1/admin/ads`, `POST /admin/ads/{adRequest}/approve`, `POST /admin/ads/{adRequest}/reject`, و نسخه API تایید/رد اضافه شدند.
+- ادمین، اپراتور و مدیر رواق می‌توانند تبلیغ را تایید یا رد کنند؛ viewer فقط حق مشاهده دارد.
+- تایید تبلیغ، status درخواست و creative را `approved` و placement را `scheduled` می‌کند.
+- رد تبلیغ، status درخواست، creative و placement را `rejected` می‌کند.
+- صفحه admin advertising موجودی نمایشگرهای ثابت/سیار، صف تایید تبلیغ و وضعیت درخواست‌ها را نشان می‌دهد.
