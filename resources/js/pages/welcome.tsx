@@ -22,10 +22,17 @@ const demoQrCode = 'ep1405-a7f3k9m2q8x4';
 const liveLinks = [
     {
         title: 'ورود رسمی هیئت‌مدیره',
-        description: 'ورود شکیل به نسخه جلسه، نقش مدیریتی و مسیر کامل محصول',
+        description: 'ورود شکیل به نسخه جلسه و مسیر کامل ارائه محصول',
         href: '/board',
         icon: Building2,
         tone: 'bg-slate-50 text-slate-950 border-slate-200',
+    },
+    {
+        title: 'دموی اکوسیستم کامل',
+        description: 'پنل کاربر، فروشگاه، مدیر رواق، گنج، پاداش و تخفیف',
+        href: '/demo/ecosystem',
+        icon: RadioTower,
+        tone: 'bg-teal-50 text-teal-950 border-teal-200',
     },
     {
         title: 'شروع تجربه بازدیدکننده',
@@ -232,7 +239,7 @@ export default function Welcome() {
                             </div>
                         </div>
 
-                        <div className="grid gap-3 pb-4 sm:grid-cols-2 lg:grid-cols-6">
+                        <div className="grid gap-3 pb-4 sm:grid-cols-2 lg:grid-cols-7">
                             {liveLinks.map((item) => (
                                 <Link
                                     key={item.title}

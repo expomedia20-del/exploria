@@ -20,9 +20,9 @@ const demoQrCode = 'ep1405-a7f3k9m2q8x4';
 
 const entryActions = [
     {
-        title: 'ورود هیئت‌مدیره',
-        description: 'نمای محصول، پوشش پروپوزال، مدل ارزش و مسیر پایلوت',
-        href: '/demo/proposal',
+        title: 'دموی اکوسیستم کامل',
+        description: 'پنل کاربر، فروشگاه، مدیر رواق، گنج، پاداش و تخفیف',
+        href: '/demo/ecosystem',
         icon: Crown,
         tone: 'border-emerald-200 bg-emerald-50 text-emerald-950',
     },
@@ -43,6 +43,12 @@ const entryActions = [
 ];
 
 const productLayers = [
+    {
+        title: 'پنل‌های اکوسیستم',
+        body: 'نمای ماک از پنل کاربر، فروشگاه‌ها، مدیر رواق، مدیر کل، گنج‌ها، تخفیف‌ها و قوانین.',
+        href: '/demo/ecosystem',
+        icon: Store,
+    },
     {
         title: 'سفر بازدیدکننده',
         body: 'از مواجهه با QR تا انتخاب مسیر، رضایت‌نامه، ثبت بازدید و ادامه تجربه.',
@@ -122,6 +128,13 @@ export default function BoardEntry() {
                             </Link>
                             <nav className="flex flex-wrap gap-2 text-sm">
                                 <Link
+                                    href="/demo/ecosystem"
+                                    className="inline-flex h-9 items-center gap-2 rounded-md bg-emerald-400 px-3 text-slate-950"
+                                >
+                                    <Store className="size-4" />
+                                    اکوسیستم
+                                </Link>
+                                <Link
                                     href="/demo/proposal"
                                     className="inline-flex h-9 items-center gap-2 rounded-md bg-white px-3 text-slate-950"
                                 >
@@ -156,10 +169,10 @@ export default function BoardEntry() {
                                 </p>
                                 <div className="mt-7 flex flex-wrap gap-3">
                                     <Link
-                                        href="/demo/proposal"
+                                        href="/demo/ecosystem"
                                         className="inline-flex h-11 items-center gap-2 rounded-md bg-emerald-400 px-4 text-sm font-semibold text-slate-950 hover:bg-emerald-300"
                                     >
-                                        ورود به نسخه جلسه
+                                        ورود به دموی کامل
                                         <ArrowLeft className="size-4" />
                                     </Link>
                                     <Link

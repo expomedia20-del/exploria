@@ -10,6 +10,9 @@ Use these URLs on the current machine:
 Board-facing entry:
 http://127.0.0.1:8000/board
 
+Full mock ecosystem demo:
+http://127.0.0.1:8000/demo/ecosystem
+
 Employer demo hub:
 http://127.0.0.1:8000/demo
 
@@ -48,29 +51,34 @@ For a fresh repeat of the same flow, use another valid Iranian-format mobile num
 
 1. Open the board-facing entry:
    `http://127.0.0.1:8000/board`
-2. Show that the board can enter the demo as a complete product site, with board role, visitor role, QR path, mission path, dashboard, and QR registry.
-3. Open the proposal coverage page:
+2. Open the full mock ecosystem demo:
+   `http://127.0.0.1:8000/demo/ecosystem`
+3. Show the four role panels: visitor, shop/partner, ravaq manager, and platform admin.
+4. Show mock definitions for treasures, rewards, discounts, partner offers, ravaq capacity, rules, and anti-fraud controls.
+5. Explain that this page is front-end mock data for the complete product vision, while the QR/OTP/consent/dashboard flow is the working MVP core.
+6. Open the proposal coverage page:
    `http://127.0.0.1:8000/demo/proposal`
-4. Show how the demo covers the board proposal: visitor journey, treasure campaign, touchpoints, hub scenarios, business value, and KPI.
-5. Show the live demo cards and the complete QR -> OTP -> Consent -> Visit -> Dashboard flow.
-6. Open the mission simulator:
+7. Show how the demo covers the board proposal: visitor journey, treasure campaign, touchpoints, hub scenarios, business value, and KPI.
+8. Show the live demo cards and the complete QR -> OTP -> Consent -> Visit -> Dashboard flow.
+9. Open the mission simulator:
    `http://127.0.0.1:8000/demo/missions`
-7. Complete the first missions and show that points, rewards, level, and the locked challenge update live.
-8. Open the QR landing page:
-   `http://127.0.0.1:8000/scan/ep1405-a7f3k9m2q8x4`
-9. Show that the QR is bound to the Abbasabad Eco Park pilot location.
-10. Click the start/continue action to go to mobile OTP.
-11. Enter `09120000000` or another valid demo mobile number.
-12. Enter OTP `123456`.
-13. Accept the Persian consent page.
-14. Show the visit experience page created from the QR flow.
-15. Open the dashboard and show operational counters.
-16. Open `/admin/qr-codes` and show the QR registry row, binding, status, and scan link.
+10. Complete the first missions and show that points, rewards, level, and the locked challenge update live.
+11. Open the QR landing page:
+    `http://127.0.0.1:8000/scan/ep1405-a7f3k9m2q8x4`
+12. Show that the QR is bound to the Abbasabad Eco Park pilot location.
+13. Click the start/continue action to go to mobile OTP.
+14. Enter `09120000000` or another valid demo mobile number.
+15. Enter OTP `123456`.
+16. Accept the Persian consent page.
+17. Show the visit experience page created from the QR flow.
+18. Open the dashboard and show operational counters.
+19. Open `/admin/qr-codes` and show the QR registry row, binding, status, and scan link.
 
 ## What Is Ready To Claim
 
 - Persian RTL visitor flow exists from QR landing to OTP, consent, visit experience, and dashboard.
 - Board-facing entry page exists at `/board` so the meeting starts from a polished product-style gateway.
+- Full mock ecosystem page exists at `/demo/ecosystem` for visitor, shop, ravaq manager, admin, treasures, rewards, discounts, partner offers, and rules.
 - A confirmed visit is created after QR consent acceptance.
 - Dashboard counters are backed by database records, not static placeholders.
 - QR registry page exists for `admin`, `operator`, and `viewer` roles.

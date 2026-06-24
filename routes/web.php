@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Route;
 Route::inertia('/', 'welcome')->name('home');
 Route::inertia('/board', 'demo/board')->name('demo.board');
 Route::inertia('/demo', 'welcome')->name('demo');
+Route::inertia('/demo/ecosystem', 'demo/ecosystem')->name('demo.ecosystem');
 Route::inertia('/demo/missions', 'demo/missions')->name('demo.missions');
 Route::inertia('/demo/proposal', 'demo/proposal')->name('demo.proposal');
 Route::get('/scan/{code}', ScanLandingController::class)->where('code', '[A-Za-z0-9-]+')->name('scan.landing');
