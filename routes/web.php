@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\PartnerRegistryController;
 use App\Http\Controllers\Admin\QrRegistryController;
+use App\Http\Controllers\Admin\VenueRegistryController;
 use App\Http\Controllers\Auth\OtpController;
 use App\Http\Controllers\ConsentController;
 use App\Http\Controllers\DashboardController;
@@ -40,6 +41,10 @@ Route::get('/admin/partners', [PartnerRegistryController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
     ->name('admin.partners.page');
 
+Route::get('/admin/venues', [VenueRegistryController::class, 'page'])
+    ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
+    ->name('admin.venues.page');
+
 Route::get('/api/v1/admin/qr-codes', [QrRegistryController::class, 'index'])
     ->middleware(['auth', 'role:admin,operator,viewer'])
     ->name('admin.qr-codes.index');
@@ -47,6 +52,10 @@ Route::get('/api/v1/admin/qr-codes', [QrRegistryController::class, 'index'])
 Route::get('/api/v1/admin/partners', [PartnerRegistryController::class, 'index'])
     ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
     ->name('admin.partners.index');
+
+Route::get('/api/v1/admin/venues', [VenueRegistryController::class, 'index'])
+    ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
+    ->name('admin.venues.index');
 
 Route::middleware(['auth', 'verified'])->get('dashboard', DashboardController::class)->name('dashboard');
 

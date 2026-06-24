@@ -35,6 +35,9 @@ http://127.0.0.1:8000/admin/qr-codes
 
 Partner registry:
 http://127.0.0.1:8000/admin/partners
+
+Venue and hub registry:
+http://127.0.0.1:8000/admin/venues
 ```
 
 ## Demo Credentials
@@ -95,6 +98,7 @@ For a fresh repeat of the same flow, use another valid Iranian-format mobile num
 - A confirmed visit is created after QR consent acceptance.
 - Dashboard counters are backed by database records, not static placeholders.
 - QR registry page exists for `admin`, `operator`, and `viewer` roles.
+- Venue/hub registry page exists for `admin`, `operator`, `viewer`, and `hub_manager` roles.
 - Mission/reward simulator shows points, rewards, levels, locked missions, and next experience layers.
 - Proposal coverage page maps the 22-slide Eco Park board proposal to the current demo and pilot minimums.
 - Demo uses local SQLite and local Persian font assets, so it does not depend on external font CDNs.
@@ -118,7 +122,7 @@ http://127.0.0.1:8000/demo
 Last completed commit:
 
 ```text
-9da010b feat: add qr registry UI and Persian font
+6ee6f3d chore: add demo admin and partner navigation
 ```
 
 Latest verified quality gates:

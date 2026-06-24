@@ -1,5 +1,12 @@
 import { Link } from '@inertiajs/react';
-import { BookOpen, FolderGit2, LayoutGrid, QrCode, Store } from 'lucide-react';
+import {
+    BookOpen,
+    FolderGit2,
+    LayoutGrid,
+    MapPinned,
+    QrCode,
+    Store,
+} from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -26,6 +33,11 @@ const mainNavItems: NavItem[] = [
         title: 'مدیریت QR',
         href: '/admin/qr-codes',
         icon: QrCode,
+    },
+    {
+        title: 'مدیریت مکان‌ها',
+        href: '/admin/venues',
+        icon: MapPinned,
     },
     {
         title: 'مدیریت شرکا',

@@ -342,3 +342,12 @@ docs/features/STANDALONE_ADVERTISING_REQUIREMENTS.md
 - seed اکوپارک با کافه اکو، فروشگاه رواق و اسپانسر مسیر خانوادگی تکمیل شد.
 - مسیرهای `GET /admin/partners` و `GET /api/v1/admin/partners` اضافه شدند.
 - صفحه ساده admin برای مشاهده partnerها اضافه شد.
+
+## وضعیت اجرای Sprint 1.2
+
+شروع اجرای Sprint 1.2 انجام شد:
+
+- مسیرهای `GET /admin/venues` و `GET /api/v1/admin/venues` اضافه شدند.
+- سرویس رجیستری مکان، زون، هاب، نقاط تماس، شرکا و مدیران هاب اضافه شد.
+- صفحه admin برای مشاهده ساختار Venue/Zone/Hub/Touchpoint اضافه شد.
+- لینک «مدیریت مکان‌ها» به sidebar پنل اصلی اضافه شد.
