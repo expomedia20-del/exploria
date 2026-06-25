@@ -1,4 +1,4 @@
-import { Form, Head, usePage } from '@inertiajs/react';
+import { Form, Head, Link, usePage } from '@inertiajs/react';
 import {
     CheckCircle2,
     Gift,
@@ -185,6 +185,20 @@ export default function PartnerDashboard({
                     </div>
                 </header>
 
+                <section className="flex flex-wrap gap-2 rounded-lg border border-sidebar-border/70 bg-background p-3 dark:border-sidebar-border">
+                    <Button asChild size="sm">
+                        <Link href="/partner/ads">
+                            <Megaphone className="size-4" />
+                            ثبت تبلیغ جدید
+                        </Link>
+                    </Button>
+                    <Button asChild size="sm" variant="outline">
+                        <a href="#partner-offer-form">
+                            <Gift className="size-4" />
+                            ثبت پیشنهاد/تخفیف
+                        </a>
+                    </Button>
+                </section>
                 {flash?.success ? (
                     <Alert>
                         <AlertDescription>{flash.success}</AlertDescription>
@@ -192,7 +206,10 @@ export default function PartnerDashboard({
                 ) : null}
 
                 <section className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-                    <div className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
+                    <div
+                        id="partner-offer-form"
+                        className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border"
+                    >
                         <div className="mb-4 flex items-center gap-2">
                             <Percent className="size-4 text-muted-foreground" />
                             <h2 className="font-semibold">
@@ -315,7 +332,10 @@ export default function PartnerDashboard({
                         </Form>
                     </div>
 
-                    <div className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
+                    <div
+                        id="partner-offer-form"
+                        className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border"
+                    >
                         <div className="mb-4 flex items-center gap-2">
                             <TicketCheck className="size-4 text-muted-foreground" />
                             <h2 className="font-semibold">تایید مصرف پاداش</h2>
