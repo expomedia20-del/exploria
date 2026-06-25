@@ -40,6 +40,20 @@ const entryActions = [
         icon: QrCode,
         tone: 'border-amber-200 bg-amber-50 text-amber-950',
     },
+    {
+        title: 'پنل فروشگاه عملیاتی',
+        description: 'داشبورد شریک، پاداش‌ها، درخواست تبلیغ و پیشنهاد تخفیف',
+        href: '/partner/dashboard',
+        icon: Store,
+        tone: 'border-indigo-200 bg-indigo-50 text-indigo-950',
+    },
+    {
+        title: 'عملیات نمایشگرها',
+        description: 'زمان‌بندی محتوای تبلیغاتی و کنترل نمایشگرهای ثابت و سیار',
+        href: '/admin/display-operations',
+        icon: BarChart3,
+        tone: 'border-rose-200 bg-rose-50 text-rose-950',
+    },
 ];
 
 const productLayers = [
@@ -73,6 +87,18 @@ const productLayers = [
         href: '/admin/qr-codes',
         icon: MapPinned,
     },
+    {
+        title: 'پنل فروشگاه و تبلیغات شریک',
+        body: 'مسیر واقعی فروشگاه برای مشاهده پاداش‌ها، ثبت تبلیغ، تعریف پیشنهاد تخفیف و پیگیری وضعیت تایید.',
+        href: '/partner/dashboard',
+        icon: Store,
+    },
+    {
+        title: 'کنسول نمایشگرها و رسانه',
+        body: 'مدیریت موجودی نمایشگرها، صف پخش، جایگاه‌های آماده و آمار عملکرد تبلیغات برای ادمین.',
+        href: '/admin/display-operations',
+        icon: ShieldCheck,
+    },
 ];
 
 const boardChecks = [
@@ -80,6 +106,8 @@ const boardChecks = [
     'دمو فقط صفحه داخلی نیست؛ نقش بازدیدکننده و نقش مدیریتی کنار هم دیده می‌شوند.',
     'حداقل‌های پروپوزال شامل مسیر، کمپین گنج، پاداش، KPI و QR قابل نمایش است.',
     'برای اجرای حضوری، موبایل نمونه 09120000000 و کد محلی 123456 آماده است.',
+    'در نسخه به‌روز، پنل فروشگاه و مسیر تبلیغات/اسپانسر خارج از کمپین هم قابل نمایش است.',
+    'کنسول عملیات نمایشگرها برای نمایشگرهای ثابت و سیار در برد اصلی دمو لینک مستقیم دارد.',
 ];
 
 function QrMark() {

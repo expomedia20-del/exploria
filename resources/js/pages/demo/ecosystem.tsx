@@ -227,6 +227,36 @@ const adminRules = [
     ['تایید شریک', 'پاداش مالی قبل از انتشار نیازمند تایید مدیر رواق', 'فعال'],
 ];
 
+const productMilestones = [
+    {
+        title: 'پنل فروشگاه عملیاتی',
+        status: 'متصل به مسیر واقعی',
+        body: 'خلاصه پاداش‌ها، مصرف کدها، درخواست تبلیغ، پیشنهاد تخفیف و اقدام سریع برای فروشگاه شریک.',
+        href: '/partner/dashboard',
+        icon: Store,
+    },
+    {
+        title: 'ثبت تبلیغات فروشگاه و اسپانسر',
+        status: 'خارج از کمپین هم پوشش داده شد',
+        body: 'درخواست تبلیغ توسط فروشگاه، برند عضو، برند غیرعضو یا اسپانسر ثبت می‌شود و در صف تایید ادمین قرار می‌گیرد.',
+        href: '/partner/ads',
+        icon: Megaphone,
+    },
+    {
+        title: 'پنل مدیر رواق',
+        status: 'کنترل محدوده تحت مدیریت',
+        body: 'مدیر رواق فقط شرکا، پیشنهادها، تبلیغات تاییدشده و نمایشگرهای محدوده خودش را می‌بیند و زمان‌بندی می‌کند.',
+        href: '/hub/dashboard',
+        icon: Building2,
+    },
+    {
+        title: 'عملیات نمایشگرها',
+        status: 'کنسول ادمین آماده است',
+        body: 'ادمین موجودی نمایشگرها، صف پخش، جایگاه‌های آماده، آمار نمایش/کلیک و لغو زمان‌بندی را مدیریت می‌کند.',
+        href: '/admin/display-operations',
+        icon: BarChart3,
+    },
+];
 const roleContent: Record<
     RoleId,
     {
@@ -408,6 +438,47 @@ export default function EcosystemDemo() {
                     </div>
                 </section>
 
+                <section className="mx-auto max-w-7xl px-5 py-6 sm:px-8 lg:px-10">
+                    <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+                        <div>
+                            <p className="text-sm font-medium text-emerald-700">
+                                به‌روزرسانی پس از توسعه واقعی
+                            </p>
+                            <h2 className="mt-1 text-2xl font-semibold">
+                                بخش‌هایی که از دمو صرف عبور کرده‌اند و مسیر عملیاتی دارند
+                            </h2>
+                        </div>
+                        <Link
+                            href="/admin/display-operations"
+                            className="inline-flex h-10 items-center gap-2 rounded-md bg-slate-950 px-3 text-sm text-white hover:bg-slate-800"
+                        >
+                            کنسول نمایشگرها
+                            <ArrowLeft className="size-4" />
+                        </Link>
+                    </div>
+                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                        {productMilestones.map((item) => (
+                            <Link
+                                key={item.title}
+                                href={item.href}
+                                className="rounded-lg border border-slate-200 bg-white p-4 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-sm"
+                            >
+                                <div className="flex items-center justify-between gap-3">
+                                    <span className="flex size-10 items-center justify-center rounded-md bg-emerald-50 text-emerald-800">
+                                        <item.icon className="size-5" />
+                                    </span>
+                                    <span className="rounded-md bg-slate-100 px-2 py-1 text-xs text-slate-600">
+                                        {item.status}
+                                    </span>
+                                </div>
+                                <h3 className="mt-4 font-semibold">{item.title}</h3>
+                                <p className="mt-2 text-sm leading-6 text-slate-600">
+                                    {item.body}
+                                </p>
+                            </Link>
+                        ))}
+                    </div>
+                </section>
                 <section className="mx-auto max-w-7xl px-5 py-6 sm:px-8 lg:px-10">
                     <div className="grid gap-3 md:grid-cols-4">
                         {roles.map((role) => (
