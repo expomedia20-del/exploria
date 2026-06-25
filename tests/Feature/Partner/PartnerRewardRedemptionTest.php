@@ -136,6 +136,30 @@ class PartnerRewardRedemptionTest extends TestCase
             ->assertJsonPath('data.stats.confirmedRedemptions', 1);
     }
 
+    public function test_partner_dashboard_reports_own_ad_requests(): void
+    {
+        $partnerUser = User::query()->where('email', 'cafe.eco@example.test')->firstOrFail();
+
+        $this->actingAs($partnerUser)
+            ->postJson(route('partner.ads.api.store'), [
+                'title' => 'Cafe dashboard ad status',
+                'body_copy' => 'Partner dashboard ad summary test.',
+                'ad_type' => 'standalone',
+                'creative_type' => 'image',
+                'placement_type' => 'fixed_display',
+            ])
+            ->assertCreated();
+
+        $this->actingAs($partnerUser)
+            ->getJson(route('partner.dashboard.index'))
+            ->assertOk()
+            ->assertJsonPath('data.stats.adRequests', 1)
+            ->assertJsonPath('data.stats.pendingAds', 1)
+            ->assertJsonPath('data.adRequests.0.title', 'Cafe dashboard ad status')
+            ->assertJsonPath('data.adRequests.0.placementType', 'fixed_display')
+            ->assertJsonPath('data.adRequests.0.placementStatus', 'pending_review');
+    }
+
     public function test_partner_can_submit_offer_for_admin_review(): void
     {
         $partnerUser = User::query()->where('email', 'cafe.eco@example.test')->firstOrFail();

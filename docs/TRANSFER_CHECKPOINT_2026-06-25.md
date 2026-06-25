@@ -96,3 +96,11 @@ Recommended next development slice: build the admin/global display operations co
 ## Continue from here - Next Slice
 
 Recommended next development slice: add display heartbeat/playback telemetry so each display client can report online/offline status, current slot, playback result, and errors to the operations console.
+## Update - Partner Dashboard Ad Summary
+
+- Partner/shop dashboard now includes the partner's own ad request summary.
+- `/api/v1/partner/dashboard` returns `adRequests`, plus `stats.adRequests`, `stats.pendingAds`, and `stats.scheduledAds`.
+- The partner dashboard UI shows ad status, placement status, display assignment, impressions, and clicks.
+- Verification passed: `php artisan test tests/Feature/Partner/PartnerRewardRedemptionTest.php` => 10 tests, 72 assertions; `npm run types:check` passed.
+
+Next recommended partner slice: add editable partner profile/store details, offer inventory controls, and partner-side ad submission shortcuts from the dashboard.

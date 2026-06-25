@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\RecordStatus;
+use App\Models\AdRequest;
 use App\Models\Campaign;
 use App\Models\PartnerAccount;
 use App\Models\PartnerUser;
@@ -72,6 +73,36 @@ class PartnerDashboardService
                 'rewardName' => $redemption->userReward?->rewardDefinition?->name,
                 'rewardType' => $redemption->userReward?->rewardDefinition?->reward_type,
             ]);
+        $adRequests = $partner->adRequests()
+            ->with(['hub:id,code,name', 'placements.displayDevice:id,code,name,device_type', 'creatives:id,ad_request_id,creative_type,status'])
+            ->withCount([
+                'events as impressions_count' => fn ($query) => $query->where('event_type', 'impression'),
+                'events as clicks_count' => fn ($query) => $query->where('event_type', 'click'),
+            ])
+            ->latest('created_at')
+            ->limit(10)
+            ->get()
+            ->map(function (AdRequest $adRequest): array {
+                $placement = $adRequest->placements->first();
+
+                return [
+                    'id' => $adRequest->id,
+                    'code' => $adRequest->code,
+                    'title' => $adRequest->title,
+                    'status' => $adRequest->status,
+                    'adType' => $adRequest->ad_type,
+                    'creativeType' => $adRequest->creatives->first()?->creative_type,
+                    'placementType' => $placement?->placement_type,
+                    'placementStatus' => $placement?->status,
+                    'displayDeviceName' => $placement?->displayDevice?->name,
+                    'displayDeviceCode' => $placement?->displayDevice?->code,
+                    'hubName' => $adRequest->hub?->name,
+                    'startsAt' => $placement?->starts_at?->toIso8601String(),
+                    'endsAt' => $placement?->ends_at?->toIso8601String(),
+                    'impressionsCount' => (int) $adRequest->getAttribute('impressions_count'),
+                    'clicksCount' => (int) $adRequest->getAttribute('clicks_count'),
+                ];
+            });
 
         return [
             'partner' => [
@@ -86,9 +117,13 @@ class PartnerDashboardService
                 'issuedRewards' => $rewardDefinitions->sum('userRewardsCount'),
                 'pendingRedemptions' => $redemptions->where('status', 'pending')->count(),
                 'confirmedRedemptions' => $redemptions->where('status', 'confirmed')->count(),
+                'adRequests' => $adRequests->count(),
+                'pendingAds' => $adRequests->where('status', 'pending_review')->count(),
+                'scheduledAds' => $adRequests->where('placementStatus', 'scheduled')->count(),
             ],
             'rewardDefinitions' => $rewardDefinitions,
             'redemptions' => $redemptions,
+            'adRequests' => $adRequests,
         ];
     }
 

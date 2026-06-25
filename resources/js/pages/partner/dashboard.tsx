@@ -2,6 +2,7 @@ import { Form, Head, usePage } from '@inertiajs/react';
 import {
     CheckCircle2,
     Gift,
+    Megaphone,
     Percent,
     ReceiptText,
     TicketCheck,
@@ -47,6 +48,23 @@ type Redemption = {
     rewardType: string | null;
 };
 
+type PartnerAdRequest = {
+    id: string;
+    code: string;
+    title: string;
+    status: string;
+    adType: string;
+    creativeType: string | null;
+    placementType: string | null;
+    placementStatus: string | null;
+    displayDeviceName: string | null;
+    displayDeviceCode: string | null;
+    hubName: string | null;
+    startsAt: string | null;
+    endsAt: string | null;
+    impressionsCount: number;
+    clicksCount: number;
+};
 type Props = {
     partner: Partner;
     stats: {
@@ -54,9 +72,13 @@ type Props = {
         issuedRewards: number;
         pendingRedemptions: number;
         confirmedRedemptions: number;
+        adRequests: number;
+        pendingAds: number;
+        scheduledAds: number;
     };
     rewardDefinitions: RewardDefinition[];
     redemptions: Redemption[];
+    adRequests: PartnerAdRequest[];
 };
 
 type SharedProps = {
@@ -116,6 +138,7 @@ export default function PartnerDashboard({
     stats,
     rewardDefinitions,
     redemptions,
+    adRequests,
 }: Props) {
     const { flash } = usePage<SharedProps>().props;
 
@@ -332,6 +355,66 @@ export default function PartnerDashboard({
                     </div>
                 </section>
 
+                <section className="rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border">
+                    <div className="border-b border-sidebar-border/70 px-4 py-3 dark:border-sidebar-border">
+                        <div className="flex items-center gap-2">
+                            <Megaphone className="size-4 text-muted-foreground" />
+                            <h2 className="font-semibold">تبلیغات فروشگاه</h2>
+                        </div>
+                    </div>
+                    <div className="divide-y divide-sidebar-border/70 dark:divide-sidebar-border">
+                        {adRequests.length === 0 ? (
+                            <p className="p-4 text-sm text-muted-foreground">
+                                هنوز درخواست تبلیغی برای این فروشگاه ثبت نشده
+                                است.
+                            </p>
+                        ) : (
+                            adRequests.map((adRequest) => (
+                                <article
+                                    key={adRequest.id}
+                                    className="grid gap-2 px-4 py-3 text-sm lg:grid-cols-[1.2fr_1fr_1fr]"
+                                >
+                                    <div className="min-w-0">
+                                        <p className="truncate font-medium">
+                                            {adRequest.title}
+                                        </p>
+                                        <p
+                                            className="mt-1 truncate text-xs text-muted-foreground"
+                                            dir="ltr"
+                                        >
+                                            {adRequest.code} ·{' '}
+                                            {adRequest.creativeType ?? '-'}
+                                        </p>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                        وضعیت:{' '}
+                                        {statusLabels[adRequest.status] ??
+                                            adRequest.status}{' '}
+                                        · جایگاه:{' '}
+                                        {adRequest.placementType ?? '-'} · پخش:{' '}
+                                        {statusLabels[
+                                            adRequest.placementStatus ?? ''
+                                        ] ??
+                                            adRequest.placementStatus ??
+                                            '-'}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        نمایشگر:{' '}
+                                        {adRequest.displayDeviceName ?? '-'} ·
+                                        نمایش:{' '}
+                                        {adRequest.impressionsCount.toLocaleString(
+                                            'fa-IR',
+                                        )}{' '}
+                                        · کلیک:{' '}
+                                        {adRequest.clicksCount.toLocaleString(
+                                            'fa-IR',
+                                        )}
+                                    </p>
+                                </article>
+                            ))
+                        )}
+                    </div>
+                </section>
                 <section className="grid gap-4 lg:grid-cols-2">
                     <div className="rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border">
                         <div className="border-b border-sidebar-border/70 px-4 py-3 dark:border-sidebar-border">
