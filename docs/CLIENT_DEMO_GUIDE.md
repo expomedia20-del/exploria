@@ -74,6 +74,13 @@ Email: cafe.eco@example.test
 Password: password
 ```
 
+Hub/ravaq manager panel:
+
+```text
+Email: ravaq.manager@example.test
+Password: password
+```
+
 The local OTP provider uses a fixed test code only in local/test environments:
 
 ```text
@@ -119,6 +126,7 @@ For a fresh repeat of the same flow, use another valid Iranian-format mobile num
 23. Open `/partner/dashboard` as `cafe.eco@example.test` and show partner reward definitions, pending redemption codes, and code confirmation.
 24. Submit a new partner offer from `/partner/dashboard`, then open `/admin/missions` as admin and approve or reject the pending offer.
 25. Open `/partner/ads` as `cafe.eco@example.test`, submit a standalone ad request, then open `/admin/ads` and approve or reject it.
+26. Open `/hub/dashboard` as `ravaq.manager@example.test` and show that the ravaq manager only sees the managed hub, partner, display inventory, scoped ads, and scoped partner offers.
 
 ## What Is Ready To Claim
 
@@ -136,7 +144,8 @@ For a fresh repeat of the same flow, use another valid Iranian-format mobile num
 - Admin mission/reward registry can approve or reject partner-submitted offers. Submitted offers remain `draft` until approved and become `active` only after review.
 - Standalone advertising skeleton exists with real tables for ad requests, creatives, display devices, placements, approvals, and events.
 - Partner advertising page exists at `/partner/ads`; a partner or sponsor can submit an ad request for fixed/mobile displays, QR landing, reward page, map/route, or post-mission placement.
-- Admin advertising page exists at `/admin/ads`; admin/operator/hub manager can approve or reject pending ad requests and see fixed/mobile display inventory.
+- Admin advertising page exists at `/admin/ads`; admin/operator can approve or reject all pending ad requests, while hub managers are restricted to managed hub/partner scope.
+- Hub/ravaq manager dashboard exists at `/hub/dashboard` with API `/api/v1/hub/dashboard`; it shows only managed hubs, partners, display devices, scoped ad requests, and scoped partner offers.
 - Display publishing API exists at /api/v1/display/{deviceCode}/schedule, and display clients can record ad events at /api/v1/display/{deviceCode}/events.
 - Venue/hub registry page exists for `admin`, `operator`, `viewer`, and `hub_manager` roles.
 - Mission/reward simulator shows points, rewards, levels, locked missions, and next experience layers.
@@ -162,7 +171,7 @@ http://127.0.0.1:8000/demo
 Last completed product-code commit:
 
 ```text
-c3e64d2 feat: add display advertising publishing api
+1f46804 feat: add scoped hub manager dashboard
 ```
 
 Latest verified quality gates:
@@ -175,4 +184,6 @@ npm run lint:check
 npm run build
 ```
 
-All passed on 2026-06-24.
+All passed on 2026-06-25.
+
+Local runtime note: on 2026-06-25 the local SQLite database was backed up, then `php artisan migrate --force` and `php artisan db:seed --class=PilotLocationSeeder --force` were run so `/hub/dashboard` can load against the current schema.
