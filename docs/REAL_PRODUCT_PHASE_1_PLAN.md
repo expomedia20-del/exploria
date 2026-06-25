@@ -447,3 +447,12 @@ docs/features/STANDALONE_ADVERTISING_REQUIREMENTS.md
 - یادداشت تصمیم پیشنهاد فروشگاه در `reward_definitions.metadata.review_notes` ذخیره و در dashboard API به صورت `reviewNotes` برگردانده می‌شود.
 - dashboard API برای آیتم‌های تصمیم‌گرفته‌شده `reviewedAt` را هم برمی‌گرداند تا زمان تصمیم در پنل دیده شود.
 - تست‌های feature برای نمایش یادداشت تصمیم در API و ذخیره note پیشنهاد فروشگاه اضافه شدند.
+
+ادامه Sprint 1.7 برای زمان‌بندی نمایشگرهای رواق انجام شد:
+
+- مسیر `POST /hub/ads/{adRequest}/schedule` برای زمان‌بندی تبلیغ تاییدشده روی نمایشگر محدوده رواق اضافه شد.
+- مسیر API متناظر `POST /api/v1/hub/ads/{adRequest}/schedule` اضافه شد.
+- مدیر رواق فقط می‌تواند تبلیغ تاییدشده و scoped را روی نمایشگر فعال همان رواق زمان‌بندی کند.
+- نوع نمایشگر باید با `placement_type` تبلیغ هم‌خوان باشد؛ مثلا تبلیغ `mobile_display` فقط روی نمایشگر `mobile_display` زمان‌بندی می‌شود.
+- فرم زمان‌بندی در `/hub/dashboard` برای تبلیغ تاییدشده نمایشگر، شروع/پایان نمایش و اولویت را ثبت می‌کند.
+- برنامه خروجی نمایشگر (`/api/v1/display/{deviceCode}/schedule`) بعد از زمان‌بندی، تبلیغ همان نمایشگر را برمی‌گرداند.

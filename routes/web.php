@@ -11,6 +11,7 @@ use App\Http\Controllers\Auth\OtpController;
 use App\Http\Controllers\ConsentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Display\DisplayAdvertisingController;
+use App\Http\Controllers\Hub\HubAdScheduleController;
 use App\Http\Controllers\Hub\HubManagerDashboardController;
 use App\Http\Controllers\Partner\PartnerAdvertisingController;
 use App\Http\Controllers\Partner\PartnerDashboardController;
@@ -55,6 +56,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/hub/dashboard', [HubManagerDashboardController::class, 'page'])
         ->middleware('role:hub_manager')
         ->name('hub.dashboard');
+    Route::post('/hub/ads/{adRequest}/schedule', [HubAdScheduleController::class, 'store'])
+        ->middleware('role:hub_manager')
+        ->name('hub.ads.schedule');
 });
 
 Route::get('/api/v1/display/{displayDevice:code}/schedule', [DisplayAdvertisingController::class, 'schedule'])
@@ -198,6 +202,9 @@ Route::post('/api/v1/partner/ads', [PartnerAdvertisingController::class, 'store'
 Route::get('/api/v1/hub/dashboard', [HubManagerDashboardController::class, 'index'])
     ->middleware(['auth', 'role:hub_manager'])
     ->name('hub.dashboard.index');
+Route::post('/api/v1/hub/ads/{adRequest}/schedule', [HubAdScheduleController::class, 'store'])
+    ->middleware(['auth', 'role:hub_manager'])
+    ->name('hub.ads.api.schedule');
 
 Route::middleware(['auth', 'verified'])->get('dashboard', DashboardController::class)->name('dashboard');
 

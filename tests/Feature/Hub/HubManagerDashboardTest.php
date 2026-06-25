@@ -3,6 +3,7 @@
 namespace Tests\Feature\Hub;
 
 use App\Models\AdRequest;
+use App\Models\DisplayDevice;
 use App\Models\RewardDefinition;
 use App\Models\User;
 use Database\Seeders\PilotLocationSeeder;
@@ -85,7 +86,61 @@ class HubManagerDashboardTest extends TestCase
         $this->assertNotNull($response->json('data.rewards.0.reviewedAt'));
     }
 
-    private function submitAdRequest(string $email, string $title): AdRequest
+    public function test_hub_manager_can_schedule_approved_ad_to_managed_display(): void
+    {
+        $manager = User::query()->where('email', 'ravaq.manager@example.test')->firstOrFail();
+        $adRequest = $this->submitAdRequest('ravaq.store@example.test', 'Scheduled ravaq mobile ad', 'mobile_display');
+        $displayDevice = DisplayDevice::query()->where('code', 'ecopark-mobile-promo-display')->firstOrFail();
+
+        $this->actingAs($manager)
+            ->postJson(route('admin.ads.api.approve', $adRequest), [
+                'notes' => 'Ready for ravaq mobile display.',
+            ])
+            ->assertOk();
+
+        $this->actingAs($manager)
+            ->postJson(route('hub.ads.api.schedule', $adRequest), [
+                'display_device_id' => $displayDevice->id,
+                'starts_at' => now()->subMinute()->toIso8601String(),
+                'ends_at' => now()->addDay()->toIso8601String(),
+                'priority' => 2,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.displayDeviceCode', 'ecopark-mobile-promo-display')
+            ->assertJsonPath('data.priority', 2)
+            ->assertJsonPath('data.status', 'scheduled');
+
+        $placement = $adRequest->placements()->firstOrFail();
+        $this->assertSame($displayDevice->id, $placement->display_device_id);
+        $this->assertSame(2, $placement->priority);
+
+        $this->getJson(route('display.schedule', $displayDevice))
+            ->assertOk()
+            ->assertJsonPath('data.items.0.adRequestId', $adRequest->id)
+            ->assertJsonPath('data.items.0.priority', 2);
+    }
+
+    public function test_hub_manager_cannot_schedule_ad_to_foreign_display(): void
+    {
+        $manager = User::query()->where('email', 'ravaq.manager@example.test')->firstOrFail();
+        $adRequest = $this->submitAdRequest('ravaq.store@example.test', 'Foreign display ravaq ad', 'mobile_display');
+        $foreignDisplay = DisplayDevice::query()->where('code', 'ecopark-entry-fixed-display')->firstOrFail();
+
+        $this->actingAs($manager)
+            ->postJson(route('admin.ads.api.approve', $adRequest))
+            ->assertOk();
+
+        $this->actingAs($manager)
+            ->postJson(route('hub.ads.api.schedule', $adRequest), [
+                'display_device_id' => $foreignDisplay->id,
+                'priority' => 3,
+            ])
+            ->assertForbidden();
+
+        $this->assertNull($adRequest->placements()->firstOrFail()->display_device_id);
+    }
+
+    private function submitAdRequest(string $email, string $title, string $placementType = 'fixed_display'): AdRequest
     {
         $partnerUser = User::query()->where('email', $email)->firstOrFail();
 
@@ -95,7 +150,7 @@ class HubManagerDashboardTest extends TestCase
                 'body_copy' => 'Dashboard scope test ad.',
                 'ad_type' => 'standalone',
                 'creative_type' => 'image',
-                'placement_type' => 'fixed_display',
+                'placement_type' => $placementType,
             ])
             ->assertCreated();
 

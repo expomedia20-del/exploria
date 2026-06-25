@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\RecordStatus;
 use App\Enums\UserRole;
 use App\Models\AdRequest;
+use App\Models\DisplayDevice;
 use App\Models\Hub;
 use App\Models\HubManagementAssignment;
 use App\Models\PartnerLocation;
@@ -62,7 +63,7 @@ class HubManagerAccessService
         }
 
         if ($user->role !== UserRole::HubManager) {
-            throw new AuthorizationException('شما اجازه بازبینی این تبلیغ را ندارید.');
+            throw new AuthorizationException('Ø´Ù…Ø§ Ø§Ø¬Ø§Ø²Ù‡ Ø¨Ø§Ø²Ø¨ÛŒÙ†ÛŒ Ø§ÛŒÙ† ØªØ¨Ù„ÛŒØº Ø±Ø§ Ù†Ø¯Ø§Ø±ÛŒØ¯.');
         }
 
         $hubIds = $this->managedHubIds($user);
@@ -72,7 +73,22 @@ class HubManagerAccessService
         $isPartnerAd = $adRequest->partner_account_id !== null && $partnerIds->contains($adRequest->partner_account_id);
 
         if (! $isDirectHubAd && ! $isPartnerAd) {
-            throw new AuthorizationException('این تبلیغ خارج از محدوده رواق شماست.');
+            throw new AuthorizationException('Ø§ÛŒÙ† ØªØ¨Ù„ÛŒØº Ø®Ø§Ø±Ø¬ Ø§Ø² Ù…Ø­Ø¯ÙˆØ¯Ù‡ Ø±ÙˆØ§Ù‚ Ø´Ù…Ø§Ø³Øª.');
+        }
+    }
+
+    public function ensureCanManageDisplayDevice(User $user, DisplayDevice $displayDevice): void
+    {
+        if ($this->isPlatformReviewer($user)) {
+            return;
+        }
+
+        if ($user->role !== UserRole::HubManager) {
+            throw new AuthorizationException('شما اجازه مدیریت این نمایشگر را ندارید.');
+        }
+
+        if (! $displayDevice->hub_id || ! $this->managedHubIds($user)->contains($displayDevice->hub_id)) {
+            throw new AuthorizationException('این نمایشگر خارج از محدوده رواق شماست.');
         }
     }
 
@@ -83,11 +99,11 @@ class HubManagerAccessService
         }
 
         if ($user->role !== UserRole::HubManager) {
-            throw new AuthorizationException('شما اجازه بازبینی این پیشنهاد را ندارید.');
+            throw new AuthorizationException('Ø´Ù…Ø§ Ø§Ø¬Ø§Ø²Ù‡ Ø¨Ø§Ø²Ø¨ÛŒÙ†ÛŒ Ø§ÛŒÙ† Ù¾ÛŒØ´Ù†Ù‡Ø§Ø¯ Ø±Ø§ Ù†Ø¯Ø§Ø±ÛŒØ¯.');
         }
 
         if (! $reward->partner_account_id || ! $this->managedPartnerIds($user)->contains($reward->partner_account_id)) {
-            throw new AuthorizationException('این پیشنهاد خارج از محدوده رواق شماست.');
+            throw new AuthorizationException('Ø§ÛŒÙ† Ù¾ÛŒØ´Ù†Ù‡Ø§Ø¯ Ø®Ø§Ø±Ø¬ Ø§Ø² Ù…Ø­Ø¯ÙˆØ¯Ù‡ Ø±ÙˆØ§Ù‚ Ø´Ù…Ø§Ø³Øª.');
         }
     }
 

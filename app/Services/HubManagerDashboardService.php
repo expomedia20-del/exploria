@@ -38,7 +38,7 @@ class HubManagerDashboardService
             ]);
 
         $adRequests = AdRequest::query()
-            ->with(['partnerAccount:id,code,name,partner_type', 'hub:id,code,name', 'venue:id,code,name', 'creatives:id,ad_request_id,creative_type,status', 'placements:id,ad_request_id,placement_type,status', 'approvals:id,ad_request_id,action,notes,created_at'])
+            ->with(['partnerAccount:id,code,name,partner_type', 'hub:id,code,name', 'venue:id,code,name', 'creatives:id,ad_request_id,creative_type,status', 'placements.displayDevice:id,code,name,device_type', 'approvals:id,ad_request_id,action,notes,created_at'])
             ->where(function ($query) use ($hubIds, $partnerIds): void {
                 $query->whereIn('hub_id', $hubIds)
                     ->orWhereIn('partner_account_id', $partnerIds);
@@ -59,6 +59,12 @@ class HubManagerDashboardService
                     'creativeType' => $adRequest->creatives->first()?->creative_type,
                     'placementType' => $adRequest->placements->first()?->placement_type,
                     'placementStatus' => $adRequest->placements->first()?->status,
+                    'displayDeviceId' => $adRequest->placements->first()?->display_device_id,
+                    'displayDeviceName' => $adRequest->placements->first()?->displayDevice?->name,
+                    'displayDeviceCode' => $adRequest->placements->first()?->displayDevice?->code,
+                    'startsAt' => $adRequest->placements->first()?->starts_at?->toIso8601String(),
+                    'endsAt' => $adRequest->placements->first()?->ends_at?->toIso8601String(),
+                    'priority' => $adRequest->placements->first()?->priority,
                     'reviewNotes' => $latestApproval?->notes,
                     'reviewedAt' => $latestApproval?->created_at?->toIso8601String(),
                 ];

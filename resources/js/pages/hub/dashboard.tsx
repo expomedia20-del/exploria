@@ -43,6 +43,12 @@ type AdRequestItem = {
     creativeType: string | null;
     placementType: string | null;
     placementStatus: string | null;
+    displayDeviceId: string | null;
+    displayDeviceName: string | null;
+    displayDeviceCode: string | null;
+    startsAt: string | null;
+    endsAt: string | null;
+    priority: number | null;
     reviewNotes: string | null;
     reviewedAt: string | null;
 };
@@ -94,6 +100,19 @@ const statusLabels: Record<string, string> = {
     rejected: 'رد شده',
     scheduled: 'زمان‌بندی شده',
 };
+
+function toDateTimeLocal(value: string | null) {
+    if (!value) {
+        return '';
+    }
+
+    const date = new Date(value);
+    const offsetDate = new Date(
+        date.getTime() - date.getTimezoneOffset() * 60000,
+    );
+
+    return offsetDate.toISOString().slice(0, 16);
+}
 
 function formatDate(value: string | null) {
     if (!value) {
@@ -205,6 +224,90 @@ function ReviewActions({
     );
 }
 
+function ScheduleActions({
+    adRequest,
+    displayDevices,
+}: {
+    adRequest: AdRequestItem;
+    displayDevices: DisplayDeviceItem[];
+}) {
+    if (displayDevices.length === 0) {
+        return (
+            <p className="rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+                نمایشگر فعالی با نوع جایگاه این تبلیغ در محدوده شما ثبت نشده
+                است.
+            </p>
+        );
+    }
+
+    return (
+        <Form
+            action={`/hub/ads/${adRequest.id}/schedule`}
+            method="post"
+            options={{ preserveScroll: true }}
+        >
+            {({ processing }) => (
+                <div className="grid gap-2 rounded-md border border-sidebar-border/70 p-3 dark:border-sidebar-border">
+                    <div className="grid gap-2 sm:grid-cols-2">
+                        <label className="grid gap-1 text-xs text-muted-foreground">
+                            نمایشگر
+                            <select
+                                name="display_device_id"
+                                defaultValue={
+                                    adRequest.displayDeviceId ??
+                                    displayDevices[0]?.id ??
+                                    ''
+                                }
+                                className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                            >
+                                {displayDevices.map((device) => (
+                                    <option key={device.id} value={device.id}>
+                                        {device.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+                        <label className="grid gap-1 text-xs text-muted-foreground">
+                            اولویت
+                            <input
+                                name="priority"
+                                type="number"
+                                min="1"
+                                max="10"
+                                defaultValue={adRequest.priority ?? 5}
+                                className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                            />
+                        </label>
+                        <label className="grid gap-1 text-xs text-muted-foreground">
+                            شروع نمایش
+                            <input
+                                name="starts_at"
+                                type="datetime-local"
+                                defaultValue={toDateTimeLocal(
+                                    adRequest.startsAt,
+                                )}
+                                className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                            />
+                        </label>
+                        <label className="grid gap-1 text-xs text-muted-foreground">
+                            پایان نمایش
+                            <input
+                                name="ends_at"
+                                type="datetime-local"
+                                defaultValue={toDateTimeLocal(adRequest.endsAt)}
+                                className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                            />
+                        </label>
+                    </div>
+                    <Button size="sm" type="submit" disabled={processing}>
+                        <MonitorPlay className="size-4" />
+                        زمان‌بندی روی نمایشگر
+                    </Button>
+                </div>
+            )}
+        </Form>
+    );
+}
 function DecisionNote({
     notes,
     reviewedAt,
@@ -397,6 +500,15 @@ export default function HubDashboard({
                                     {adRequest.hubName ?? '-'} · جایگاه:{' '}
                                     {adRequest.placementType ?? '-'}
                                 </p>
+                                {adRequest.displayDeviceName ? (
+                                    <p className="text-xs text-muted-foreground">
+                                        نمایشگر زمان‌بندی‌شده:{' '}
+                                        {adRequest.displayDeviceName} · اولویت:{' '}
+                                        {adRequest.priority?.toLocaleString(
+                                            'fa-IR',
+                                        ) ?? '-'}
+                                    </p>
+                                ) : null}
                                 {adRequest.status === 'pending_review' ? (
                                     <ReviewActions
                                         approveAction={`/admin/ads/${adRequest.id}/approve`}
@@ -404,10 +516,22 @@ export default function HubDashboard({
                                         placeholder="یادداشت تایید یا دلیل رد تبلیغ"
                                     />
                                 ) : (
-                                    <DecisionNote
-                                        notes={adRequest.reviewNotes}
-                                        reviewedAt={adRequest.reviewedAt}
-                                    />
+                                    <>
+                                        <DecisionNote
+                                            notes={adRequest.reviewNotes}
+                                            reviewedAt={adRequest.reviewedAt}
+                                        />
+                                        {adRequest.status === 'approved' ? (
+                                            <ScheduleActions
+                                                adRequest={adRequest}
+                                                displayDevices={displayDevices.filter(
+                                                    (device) =>
+                                                        device.deviceType ===
+                                                        adRequest.placementType,
+                                                )}
+                                            />
+                                        ) : null}
+                                    </>
                                 )}
                             </article>
                         ))}

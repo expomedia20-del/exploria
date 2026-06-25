@@ -38,3 +38,13 @@ Next recommended development slice: turn the scoped hub dashboard into an operat
 - Partner offer review notes are stored in `reward_definitions.metadata.review_notes` and exposed in `/api/v1/hub/dashboard` as `reviewNotes`.
 - The API also returns `reviewedAt` for reviewed ads/offers so the dashboard can show decision timing.
 - Additional verification: targeted hub/partner/advertising tests now cover 22 tests and 176 assertions; full `composer test`, `npm run types:check`, `npm run lint:check`, `npm run format:check`, and `npm run build` passed.
+
+## Update - Hub Display Scheduling
+
+- Added scoped display scheduling for approved hub/ravaq ads.
+- New web route: `POST /hub/ads/{adRequest}/schedule`.
+- New API route: `POST /api/v1/hub/ads/{adRequest}/schedule`.
+- `HubAdScheduleController` validates approved ad status, managed display scope, active display status, placement/display type compatibility, date range, and priority.
+- `/hub/dashboard` now shows scheduling controls for approved ads and current display assignment/priority.
+- Targeted tests now cover scheduling to the managed mobile display and rejection of a foreign display.
+- Verification passed: targeted hub/advertising tests, full `composer test` with 119 tests and 650 assertions, `npm run types:check`, `npm run lint:check`, `npm run format:check`, and `npm run build`.
