@@ -162,7 +162,7 @@ http://127.0.0.1:8000/demo
 Last completed product-code commit:
 
 ```text
-37b01e0 feat: add standalone advertising skeleton
+c3e64d2 feat: add display advertising publishing api
 ```
 
 Latest verified quality gates:
