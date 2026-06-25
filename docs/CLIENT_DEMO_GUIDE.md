@@ -145,7 +145,7 @@ For a fresh repeat of the same flow, use another valid Iranian-format mobile num
 - Standalone advertising skeleton exists with real tables for ad requests, creatives, display devices, placements, approvals, and events.
 - Partner advertising page exists at `/partner/ads`; a partner or sponsor can submit an ad request for fixed/mobile displays, QR landing, reward page, map/route, or post-mission placement.
 - Admin advertising page exists at `/admin/ads`; admin/operator can approve or reject all pending ad requests, while hub managers are restricted to managed hub/partner scope.
-- Hub/ravaq manager dashboard exists at `/hub/dashboard` with API `/api/v1/hub/dashboard`; it shows only managed hubs, partners, display devices, scoped ad requests, and scoped partner offers.
+- Hub/ravaq manager dashboard exists at `/hub/dashboard` with API `/api/v1/hub/dashboard`; it shows only managed hubs, partners, display devices, scoped ad requests, scoped partner offers, review notes, and decision times.
 - Display publishing API exists at /api/v1/display/{deviceCode}/schedule, and display clients can record ad events at /api/v1/display/{deviceCode}/events.
 - Venue/hub registry page exists for `admin`, `operator`, `viewer`, and `hub_manager` roles.
 - Mission/reward simulator shows points, rewards, levels, locked missions, and next experience layers.

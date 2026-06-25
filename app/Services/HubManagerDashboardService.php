@@ -38,25 +38,31 @@ class HubManagerDashboardService
             ]);
 
         $adRequests = AdRequest::query()
-            ->with(['partnerAccount:id,code,name,partner_type', 'hub:id,code,name', 'venue:id,code,name', 'creatives:id,ad_request_id,creative_type,status', 'placements:id,ad_request_id,placement_type,status'])
+            ->with(['partnerAccount:id,code,name,partner_type', 'hub:id,code,name', 'venue:id,code,name', 'creatives:id,ad_request_id,creative_type,status', 'placements:id,ad_request_id,placement_type,status', 'approvals:id,ad_request_id,action,notes,created_at'])
             ->where(function ($query) use ($hubIds, $partnerIds): void {
                 $query->whereIn('hub_id', $hubIds)
                     ->orWhereIn('partner_account_id', $partnerIds);
             })
             ->latest('created_at')
             ->get()
-            ->map(fn (AdRequest $adRequest): array => [
-                'id' => $adRequest->id,
-                'code' => $adRequest->code,
-                'title' => $adRequest->title,
-                'status' => $adRequest->status,
-                'partnerName' => $adRequest->partnerAccount?->name,
-                'hubName' => $adRequest->hub?->name,
-                'venueName' => $adRequest->venue?->name,
-                'creativeType' => $adRequest->creatives->first()?->creative_type,
-                'placementType' => $adRequest->placements->first()?->placement_type,
-                'placementStatus' => $adRequest->placements->first()?->status,
-            ]);
+            ->map(function (AdRequest $adRequest): array {
+                $latestApproval = $adRequest->approvals->sortByDesc('created_at')->first();
+
+                return [
+                    'id' => $adRequest->id,
+                    'code' => $adRequest->code,
+                    'title' => $adRequest->title,
+                    'status' => $adRequest->status,
+                    'partnerName' => $adRequest->partnerAccount?->name,
+                    'hubName' => $adRequest->hub?->name,
+                    'venueName' => $adRequest->venue?->name,
+                    'creativeType' => $adRequest->creatives->first()?->creative_type,
+                    'placementType' => $adRequest->placements->first()?->placement_type,
+                    'placementStatus' => $adRequest->placements->first()?->status,
+                    'reviewNotes' => $latestApproval?->notes,
+                    'reviewedAt' => $latestApproval?->created_at?->toIso8601String(),
+                ];
+            });
 
         $rewards = RewardDefinition::query()
             ->with(['partnerAccount:id,code,name,partner_type', 'campaign:id,code,name'])
@@ -72,6 +78,8 @@ class HubManagerDashboardService
                 'approvalStatus' => $reward->metadata['approval_status'] ?? $reward->status->value,
                 'partnerName' => $reward->partnerAccount?->name,
                 'campaignName' => $reward->campaign?->name,
+                'reviewNotes' => $reward->metadata['review_notes'] ?? null,
+                'reviewedAt' => $reward->metadata['approved_at'] ?? $reward->metadata['rejected_at'] ?? null,
             ]);
 
         $displayDevices = DisplayDevice::query()

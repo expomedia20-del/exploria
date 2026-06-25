@@ -30,3 +30,11 @@
 ## Continue from here
 
 Next recommended development slice: turn the scoped hub dashboard into an operational workspace by adding scoped create/edit workflows for hub partners, display inventory scheduling, pending ad/offer queues with notes, and KPI summaries.
+
+## Update - Hub Manager Review Notes
+
+- Hub manager approval/rejection controls now include a decision note textarea.
+- Ad review notes are stored in `ad_approvals.notes` and exposed in `/api/v1/hub/dashboard` as `reviewNotes`.
+- Partner offer review notes are stored in `reward_definitions.metadata.review_notes` and exposed in `/api/v1/hub/dashboard` as `reviewNotes`.
+- The API also returns `reviewedAt` for reviewed ads/offers so the dashboard can show decision timing.
+- Additional verification: targeted hub/partner/advertising tests now cover 22 tests and 176 assertions; full `composer test`, `npm run types:check`, `npm run lint:check`, `npm run format:check`, and `npm run build` passed.

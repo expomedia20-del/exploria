@@ -1,6 +1,5 @@
-import { Form, Head } from '@inertiajs/react';
+﻿import { Form, Head } from '@inertiajs/react';
 import {
-    BadgeCheck,
     Building2,
     CheckCircle2,
     Gift,
@@ -10,6 +9,7 @@ import {
     XCircle,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 
@@ -43,6 +43,8 @@ type AdRequestItem = {
     creativeType: string | null;
     placementType: string | null;
     placementStatus: string | null;
+    reviewNotes: string | null;
+    reviewedAt: string | null;
 };
 
 type RewardItem = {
@@ -54,6 +56,8 @@ type RewardItem = {
     approvalStatus: string;
     partnerName: string | null;
     campaignName: string | null;
+    reviewNotes: string | null;
+    reviewedAt: string | null;
 };
 
 type DisplayDeviceItem = {
@@ -91,6 +95,17 @@ const statusLabels: Record<string, string> = {
     scheduled: 'زمان‌بندی شده',
 };
 
+function formatDate(value: string | null) {
+    if (!value) {
+        return null;
+    }
+
+    return new Intl.DateTimeFormat('fa-IR', {
+        dateStyle: 'short',
+        timeStyle: 'short',
+    }).format(new Date(value));
+}
+
 function Stat({
     icon: Icon,
     label,
@@ -109,6 +124,106 @@ function Stat({
             <p className="mt-1 font-semibold">
                 {value.toLocaleString('fa-IR')}
             </p>
+        </div>
+    );
+}
+
+function ReviewActions({
+    approveAction,
+    rejectAction,
+    placeholder,
+}: {
+    approveAction: string;
+    rejectAction: string;
+    placeholder: string;
+}) {
+    const [notes, setNotes] = useState('');
+
+    return (
+        <div className="grid gap-2 pt-1">
+            <textarea
+                name="review_notes"
+                value={notes}
+                onChange={(event) => setNotes(event.target.value)}
+                maxLength={1000}
+                rows={2}
+                className="min-h-16 w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                placeholder={placeholder}
+            />
+            <div className="flex flex-wrap gap-2">
+                <Form
+                    action={approveAction}
+                    method="post"
+                    options={{ preserveScroll: true }}
+                >
+                    {({ processing }) => (
+                        <>
+                            <input
+                                type="hidden"
+                                name="notes"
+                                value={notes}
+                                readOnly
+                            />
+                            <Button
+                                size="sm"
+                                type="submit"
+                                disabled={processing}
+                            >
+                                <CheckCircle2 className="size-4" />
+                                تایید
+                            </Button>
+                        </>
+                    )}
+                </Form>
+                <Form
+                    action={rejectAction}
+                    method="post"
+                    options={{ preserveScroll: true }}
+                >
+                    {({ processing }) => (
+                        <>
+                            <input
+                                type="hidden"
+                                name="notes"
+                                value={notes}
+                                readOnly
+                            />
+                            <Button
+                                size="sm"
+                                type="submit"
+                                variant="outline"
+                                disabled={processing}
+                            >
+                                <XCircle className="size-4" />
+                                رد
+                            </Button>
+                        </>
+                    )}
+                </Form>
+            </div>
+        </div>
+    );
+}
+
+function DecisionNote({
+    notes,
+    reviewedAt,
+}: {
+    notes: string | null;
+    reviewedAt: string | null;
+}) {
+    const reviewedAtLabel = formatDate(reviewedAt);
+
+    if (!notes && !reviewedAtLabel) {
+        return null;
+    }
+
+    return (
+        <div className="rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+            {notes ? <p>یادداشت تصمیم: {notes}</p> : null}
+            {reviewedAtLabel ? (
+                <p className="mt-1">زمان تصمیم: {reviewedAtLabel}</p>
+            ) : null}
         </div>
     );
 }
@@ -167,6 +282,7 @@ export default function HubDashboard({
                         <h2 className="font-semibold">هاب‌های تحت مدیریت</h2>
                     </div>
                     <div className="divide-y divide-sidebar-border/70 dark:divide-sidebar-border">
+                        {hubs.length === 0 ? <EmptyState /> : null}
                         {hubs.map((hub) => (
                             <article
                                 key={hub.id}
@@ -188,7 +304,7 @@ export default function HubDashboard({
                 </section>
 
                 <section className="grid gap-4 lg:grid-cols-2">
-                    <Panel title="شرکای محدوده">
+                    <Panel title="شرکای محدوده" isEmpty={partners.length === 0}>
                         {partners.map((partner) => (
                             <article
                                 key={partner.id}
@@ -216,7 +332,10 @@ export default function HubDashboard({
                         ))}
                     </Panel>
 
-                    <Panel title="نمایشگرهای محدوده">
+                    <Panel
+                        title="نمایشگرهای محدوده"
+                        isEmpty={displayDevices.length === 0}
+                    >
                         {displayDevices.map((device) => (
                             <article
                                 key={device.id}
@@ -246,7 +365,10 @@ export default function HubDashboard({
                 </section>
 
                 <section className="grid gap-4 lg:grid-cols-2">
-                    <Panel title="تبلیغات در محدوده رواق">
+                    <Panel
+                        title="تبلیغات در محدوده رواق"
+                        isEmpty={adRequests.length === 0}
+                    >
                         {adRequests.map((adRequest) => (
                             <article
                                 key={adRequest.id}
@@ -276,45 +398,25 @@ export default function HubDashboard({
                                     {adRequest.placementType ?? '-'}
                                 </p>
                                 {adRequest.status === 'pending_review' ? (
-                                    <div className="flex flex-wrap gap-2 pt-1">
-                                        <Form
-                                            action={`/admin/ads/${adRequest.id}/approve`}
-                                            method="post"
-                                            options={{ preserveScroll: true }}
-                                        >
-                                            {({ processing }) => (
-                                                <Button
-                                                    size="sm"
-                                                    disabled={processing}
-                                                >
-                                                    <CheckCircle2 className="size-4" />
-                                                    تایید
-                                                </Button>
-                                            )}
-                                        </Form>
-                                        <Form
-                                            action={`/admin/ads/${adRequest.id}/reject`}
-                                            method="post"
-                                            options={{ preserveScroll: true }}
-                                        >
-                                            {({ processing }) => (
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    disabled={processing}
-                                                >
-                                                    <XCircle className="size-4" />
-                                                    رد
-                                                </Button>
-                                            )}
-                                        </Form>
-                                    </div>
-                                ) : null}
+                                    <ReviewActions
+                                        approveAction={`/admin/ads/${adRequest.id}/approve`}
+                                        rejectAction={`/admin/ads/${adRequest.id}/reject`}
+                                        placeholder="یادداشت تایید یا دلیل رد تبلیغ"
+                                    />
+                                ) : (
+                                    <DecisionNote
+                                        notes={adRequest.reviewNotes}
+                                        reviewedAt={adRequest.reviewedAt}
+                                    />
+                                )}
                             </article>
                         ))}
                     </Panel>
 
-                    <Panel title="پیشنهادها و پاداش‌های فروشگاهی">
+                    <Panel
+                        title="پیشنهادها و پاداش‌های فروشگاهی"
+                        isEmpty={rewards.length === 0}
+                    >
                         {rewards.map((reward) => (
                             <article
                                 key={reward.id}
@@ -342,40 +444,17 @@ export default function HubDashboard({
                                     {reward.campaignName ?? '-'}
                                 </p>
                                 {reward.approvalStatus === 'pending_review' ? (
-                                    <div className="flex flex-wrap gap-2 pt-1">
-                                        <Form
-                                            action={`/admin/rewards/${reward.id}/approve`}
-                                            method="post"
-                                            options={{ preserveScroll: true }}
-                                        >
-                                            {({ processing }) => (
-                                                <Button
-                                                    size="sm"
-                                                    disabled={processing}
-                                                >
-                                                    <BadgeCheck className="size-4" />
-                                                    تایید
-                                                </Button>
-                                            )}
-                                        </Form>
-                                        <Form
-                                            action={`/admin/rewards/${reward.id}/reject`}
-                                            method="post"
-                                            options={{ preserveScroll: true }}
-                                        >
-                                            {({ processing }) => (
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    disabled={processing}
-                                                >
-                                                    <XCircle className="size-4" />
-                                                    رد
-                                                </Button>
-                                            )}
-                                        </Form>
-                                    </div>
-                                ) : null}
+                                    <ReviewActions
+                                        approveAction={`/admin/rewards/${reward.id}/approve`}
+                                        rejectAction={`/admin/rewards/${reward.id}/reject`}
+                                        placeholder="یادداشت تایید یا دلیل رد پیشنهاد"
+                                    />
+                                ) : (
+                                    <DecisionNote
+                                        notes={reward.reviewNotes}
+                                        reviewedAt={reward.reviewedAt}
+                                    />
+                                )}
                             </article>
                         ))}
                     </Panel>
@@ -385,16 +464,32 @@ export default function HubDashboard({
     );
 }
 
-function Panel({ title, children }: { title: string; children: ReactNode }) {
+function Panel({
+    title,
+    children,
+    isEmpty = false,
+}: {
+    title: string;
+    children: ReactNode;
+    isEmpty?: boolean;
+}) {
     return (
         <div className="rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border">
             <div className="border-b border-sidebar-border/70 px-4 py-3 dark:border-sidebar-border">
                 <h2 className="font-semibold">{title}</h2>
             </div>
             <div className="divide-y divide-sidebar-border/70 dark:divide-sidebar-border">
-                {children}
+                {isEmpty ? <EmptyState /> : children}
             </div>
         </div>
+    );
+}
+
+function EmptyState() {
+    return (
+        <p className="px-4 py-4 text-sm text-muted-foreground">
+            موردی برای نمایش وجود ندارد.
+        </p>
     );
 }
 

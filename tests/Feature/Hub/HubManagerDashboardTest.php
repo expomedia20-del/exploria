@@ -56,6 +56,35 @@ class HubManagerDashboardTest extends TestCase
             ->assertJsonMissing(['title' => 'Out of scope cafe ad']);
     }
 
+    public function test_hub_dashboard_api_reports_review_notes_after_scoped_decisions(): void
+    {
+        $manager = User::query()->where('email', 'ravaq.manager@example.test')->firstOrFail();
+        $adRequest = $this->submitAdRequest('ravaq.store@example.test', 'Reviewed ravaq ad');
+        $offer = $this->submitPartnerOffer('ravaq.store@example.test', 'Reviewed ravaq offer');
+
+        $this->actingAs($manager)
+            ->postJson(route('admin.ads.api.approve', $adRequest), [
+                'notes' => 'Approved for mobile ravaq display.',
+            ])
+            ->assertOk();
+
+        $this->actingAs($manager)
+            ->postJson(route('admin.rewards.api.reject', $offer), [
+                'notes' => 'Partner must clarify terms before publishing.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.reviewNotes', 'Partner must clarify terms before publishing.');
+
+        $response = $this->actingAs($manager)
+            ->getJson(route('hub.dashboard.index'))
+            ->assertOk();
+
+        $this->assertSame('Approved for mobile ravaq display.', $response->json('data.adRequests.0.reviewNotes'));
+        $this->assertNotNull($response->json('data.adRequests.0.reviewedAt'));
+        $this->assertSame('Partner must clarify terms before publishing.', $response->json('data.rewards.0.reviewNotes'));
+        $this->assertNotNull($response->json('data.rewards.0.reviewedAt'));
+    }
+
     private function submitAdRequest(string $email, string $title): AdRequest
     {
         $partnerUser = User::query()->where('email', $email)->firstOrFail();

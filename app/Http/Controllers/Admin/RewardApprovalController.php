@@ -15,6 +15,7 @@ class RewardApprovalController extends Controller
     public function approve(Request $request, RewardDefinition $reward, HubManagerAccessService $access): JsonResponse|RedirectResponse
     {
         $access->ensureCanReviewReward($request->user(), $reward);
+        $data = $this->validatedReviewData($request);
 
         $reward->update([
             'status' => RecordStatus::Active,
@@ -23,6 +24,7 @@ class RewardApprovalController extends Controller
                 'approval_status' => 'approved',
                 'approved_by_user_id' => $request->user()?->id,
                 'approved_at' => now()->toIso8601String(),
+                'review_notes' => $data['notes'],
             ],
         ]);
 
@@ -36,6 +38,7 @@ class RewardApprovalController extends Controller
     public function reject(Request $request, RewardDefinition $reward, HubManagerAccessService $access): JsonResponse|RedirectResponse
     {
         $access->ensureCanReviewReward($request->user(), $reward);
+        $data = $this->validatedReviewData($request);
 
         $reward->update([
             'status' => RecordStatus::Inactive,
@@ -44,6 +47,7 @@ class RewardApprovalController extends Controller
                 'approval_status' => 'rejected',
                 'rejected_by_user_id' => $request->user()?->id,
                 'rejected_at' => now()->toIso8601String(),
+                'review_notes' => $data['notes'],
             ],
         ]);
 
@@ -52,6 +56,16 @@ class RewardApprovalController extends Controller
         }
 
         return back()->with('success', 'پیشنهاد فروشگاه رد شد.');
+    }
+
+    /** @return array{notes: string|null} */
+    private function validatedReviewData(Request $request): array
+    {
+        $data = $request->validate([
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        return ['notes' => isset($data['notes']) ? (string) $data['notes'] : null];
     }
 
     /** @return array<string, mixed> */
@@ -63,6 +77,7 @@ class RewardApprovalController extends Controller
             'name' => $reward?->name,
             'status' => $reward?->status->value,
             'approvalStatus' => $reward?->metadata['approval_status'] ?? null,
+            'reviewNotes' => $reward?->metadata['review_notes'] ?? null,
         ];
     }
 }

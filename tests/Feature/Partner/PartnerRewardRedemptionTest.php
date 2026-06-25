@@ -142,18 +142,18 @@ class PartnerRewardRedemptionTest extends TestCase
 
         $this->actingAs($partnerUser)
             ->postJson(route('partner.offers.api.store'), [
-                'name' => 'ØªØ®ÙÛŒÙ Ù†ÙˆØ´ÛŒØ¯Ù†ÛŒ Ø®Ø§Ù†ÙˆØ§Ø¯Ú¯ÛŒ',
+                'name' => 'Ã˜ÂªÃ˜Â®Ã™ÂÃ›Å’Ã™Â Ã™â€ Ã™Ë†Ã˜Â´Ã›Å’Ã˜Â¯Ã™â€ Ã›Å’ Ã˜Â®Ã˜Â§Ã™â€ Ã™Ë†Ã˜Â§Ã˜Â¯ÃšÂ¯Ã›Å’',
                 'reward_type' => 'discount',
                 'point_cost' => 250,
                 'stock_quantity' => 30,
-                'description' => 'Ø¨Ø±Ø§ÛŒ Ø®Ø§Ù†ÙˆØ§Ø¯Ù‡â€ŒÙ‡Ø§ÛŒÛŒ Ú©Ù‡ Ù…Ø³ÛŒØ± Ø§Ú©ÙˆÙ¾Ø§Ø±Ú© Ø±Ø§ Ú©Ø§Ù…Ù„ Ù…ÛŒâ€ŒÚ©Ù†Ù†Ø¯.',
-                'terms' => 'Ù‡Ø± Ú©Ø§Ø±Ø¨Ø± ÙÙ‚Ø· ÛŒÚ© Ø¨Ø§Ø±.',
+                'description' => 'Ã˜Â¨Ã˜Â±Ã˜Â§Ã›Å’ Ã˜Â®Ã˜Â§Ã™â€ Ã™Ë†Ã˜Â§Ã˜Â¯Ã™â€¡Ã¢â‚¬Å’Ã™â€¡Ã˜Â§Ã›Å’Ã›Å’ ÃšÂ©Ã™â€¡ Ã™â€¦Ã˜Â³Ã›Å’Ã˜Â± Ã˜Â§ÃšÂ©Ã™Ë†Ã™Â¾Ã˜Â§Ã˜Â±ÃšÂ© Ã˜Â±Ã˜Â§ ÃšÂ©Ã˜Â§Ã™â€¦Ã™â€ž Ã™â€¦Ã›Å’Ã¢â‚¬Å’ÃšÂ©Ã™â€ Ã™â€ Ã˜Â¯.',
+                'terms' => 'Ã™â€¡Ã˜Â± ÃšÂ©Ã˜Â§Ã˜Â±Ã˜Â¨Ã˜Â± Ã™ÂÃ™â€šÃ˜Â· Ã›Å’ÃšÂ© Ã˜Â¨Ã˜Â§Ã˜Â±.',
             ])
             ->assertCreated()
             ->assertJsonPath('data.status', 'draft');
 
         $offer = RewardDefinition::query()
-            ->where('name', 'ØªØ®ÙÛŒÙ Ù†ÙˆØ´ÛŒØ¯Ù†ÛŒ Ø®Ø§Ù†ÙˆØ§Ø¯Ú¯ÛŒ')
+            ->where('name', 'Ã˜ÂªÃ˜Â®Ã™ÂÃ›Å’Ã™Â Ã™â€ Ã™Ë†Ã˜Â´Ã›Å’Ã˜Â¯Ã™â€ Ã›Å’ Ã˜Â®Ã˜Â§Ã™â€ Ã™Ë†Ã˜Â§Ã˜Â¯ÃšÂ¯Ã›Å’')
             ->with('partnerAccount')
             ->firstOrFail();
 
@@ -193,15 +193,19 @@ class PartnerRewardRedemptionTest extends TestCase
         $manager = User::query()->where('email', 'ravaq.manager@example.test')->firstOrFail();
 
         $this->actingAs($manager)
-            ->postJson(route('admin.rewards.api.reject', $offer))
+            ->postJson(route('admin.rewards.api.reject', $offer), [
+                'notes' => 'Offer needs clearer redemption terms.',
+            ])
             ->assertOk()
             ->assertJsonPath('data.status', 'inactive')
-            ->assertJsonPath('data.approvalStatus', 'rejected');
+            ->assertJsonPath('data.approvalStatus', 'rejected')
+            ->assertJsonPath('data.reviewNotes', 'Offer needs clearer redemption terms.');
 
         $offer->refresh();
 
         $this->assertSame('inactive', $offer->status->value);
         $this->assertSame('rejected', $offer->metadata['approval_status']);
+        $this->assertSame('Offer needs clearer redemption terms.', $offer->metadata['review_notes']);
     }
 
     public function test_hub_manager_cannot_review_offer_outside_managed_hub(): void
@@ -225,7 +229,7 @@ class PartnerRewardRedemptionTest extends TestCase
             ->assertRedirect();
     }
 
-    private function submitPartnerOffer(string $email = 'cafe.eco@example.test', string $name = 'Ù¾ÛŒØ´Ù†Ù‡Ø§Ø¯ ØªØ³ØªÛŒ ÙØ±ÙˆØ´Ú¯Ø§Ù‡'): RewardDefinition
+    private function submitPartnerOffer(string $email = 'cafe.eco@example.test', string $name = 'Ã™Â¾Ã›Å’Ã˜Â´Ã™â€ Ã™â€¡Ã˜Â§Ã˜Â¯ Ã˜ÂªÃ˜Â³Ã˜ÂªÃ›Å’ Ã™ÂÃ˜Â±Ã™Ë†Ã˜Â´ÃšÂ¯Ã˜Â§Ã™â€¡'): RewardDefinition
     {
         $partnerUser = User::query()->where('email', $email)->firstOrFail();
 
