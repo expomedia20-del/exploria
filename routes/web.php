@@ -11,6 +11,7 @@ use App\Http\Controllers\Auth\OtpController;
 use App\Http\Controllers\ConsentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Display\DisplayAdvertisingController;
+use App\Http\Controllers\Hub\HubManagerDashboardController;
 use App\Http\Controllers\Partner\PartnerAdvertisingController;
 use App\Http\Controllers\Partner\PartnerDashboardController;
 use App\Http\Controllers\Partner\PartnerOfferController;
@@ -51,6 +52,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/partner/ads', [PartnerAdvertisingController::class, 'store'])
         ->middleware('role:shop_partner,sponsor')
         ->name('partner.ads.store');
+    Route::get('/hub/dashboard', [HubManagerDashboardController::class, 'page'])
+        ->middleware('role:hub_manager')
+        ->name('hub.dashboard');
 });
 
 Route::get('/api/v1/display/{displayDevice:code}/schedule', [DisplayAdvertisingController::class, 'schedule'])
@@ -191,6 +195,9 @@ Route::get('/api/v1/partner/ads', [PartnerAdvertisingController::class, 'index']
 Route::post('/api/v1/partner/ads', [PartnerAdvertisingController::class, 'store'])
     ->middleware(['auth', 'role:shop_partner,sponsor'])
     ->name('partner.ads.api.store');
+Route::get('/api/v1/hub/dashboard', [HubManagerDashboardController::class, 'index'])
+    ->middleware(['auth', 'role:hub_manager'])
+    ->name('hub.dashboard.index');
 
 Route::middleware(['auth', 'verified'])->get('dashboard', DashboardController::class)->name('dashboard');
 

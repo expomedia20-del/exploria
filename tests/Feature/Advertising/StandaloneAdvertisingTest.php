@@ -52,9 +52,9 @@ class StandaloneAdvertisingTest extends TestCase
 
         $this->actingAs($partnerUser)
             ->postJson(route('partner.ads.api.store'), [
-                'title' => 'تبلیغ نوشیدنی خانواده',
-                'body_copy' => 'نمایش پیشنهاد ویژه کافه اکو در مسیر خانواده.',
-                'cta_text' => 'مشاهده پیشنهاد',
+                'title' => 'ØªØ¨Ù„ÛŒØº Ù†ÙˆØ´ÛŒØ¯Ù†ÛŒ Ø®Ø§Ù†ÙˆØ§Ø¯Ù‡',
+                'body_copy' => 'Ù†Ù…Ø§ÛŒØ´ Ù¾ÛŒØ´Ù†Ù‡Ø§Ø¯ ÙˆÛŒÚ˜Ù‡ Ú©Ø§ÙÙ‡ Ø§Ú©Ùˆ Ø¯Ø± Ù…Ø³ÛŒØ± Ø®Ø§Ù†ÙˆØ§Ø¯Ù‡.',
+                'cta_text' => 'Ù…Ø´Ø§Ù‡Ø¯Ù‡ Ù¾ÛŒØ´Ù†Ù‡Ø§Ø¯',
                 'target_url' => 'https://example.com/cafe-eco',
                 'ad_type' => 'standalone',
                 'creative_type' => 'image',
@@ -67,7 +67,7 @@ class StandaloneAdvertisingTest extends TestCase
             ->assertJsonPath('data.status', 'pending_review');
 
         $adRequest = AdRequest::query()
-            ->where('title', 'تبلیغ نوشیدنی خانواده')
+            ->where('title', 'ØªØ¨Ù„ÛŒØº Ù†ÙˆØ´ÛŒØ¯Ù†ÛŒ Ø®Ø§Ù†ÙˆØ§Ø¯Ù‡')
             ->with(['partnerAccount', 'creatives', 'placements'])
             ->firstOrFail();
 
@@ -90,7 +90,7 @@ class StandaloneAdvertisingTest extends TestCase
 
         $this->actingAs($admin)
             ->postJson(route('admin.ads.api.approve', $adRequest), [
-                'notes' => 'محتوا برای نمایشگر ورودی تایید شد.',
+                'notes' => 'Ù…Ø­ØªÙˆØ§ Ø¨Ø±Ø§ÛŒ Ù†Ù…Ø§ÛŒØ´Ú¯Ø± ÙˆØ±ÙˆØ¯ÛŒ ØªØ§ÛŒÛŒØ¯ Ø´Ø¯.',
             ])
             ->assertOk()
             ->assertJsonPath('data.status', 'approved');
@@ -104,12 +104,12 @@ class StandaloneAdvertisingTest extends TestCase
 
     public function test_hub_manager_can_reject_ad_request(): void
     {
-        $adRequest = $this->submitAdRequest();
+        $adRequest = $this->submitAdRequest('ravaq.store@example.test', 'Ravaq scoped ad request');
         $manager = User::query()->where('email', 'ravaq.manager@example.test')->firstOrFail();
 
         $this->actingAs($manager)
             ->postJson(route('admin.ads.api.reject', $adRequest), [
-                'notes' => 'نیازمند اصلاح محتوا.',
+                'notes' => 'Ù†ÛŒØ§Ø²Ù…Ù†Ø¯ Ø§ØµÙ„Ø§Ø­ Ù…Ø­ØªÙˆØ§.',
             ])
             ->assertOk()
             ->assertJsonPath('data.status', 'rejected');
@@ -199,20 +199,32 @@ class StandaloneAdvertisingTest extends TestCase
             ->assertJsonValidationErrors('ad_request_id');
     }
 
-    private function submitAdRequest(): AdRequest
+    public function test_hub_manager_cannot_review_foreign_ad_request(): void
     {
-        $partnerUser = User::query()->where('email', 'cafe.eco@example.test')->firstOrFail();
+        $adRequest = $this->submitAdRequest();
+        $manager = User::query()->where('email', 'ravaq.manager@example.test')->firstOrFail();
+
+        $this->actingAs($manager)
+            ->postJson(route('admin.ads.api.approve', $adRequest))
+            ->assertForbidden();
+
+        $this->assertSame('pending_review', $adRequest->fresh()->status);
+    }
+
+    private function submitAdRequest(string $email = 'cafe.eco@example.test', string $title = 'ØªØ¨Ù„ÛŒØº ØªØ³ØªÛŒ Ú©Ø§ÙÙ‡'): AdRequest
+    {
+        $partnerUser = User::query()->where('email', $email)->firstOrFail();
 
         $this->actingAs($partnerUser)
             ->postJson(route('partner.ads.api.store'), [
-                'title' => 'تبلیغ تستی کافه',
-                'body_copy' => 'یک درخواست تبلیغ مستقل برای تست.',
+                'title' => $title,
+                'body_copy' => 'ÛŒÚ© Ø¯Ø±Ø®ÙˆØ§Ø³Øª ØªØ¨Ù„ÛŒØº Ù…Ø³ØªÙ‚Ù„ Ø¨Ø±Ø§ÛŒ ØªØ³Øª.',
                 'ad_type' => 'standalone',
                 'creative_type' => 'image',
                 'placement_type' => 'fixed_display',
             ])
             ->assertCreated();
 
-        return AdRequest::query()->where('title', 'تبلیغ تستی کافه')->firstOrFail();
+        return AdRequest::query()->where('title', $title)->firstOrFail();
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ReviewAdRequestRequest;
 use App\Models\AdRequest;
+use App\Services\HubManagerAccessService;
 use App\Services\StandaloneAdvertisingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -23,8 +24,10 @@ class AdvertisingController extends Controller
         return response()->json(['status' => 'success', 'data' => $service->adminOverview()]);
     }
 
-    public function approve(ReviewAdRequestRequest $request, AdRequest $adRequest, StandaloneAdvertisingService $service): JsonResponse|RedirectResponse
+    public function approve(ReviewAdRequestRequest $request, AdRequest $adRequest, StandaloneAdvertisingService $service, HubManagerAccessService $access): JsonResponse|RedirectResponse
     {
+        $access->ensureCanReviewAdRequest($request->user(), $adRequest);
+
         $adRequest = $service->approve($request->user(), $adRequest, $request->validated());
 
         if ($request->expectsJson()) {
@@ -38,8 +41,10 @@ class AdvertisingController extends Controller
         return back()->with('success', 'درخواست تبلیغ تایید و برای انتشار زمان‌بندی شد.');
     }
 
-    public function reject(ReviewAdRequestRequest $request, AdRequest $adRequest, StandaloneAdvertisingService $service): JsonResponse|RedirectResponse
+    public function reject(ReviewAdRequestRequest $request, AdRequest $adRequest, StandaloneAdvertisingService $service, HubManagerAccessService $access): JsonResponse|RedirectResponse
     {
+        $access->ensureCanReviewAdRequest($request->user(), $adRequest);
+
         $adRequest = $service->reject($request->user(), $adRequest, $request->validated());
 
         if ($request->expectsJson()) {

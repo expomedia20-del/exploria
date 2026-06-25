@@ -5,6 +5,7 @@ import {
     LayoutGrid,
     MapPinned,
     Megaphone,
+    Network,
     QrCode,
     ShoppingBag,
     Store,
@@ -66,6 +67,11 @@ const mainNavItems: NavItem[] = [
         title: 'پنل فروشگاه',
         href: '/partner/dashboard',
         icon: ShoppingBag,
+    },
+    {
+        title: 'پنل مدیر رواق',
+        href: '/hub/dashboard',
+        icon: Network,
     },
 ];
 

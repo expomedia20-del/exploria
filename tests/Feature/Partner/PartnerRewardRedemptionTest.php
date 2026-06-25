@@ -142,18 +142,18 @@ class PartnerRewardRedemptionTest extends TestCase
 
         $this->actingAs($partnerUser)
             ->postJson(route('partner.offers.api.store'), [
-                'name' => 'تخفیف نوشیدنی خانوادگی',
+                'name' => 'ØªØ®ÙÛŒÙ Ù†ÙˆØ´ÛŒØ¯Ù†ÛŒ Ø®Ø§Ù†ÙˆØ§Ø¯Ú¯ÛŒ',
                 'reward_type' => 'discount',
                 'point_cost' => 250,
                 'stock_quantity' => 30,
-                'description' => 'برای خانواده‌هایی که مسیر اکوپارک را کامل می‌کنند.',
-                'terms' => 'هر کاربر فقط یک بار.',
+                'description' => 'Ø¨Ø±Ø§ÛŒ Ø®Ø§Ù†ÙˆØ§Ø¯Ù‡â€ŒÙ‡Ø§ÛŒÛŒ Ú©Ù‡ Ù…Ø³ÛŒØ± Ø§Ú©ÙˆÙ¾Ø§Ø±Ú© Ø±Ø§ Ú©Ø§Ù…Ù„ Ù…ÛŒâ€ŒÚ©Ù†Ù†Ø¯.',
+                'terms' => 'Ù‡Ø± Ú©Ø§Ø±Ø¨Ø± ÙÙ‚Ø· ÛŒÚ© Ø¨Ø§Ø±.',
             ])
             ->assertCreated()
             ->assertJsonPath('data.status', 'draft');
 
         $offer = RewardDefinition::query()
-            ->where('name', 'تخفیف نوشیدنی خانوادگی')
+            ->where('name', 'ØªØ®ÙÛŒÙ Ù†ÙˆØ´ÛŒØ¯Ù†ÛŒ Ø®Ø§Ù†ÙˆØ§Ø¯Ú¯ÛŒ')
             ->with('partnerAccount')
             ->firstOrFail();
 
@@ -183,7 +183,7 @@ class PartnerRewardRedemptionTest extends TestCase
 
     public function test_hub_manager_can_reject_partner_offer_and_viewer_cannot_approve_it(): void
     {
-        $offer = $this->submitPartnerOffer();
+        $offer = $this->submitPartnerOffer('ravaq.store@example.test', 'Ravaq scoped partner offer');
         $viewer = User::factory()->create(['role' => UserRole::Viewer]);
 
         $this->actingAs($viewer)
@@ -204,6 +204,18 @@ class PartnerRewardRedemptionTest extends TestCase
         $this->assertSame('rejected', $offer->metadata['approval_status']);
     }
 
+    public function test_hub_manager_cannot_review_offer_outside_managed_hub(): void
+    {
+        $offer = $this->submitPartnerOffer();
+        $manager = User::query()->where('email', 'ravaq.manager@example.test')->firstOrFail();
+
+        $this->actingAs($manager)
+            ->postJson(route('admin.rewards.api.approve', $offer))
+            ->assertForbidden();
+
+        $this->assertSame('draft', $offer->fresh()->status->value);
+    }
+
     private function completeMission(string $code): void
     {
         $mission = MissionInstance::query()->where('code', $code)->firstOrFail();
@@ -213,19 +225,19 @@ class PartnerRewardRedemptionTest extends TestCase
             ->assertRedirect();
     }
 
-    private function submitPartnerOffer(): RewardDefinition
+    private function submitPartnerOffer(string $email = 'cafe.eco@example.test', string $name = 'Ù¾ÛŒØ´Ù†Ù‡Ø§Ø¯ ØªØ³ØªÛŒ ÙØ±ÙˆØ´Ú¯Ø§Ù‡'): RewardDefinition
     {
-        $partnerUser = User::query()->where('email', 'cafe.eco@example.test')->firstOrFail();
+        $partnerUser = User::query()->where('email', $email)->firstOrFail();
 
         $this->actingAs($partnerUser)
             ->postJson(route('partner.offers.api.store'), [
-                'name' => 'پیشنهاد تستی فروشگاه',
+                'name' => $name,
                 'reward_type' => 'partner_coupon',
                 'point_cost' => 120,
                 'stock_quantity' => 10,
             ])
             ->assertCreated();
 
-        return RewardDefinition::query()->where('name', 'پیشنهاد تستی فروشگاه')->firstOrFail();
+        return RewardDefinition::query()->where('name', $name)->firstOrFail();
     }
 }

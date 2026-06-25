@@ -5,14 +5,17 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\RecordStatus;
 use App\Http\Controllers\Controller;
 use App\Models\RewardDefinition;
+use App\Services\HubManagerAccessService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class RewardApprovalController extends Controller
 {
-    public function approve(Request $request, RewardDefinition $reward): JsonResponse|RedirectResponse
+    public function approve(Request $request, RewardDefinition $reward, HubManagerAccessService $access): JsonResponse|RedirectResponse
     {
+        $access->ensureCanReviewReward($request->user(), $reward);
+
         $reward->update([
             'status' => RecordStatus::Active,
             'metadata' => [
@@ -30,8 +33,10 @@ class RewardApprovalController extends Controller
         return back()->with('success', 'پیشنهاد فروشگاه تایید و فعال شد.');
     }
 
-    public function reject(Request $request, RewardDefinition $reward): JsonResponse|RedirectResponse
+    public function reject(Request $request, RewardDefinition $reward, HubManagerAccessService $access): JsonResponse|RedirectResponse
     {
+        $access->ensureCanReviewReward($request->user(), $reward);
+
         $reward->update([
             'status' => RecordStatus::Inactive,
             'metadata' => [
