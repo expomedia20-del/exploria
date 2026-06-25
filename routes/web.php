@@ -59,6 +59,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/hub/ads/{adRequest}/schedule', [HubAdScheduleController::class, 'store'])
         ->middleware('role:hub_manager')
         ->name('hub.ads.schedule');
+    Route::post('/hub/ad-placements/{adPlacement}/cancel', [HubAdScheduleController::class, 'cancel'])
+        ->middleware('role:hub_manager')
+        ->name('hub.ad-placements.cancel');
 });
 
 Route::get('/api/v1/display/{displayDevice:code}/schedule', [DisplayAdvertisingController::class, 'schedule'])
@@ -205,6 +208,9 @@ Route::get('/api/v1/hub/dashboard', [HubManagerDashboardController::class, 'inde
 Route::post('/api/v1/hub/ads/{adRequest}/schedule', [HubAdScheduleController::class, 'store'])
     ->middleware(['auth', 'role:hub_manager'])
     ->name('hub.ads.api.schedule');
+Route::post('/api/v1/hub/ad-placements/{adPlacement}/cancel', [HubAdScheduleController::class, 'cancel'])
+    ->middleware(['auth', 'role:hub_manager'])
+    ->name('hub.ad-placements.api.cancel');
 
 Route::middleware(['auth', 'verified'])->get('dashboard', DashboardController::class)->name('dashboard');
 

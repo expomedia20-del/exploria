@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\RecordStatus;
+use App\Models\AdPlacement;
 use App\Models\AdRequest;
 use App\Models\DisplayDevice;
 use App\Models\PartnerLocation;
@@ -103,6 +104,29 @@ class HubManagerDashboardService
                 'venueName' => $device->venue?->name,
             ]);
 
+        $displayScheduleItems = AdPlacement::query()
+            ->with(['adRequest:id,code,title,status,partner_account_id', 'adRequest.partnerAccount:id,code,name', 'displayDevice:id,code,name,device_type,hub_id'])
+            ->whereIn('display_device_id', $displayDevices->pluck('id'))
+            ->where('status', 'scheduled')
+            ->orderBy('priority')
+            ->latest('updated_at')
+            ->get()
+            ->map(fn (AdPlacement $placement): array => [
+                'id' => $placement->id,
+                'adRequestId' => $placement->ad_request_id,
+                'adTitle' => $placement->adRequest?->title,
+                'adCode' => $placement->adRequest?->code,
+                'partnerName' => $placement->adRequest?->partnerAccount?->name,
+                'displayDeviceId' => $placement->display_device_id,
+                'displayDeviceName' => $placement->displayDevice?->name,
+                'displayDeviceCode' => $placement->displayDevice?->code,
+                'placementType' => $placement->placement_type,
+                'status' => $placement->status,
+                'priority' => $placement->priority,
+                'startsAt' => $placement->starts_at?->toIso8601String(),
+                'endsAt' => $placement->ends_at?->toIso8601String(),
+            ]);
+
         return [
             'stats' => [
                 'hubs' => $hubs->count(),
@@ -122,6 +146,7 @@ class HubManagerDashboardService
             'adRequests' => $adRequests,
             'rewards' => $rewards,
             'displayDevices' => $displayDevices,
+            'displayScheduleItems' => $displayScheduleItems,
         ];
     }
 }

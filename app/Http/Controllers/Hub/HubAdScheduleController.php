@@ -75,6 +75,38 @@ class HubAdScheduleController extends Controller
         return back()->with('success', 'تبلیغ روی نمایشگر زمان‌بندی شد.');
     }
 
+    public function cancel(Request $request, AdPlacement $adPlacement, HubManagerAccessService $access): JsonResponse|RedirectResponse
+    {
+        $adPlacement->load(['displayDevice:id,hub_id,code,name,device_type']);
+
+        if (! $adPlacement->displayDevice) {
+            throw ValidationException::withMessages([
+                'ad_placement' => 'این تبلیغ روی نمایشگر زمان‌بندی نشده است.',
+            ]);
+        }
+
+        $access->ensureCanManageDisplayDevice($request->user(), $adPlacement->displayDevice);
+
+        $adPlacement->update([
+            'display_device_id' => null,
+            'status' => 'approved',
+            'metadata' => [
+                ...($adPlacement->metadata ?? []),
+                'cancelled_by_user_id' => $request->user()?->id,
+                'cancelled_at' => now()->toIso8601String(),
+            ],
+        ]);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'status' => 'success',
+                'data' => $this->serialize($adPlacement->fresh()),
+            ]);
+        }
+
+        return back()->with('success', 'زمان‌بندی تبلیغ از نمایشگر لغو شد.');
+    }
+
     /** @return array<string, mixed> */
     private function serialize(?AdPlacement $placement): array
     {

@@ -48,3 +48,23 @@ Next recommended development slice: turn the scoped hub dashboard into an operat
 - `/hub/dashboard` now shows scheduling controls for approved ads and current display assignment/priority.
 - Targeted tests now cover scheduling to the managed mobile display and rejection of a foreign display.
 - Verification passed: targeted hub/advertising tests, full `composer test` with 119 tests and 650 assertions, `npm run types:check`, `npm run lint:check`, `npm run format:check`, and `npm run build`.
+## Update - Hub Display Operations Queue
+
+- Approval and publishing are now separated: ad approval sets placements to `approved`, not `scheduled`.
+- Display schedule API now returns only placements explicitly assigned to the requested display device.
+- Added active display schedule queue to `/hub/dashboard` through `displayScheduleItems` from `/api/v1/hub/dashboard`.
+- Added cancellation flow for hub managers:
+  - Web route: `POST /hub/ad-placements/{adPlacement}/cancel`
+  - API route: `POST /api/v1/hub/ad-placements/{adPlacement}/cancel`
+- Cancellation clears `display_device_id`, returns the placement to `approved`, and removes it from display playback feeds.
+- Verification passed after this update:
+  - Targeted advertising + hub tests: 16 tests, 145 assertions.
+  - `composer test`: 120 tests, 669 assertions, plus Pint and PHPStan.
+  - `npm run types:check`.
+  - `npm run lint:check`.
+  - `npm run format:check`.
+  - `npm run build`.
+
+## Continue from here - Next Slice
+
+Recommended next development slice: build the admin/global display operations console so platform admin can see all displays, scheduled ads, playback health, event volume, and override/cancel display assignments across hubs.

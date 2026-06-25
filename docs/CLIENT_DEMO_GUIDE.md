@@ -171,7 +171,7 @@ http://127.0.0.1:8000/demo
 Last completed product-code commit:
 
 ```text
-1f46804 feat: add scoped hub manager dashboard
+Use git log -1 --oneline after pulling/transferring the latest project folder.
 ```
 
 Latest verified quality gates:
@@ -187,3 +187,13 @@ npm run build
 All passed on 2026-06-25.
 
 Local runtime note: on 2026-06-25 the local SQLite database was backed up, then `php artisan migrate --force` and `php artisan db:seed --class=PilotLocationSeeder --force` were run so `/hub/dashboard` can load against the current schema.
+## Demo Addendum - Hub Display Operations Queue
+
+Use `/hub/dashboard` as `ravaq.manager@example.test` to show the real scoped hub manager workflow:
+
+1. Review/approve a ravaq ad request.
+2. Schedule the approved mobile-display ad to the managed mobile display.
+3. Show the active display operations queue.
+4. Cancel the scheduled placement and explain that approval does not publish an ad until a manager explicitly schedules it.
+
+This is backed by `/api/v1/hub/dashboard`, `POST /api/v1/hub/ads/{adRequest}/schedule`, `POST /api/v1/hub/ad-placements/{adPlacement}/cancel`, and `/api/v1/display/{deviceCode}/schedule`.

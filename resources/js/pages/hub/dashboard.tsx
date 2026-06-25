@@ -1,4 +1,4 @@
-﻿import { Form, Head } from '@inertiajs/react';
+import { Form, Head } from '@inertiajs/react';
 import {
     Building2,
     CheckCircle2,
@@ -76,6 +76,21 @@ type DisplayDeviceItem = {
     venueName: string | null;
 };
 
+type DisplayScheduleItem = {
+    id: string;
+    adRequestId: string;
+    adTitle: string | null;
+    adCode: string | null;
+    partnerName: string | null;
+    displayDeviceId: string | null;
+    displayDeviceName: string | null;
+    displayDeviceCode: string | null;
+    placementType: string;
+    status: string;
+    priority: number;
+    startsAt: string | null;
+    endsAt: string | null;
+};
 type Props = {
     stats: {
         hubs: number;
@@ -89,6 +104,7 @@ type Props = {
     adRequests: AdRequestItem[];
     rewards: RewardItem[];
     displayDevices: DisplayDeviceItem[];
+    displayScheduleItems: DisplayScheduleItem[];
 };
 
 const statusLabels: Record<string, string> = {
@@ -331,6 +347,58 @@ function DecisionNote({
     );
 }
 
+function DisplayScheduleQueue({ items }: { items: DisplayScheduleItem[] }) {
+    return (
+        <Panel title="برنامه فعال نمایشگرها" isEmpty={items.length === 0}>
+            {items.map((item) => (
+                <article key={item.id} className="grid gap-2 px-4 py-3 text-sm">
+                    <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                            <p className="truncate font-medium">
+                                {item.adTitle}
+                            </p>
+                            <p
+                                className="mt-1 truncate text-xs text-muted-foreground"
+                                dir="ltr"
+                            >
+                                {item.adCode} · {item.placementType}
+                            </p>
+                        </div>
+                        <span className="shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
+                            {statusLabels[item.status] ?? item.status}
+                        </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                        نمایشگر: {item.displayDeviceName ?? '-'} · شریک:{' '}
+                        {item.partnerName ?? '-'} · اولویت:{' '}
+                        {item.priority.toLocaleString('fa-IR')}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                        شروع: {formatDate(item.startsAt) ?? '-'} · پایان:{' '}
+                        {formatDate(item.endsAt) ?? '-'}
+                    </p>
+                    <Form
+                        action={`/hub/ad-placements/${item.id}/cancel`}
+                        method="post"
+                        options={{ preserveScroll: true }}
+                    >
+                        {({ processing }) => (
+                            <Button
+                                size="sm"
+                                type="submit"
+                                variant="outline"
+                                disabled={processing}
+                            >
+                                <XCircle className="size-4" />
+                                لغو زمان‌بندی
+                            </Button>
+                        )}
+                    </Form>
+                </article>
+            ))}
+        </Panel>
+    );
+}
 export default function HubDashboard({
     stats,
     hubs,
@@ -338,6 +406,7 @@ export default function HubDashboard({
     adRequests,
     rewards,
     displayDevices,
+    displayScheduleItems,
 }: Props) {
     return (
         <>
@@ -466,6 +535,8 @@ export default function HubDashboard({
                         ))}
                     </Panel>
                 </section>
+
+                <DisplayScheduleQueue items={displayScheduleItems} />
 
                 <section className="grid gap-4 lg:grid-cols-2">
                     <Panel

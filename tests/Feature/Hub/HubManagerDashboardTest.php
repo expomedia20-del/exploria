@@ -118,6 +118,52 @@ class HubManagerDashboardTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.items.0.adRequestId', $adRequest->id)
             ->assertJsonPath('data.items.0.priority', 2);
+
+        $this->actingAs($manager)
+            ->getJson(route('hub.dashboard.index'))
+            ->assertOk()
+            ->assertJsonPath('data.displayScheduleItems.0.adRequestId', $adRequest->id)
+            ->assertJsonPath('data.displayScheduleItems.0.displayDeviceCode', 'ecopark-mobile-promo-display');
+    }
+
+    public function test_hub_manager_can_cancel_managed_display_schedule(): void
+    {
+        $manager = User::query()->where('email', 'ravaq.manager@example.test')->firstOrFail();
+        $adRequest = $this->submitAdRequest('ravaq.store@example.test', 'Cancelable ravaq mobile ad', 'mobile_display');
+        $displayDevice = DisplayDevice::query()->where('code', 'ecopark-mobile-promo-display')->firstOrFail();
+
+        $this->actingAs($manager)
+            ->postJson(route('admin.ads.api.approve', $adRequest))
+            ->assertOk();
+
+        $this->actingAs($manager)
+            ->postJson(route('hub.ads.api.schedule', $adRequest), [
+                'display_device_id' => $displayDevice->id,
+                'starts_at' => now()->subMinute()->toIso8601String(),
+                'ends_at' => now()->addDay()->toIso8601String(),
+                'priority' => 2,
+            ])
+            ->assertOk();
+
+        $placement = $adRequest->placements()->firstOrFail();
+
+        $response = $this->actingAs($manager)
+            ->postJson(route('hub.ad-placements.api.cancel', $placement))
+            ->assertOk()
+            ->assertJsonPath('data.status', 'approved');
+
+        $this->assertNull($response->json('data.displayDeviceId'));
+        $this->assertNull($placement->fresh()->display_device_id);
+        $this->assertSame('approved', $placement->fresh()->status);
+
+        $this->getJson(route('display.schedule', $displayDevice))
+            ->assertOk()
+            ->assertJsonCount(0, 'data.items');
+
+        $this->actingAs($manager)
+            ->getJson(route('hub.dashboard.index'))
+            ->assertOk()
+            ->assertJsonCount(0, 'data.displayScheduleItems');
     }
 
     public function test_hub_manager_cannot_schedule_ad_to_foreign_display(): void

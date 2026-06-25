@@ -456,3 +456,15 @@ docs/features/STANDALONE_ADVERTISING_REQUIREMENTS.md
 - نوع نمایشگر باید با `placement_type` تبلیغ هم‌خوان باشد؛ مثلا تبلیغ `mobile_display` فقط روی نمایشگر `mobile_display` زمان‌بندی می‌شود.
 - فرم زمان‌بندی در `/hub/dashboard` برای تبلیغ تاییدشده نمایشگر، شروع/پایان نمایش و اولویت را ثبت می‌کند.
 - برنامه خروجی نمایشگر (`/api/v1/display/{deviceCode}/schedule`) بعد از زمان‌بندی، تبلیغ همان نمایشگر را برمی‌گرداند.
+## 2026-06-25 Implementation Note - Hub Display Operations Queue
+
+Completed in the real product code after the scoped hub dashboard and display scheduling slice:
+
+- Approved ad requests no longer auto-publish to display clients; approval now leaves placements in `approved` status.
+- Hub/ravaq managers must explicitly schedule an approved ad to a managed active display before it appears in `/api/v1/display/{deviceCode}/schedule`.
+- `/hub/dashboard` now includes an active display operations queue for scheduled placements.
+- Hub/ravaq managers can cancel a scheduled placement, which returns it to `approved` status and removes it from the display schedule feed.
+- Display schedule feeds now return only placements assigned to that exact display device.
+- Tests cover approval, explicit scheduling, scoped queue visibility, cancellation, foreign-display protection, schedule reads, and event recording.
+
+Next recommended slice: add admin/global display operations controls and persisted display playback/status telemetry.

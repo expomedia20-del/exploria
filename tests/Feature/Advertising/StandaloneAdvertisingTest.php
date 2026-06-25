@@ -99,7 +99,7 @@ class StandaloneAdvertisingTest extends TestCase
 
         $this->assertSame('approved', $adRequest->status);
         $this->assertSame('approved', $adRequest->approvals()->firstOrFail()->action);
-        $this->assertSame('scheduled', $adRequest->placements()->firstOrFail()->status);
+        $this->assertSame('approved', $adRequest->placements()->firstOrFail()->status);
     }
 
     public function test_hub_manager_can_reject_ad_request(): void
@@ -140,32 +140,51 @@ class StandaloneAdvertisingTest extends TestCase
 
     public function test_display_device_can_read_approved_schedule(): void
     {
-        $adRequest = $this->submitAdRequest();
-        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $manager = User::query()->where('email', 'ravaq.manager@example.test')->firstOrFail();
+        $adRequest = $this->submitAdRequest('ravaq.store@example.test', 'Ravaq scheduled display ad', 'mobile_display');
+        $device = DisplayDevice::query()->where('code', 'ecopark-mobile-promo-display')->firstOrFail();
 
-        $this->actingAs($admin)
+        $this->actingAs($manager)
             ->postJson(route('admin.ads.api.approve', $adRequest))
             ->assertOk();
 
-        $device = DisplayDevice::query()->where('code', 'ecopark-entry-fixed-display')->firstOrFail();
+        $this->getJson(route('display.schedule', $device))
+            ->assertOk()
+            ->assertJsonCount(0, 'data.items');
+
+        $this->actingAs($manager)
+            ->postJson(route('hub.ads.api.schedule', $adRequest), [
+                'display_device_id' => $device->id,
+                'starts_at' => now()->subMinute()->toIso8601String(),
+                'ends_at' => now()->addDay()->toIso8601String(),
+                'priority' => 2,
+            ])
+            ->assertOk();
 
         $this->getJson(route('display.schedule', $device))
             ->assertOk()
-            ->assertJsonPath('data.device.code', 'ecopark-entry-fixed-display')
+            ->assertJsonPath('data.device.code', 'ecopark-mobile-promo-display')
             ->assertJsonPath('data.items.0.adRequestId', $adRequest->id)
-            ->assertJsonPath('data.items.0.placementType', 'fixed_display');
+            ->assertJsonPath('data.items.0.placementType', 'mobile_display');
     }
 
     public function test_display_device_can_record_ad_events(): void
     {
-        $adRequest = $this->submitAdRequest();
-        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $manager = User::query()->where('email', 'ravaq.manager@example.test')->firstOrFail();
+        $adRequest = $this->submitAdRequest('ravaq.store@example.test', 'Ravaq event display ad', 'mobile_display');
+        $device = DisplayDevice::query()->where('code', 'ecopark-mobile-promo-display')->firstOrFail();
 
-        $this->actingAs($admin)
+        $this->actingAs($manager)
             ->postJson(route('admin.ads.api.approve', $adRequest))
             ->assertOk();
 
-        $device = DisplayDevice::query()->where('code', 'ecopark-entry-fixed-display')->firstOrFail();
+        $this->actingAs($manager)
+            ->postJson(route('hub.ads.api.schedule', $adRequest), [
+                'display_device_id' => $device->id,
+                'starts_at' => now()->subMinute()->toIso8601String(),
+                'ends_at' => now()->addDay()->toIso8601String(),
+            ])
+            ->assertOk();
 
         $this->postJson(route('display.events.store', $device), [
             'ad_request_id' => $adRequest->id,
@@ -211,7 +230,7 @@ class StandaloneAdvertisingTest extends TestCase
         $this->assertSame('pending_review', $adRequest->fresh()->status);
     }
 
-    private function submitAdRequest(string $email = 'cafe.eco@example.test', string $title = 'ØªØ¨Ù„ÛŒØº ØªØ³ØªÛŒ Ú©Ø§ÙÙ‡'): AdRequest
+    private function submitAdRequest(string $email = 'cafe.eco@example.test', string $title = 'Test cafe ad', string $placementType = 'fixed_display'): AdRequest
     {
         $partnerUser = User::query()->where('email', $email)->firstOrFail();
 
@@ -221,7 +240,7 @@ class StandaloneAdvertisingTest extends TestCase
                 'body_copy' => 'ÛŒÚ© Ø¯Ø±Ø®ÙˆØ§Ø³Øª ØªØ¨Ù„ÛŒØº Ù…Ø³ØªÙ‚Ù„ Ø¨Ø±Ø§ÛŒ ØªØ³Øª.',
                 'ad_type' => 'standalone',
                 'creative_type' => 'image',
-                'placement_type' => 'fixed_display',
+                'placement_type' => $placementType,
             ])
             ->assertCreated();
 

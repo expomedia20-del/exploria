@@ -176,7 +176,7 @@ class StandaloneAdvertisingService
                 ],
             ]);
             $adRequest->creatives()->update(['status' => $status]);
-            $adRequest->placements()->update(['status' => $status === 'approved' ? 'scheduled' : 'rejected']);
+            $adRequest->placements()->update(['status' => $status === 'approved' ? 'approved' : 'rejected']);
             $adRequest->approvals()->create([
                 'reviewer_user_id' => $reviewer->id,
                 'action' => $status,
@@ -224,22 +224,7 @@ class StandaloneAdvertisingService
             ->orderBy('priority')
             ->get();
 
-        $genericPlacements = AdPlacement::query()
-            ->with(['adRequest.creatives', 'adRequest.partnerAccount:id,code,name,partner_type'])
-            ->whereNull('display_device_id')
-            ->where('placement_type', $displayDevice->device_type)
-            ->where('status', 'scheduled')
-            ->where(function ($query) use ($now): void {
-                $query->whereNull('starts_at')->orWhere('starts_at', '<=', $now);
-            })
-            ->where(function ($query) use ($now): void {
-                $query->whereNull('ends_at')->orWhere('ends_at', '>=', $now);
-            })
-            ->orderBy('priority')
-            ->get();
-
         $items = $placements
-            ->concat($genericPlacements)
             ->filter(fn ($placement): bool => $placement->adRequest?->status === 'approved')
             ->filter(fn ($placement): bool => $this->withinCaps($placement->adRequest))
             ->values()
