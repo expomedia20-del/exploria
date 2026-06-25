@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AdvertisingController;
 use App\Http\Controllers\Admin\CampaignRegistryController;
+use App\Http\Controllers\Admin\DisplayOperationsController;
 use App\Http\Controllers\Admin\MissionRewardRegistryController;
 use App\Http\Controllers\Admin\PartnerRegistryController;
 use App\Http\Controllers\Admin\QrRegistryController;
@@ -123,6 +124,17 @@ Route::post('/admin/campaigns', [CampaignRegistryController::class, 'store'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.campaigns.store');
 
+Route::get('/admin/display-operations', [DisplayOperationsController::class, 'page'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.display-operations.page');
+
+Route::post('/admin/display-operations/placements/{adPlacement}/schedule', [DisplayOperationsController::class, 'schedule'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.display-operations.placements.schedule');
+
+Route::post('/admin/display-operations/placements/{adPlacement}/cancel', [DisplayOperationsController::class, 'cancel'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.display-operations.placements.cancel');
 Route::get('/admin/venues', [VenueRegistryController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
     ->name('admin.venues.page');
@@ -171,6 +183,17 @@ Route::post('/api/v1/admin/ads/{adRequest}/reject', [AdvertisingController::clas
     ->middleware(['auth', 'role:admin,operator,hub_manager'])
     ->name('admin.ads.api.reject');
 
+Route::get('/api/v1/admin/display-operations', [DisplayOperationsController::class, 'index'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.display-operations.index');
+
+Route::post('/api/v1/admin/display-operations/placements/{adPlacement}/schedule', [DisplayOperationsController::class, 'schedule'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.display-operations.placements.api.schedule');
+
+Route::post('/api/v1/admin/display-operations/placements/{adPlacement}/cancel', [DisplayOperationsController::class, 'cancel'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.display-operations.placements.api.cancel');
 Route::get('/api/v1/admin/venues', [VenueRegistryController::class, 'index'])
     ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
     ->name('admin.venues.index');

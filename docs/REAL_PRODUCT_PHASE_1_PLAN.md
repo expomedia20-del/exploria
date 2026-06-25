@@ -468,3 +468,15 @@ Completed in the real product code after the scoped hub dashboard and display sc
 - Tests cover approval, explicit scheduling, scoped queue visibility, cancellation, foreign-display protection, schedule reads, and event recording.
 
 Next recommended slice: add admin/global display operations controls and persisted display playback/status telemetry.
+## 2026-06-25 Implementation Note - Admin Display Operations Console
+
+Completed after the hub display operations queue:
+
+- Added a global admin/operator display operations console at `/admin/display-operations`.
+- Added API overview at `/api/v1/admin/display-operations`.
+- Admin/operator can schedule any approved compatible ad placement to an active display device.
+- Admin/operator can cancel any scheduled placement globally and return it to `approved` status.
+- Console shows display inventory, active schedule queue, ready-to-schedule placements, event counts, impressions, clicks, last event time, priority, and caps.
+- Added feature tests for opening the console, global scheduling, global cancellation, and incompatible display protection.
+
+Next recommended slice: persist display heartbeat/playback status so the console can show online/offline health, last poll time, and per-device playback errors.

@@ -197,3 +197,13 @@ Use `/hub/dashboard` as `ravaq.manager@example.test` to show the real scoped hub
 4. Cancel the scheduled placement and explain that approval does not publish an ad until a manager explicitly schedules it.
 
 This is backed by `/api/v1/hub/dashboard`, `POST /api/v1/hub/ads/{adRequest}/schedule`, `POST /api/v1/hub/ad-placements/{adPlacement}/cancel`, and `/api/v1/display/{deviceCode}/schedule`.
+## Demo Addendum - Admin Display Operations
+
+Use `/admin/display-operations` as `admin@example.test` to show the global operations layer:
+
+1. Review and approve a partner ad.
+2. Schedule the approved compatible placement to an active fixed or mobile display.
+3. Show the active display queue, event counters, impressions, clicks, caps, and last event time.
+4. Cancel the placement globally and show that it disappears from the display schedule feed.
+
+This demonstrates the difference between local hub/ravaq operations and platform-wide admin operations.

@@ -5,6 +5,7 @@ import {
     LayoutGrid,
     MapPinned,
     Megaphone,
+    MonitorPlay,
     Network,
     QrCode,
     ShoppingBag,
@@ -62,6 +63,11 @@ const mainNavItems: NavItem[] = [
         title: 'تبلیغات مستقل',
         href: '/admin/ads',
         icon: Megaphone,
+    },
+    {
+        title: 'عملیات نمایشگرها',
+        href: '/admin/display-operations',
+        icon: MonitorPlay,
     },
     {
         title: 'پنل فروشگاه',

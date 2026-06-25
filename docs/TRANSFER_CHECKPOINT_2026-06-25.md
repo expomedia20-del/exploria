@@ -68,3 +68,31 @@ Next recommended development slice: turn the scoped hub dashboard into an operat
 ## Continue from here - Next Slice
 
 Recommended next development slice: build the admin/global display operations console so platform admin can see all displays, scheduled ads, playback health, event volume, and override/cancel display assignments across hubs.
+## Update - Admin Display Operations Console
+
+- Added service/controller/page for global display operations:
+  - `App\Services\AdminDisplayOperationsService`
+  - `App\Http\Controllers\Admin\DisplayOperationsController`
+  - `resources/js/pages/admin/display-operations/index.tsx`
+- Added web routes:
+  - `GET /admin/display-operations`
+  - `POST /admin/display-operations/placements/{adPlacement}/schedule`
+  - `POST /admin/display-operations/placements/{adPlacement}/cancel`
+- Added API routes:
+  - `GET /api/v1/admin/display-operations`
+  - `POST /api/v1/admin/display-operations/placements/{adPlacement}/schedule`
+  - `POST /api/v1/admin/display-operations/placements/{adPlacement}/cancel`
+- Sidebar now links to `عملیات نمایشگرها`.
+- Global admin/operator scheduling validates approved ad status, active display status, placement/display type compatibility, date range, and priority.
+- Console reports display inventory, ready placements, active placements, event totals, impressions, clicks, and last event time.
+- Verification passed after this update:
+  - Targeted admin/advertising/hub tests: 20 tests, 190 assertions.
+  - `composer test`: 124 tests, 714 assertions, plus Pint and PHPStan.
+  - `npm run types:check`.
+  - `npm run lint:check`.
+  - `npm run format:check`.
+  - `npm run build`.
+
+## Continue from here - Next Slice
+
+Recommended next development slice: add display heartbeat/playback telemetry so each display client can report online/offline status, current slot, playback result, and errors to the operations console.
