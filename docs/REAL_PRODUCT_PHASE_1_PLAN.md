@@ -419,3 +419,11 @@ docs/features/STANDALONE_ADVERTISING_REQUIREMENTS.md
 - تایید تبلیغ، status درخواست و creative را `approved` و placement را `scheduled` می‌کند.
 - رد تبلیغ، status درخواست، creative و placement را `rejected` می‌کند.
 - صفحه admin advertising موجودی نمایشگرهای ثابت/سیار، صف تایید تبلیغ و وضعیت درخواست‌ها را نشان می‌دهد.
+
+ادامه Sprint 1.6 برای API نمایشگر انجام شد:
+
+- مسیر `GET /api/v1/display/{deviceCode}/schedule` اضافه شد تا نمایشگر ثابت/سیار برنامه تبلیغ تاییدشده را دریافت کند.
+- مسیر `POST /api/v1/display/{deviceCode}/events` اضافه شد تا eventهای `impression`, `click`, `playback_start`, `playback_complete`, و `scan` ثبت شوند.
+- برنامه نمایشگر فقط تبلیغ‌های `approved` با placement `scheduled`، device فعال، بازه زمانی معتبر و سقف impression معتبر را برمی‌گرداند.
+- event نمایشگر در جدول `ad_events` با اتصال به `display_device_id` و `ad_request_id` ذخیره می‌شود.
+- تست‌های feature برای خواندن schedule، ثبت event، و رد event تبلیغ تاییدنشده اضافه شدند.

@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Enums\RecordStatus;
+use App\Models\AdEvent;
+use App\Models\AdPlacement;
 use App\Models\AdRequest;
 use App\Models\DisplayDevice;
 use App\Models\Hub;
@@ -198,6 +200,130 @@ class StandaloneAdvertisingService
 
             return $freshAdRequest;
         });
+    }
+
+    /** @return array<string, mixed> */
+    public function displaySchedule(DisplayDevice $displayDevice): array
+    {
+        if ($displayDevice->status !== RecordStatus::Active) {
+            throw ValidationException::withMessages([
+                'display_device' => 'نمایشگر فعال نیست.',
+            ]);
+        }
+
+        $now = now();
+        $placements = $displayDevice->placements()
+            ->with(['adRequest.creatives', 'adRequest.partnerAccount:id,code,name,partner_type'])
+            ->where('status', 'scheduled')
+            ->where(function ($query) use ($now): void {
+                $query->whereNull('starts_at')->orWhere('starts_at', '<=', $now);
+            })
+            ->where(function ($query) use ($now): void {
+                $query->whereNull('ends_at')->orWhere('ends_at', '>=', $now);
+            })
+            ->orderBy('priority')
+            ->get();
+
+        $genericPlacements = AdPlacement::query()
+            ->with(['adRequest.creatives', 'adRequest.partnerAccount:id,code,name,partner_type'])
+            ->whereNull('display_device_id')
+            ->where('placement_type', $displayDevice->device_type)
+            ->where('status', 'scheduled')
+            ->where(function ($query) use ($now): void {
+                $query->whereNull('starts_at')->orWhere('starts_at', '<=', $now);
+            })
+            ->where(function ($query) use ($now): void {
+                $query->whereNull('ends_at')->orWhere('ends_at', '>=', $now);
+            })
+            ->orderBy('priority')
+            ->get();
+
+        $items = $placements
+            ->concat($genericPlacements)
+            ->filter(fn ($placement): bool => $placement->adRequest?->status === 'approved')
+            ->filter(fn ($placement): bool => $this->withinCaps($placement->adRequest))
+            ->values()
+            ->map(fn ($placement): array => $this->serializeDisplayPlacement($placement));
+
+        return [
+            'device' => [
+                'id' => $displayDevice->id,
+                'code' => $displayDevice->code,
+                'name' => $displayDevice->name,
+                'deviceType' => $displayDevice->device_type,
+                'formats' => $displayDevice->supported_media_formats ?? [],
+            ],
+            'generatedAt' => now()->toIso8601String(),
+            'items' => $items,
+        ];
+    }
+
+    /** @param array<string, mixed> $data */
+    public function recordDisplayEvent(DisplayDevice $displayDevice, array $data): AdEvent
+    {
+        $adRequest = AdRequest::query()
+            ->where('id', $data['ad_request_id'])
+            ->where('status', 'approved')
+            ->first();
+
+        if (! $adRequest) {
+            throw ValidationException::withMessages([
+                'ad_request_id' => 'تبلیغ برای ثبت رویداد نمایشگر معتبر نیست.',
+            ]);
+        }
+
+        return AdEvent::query()->create([
+            'ad_request_id' => $adRequest->id,
+            'display_device_id' => $displayDevice->id,
+            'event_type' => $data['event_type'],
+            'occurred_at' => $data['occurred_at'] ?? now(),
+            'metadata' => [
+                ...$this->metadataArray($data['metadata'] ?? []),
+                'device_code' => $displayDevice->code,
+                'source' => 'display_client_api',
+            ],
+        ]);
+    }
+
+    private function withinCaps(?AdRequest $adRequest): bool
+    {
+        if (! $adRequest) {
+            return false;
+        }
+
+        if ($adRequest->impression_cap === null) {
+            return true;
+        }
+
+        $impressions = $adRequest->events()
+            ->where('event_type', 'impression')
+            ->count();
+
+        return $impressions < $adRequest->impression_cap;
+    }
+
+    /** @return array<string, mixed> */
+    private function serializeDisplayPlacement(AdPlacement $placement): array
+    {
+        $adRequest = $placement->adRequest;
+        $creative = $adRequest?->creatives->first();
+
+        return [
+            'placementId' => $placement->id,
+            'adRequestId' => $adRequest?->id,
+            'code' => $adRequest?->code,
+            'title' => $adRequest?->title,
+            'bodyCopy' => $adRequest?->body_copy,
+            'ctaText' => $adRequest?->cta_text,
+            'targetUrl' => $adRequest?->target_url,
+            'creativeType' => $creative?->creative_type,
+            'assetUrl' => $creative?->asset_url,
+            'placementType' => $placement->placement_type,
+            'priority' => $placement->priority,
+            'startsAt' => $placement->starts_at?->toIso8601String(),
+            'endsAt' => $placement->ends_at?->toIso8601String(),
+            'partnerName' => $adRequest?->partnerAccount?->name,
+        ];
     }
 
     /** @return Collection<int, array{id: string, code: string, name: string}> */

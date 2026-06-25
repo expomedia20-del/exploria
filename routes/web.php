@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\VenueRegistryController;
 use App\Http\Controllers\Auth\OtpController;
 use App\Http\Controllers\ConsentController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Display\DisplayAdvertisingController;
 use App\Http\Controllers\Partner\PartnerAdvertisingController;
 use App\Http\Controllers\Partner\PartnerDashboardController;
 use App\Http\Controllers\Partner\PartnerOfferController;
@@ -52,6 +53,11 @@ Route::middleware('auth')->group(function () {
         ->name('partner.ads.store');
 });
 
+Route::get('/api/v1/display/{displayDevice:code}/schedule', [DisplayAdvertisingController::class, 'schedule'])
+    ->name('display.schedule');
+Route::post('/api/v1/display/{displayDevice:code}/events', [DisplayAdvertisingController::class, 'event'])
+    ->middleware('throttle:120,1')
+    ->name('display.events.store');
 Route::prefix('api/v1/auth/otp')->middleware('throttle:5,1')->group(function () {
     Route::post('request', [OtpController::class, 'request'])->name('otp.request');
     Route::post('verify', [OtpController::class, 'verify'])->name('otp.verify');

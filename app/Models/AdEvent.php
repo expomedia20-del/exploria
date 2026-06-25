@@ -2,10 +2,19 @@
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property string $id
+ * @property string $ad_request_id
+ * @property string|null $display_device_id
+ * @property string $event_type
+ * @property CarbonImmutable $occurred_at
+ * @property array<string, mixed>|null $metadata
+ */
 class AdEvent extends Model
 {
     use HasUuids;

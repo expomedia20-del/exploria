@@ -51,6 +51,9 @@ http://127.0.0.1:8000/admin/ads
 Partner advertising submission:
 http://127.0.0.1:8000/partner/ads
 
+
+Display schedule API:
+http://127.0.0.1:8000/api/v1/display/ecopark-entry-fixed-display/schedule
 Venue and hub registry:
 http://127.0.0.1:8000/admin/venues
 ```
@@ -134,6 +137,7 @@ For a fresh repeat of the same flow, use another valid Iranian-format mobile num
 - Standalone advertising skeleton exists with real tables for ad requests, creatives, display devices, placements, approvals, and events.
 - Partner advertising page exists at `/partner/ads`; a partner or sponsor can submit an ad request for fixed/mobile displays, QR landing, reward page, map/route, or post-mission placement.
 - Admin advertising page exists at `/admin/ads`; admin/operator/hub manager can approve or reject pending ad requests and see fixed/mobile display inventory.
+- Display publishing API exists at /api/v1/display/{deviceCode}/schedule, and display clients can record ad events at /api/v1/display/{deviceCode}/events.
 - Venue/hub registry page exists for `admin`, `operator`, `viewer`, and `hub_manager` roles.
 - Mission/reward simulator shows points, rewards, levels, locked missions, and next experience layers.
 - Proposal coverage page maps the 22-slide Eco Park board proposal to the current demo and pilot minimums.

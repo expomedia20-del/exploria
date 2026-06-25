@@ -4,6 +4,7 @@ namespace Tests\Feature\Advertising;
 
 use App\Enums\UserRole;
 use App\Models\AdRequest;
+use App\Models\DisplayDevice;
 use App\Models\User;
 use Database\Seeders\PilotLocationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -135,6 +136,67 @@ class StandaloneAdvertisingTest extends TestCase
                 ->where('stats.devices', 2)
                 ->has('adRequests', 1)
                 ->has('displayDevices', 2));
+    }
+
+    public function test_display_device_can_read_approved_schedule(): void
+    {
+        $adRequest = $this->submitAdRequest();
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.ads.api.approve', $adRequest))
+            ->assertOk();
+
+        $device = DisplayDevice::query()->where('code', 'ecopark-entry-fixed-display')->firstOrFail();
+
+        $this->getJson(route('display.schedule', $device))
+            ->assertOk()
+            ->assertJsonPath('data.device.code', 'ecopark-entry-fixed-display')
+            ->assertJsonPath('data.items.0.adRequestId', $adRequest->id)
+            ->assertJsonPath('data.items.0.placementType', 'fixed_display');
+    }
+
+    public function test_display_device_can_record_ad_events(): void
+    {
+        $adRequest = $this->submitAdRequest();
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.ads.api.approve', $adRequest))
+            ->assertOk();
+
+        $device = DisplayDevice::query()->where('code', 'ecopark-entry-fixed-display')->firstOrFail();
+
+        $this->postJson(route('display.events.store', $device), [
+            'ad_request_id' => $adRequest->id,
+            'event_type' => 'impression',
+            'metadata' => ['slot' => 'entry-main'],
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.eventType', 'impression');
+
+        $this->assertDatabaseHas('ad_events', [
+            'ad_request_id' => $adRequest->id,
+            'display_device_id' => $device->id,
+            'event_type' => 'impression',
+        ]);
+    }
+
+    public function test_display_schedule_excludes_pending_ads(): void
+    {
+        $adRequest = $this->submitAdRequest();
+        $device = DisplayDevice::query()->where('code', 'ecopark-entry-fixed-display')->firstOrFail();
+
+        $this->getJson(route('display.schedule', $device))
+            ->assertOk()
+            ->assertJsonCount(0, 'data.items');
+
+        $this->postJson(route('display.events.store', $device), [
+            'ad_request_id' => $adRequest->id,
+            'event_type' => 'impression',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('ad_request_id');
     }
 
     private function submitAdRequest(): AdRequest
