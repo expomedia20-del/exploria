@@ -45,9 +45,15 @@ Route::middleware('auth')->group(function () {
     Route::post('/partner/redemptions/confirm', [RewardRedemptionController::class, 'confirm'])
         ->middleware('role:shop_partner,sponsor')
         ->name('partner.redemptions.confirm');
+    Route::patch('/partner/profile', [PartnerDashboardController::class, 'update'])
+        ->middleware('role:shop_partner,sponsor')
+        ->name('partner.profile.update');
     Route::post('/partner/offers', [PartnerOfferController::class, 'store'])
         ->middleware('role:shop_partner,sponsor')
         ->name('partner.offers.store');
+    Route::patch('/partner/offers/{reward}', [PartnerOfferController::class, 'update'])
+        ->middleware('role:shop_partner,sponsor')
+        ->name('partner.offers.update');
     Route::get('/partner/ads', [PartnerAdvertisingController::class, 'page'])
         ->middleware('role:shop_partner,sponsor')
         ->name('partner.ads.page');
@@ -219,9 +225,15 @@ Route::get('/api/v1/partner/dashboard', [PartnerDashboardController::class, 'ind
 Route::post('/api/v1/partner/redemptions/confirm', [RewardRedemptionController::class, 'confirm'])
     ->middleware(['auth', 'role:shop_partner,sponsor'])
     ->name('partner.redemptions.api.confirm');
+Route::patch('/api/v1/partner/profile', [PartnerDashboardController::class, 'update'])
+    ->middleware(['auth', 'role:shop_partner,sponsor'])
+    ->name('partner.profile.api.update');
 Route::post('/api/v1/partner/offers', [PartnerOfferController::class, 'store'])
     ->middleware(['auth', 'role:shop_partner,sponsor'])
     ->name('partner.offers.api.store');
+Route::patch('/api/v1/partner/offers/{reward}', [PartnerOfferController::class, 'update'])
+    ->middleware(['auth', 'role:shop_partner,sponsor'])
+    ->name('partner.offers.api.update');
 Route::get('/api/v1/partner/ads', [PartnerAdvertisingController::class, 'index'])
     ->middleware(['auth', 'role:shop_partner,sponsor'])
     ->name('partner.ads.index');

@@ -44,20 +44,7 @@ class PartnerDashboardService
             ->withCount(['userRewards', 'userRewards as awarded_count' => fn ($query) => $query->where('status', 'awarded')])
             ->latest('created_at')
             ->get()
-            ->map(fn ($reward): array => [
-                'id' => $reward->id,
-                'code' => $reward->code,
-                'name' => $reward->name,
-                'rewardType' => $reward->reward_type,
-                'status' => $reward->status->value,
-                'pointCost' => $reward->point_cost,
-                'stockQuantity' => $reward->stock_quantity,
-                'userRewardsCount' => (int) $reward->getAttribute('user_rewards_count'),
-                'awardedCount' => (int) $reward->getAttribute('awarded_count'),
-                'campaignName' => $reward->campaign?->name,
-                'approvalStatus' => $reward->metadata['approval_status'] ?? $reward->status->value,
-                'description' => $reward->metadata['description'] ?? null,
-            ]);
+            ->map(fn (RewardDefinition $reward): array => $this->serializeRewardDefinition($reward));
         $redemptions = $partner->rewardRedemptions()
             ->with(['user:id,name,email', 'userReward.rewardDefinition:id,code,name,reward_type'])
             ->latest('created_at')
@@ -111,6 +98,11 @@ class PartnerDashboardService
                 'name' => $partner->name,
                 'partnerType' => $partner->partner_type,
                 'venueName' => $partner->venue?->name,
+                'contactName' => $partner->contact_name,
+                'contactMobile' => $partner->contact_mobile,
+                'category' => $partner->metadata['category'] ?? null,
+                'operatingNotes' => $partner->metadata['operating_notes'] ?? null,
+                'displayVisibility' => (bool) ($partner->metadata['display_visibility'] ?? true),
             ],
             'stats' => [
                 'rewardDefinitions' => $rewardDefinitions->count(),
@@ -125,6 +117,29 @@ class PartnerDashboardService
             'redemptions' => $redemptions,
             'adRequests' => $adRequests,
         ];
+    }
+
+    /** @param array<string, mixed> $data */
+    public function updateProfile(User $user, array $data): PartnerAccount
+    {
+        $partner = $this->partnerForUser($user);
+        $metadata = $this->metadataArray($partner->metadata);
+
+        $partner->update([
+            'name' => $data['name'],
+            'contact_name' => $data['contact_name'] ?? null,
+            'contact_mobile' => $data['contact_mobile'] ?? null,
+            'metadata' => [
+                ...$metadata,
+                'category' => $data['category'] ?? null,
+                'operating_notes' => $data['operating_notes'] ?? null,
+                'display_visibility' => (bool) $data['display_visibility'],
+                'profile_updated_by_user_id' => $user->id,
+                'profile_updated_at' => now()->toIso8601String(),
+            ],
+        ]);
+
+        return $partner->fresh(['venue:id,code,name']) ?? $partner;
     }
 
     /** @param array<string, mixed> $data */
@@ -151,6 +166,70 @@ class PartnerDashboardService
                 'terms' => $data['terms'] ?? null,
             ],
         ]));
+    }
+
+    /** @param array<string, mixed> $data */
+    public function updateOffer(User $partnerUser, RewardDefinition $reward, array $data): RewardDefinition
+    {
+        $partner = $this->partnerForUser($partnerUser);
+
+        if ($reward->partner_account_id !== $partner->id) {
+            throw ValidationException::withMessages([
+                'reward' => 'This offer cannot be updated by the current partner.',
+            ]);
+        }
+
+        $metadata = $this->metadataArray($reward->metadata);
+        $approvalStatus = $metadata['approval_status'] ?? $reward->status->value;
+        $isPaused = $data['availability_status'] === 'paused';
+
+        $status = $reward->status;
+        if ($approvalStatus === 'approved') {
+            $status = $isPaused ? RecordStatus::Inactive : RecordStatus::Active;
+        }
+
+        $reward->update([
+            'point_cost' => $data['point_cost'] ?? null,
+            'stock_quantity' => $data['stock_quantity'] ?? null,
+            'status' => $status,
+            'metadata' => [
+                ...$metadata,
+                'availability_status' => $data['availability_status'],
+                'is_paused' => $isPaused,
+                'available_from' => $data['available_from'] ?? null,
+                'available_until' => $data['available_until'] ?? null,
+                'description' => $data['description'] ?? ($metadata['description'] ?? null),
+                'terms' => $data['terms'] ?? ($metadata['terms'] ?? null),
+                'updated_by_partner_user_id' => $partnerUser->id,
+                'partner_updated_at' => now()->toIso8601String(),
+            ],
+        ]);
+
+        return $reward->fresh(['campaign:id,code,name']) ?? $reward;
+    }
+
+    /** @return array<string, mixed> */
+    public function serializeRewardDefinition(RewardDefinition $reward): array
+    {
+        return [
+            'id' => $reward->id,
+            'code' => $reward->code,
+            'name' => $reward->name,
+            'rewardType' => $reward->reward_type,
+            'status' => $reward->status->value,
+            'pointCost' => $reward->point_cost,
+            'stockQuantity' => $reward->stock_quantity,
+            'userRewardsCount' => (int) $reward->getAttribute('user_rewards_count'),
+            'awardedCount' => (int) $reward->getAttribute('awarded_count'),
+            'campaignName' => $reward->campaign?->name,
+            'approvalStatus' => $reward->metadata['approval_status'] ?? $reward->status->value,
+            'availabilityStatus' => $reward->metadata['availability_status'] ?? ($reward->status === RecordStatus::Inactive ? 'paused' : 'active'),
+            'availableFrom' => $reward->metadata['available_from'] ?? null,
+            'availableUntil' => $reward->metadata['available_until'] ?? null,
+            'description' => $reward->metadata['description'] ?? null,
+            'terms' => $reward->metadata['terms'] ?? null,
+            'reviewNotes' => $reward->metadata['review_notes'] ?? null,
+        ];
     }
 
     public function ensureRedemptionForReward(UserReward $userReward): RewardRedemption
@@ -210,6 +289,12 @@ class PartnerDashboardService
 
             return $redemption;
         });
+    }
+
+    /** @return array<string, mixed> */
+    private function metadataArray(mixed $metadata): array
+    {
+        return is_array($metadata) ? $metadata : [];
     }
 
     private function uniqueRedemptionCode(): string

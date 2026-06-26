@@ -187,6 +187,83 @@ class PartnerRewardRedemptionTest extends TestCase
         $this->assertSame('partner_offer_submission', $offer->metadata['source']);
     }
 
+    public function test_partner_can_update_own_store_profile(): void
+    {
+        $partnerUser = User::query()->where('email', 'cafe.eco@example.test')->firstOrFail();
+
+        $this->actingAs($partnerUser)
+            ->patchJson(route('partner.profile.api.update'), [
+                'name' => 'Cafe Eco Updated',
+                'contact_name' => 'Cafe Operations Lead',
+                'contact_mobile' => '09123334444',
+                'category' => 'beverage',
+                'operating_notes' => 'Open during the family route pilot hours.',
+                'display_visibility' => true,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.name', 'Cafe Eco Updated')
+            ->assertJsonPath('data.category', 'beverage')
+            ->assertJsonPath('data.displayVisibility', true);
+
+        $this->actingAs($partnerUser)
+            ->getJson(route('partner.dashboard.index'))
+            ->assertOk()
+            ->assertJsonPath('data.partner.name', 'Cafe Eco Updated')
+            ->assertJsonPath('data.partner.contactMobile', '09123334444')
+            ->assertJsonPath('data.partner.operatingNotes', 'Open during the family route pilot hours.');
+    }
+
+    public function test_partner_can_update_own_offer_inventory_and_pause_status(): void
+    {
+        $offer = $this->submitPartnerOffer();
+        $partnerUser = User::query()->where('email', 'cafe.eco@example.test')->firstOrFail();
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.rewards.api.approve', $offer))
+            ->assertOk();
+
+        $this->actingAs($partnerUser)
+            ->patchJson(route('partner.offers.api.update', $offer), [
+                'stock_quantity' => 25,
+                'point_cost' => 140,
+                'availability_status' => 'paused',
+                'available_from' => now()->addDay()->toIso8601String(),
+                'available_until' => now()->addDays(10)->toIso8601String(),
+                'description' => 'Updated inventory for pilot demand.',
+                'terms' => 'Valid once for each visitor.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.stockQuantity', 25)
+            ->assertJsonPath('data.pointCost', 140)
+            ->assertJsonPath('data.status', 'inactive')
+            ->assertJsonPath('data.availabilityStatus', 'paused')
+            ->assertJsonPath('data.terms', 'Valid once for each visitor.');
+
+        $offer->refresh();
+
+        $this->assertSame('inactive', $offer->status->value);
+        $this->assertSame(25, $offer->stock_quantity);
+        $this->assertSame('paused', $offer->metadata['availability_status']);
+    }
+
+    public function test_partner_cannot_update_foreign_offer_inventory(): void
+    {
+        $offer = $this->submitPartnerOffer('ravaq.store@example.test', 'Foreign ravaq offer');
+        $partnerUser = User::query()->where('email', 'cafe.eco@example.test')->firstOrFail();
+
+        $this->actingAs($partnerUser)
+            ->patchJson(route('partner.offers.api.update', $offer), [
+                'stock_quantity' => 99,
+                'point_cost' => 90,
+                'availability_status' => 'active',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('reward');
+
+        $this->assertSame(10, $offer->fresh()->stock_quantity);
+    }
+
     public function test_admin_can_approve_partner_offer(): void
     {
         $offer = $this->submitPartnerOffer();
