@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang='fa' dir='rtl'>
+<head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>
+<title>Exploria_UI_UX_Wireframe_Pack_v1.0</title>
+<style>
+body{font-family:'Noto Sans Arabic','Tahoma',sans-serif;background:#f5f8ff;margin:0;color:#102033}
+header{background:#0A4EA3;color:white;padding:24px 32px}
+main{padding:24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+.screen{background:white;border:1px solid #d8e4f7;border-radius:16px;padding:16px;box-shadow:0 4px 14px rgba(10,78,163,.08)}
+h2{font-size:18px;color:#0A4EA3;margin:0 0 10px}
+pre{direction:ltr;text-align:left;background:#0b1220;color:#e8f0ff;padding:14px;border-radius:10px;overflow:auto;line-height:1.35}
+.summary{padding:18px 32px;background:#EAF4FF;border-bottom:1px solid #c8defc}
+</style></head>
+<body><header><h1>Exploria_UI_UX_Wireframe_Pack_v1.0</h1><p>Interactive low-fidelity HTML prototype for Sprint 1.</p></header>
+<div class='summary'>این سند بسته وایرفریم و طراحی تجربه کاربری Sprint 1 اکوسیستم EXPLORIA است. تمرکز آن بر مسیر QR Scan → PWA → OTP → Consent → Attributed Scan Event و صفحات حداقلی ادمین، سفیر و مرچنت است. سند بر اساس BRD v1.1، FRD v1.1، Sprint 0/1 Execution Plan و Technical Design Pack v1.0 تهیه شده است.</div>
+<main><section class='screen'><h2>Visitor QR Landing</h2><pre>+-------------------------------------------+
+| QR Landing / PWA                          |
++-------------------------------------------+
+| [Logo EXPLORIA]                           |
+| Venue: EcoPark / Eram / Milad             |
+| Campaign: Active Pilot                    |
+| Welcome message                           |
+| Button: Start / ورود سریع                 |
+| Link: Privacy &amp; Rules                     |
+| Offline notice area                       |
++-------------------------------------------+</pre></section><section class='screen'><h2>OTP Login</h2><pre>+-------------------------------------------+
+| OTP Login                                 |
++-------------------------------------------+
+| Mobile Number Input                       |
+| Button: Send OTP                          |
+| OTP Code Boxes                            |
+| Resend timer                              |
+| Error / Success message                   |
+| Back to QR Landing                        |
++-------------------------------------------+</pre></section><section class='screen'><h2>Consent Screen</h2><pre>+-------------------------------------------+
+| Consent &amp; Rules                           |
++-------------------------------------------+
+| Pilot Rules Summary                       |
+| Data &amp; Privacy Notice                     |
+| Checkbox: I Agree                         |
+| Button: Continue                          |
+| Link: Full Terms                          |
+| Support link                              |
++-------------------------------------------+</pre></section><section class='screen'><h2>Scan Success</h2><pre>+-------------------------------------------+
+| Scan Success                              |
++-------------------------------------------+
+| Success Icon                              |
+| QR attributed to:                         |
+| Venue / Zone / Hub                        |
+| Touchpoint name                           |
+| Button: Continue Mission                  |
+| Button: Save / Share                      |
++-------------------------------------------+</pre></section><section class='screen'><h2>Admin Venue Builder</h2><pre>+-------------------------------------------+
+| Admin Venue Builder                       |
++-------------------------------------------+
+| Sidebar: Venues / QR / Events             |
+| Venue dropdown                            |
+| Add Zone                                  |
+| Add Hub                                   |
+| Add Touchpoint                            |
+| Assign QR                                 |
+| Publish / Disable                         |
++-------------------------------------------+</pre></section><section class='screen'><h2>Admin Event Monitor</h2><pre>+-------------------------------------------+
+| Event Monitor                             |
++-------------------------------------------+
+| Filters: Date / Venue / QR                |
+| Cards: Scans / OTP / Consent              |
+| Event table                               |
+| Export CSV                                |
+| Suspicious activity flag                  |
+| Error logs                                |
++-------------------------------------------+</pre></section><section class='screen'><h2>Ambassador Fallback</h2><pre>+-------------------------------------------+
+| Ambassador Fallback                       |
++-------------------------------------------+
+| Ambassador login                          |
+| Scan QR manually                          |
+| User mobile optional                      |
+| Issue type                                |
+| Submit interaction log                    |
+| Equipment checklist                       |
++-------------------------------------------+</pre></section><section class='screen'><h2>Merchant Mini Dashboard</h2><pre>+-------------------------------------------+
+| Merchant Dashboard                        |
++-------------------------------------------+
+| Merchant name                             |
+| Campaign visits                           |
+| Reward redeemed                           |
+| Conversion estimate                       |
+| Top QR source                             |
+| Download report                           |
++-------------------------------------------+</pre></section></main>
+</body></html>
