@@ -4,6 +4,7 @@ namespace Tests\Feature\Hub;
 
 use App\Models\AdRequest;
 use App\Models\DisplayDevice;
+use App\Models\Hub;
 use App\Models\RewardDefinition;
 use App\Models\User;
 use Database\Seeders\PilotLocationSeeder;
@@ -38,6 +39,27 @@ class HubManagerDashboardTest extends TestCase
                 ->has('partners', 1)
                 ->has('displayDevices', 1));
     }
+
+    public function test_admin_can_open_hub_dashboard_for_support(): void
+    {
+        $this->withoutVite();
+        $admin = User::factory()->create(['role' => 'admin']);
+        $activeHubCount = Hub::query()->where('status', 'active')->count();
+
+        $this->actingAs($admin)
+            ->get(route('hub.dashboard'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('hub/dashboard')
+                ->where('stats.hubs', $activeHubCount)
+                ->has('hubs', $activeHubCount));
+
+        $this->actingAs($admin)
+            ->getJson(route('hub.dashboard.index'))
+            ->assertOk()
+            ->assertJsonPath('data.stats.hubs', $activeHubCount);
+    }
+
 
     public function test_hub_dashboard_api_only_returns_managed_scope(): void
     {

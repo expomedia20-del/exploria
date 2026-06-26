@@ -19,6 +19,13 @@ class HubManagerAccessService
     /** @return Collection<int, string> */
     public function managedHubIds(User $user): Collection
     {
+        if ($this->isPlatformReviewer($user)) {
+            return Hub::query()
+                ->where('status', RecordStatus::Active)
+                ->pluck('id')
+                ->values();
+        }
+
         return HubManagementAssignment::query()
             ->where('user_id', $user->id)
             ->where('status', RecordStatus::Active)

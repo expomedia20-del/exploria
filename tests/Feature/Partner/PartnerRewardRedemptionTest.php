@@ -56,6 +56,26 @@ class PartnerRewardRedemptionTest extends TestCase
                 ->has('rewardDefinitions', 1));
     }
 
+    public function test_admin_can_open_partner_dashboard_for_support(): void
+    {
+        $this->withoutVite();
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+        $this->actingAs($admin)
+            ->get(route('partner.dashboard'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('partner/dashboard')
+                ->where('partner.code', 'cafe-eco')
+                ->has('rewardDefinitions'));
+
+        $this->actingAs($admin)
+            ->getJson(route('partner.dashboard.index'))
+            ->assertOk()
+            ->assertJsonPath('data.partner.code', 'cafe-eco');
+    }
+
+
     public function test_partner_reward_completion_creates_pending_redemption(): void
     {
         $this->completeMission('scan-entry-qr');

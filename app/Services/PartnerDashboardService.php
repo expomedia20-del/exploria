@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\RecordStatus;
+use App\Enums\UserRole;
 use App\Models\AdRequest;
 use App\Models\Campaign;
 use App\Models\PartnerAccount;
@@ -19,6 +20,18 @@ class PartnerDashboardService
 {
     public function partnerForUser(User $user): PartnerAccount
     {
+        if (in_array($user->role, [UserRole::Admin, UserRole::Operator], true)) {
+            $partner = PartnerAccount::query()
+                ->with('venue:id,code,name')
+                ->where('status', RecordStatus::Active)
+                ->orderBy('created_at')
+                ->first();
+
+            if ($partner) {
+                return $partner;
+            }
+        }
+
         $partnerUser = PartnerUser::query()
             ->with('partnerAccount.venue:id,code,name')
             ->where('user_id', $user->id)

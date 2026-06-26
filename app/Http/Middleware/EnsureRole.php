@@ -12,6 +12,10 @@ class EnsureRole
     {
         $role = $request->user()?->role?->value;
 
+        if ($role === 'admin') {
+            return $next($request);
+        }
+
         abort_unless($role && in_array($role, $roles, true), 403);
 
         return $next($request);
