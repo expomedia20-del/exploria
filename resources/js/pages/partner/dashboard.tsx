@@ -5,6 +5,7 @@ import {
     Megaphone,
     Percent,
     ReceiptText,
+    Store,
     TicketCheck,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -20,6 +21,11 @@ type Partner = {
     name: string;
     partnerType: string;
     venueName: string | null;
+    contactName: string | null;
+    contactMobile: string | null;
+    category: string | null;
+    operatingNotes: string | null;
+    displayVisibility: boolean;
 };
 
 type RewardDefinition = {
@@ -34,7 +40,12 @@ type RewardDefinition = {
     awardedCount: number;
     campaignName: string | null;
     approvalStatus: string;
+    availabilityStatus: string;
+    availableFrom: string | null;
+    availableUntil: string | null;
     description: string | null;
+    terms: string | null;
+    reviewNotes: string | null;
 };
 
 type Redemption = {
@@ -109,6 +120,20 @@ function formatDate(value: string | null) {
         dateStyle: 'medium',
         timeStyle: 'short',
     }).format(new Date(value));
+}
+
+function formatDateTimeLocal(value: string | null) {
+    if (!value) {
+        return '';
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return '';
+    }
+
+    return date.toISOString().slice(0, 16);
 }
 
 function Stat({
@@ -205,6 +230,108 @@ export default function PartnerDashboard({
                     </Alert>
                 ) : null}
 
+                <section className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
+                    <div className="mb-4 flex items-center gap-2">
+                        <Store className="size-4 text-muted-foreground" />
+                        <h2 className="font-semibold">اطلاعات فروشگاه</h2>
+                    </div>
+                    <Form
+                        action="/partner/profile"
+                        method="patch"
+                        options={{ preserveScroll: true }}
+                        className="grid gap-4 md:grid-cols-2"
+                    >
+                        {({ processing, errors }) => (
+                            <>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="partner_name">
+                                        نام فروشگاه
+                                    </Label>
+                                    <Input
+                                        id="partner_name"
+                                        name="name"
+                                        required
+                                        defaultValue={partner.name}
+                                    />
+                                    <InputError message={errors.name} />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="partner_category">
+                                        دسته‌بندی
+                                    </Label>
+                                    <Input
+                                        id="partner_category"
+                                        name="category"
+                                        defaultValue={partner.category ?? ''}
+                                        placeholder="مثلا کافه، پوشاک، خدمات"
+                                    />
+                                    <InputError message={errors.category} />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="contact_name">
+                                        نام مسئول
+                                    </Label>
+                                    <Input
+                                        id="contact_name"
+                                        name="contact_name"
+                                        defaultValue={partner.contactName ?? ''}
+                                    />
+                                    <InputError message={errors.contact_name} />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="contact_mobile">
+                                        موبایل مسئول
+                                    </Label>
+                                    <Input
+                                        id="contact_mobile"
+                                        name="contact_mobile"
+                                        dir="ltr"
+                                        defaultValue={partner.contactMobile ?? ''}
+                                    />
+                                    <InputError message={errors.contact_mobile} />
+                                </div>
+                                <div className="grid gap-2 md:col-span-2">
+                                    <Label htmlFor="operating_notes">
+                                        توضیحات عملیاتی
+                                    </Label>
+                                    <textarea
+                                        id="operating_notes"
+                                        name="operating_notes"
+                                        defaultValue={partner.operatingNotes ?? ''}
+                                        className="min-h-20 rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                        placeholder="ساعت پاسخگویی، نکته‌های تحویل جایزه یا محدودیت‌های اجرایی"
+                                    />
+                                    <InputError message={errors.operating_notes} />
+                                </div>
+                                <div className="flex items-center gap-2 md:col-span-2">
+                                    <input
+                                        type="hidden"
+                                        name="display_visibility"
+                                        value="0"
+                                    />
+                                    <input
+                                        id="display_visibility"
+                                        name="display_visibility"
+                                        type="checkbox"
+                                        value="1"
+                                        defaultChecked={partner.displayVisibility}
+                                        className="size-4 rounded border border-input"
+                                    />
+                                    <Label htmlFor="display_visibility">
+                                        نمایش فروشگاه در تجربه‌های کاربر و نمایشگرها
+                                    </Label>
+                                    <InputError message={errors.display_visibility} />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <Button disabled={processing}>
+                                        <Store className="size-4" />
+                                        ذخیره اطلاعات فروشگاه
+                                    </Button>
+                                </div>
+                            </>
+                        )}
+                    </Form>
+                </section>
                 <section className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
                     <div
                         id="partner-offer-form"
@@ -489,6 +616,111 @@ export default function PartnerDashboard({
                                                 'fa-IR',
                                             ) ?? 'نامحدود'}
                                         </p>
+                                        <Form
+                                            action={`/partner/offers/${reward.id}`}
+                                            method="patch"
+                                            options={{ preserveScroll: true }}
+                                            className="mt-2 grid gap-3 rounded-md bg-muted/30 p-3 md:grid-cols-2"
+                                        >
+                                            {({ processing, errors }) => (
+                                                <>
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor={`reward_stock_${reward.id}`}>
+                                                            موجودی
+                                                        </Label>
+                                                        <Input
+                                                            id={`reward_stock_${reward.id}`}
+                                                            name="stock_quantity"
+                                                            type="number"
+                                                            min="0"
+                                                            defaultValue={reward.stockQuantity ?? ''}
+                                                        />
+                                                        <InputError message={errors.stock_quantity} />
+                                                    </div>
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor={`reward_point_cost_${reward.id}`}>
+                                                            هزینه امتیازی
+                                                        </Label>
+                                                        <Input
+                                                            id={`reward_point_cost_${reward.id}`}
+                                                            name="point_cost"
+                                                            type="number"
+                                                            min="0"
+                                                            defaultValue={reward.pointCost ?? ''}
+                                                        />
+                                                        <InputError message={errors.point_cost} />
+                                                    </div>
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor={`reward_status_${reward.id}`}>
+                                                            وضعیت ارائه
+                                                        </Label>
+                                                        <select
+                                                            id={`reward_status_${reward.id}`}
+                                                            name="availability_status"
+                                                            defaultValue={reward.availabilityStatus}
+                                                            className="h-9 rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                                        >
+                                                            <option value="active">فعال</option>
+                                                            <option value="paused">متوقف</option>
+                                                        </select>
+                                                        <InputError message={errors.availability_status} />
+                                                    </div>
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor={`reward_from_${reward.id}`}>
+                                                            شروع اعتبار
+                                                        </Label>
+                                                        <Input
+                                                            id={`reward_from_${reward.id}`}
+                                                            name="available_from"
+                                                            type="datetime-local"
+                                                            defaultValue={formatDateTimeLocal(reward.availableFrom)}
+                                                        />
+                                                        <InputError message={errors.available_from} />
+                                                    </div>
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor={`reward_until_${reward.id}`}>
+                                                            پایان اعتبار
+                                                        </Label>
+                                                        <Input
+                                                            id={`reward_until_${reward.id}`}
+                                                            name="available_until"
+                                                            type="datetime-local"
+                                                            defaultValue={formatDateTimeLocal(reward.availableUntil)}
+                                                        />
+                                                        <InputError message={errors.available_until} />
+                                                    </div>
+                                                    <div className="flex items-end">
+                                                        <Button size="sm" disabled={processing}>
+                                                            ذخیره تنظیمات
+                                                        </Button>
+                                                    </div>
+                                                    <div className="grid gap-2 md:col-span-2">
+                                                        <Label htmlFor={`reward_description_${reward.id}`}>
+                                                            توضیح پیشنهاد
+                                                        </Label>
+                                                        <textarea
+                                                            id={`reward_description_${reward.id}`}
+                                                            name="description"
+                                                            defaultValue={reward.description ?? ''}
+                                                            className="min-h-16 rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                                        />
+                                                        <InputError message={errors.description} />
+                                                    </div>
+                                                    <div className="grid gap-2 md:col-span-2">
+                                                        <Label htmlFor={`reward_terms_${reward.id}`}>
+                                                            شرایط مصرف
+                                                        </Label>
+                                                        <textarea
+                                                            id={`reward_terms_${reward.id}`}
+                                                            name="terms"
+                                                            defaultValue={reward.terms ?? ''}
+                                                            className="min-h-16 rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                                        />
+                                                        <InputError message={errors.terms} />
+                                                    </div>
+                                                </>
+                                            )}
+                                        </Form>
                                     </article>
                                 ))
                             )}
