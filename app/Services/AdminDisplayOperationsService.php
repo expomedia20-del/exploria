@@ -86,6 +86,8 @@ class AdminDisplayOperationsService
                 'readyPlacements' => $readyPlacements->count(),
                 'eventsToday' => AdEvent::query()->whereDate('occurred_at', today())->count(),
                 'impressions' => AdEvent::query()->where('event_type', 'impression')->count(),
+                'onlineDevices' => $devices->where('isOnline', true)->count(),
+                'errorDevices' => $devices->where('playbackStatus', 'error')->count(),
             ],
             'displayDevices' => $devices,
             'scheduledPlacements' => $scheduledPlacements,
@@ -204,6 +206,9 @@ class AdminDisplayOperationsService
     /** @return array<string, mixed> */
     private function serializeDevice(DisplayDevice $device, ?Model $eventStats = null): array
     {
+        $lastHeartbeatAt = $device->last_heartbeat_at;
+        $isOnline = $lastHeartbeatAt !== null && $lastHeartbeatAt->greaterThanOrEqualTo(now()->subMinutes(2));
+
         return [
             'id' => $device->id,
             'code' => $device->code,
@@ -219,6 +224,12 @@ class AdminDisplayOperationsService
             'impressionsCount' => $this->aggregateInt($eventStats, 'impressions_count'),
             'clicksCount' => $this->aggregateInt($eventStats, 'clicks_count'),
             'lastEventAt' => $this->aggregateString($eventStats, 'last_event_at'),
+            'isOnline' => $isOnline,
+            'lastHeartbeatAt' => $lastHeartbeatAt?->toIso8601String(),
+            'playbackStatus' => $device->playback_status,
+            'currentSlot' => $device->current_slot,
+            'lastPlaybackResult' => $device->last_playback_result,
+            'lastPlaybackError' => $device->last_playback_error,
         ];
     }
 

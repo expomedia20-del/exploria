@@ -70,6 +70,9 @@ Route::get('/api/v1/display/{displayDevice:code}/schedule', [DisplayAdvertisingC
 Route::post('/api/v1/display/{displayDevice:code}/events', [DisplayAdvertisingController::class, 'event'])
     ->middleware('throttle:120,1')
     ->name('display.events.store');
+Route::post('/api/v1/display/{displayDevice:code}/heartbeat', [DisplayAdvertisingController::class, 'heartbeat'])
+    ->middleware('throttle:120,1')
+    ->name('display.heartbeat.store');
 Route::prefix('api/v1/auth/otp')->middleware('throttle:5,1')->group(function () {
     Route::post('request', [OtpController::class, 'request'])->name('otp.request');
     Route::post('verify', [OtpController::class, 'verify'])->name('otp.verify');

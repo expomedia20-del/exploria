@@ -18,6 +18,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $device_type
  * @property RecordStatus $status
  * @property array<int, string>|null $supported_media_formats
+ * @property \Illuminate\Support\Carbon|null $last_heartbeat_at
+ * @property string|null $playback_status
+ * @property string|null $current_slot
+ * @property string|null $last_playback_result
+ * @property string|null $last_playback_error
  * @property array<string, mixed>|null $metadata
  */
 class DisplayDevice extends Model
@@ -33,6 +38,11 @@ class DisplayDevice extends Model
         'device_type',
         'status',
         'supported_media_formats',
+        'last_heartbeat_at',
+        'playback_status',
+        'current_slot',
+        'last_playback_result',
+        'last_playback_error',
         'metadata',
     ];
 
@@ -42,6 +52,7 @@ class DisplayDevice extends Model
         return [
             'status' => RecordStatus::class,
             'supported_media_formats' => 'array',
+            'last_heartbeat_at' => 'datetime',
             'metadata' => 'array',
         ];
     }

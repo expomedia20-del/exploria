@@ -270,6 +270,33 @@ class StandaloneAdvertisingService
         ]);
     }
 
+    /** @param array<string, mixed> $data */
+    public function recordDisplayHeartbeat(DisplayDevice $displayDevice, array $data): DisplayDevice
+    {
+        $heartbeatAt = isset($data['reported_at']) ? now()->parse($data['reported_at']) : now();
+        $metadata = $this->metadataArray($displayDevice->metadata);
+
+        $displayDevice->update([
+            'last_heartbeat_at' => $heartbeatAt,
+            'playback_status' => $data['playback_status'],
+            'current_slot' => $data['current_slot'] ?? null,
+            'last_playback_result' => $data['last_playback_result'] ?? null,
+            'last_playback_error' => $data['last_playback_error'] ?? null,
+            'metadata' => [
+                ...$metadata,
+                'last_heartbeat' => [
+                    'source' => 'display_client_api',
+                    'current_ad_request_id' => $data['current_ad_request_id'] ?? null,
+                    'current_placement_id' => $data['current_placement_id'] ?? null,
+                    'metadata' => $this->metadataArray($data['metadata'] ?? []),
+                    'received_at' => now()->toIso8601String(),
+                ],
+            ],
+        ]);
+
+        return $displayDevice->fresh() ?? $displayDevice;
+    }
+
     private function withinCaps(?AdRequest $adRequest): bool
     {
         if (! $adRequest) {

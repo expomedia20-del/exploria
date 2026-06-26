@@ -26,6 +26,12 @@ type DisplayDevice = {
     impressionsCount: number;
     clicksCount: number;
     lastEventAt: string | null;
+    isOnline: boolean;
+    lastHeartbeatAt: string | null;
+    playbackStatus: string | null;
+    currentSlot: string | null;
+    lastPlaybackResult: string | null;
+    lastPlaybackError: string | null;
 };
 
 type ScheduledPlacement = {
@@ -78,6 +84,8 @@ type Props = {
         readyPlacements: number;
         eventsToday: number;
         impressions: number;
+        onlineDevices: number;
+        errorDevices: number;
     };
     displayDevices: DisplayDevice[];
     scheduledPlacements: ScheduledPlacement[];
@@ -97,6 +105,10 @@ const statusLabels: Record<string, string> = {
     scheduled: 'زمان‌بندی شده',
     pending_review: 'در انتظار تایید',
     rejected: 'رد شده',
+    online: 'آنلاین',
+    idle: 'آماده',
+    playing: 'در حال پخش',
+    error: 'خطا',
 };
 
 const placementLabels: Record<string, string> = {
@@ -181,7 +193,7 @@ export default function AdminDisplayOperationsIndex({
                             عملیات نمایشگرها
                         </h1>
                     </div>
-                    <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-6">
+                    <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4 xl:grid-cols-8">
                         <Stat
                             icon={MonitorPlay}
                             label="نمایشگر"
@@ -211,6 +223,16 @@ export default function AdminDisplayOperationsIndex({
                             icon={MonitorPlay}
                             label="نمایش"
                             value={stats.impressions}
+                        />
+                        <Stat
+                            icon={RadioTower}
+                            label="آنلاین"
+                            value={stats.onlineDevices}
+                        />
+                        <Stat
+                            icon={XCircle}
+                            label="خطادار"
+                            value={stats.errorDevices}
                         />
                     </div>
                 </header>
@@ -270,6 +292,35 @@ export default function AdminDisplayOperationsIndex({
                                         آخرین رویداد:{' '}
                                         {formatDate(device.lastEventAt)}
                                     </span>
+                                    <span
+                                        className={`rounded-full px-2.5 py-1 text-xs ${
+                                            device.isOnline
+                                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                                                : 'bg-muted text-muted-foreground'
+                                        }`}
+                                    >
+                                        {device.isOnline ? 'آنلاین' : 'آفلاین'}
+                                    </span>
+                                    <span className="text-xs text-muted-foreground">
+                                        پخش:{' '}
+                                        {device.playbackStatus
+                                            ? (statusLabels[
+                                                  device.playbackStatus
+                                              ] ?? device.playbackStatus)
+                                            : '-'}
+                                    </span>
+                                    <span className="text-xs text-muted-foreground">
+                                        heartbeat:{' '}
+                                        {formatDate(device.lastHeartbeatAt)}
+                                    </span>
+                                    <span className="text-xs text-muted-foreground">
+                                        اسلات: {device.currentSlot ?? '-'}
+                                    </span>
+                                    {device.lastPlaybackError ? (
+                                        <span className="basis-full text-xs text-destructive">
+                                            خطا: {device.lastPlaybackError}
+                                        </span>
+                                    ) : null}
                                 </div>
                             </article>
                         ))}

@@ -33,6 +33,7 @@ class DisplayOperationsTest extends TestCase
                 ->component('admin/display-operations/index')
                 ->where('stats.devices', 2)
                 ->where('stats.activeDevices', 2)
+                ->where('stats.onlineDevices', 0)
                 ->has('displayDevices', 2)
                 ->has('scheduledPlacements', 0));
     }
@@ -125,6 +126,58 @@ class DisplayOperationsTest extends TestCase
             ])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('display_device_id');
+    }
+
+    public function test_display_can_report_playback_heartbeat_to_operations_console(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $adRequest = $this->submitAdRequest('cafe.eco@example.test', 'Heartbeat cafe ad', 'fixed_display');
+        $displayDevice = DisplayDevice::query()->where('code', 'ecopark-entry-fixed-display')->firstOrFail();
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.ads.api.approve', $adRequest))
+            ->assertOk();
+
+        $placement = $adRequest->placements()->firstOrFail();
+
+        $this->postJson(route('display.heartbeat.store', $displayDevice), [
+            'playback_status' => 'playing',
+            'current_slot' => 'hero-loop-1',
+            'current_ad_request_id' => $adRequest->id,
+            'current_placement_id' => $placement->id,
+            'last_playback_result' => 'ok',
+            'metadata' => ['client_version' => 'display-demo-1'],
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.code', 'ecopark-entry-fixed-display')
+            ->assertJsonPath('data.playbackStatus', 'playing');
+
+        $this->actingAs($admin)
+            ->getJson(route('admin.display-operations.index'))
+            ->assertOk()
+            ->assertJsonPath('data.stats.onlineDevices', 1)
+            ->assertJsonPath('data.displayDevices.0.isOnline', true)
+            ->assertJsonPath('data.displayDevices.0.playbackStatus', 'playing')
+            ->assertJsonPath('data.displayDevices.0.currentSlot', 'hero-loop-1')
+            ->assertJsonPath('data.displayDevices.0.lastPlaybackResult', 'ok');
+    }
+
+    public function test_old_display_heartbeat_is_reported_as_offline(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $displayDevice = DisplayDevice::query()->where('code', 'ecopark-entry-fixed-display')->firstOrFail();
+
+        $this->postJson(route('display.heartbeat.store', $displayDevice), [
+            'playback_status' => 'idle',
+            'reported_at' => now()->subMinutes(5)->toIso8601String(),
+        ])->assertOk();
+
+        $this->actingAs($admin)
+            ->getJson(route('admin.display-operations.index'))
+            ->assertOk()
+            ->assertJsonPath('data.stats.onlineDevices', 0)
+            ->assertJsonPath('data.displayDevices.0.isOnline', false)
+            ->assertJsonPath('data.displayDevices.0.playbackStatus', 'idle');
     }
 
     private function submitAdRequest(string $email, string $title, string $placementType): AdRequest
