@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import {
     BookOpen,
     FolderGit2,
@@ -28,7 +28,28 @@ import {
 import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';
 
-const mainNavItems: NavItem[] = [
+type UserRole =
+    | 'admin'
+    | 'operator'
+    | 'viewer'
+    | 'visitor'
+    | 'shop_partner'
+    | 'hub_manager'
+    | 'sponsor';
+
+type RoleAwareNavItem = NavItem & {
+    roles?: UserRole[];
+};
+
+type SharedProps = {
+    auth?: {
+        user?: {
+            role?: UserRole;
+        };
+    };
+};
+
+const mainNavItems: RoleAwareNavItem[] = [
     {
         title: 'داشبورد',
         href: dashboard(),
@@ -38,46 +59,55 @@ const mainNavItems: NavItem[] = [
         title: 'مدیریت QR',
         href: '/admin/qr-codes',
         icon: QrCode,
+        roles: ['admin', 'operator', 'viewer'],
     },
     {
         title: 'کمپین‌ها',
         href: '/admin/campaigns',
         icon: Megaphone,
+        roles: ['admin', 'operator', 'viewer', 'hub_manager'],
     },
     {
         title: 'ماموریت و پاداش',
         href: '/admin/missions',
         icon: Trophy,
+        roles: ['admin', 'operator', 'viewer', 'hub_manager'],
     },
     {
         title: 'مدیریت مکان‌ها',
         href: '/admin/venues',
         icon: MapPinned,
+        roles: ['admin', 'operator', 'viewer', 'hub_manager'],
     },
     {
         title: 'مدیریت شرکا',
         href: '/admin/partners',
         icon: Store,
+        roles: ['admin', 'operator', 'viewer', 'hub_manager'],
     },
     {
         title: 'تبلیغات مستقل',
         href: '/admin/ads',
         icon: Megaphone,
+        roles: ['admin', 'operator', 'viewer', 'hub_manager'],
     },
     {
         title: 'عملیات نمایشگرها',
         href: '/admin/display-operations',
         icon: MonitorPlay,
+        roles: ['admin', 'operator'],
     },
     {
         title: 'پنل فروشگاه',
         href: '/partner/dashboard',
         icon: ShoppingBag,
+        roles: ['admin', 'shop_partner', 'sponsor'],
     },
     {
         title: 'پنل مدیر رواق',
         href: '/hub/dashboard',
         icon: Network,
+        roles: ['admin', 'hub_manager'],
     },
 ];
 
@@ -94,7 +124,17 @@ const footerNavItems: NavItem[] = [
     },
 ];
 
+function isVisibleForRole(item: RoleAwareNavItem, role?: UserRole) {
+    return !item.roles || (role !== undefined && item.roles.includes(role));
+}
+
 export function AppSidebar() {
+    const { auth } = usePage<SharedProps>().props;
+    const role = auth?.user?.role;
+    const visibleNavItems = mainNavItems.filter((item) =>
+        isVisibleForRole(item, role),
+    );
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
@@ -110,7 +150,7 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
+                <NavMain items={visibleNavItems} />
             </SidebarContent>
 
             <SidebarFooter>
