@@ -321,6 +321,27 @@ class PartnerRewardRedemptionTest extends TestCase
         $this->assertSame('draft', $offer->fresh()->status->value);
     }
 
+    public function test_admin_mission_registry_surfaces_pending_partner_offer_review_details(): void
+    {
+        $offer = $this->submitPartnerOffer();
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+        $response = $this->actingAs($admin)
+            ->getJson(route('admin.missions.index'))
+            ->assertOk()
+            ->assertJsonPath('data.stats.pendingRewards', 1);
+
+        $reward = collect($response->json('data.rewards'))
+            ->firstWhere('id', $offer->id);
+
+        $this->assertNotNull($reward);
+        $this->assertSame('pending_review', $reward['approvalStatus']);
+        $this->assertSame('active', $reward['availabilityStatus']);
+        $this->assertSame('cafe-eco', $reward['partner']['code']);
+        $this->assertArrayHasKey('submittedAt', $reward);
+    }
+
+
     private function completeMission(string $code): void
     {
         $mission = MissionInstance::query()->where('code', $code)->firstOrFail();

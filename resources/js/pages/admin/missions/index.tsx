@@ -45,6 +45,13 @@ type RewardItem = {
     status: string;
     approvalStatus: string;
     description: string | null;
+    terms: string | null;
+    reviewNotes: string | null;
+    availabilityStatus: string;
+    availableFrom: string | null;
+    availableUntil: string | null;
+    submittedAt: string | null;
+    reviewedAt: string | null;
     pointCost: number | null;
     stockQuantity: number | null;
     awardedCount: number;
@@ -71,6 +78,9 @@ type Props = {
         activeMissions: number;
         totalPoints: number;
         rewards: number;
+        pendingRewards: number;
+        approvedRewards: number;
+        rejectedRewards: number;
         treasures: number;
     };
     missions: MissionItem[];
@@ -150,7 +160,7 @@ export default function MissionRewardRegistryIndex({
                             ماموریت، گنج، امتیاز و پاداش
                         </h1>
                     </div>
-                    <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-5">
+                    <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3 xl:grid-cols-6">
                         <Stat
                             icon={Trophy}
                             label="ماموریت"
@@ -167,6 +177,11 @@ export default function MissionRewardRegistryIndex({
                             value={stats.totalPoints}
                         />
                         <Stat icon={Gift} label="پاداش" value={stats.rewards} />
+                        <Stat
+                            icon={CalendarClock}
+                            label="در انتظار"
+                            value={stats.pendingRewards}
+                        />
                         <Stat
                             icon={MapPin}
                             label="گنج"
@@ -353,31 +368,55 @@ export default function MissionRewardRegistryIndex({
                                             {reward.description}
                                         </p>
                                     ) : null}
+                                    {reward.terms ? (
+                                        <p className="line-clamp-2 text-xs text-muted-foreground">
+                                            شرایط: {reward.terms}
+                                        </p>
+                                    ) : null}
                                     <p className="text-xs text-muted-foreground">
                                         شریک: {reward.partner?.name ?? 'پلتفرم'}{' '}
                                         · موجودی:{' '}
                                         {reward.stockQuantity?.toLocaleString(
                                             'fa-IR',
-                                        ) ?? 'نامحدود'}
+                                        ) ?? 'نامحدود'}{' '}
+                                        · وضعیت ارائه:{' '}
+                                        {statusLabels[reward.availabilityStatus] ??
+                                            reward.availabilityStatus}{' '}
+                                        · ثبت: {formatDate(reward.submittedAt)}
                                     </p>
+                                    {reward.reviewNotes ? (
+                                        <p className="rounded-md bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                                            یادداشت بازبینی: {reward.reviewNotes}
+                                        </p>
+                                    ) : null}
                                     {reward.approvalStatus ===
                                     'pending_review' ? (
-                                        <div className="flex flex-wrap gap-2 pt-1">
+                                        <div className="grid gap-3 rounded-md bg-muted/30 p-3 pt-3">
                                             <Form
                                                 action={`/admin/rewards/${reward.id}/approve`}
                                                 method="post"
                                                 options={{
                                                     preserveScroll: true,
                                                 }}
+                                                className="grid gap-2 md:grid-cols-[1fr_auto]"
                                             >
                                                 {({ processing }) => (
-                                                    <Button
-                                                        size="sm"
-                                                        disabled={processing}
-                                                    >
-                                                        <CheckCircle2 className="size-4" />
-                                                        تایید
-                                                    </Button>
+                                                    <>
+                                                        <textarea
+                                                            name="notes"
+                                                            className="min-h-16 rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                                            placeholder="یادداشت تایید برای تیم عملیات"
+                                                        />
+                                                        <div className="flex items-end">
+                                                            <Button
+                                                                size="sm"
+                                                                disabled={processing}
+                                                            >
+                                                                <CheckCircle2 className="size-4" />
+                                                                تایید
+                                                            </Button>
+                                                        </div>
+                                                    </>
                                                 )}
                                             </Form>
                                             <Form
@@ -386,16 +425,26 @@ export default function MissionRewardRegistryIndex({
                                                 options={{
                                                     preserveScroll: true,
                                                 }}
+                                                className="grid gap-2 md:grid-cols-[1fr_auto]"
                                             >
                                                 {({ processing }) => (
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        disabled={processing}
-                                                    >
-                                                        <XCircle className="size-4" />
-                                                        رد
-                                                    </Button>
+                                                    <>
+                                                        <textarea
+                                                            name="notes"
+                                                            className="min-h-16 rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                                            placeholder="دلیل رد یا اصلاح موردنیاز"
+                                                        />
+                                                        <div className="flex items-end">
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                disabled={processing}
+                                                            >
+                                                                <XCircle className="size-4" />
+                                                                رد
+                                                            </Button>
+                                                        </div>
+                                                    </>
                                                 )}
                                             </Form>
                                         </div>

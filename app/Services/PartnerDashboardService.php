@@ -162,6 +162,7 @@ class PartnerDashboardService
                 'source' => 'partner_offer_submission',
                 'approval_status' => 'pending_review',
                 'submitted_by_user_id' => $partnerUser->id,
+                'submitted_at' => now()->toIso8601String(),
                 'description' => $data['description'] ?? null,
                 'terms' => $data['terms'] ?? null,
             ],
