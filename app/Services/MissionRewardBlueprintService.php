@@ -7,7 +7,7 @@ class MissionRewardBlueprintService
     /** @return array<string, mixed> */
     public function overview(): array
     {
-        $templates = collect($this->templates());
+        $templates = collect($this->templates())->map(fn (array $template) => $this->enrichTemplate($template));
 
         return [
             'stats' => [
@@ -15,6 +15,7 @@ class MissionRewardBlueprintService
                 'missionFamilies' => $templates->pluck('family')->unique()->count(),
                 'rewardModels' => $templates->pluck('rewardModel')->unique()->count(),
                 'evidenceTypes' => $templates->pluck('evidenceType')->unique()->count(),
+                'mvpFocus' => $templates->where('launchPhase', 'MVP اولویت ۱')->count(),
             ],
             'principles' => $this->principles(),
             'designFlow' => $this->designFlow(),
@@ -57,6 +58,104 @@ class MissionRewardBlueprintService
             ['step' => '۳', 'title' => 'اتصال به کمپین', 'body' => 'مأموریت را به کمپین، هاب، شریک، QR، نمایشگر یا نقطه مسیر وصل کنید.'],
             ['step' => '۴', 'title' => 'تأیید اجرایی', 'body' => 'مجری یا مدیر هاب مسیر، متن راهنما، موجودی پاداش و امکان انجام در محل را کنترل کند.'],
             ['step' => '۵', 'title' => 'انتشار و پایش', 'body' => 'پس از انتشار، نرخ شروع، تکمیل، مصرف پاداش و خطاهای مسیر را پایش کنید.'],
+        ];
+    }
+
+    /** @param array<string, mixed> $template */
+    private function enrichTemplate(array $template): array
+    {
+        $plan = $this->executionPlans()[$template['code']] ?? $this->defaultExecutionPlan();
+
+        return array_merge($template, $plan);
+    }
+
+    /** @return array<string, array<string, mixed>> */
+    private function executionPlans(): array
+    {
+        return [
+            'ecopark-online-treasure-map-game' => [
+                'launchPhase' => 'MVP اولویت ۱',
+                'mvpPriority' => 1,
+                'priorityReason' => 'شروع تجربه از خانه، جذب اولیه، وایرال شدن و تبدیل کاربر آنلاین به بازدید حضوری.',
+                'connectedSurfaces' => ['بازی آنلاین', 'صفحه کاربر', 'نقشه عملیات', 'QR شروع حضوری', 'داشبورد کمپین'],
+                'rewardBasket' => [
+                    ['level' => 'عادی', 'items' => ['نشان کاشف آنلاین', 'کد شروع سریع در محل', 'امتیاز پیش ورود']],
+                    ['level' => 'نقره ای', 'items' => ['کوپن شروع حضوری', 'سرنخ اختصاصی مسیر', 'ورود به قرعه کشی کوچک']],
+                    ['level' => 'طلایی', 'items' => ['سبد ترکیبی رواق و غذا', 'دعوت خانوادگی', 'امتیاز دوبرابر برای اولین QR حضوری']],
+                    ['level' => 'افسانه ای', 'items' => ['جایزه اسپانسر', 'بسته VIP بازدید', 'نمایش نام برنده در داشبورد/نمایشگر']],
+                ],
+                'nextBuildAction' => 'ساخت نسخه ساده بازی آنلاین نقشه گنج با چند نقطه قابل کلیک و کد شروع حضوری.',
+            ],
+            'hologram-backpack-campaign-starter' => [
+                'launchPhase' => 'MVP اولویت ۱',
+                'mvpPriority' => 2,
+                'priorityReason' => 'پل اصلی بین بازی آنلاین و تجربه واقعی در محل؛ بهترین ابزار شروع مسیر در ورودی و نقاط پرتردد.',
+                'connectedSurfaces' => ['کوله هولوگرامی', 'نمایشگر سیار', 'QR ورود', 'مجری میدانی', 'نقشه عملیات'],
+                'rewardBasket' => [
+                    ['level' => 'عادی', 'items' => ['نشان ورود', 'امتیاز شروع', 'سرنخ اول']],
+                    ['level' => 'نقره ای', 'items' => ['کد خوشامد فروشگاهی', 'اولویت دریافت مسیر پیشنهادی', 'شانس قرعه کشی همان روز']],
+                    ['level' => 'طلایی', 'items' => ['کوپن ترکیبی رواق و طعم گردی', 'امتیاز تکمیل سریع مسیر', 'دعوت همراه']],
+                    ['level' => 'افسانه ای', 'items' => ['جایزه ویژه شروع کمپین', 'ثبت تصویر یادگاری با نمایشگر', 'بسته اسپانسر']],
+                ],
+                'nextBuildAction' => 'اتصال QR شروع کوله به مسیر کاربر و ثبت اولین وضعیت حضور در کمپین.',
+            ],
+            'foodcourt-taste-tour-quest' => [
+                'launchPhase' => 'MVP اولویت ۱',
+                'mvpPriority' => 3,
+                'priorityReason' => 'سریع ترین مسیر تبدیل تعامل به خرید، تجربه واقعی، رأی دادن و بازگشت کاربر به فودکورت.',
+                'connectedSurfaces' => ['پنل هاب غذا', 'پنل فروشگاه', 'کوپن', 'QR غرفه', 'گزارش مصرف پاداش'],
+                'rewardBasket' => [
+                    ['level' => 'عادی', 'items' => ['امتیاز طعم گردی', 'تخفیف کوچک', 'رأی ثبت شده']],
+                    ['level' => 'نقره ای', 'items' => ['نوشیدنی یا آیتم کوچک', 'کوپن غرفه دوم', 'نشان خوش سلیقه']],
+                    ['level' => 'طلایی', 'items' => ['سبد خوراک خانوادگی', 'دعوت به مسیر ویژه غذا', 'امتیاز چند غرفه']],
+                    ['level' => 'افسانه ای', 'items' => ['جایزه جشنواره غذا', 'میزان تخفیف ویژه اسپانسر', 'قرعه کشی بزرگ فودکورت']],
+                ],
+                'nextBuildAction' => 'تعریف مصرف کوپن و تایید فروشگاه برای مسیر طعم گردی.',
+            ],
+            'ravaq-rewarded-shopping-treasure' => [
+                'launchPhase' => 'MVP اولویت ۱',
+                'mvpPriority' => 4,
+                'priorityReason' => 'تبدیل بازدید به مراجعه فروشگاهی، خرید، کوپن و گزارش قابل فهم برای مدیر رواق و واحدهای تجاری.',
+                'connectedSurfaces' => ['پنل مدیر رواق', 'پنل فروشگاه', 'مدیریت شرکا', 'کوپن فروشگاه', 'داشبورد کمپین'],
+                'rewardBasket' => [
+                    ['level' => 'عادی', 'items' => ['کوپن کوچک فروشگاه', 'امتیاز مراجعه', 'نشان بازدید رواق']],
+                    ['level' => 'نقره ای', 'items' => ['تخفیف خرید', 'هدیه کوچک', 'ورود به قرعه کشی رواق']],
+                    ['level' => 'طلایی', 'items' => ['سبد هدیه چند فروشگاه', 'دعوت خانوادگی', 'کد خرید ویژه']],
+                    ['level' => 'افسانه ای', 'items' => ['جایزه ویژه رواق', 'بسته VIP خرید', 'جایزه مشترک اسپانسر و فروشگاه']],
+                ],
+                'nextBuildAction' => 'اتصال الگو به فهرست فروشگاه ها و وضعیت موجودی/مصرف کوپن.',
+            ],
+            'brand-legendary-sponsored-treasure' => [
+                'launchPhase' => 'MVP اولویت ۲',
+                'mvpPriority' => 5,
+                'priorityReason' => 'برای بالاترین سطح برنده ها و اسپانسرهای بزرگ؛ بهتر است بعد از پایدار شدن مسیر اصلی فعال شود.',
+                'connectedSurfaces' => ['ادمین مرکزی', 'اسپانسر خارجی', 'قرعه کشی', 'گزارش حقوقی', 'داشبورد KPI'],
+                'rewardBasket' => [
+                    ['level' => 'عادی', 'items' => ['امتیاز ورود به مسیر اسپانسر', 'نشان اسپانسر']],
+                    ['level' => 'نقره ای', 'items' => ['کد برند', 'شانس قرعه کشی', 'محتوای اختصاصی']],
+                    ['level' => 'طلایی', 'items' => ['بسته ترکیبی برند و اکوپارک', 'دعوت ویژه', 'امتیاز ویژه خانواده']],
+                    ['level' => 'افسانه ای', 'items' => ['جایزه بزرگ اسپانسر', 'بسته VIP', 'اعلام رسمی برنده']],
+                ],
+                'nextBuildAction' => 'تعریف قوانین قرعه کشی، ظرفیت جایزه و سطح دسترسی ادمین مرکزی.',
+            ],
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function defaultExecutionPlan(): array
+    {
+        return [
+            'launchPhase' => 'مخزن ایده',
+            'mvpPriority' => 99,
+            'priorityReason' => 'فعلاً به عنوان الگوی پشتیبان نگهداری شود و بعد از مسیر اصلی به اجرا برسد.',
+            'connectedSurfaces' => ['گنجینه مأموریت ها', 'تعریف مأموریت', 'نقشه عملیات'],
+            'rewardBasket' => [
+                ['level' => 'عادی', 'items' => ['امتیاز پایه', 'نشان دیجیتال']],
+                ['level' => 'نقره ای', 'items' => ['کوپن کوچک', 'ورود به قرعه کشی']],
+                ['level' => 'طلایی', 'items' => ['سبد ترکیبی کوچک', 'دعوت همراه']],
+                ['level' => 'افسانه ای', 'items' => ['جایزه ویژه در صورت اتصال اسپانسر']],
+            ],
+            'nextBuildAction' => 'در زمان طراحی کمپین، با یکی از مسیرهای MVP ترکیب شود.',
         ];
     }
 

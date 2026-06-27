@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 
 type Principle = { title: string; body: string };
 type FlowStep = { step: string; title: string; body: string };
+type RewardBasketTier = { level: string; items: string[] };
 type BlueprintTemplate = {
     code: string;
     title: string;
@@ -31,6 +32,12 @@ type BlueprintTemplate = {
     rewardIdeas: string[];
     stakeholders: string[];
     riskControl: string;
+    launchPhase: string;
+    mvpPriority: number;
+    priorityReason: string;
+    connectedSurfaces: string[];
+    rewardBasket: RewardBasketTier[];
+    nextBuildAction: string;
 };
 type MatrixRow = { level: string; range: string; rule: string };
 type RewardVaultItem = { type: string; use: string };
@@ -42,6 +49,7 @@ type Props = {
         missionFamilies: number;
         rewardModels: number;
         evidenceTypes: number;
+        mvpFocus: number;
     };
     principles: Principle[];
     designFlow: FlowStep[];
@@ -116,6 +124,30 @@ export default function MissionBlueprintIndex({
                     <Stat icon={ShieldCheck} label="نوع مدرک" value={stats.evidenceTypes} />
                 </section>
 
+                <section className="rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border">
+                    <div className="border-b border-sidebar-border/70 px-4 py-3 dark:border-sidebar-border">
+                        <h2 className="font-semibold">اولویت اجرایی MVP</h2>
+                        <p className="mt-1 text-sm text-muted-foreground">این مسیرها ستون فقرات پایلوت اکوپارک هستند: شروع از خانه، اتصال به حضور واقعی، تبدیل به خرید و پاداش ترکیبی.</p>
+                    </div>
+                    <div className="grid gap-3 p-4 lg:grid-cols-4">
+                        {mvpTemplates.slice(0, 4).map((template) => (
+                            <article key={template.code} className="rounded-lg border border-sidebar-border/70 p-3 dark:border-sidebar-border">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div>
+                                        <p className="text-xs text-muted-foreground">اولویت {fa(template.mvpPriority)}</p>
+                                        <h3 className="mt-1 text-sm font-semibold leading-6">{template.title}</h3>
+                                    </div>
+                                    <Trophy className="size-4 text-muted-foreground" />
+                                </div>
+                                <p className="mt-2 text-xs leading-6 text-muted-foreground">{template.priorityReason}</p>
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                    {template.connectedSurfaces.slice(0, 3).map((surface) => <Chip key={surface}>{surface}</Chip>)}
+                                </div>
+                            </article>
+                        ))}
+                    </div>
+                </section>
+
                 <section className="grid gap-4 xl:grid-cols-[0.85fr_1.15fr]">
                     <div className="rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border">
                         <div className="border-b border-sidebar-border/70 px-4 py-3 dark:border-sidebar-border">
@@ -185,6 +217,8 @@ export default function MissionBlueprintIndex({
                                         <p className="mt-1 text-xs text-muted-foreground" dir="ltr">{template.code}</p>
                                     </div>
                                     <div className="flex flex-wrap gap-2">
+                                        <Chip>{template.launchPhase}</Chip>
+                                        {template.mvpPriority < 99 && <Chip>اولویت {fa(template.mvpPriority)}</Chip>}
                                         <Chip>{template.family}</Chip>
                                         <Chip>{template.rewardModel}</Chip>
                                     </div>
