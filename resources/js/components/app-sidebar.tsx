@@ -8,6 +8,7 @@ import {
     MonitorPlay,
     Network,
     QrCode,
+    ShieldCheck,
     ShoppingBag,
     Store,
     Trophy,
@@ -102,6 +103,12 @@ const mainNavItems: RoleAwareNavItem[] = [
         title: 'نقش‌ها و عملیات',
         href: '/admin/role-operations',
         icon: UserCog,
+        roles: ['admin', 'operator', 'viewer'],
+    },
+    {
+        title: 'تخصیص دسترسی',
+        href: '/admin/access-scopes',
+        icon: ShieldCheck,
         roles: ['admin', 'operator', 'viewer'],
     },
     {

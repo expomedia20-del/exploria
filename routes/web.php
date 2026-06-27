@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\PartnerRegistryController;
 use App\Http\Controllers\Admin\QrRegistryController;
 use App\Http\Controllers\Admin\RewardApprovalController;
 use App\Http\Controllers\Admin\RoleOperationsController;
+use App\Http\Controllers\Admin\UserAccessScopeController;
 use App\Http\Controllers\Admin\VenueRegistryController;
 use App\Http\Controllers\Auth\OtpController;
 use App\Http\Controllers\ConsentController;
@@ -141,6 +142,18 @@ Route::get('/admin/display-operations', [DisplayOperationsController::class, 'pa
 Route::get('/admin/role-operations', [RoleOperationsController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer'])
     ->name('admin.role-operations.page');
+
+Route::get('/admin/access-scopes', [UserAccessScopeController::class, 'page'])
+    ->middleware(['auth', 'role:admin,operator,viewer'])
+    ->name('admin.access-scopes.page');
+
+Route::post('/admin/access-scopes', [UserAccessScopeController::class, 'store'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.access-scopes.store');
+
+Route::post('/admin/access-scopes/{accessScope}/deactivate', [UserAccessScopeController::class, 'deactivate'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.access-scopes.deactivate');
 
 Route::post('/admin/display-operations/placements/{adPlacement}/schedule', [DisplayOperationsController::class, 'schedule'])
     ->middleware(['auth', 'role:admin,operator'])
