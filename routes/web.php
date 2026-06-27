@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\MissionRewardRegistryController;
 use App\Http\Controllers\Admin\PartnerRegistryController;
 use App\Http\Controllers\Admin\QrRegistryController;
 use App\Http\Controllers\Admin\RewardApprovalController;
+use App\Http\Controllers\Admin\RoleOperationsController;
 use App\Http\Controllers\Admin\VenueRegistryController;
 use App\Http\Controllers\Auth\OtpController;
 use App\Http\Controllers\ConsentController;
@@ -136,6 +137,10 @@ Route::post('/admin/campaigns', [CampaignRegistryController::class, 'store'])
 Route::get('/admin/display-operations', [DisplayOperationsController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.display-operations.page');
+
+Route::get('/admin/role-operations', [RoleOperationsController::class, 'page'])
+    ->middleware(['auth', 'role:admin,operator,viewer'])
+    ->name('admin.role-operations.page');
 
 Route::post('/admin/display-operations/placements/{adPlacement}/schedule', [DisplayOperationsController::class, 'schedule'])
     ->middleware(['auth', 'role:admin,operator'])

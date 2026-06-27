@@ -11,6 +11,7 @@ import {
     ShoppingBag,
     Store,
     Trophy,
+    UserCog,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
@@ -96,6 +97,12 @@ const mainNavItems: RoleAwareNavItem[] = [
         href: '/admin/display-operations',
         icon: MonitorPlay,
         roles: ['admin', 'operator'],
+    },
+    {
+        title: 'نقش‌ها و عملیات',
+        href: '/admin/role-operations',
+        icon: UserCog,
+        roles: ['admin', 'operator', 'viewer'],
     },
     {
         title: 'پنل فروشگاه',
