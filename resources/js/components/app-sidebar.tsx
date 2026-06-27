@@ -91,6 +91,12 @@ const mainNavItems: RoleAwareNavItem[] = [
         roles: ['admin', 'operator', 'viewer', 'hub_manager'],
     },
     {
+        title: 'گنجینه ماموریت‌ها',
+        href: '/admin/mission-blueprints',
+        icon: BookOpen,
+        roles: ['admin', 'operator', 'viewer', 'hub_manager'],
+    },
+    {
         title: 'مدیریت مکان‌ها',
         href: '/admin/venues',
         icon: MapPinned,

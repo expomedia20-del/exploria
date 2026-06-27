@@ -1,6 +1,7 @@
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, Link } from '@inertiajs/react';
 import {
     BadgeCheck,
+    BookOpenCheck,
     CalendarClock,
     CheckCircle2,
     Gift,
@@ -160,6 +161,12 @@ export default function MissionRewardRegistryIndex({
                             ماموریت، گنج، امتیاز و پاداش
                         </h1>
                     </div>
+                    <Button asChild variant="outline">
+                        <Link href="/admin/mission-blueprints">
+                            <BookOpenCheck className="size-4" />
+                            گنجینه ماموریت‌ها
+                        </Link>
+                    </Button>
                     <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3 xl:grid-cols-6">
                         <Stat
                             icon={Trophy}
