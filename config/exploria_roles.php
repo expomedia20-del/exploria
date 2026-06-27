@@ -1,0 +1,222 @@
+<?php
+
+return [
+    'scope_types' => [
+        'global',
+        'region',
+        'venue',
+        'project',
+        'hub',
+        'partner',
+        'campaign',
+        'display_network',
+        'team',
+    ],
+
+    'roles' => [
+        'super_admin' => [
+            'group' => 'exploria_team',
+            'label' => 'Exploria super admin',
+            'scope' => 'global',
+            'reports_to' => null,
+            'responsibilities' => [
+                'Own platform governance, tenant policy, critical approvals, and final production readiness.',
+                'Review regional, project, sponsor, hub, display, reward, and campaign performance.',
+                'Resolve escalations that cross regional, venue, hub, sponsor, or financial boundaries.',
+            ],
+            'daily_operations' => [
+                'Review global health dashboard, incidents, approvals, and blocked campaign actions.',
+                'Check sponsor, display, reward, and partner exceptions that need executive approval.',
+                'Confirm the daily rollout priorities with regional and project admins.',
+                'Record decisions, risks, and next-day priorities in the operating log.',
+            ],
+        ],
+        'regional_admin' => [
+            'group' => 'exploria_team',
+            'label' => 'Regional admin',
+            'scope' => 'region',
+            'reports_to' => 'super_admin',
+            'responsibilities' => [
+                'Run the Exploria operation for one province or commercial region.',
+                'Approve and supervise venues, project admins, field operators, sponsors, and regional reporting.',
+                'Escalate policy, financial, legal, or cross-region issues to the super admin.',
+            ],
+            'daily_operations' => [
+                'Review active venues, campaign status, staffing coverage, and regional alerts.',
+                'Approve or reject regional partner, sponsor, and campaign requests within policy.',
+                'Follow up with project admins on delayed missions, display slots, and field issues.',
+                'Send a regional summary with blockers, KPIs, and tomorrow priorities.',
+            ],
+        ],
+        'project_admin' => [
+            'group' => 'exploria_team',
+            'label' => 'Project or venue contractor admin',
+            'scope' => 'venue',
+            'reports_to' => 'regional_admin',
+            'responsibilities' => [
+                'Operate one or more contracted venue projects such as EcoPark, Milad Tower, or Eram.',
+                'Coordinate venue executives, hub managers, field operators, display managers, and support assistants.',
+                'Keep local campaign data, QR points, hub readiness, display inventory, and partner onboarding current.',
+            ],
+            'daily_operations' => [
+                'Check venue readiness, open incidents, staffing, QR touchpoints, and active campaign timeline.',
+                'Review hub, shop, sponsor, and display requests for the assigned venue.',
+                'Confirm field operator assignments and unresolved visitor support cases.',
+                'Close the day with venue KPIs, risks, and required regional decisions.',
+            ],
+        ],
+        'field_operator' => [
+            'group' => 'exploria_team',
+            'label' => 'Field campaign operator',
+            'scope' => 'campaign',
+            'reports_to' => 'project_admin',
+            'responsibilities' => [
+                'Run campaign operations on site and validate that visitor touchpoints work in the real venue.',
+                'Report QR, signage, reward redemption, crowd, device, and partner execution issues.',
+                'Support mission execution without changing commercial or governance settings.',
+            ],
+            'daily_operations' => [
+                'Inspect assigned touchpoints, QR codes, route signs, and reward desks before visitor traffic starts.',
+                'Log field issues with photo, location, urgency, and owner.',
+                'Assist partners, hub managers, and visitor helpers during campaign peaks.',
+                'Submit end-of-day execution notes, attendance, resolved issues, and unresolved risks.',
+            ],
+        ],
+        'treasure_assistant' => [
+            'group' => 'exploria_team',
+            'label' => 'Treasure explorer assistant',
+            'scope' => 'campaign',
+            'reports_to' => 'field_operator',
+            'responsibilities' => [
+                'Guide visitors, families, and teams through treasure discovery and campaign participation.',
+                'Help with check-in, QR scanning, mission guidance, queue support, and simple issue reporting.',
+                'Escalate fraud, safety, technical, or reward problems to field operators.',
+            ],
+            'daily_operations' => [
+                'Prepare visitor support station, printed guidance, and QR help materials.',
+                'Help participants start missions and understand team or family participation rules.',
+                'Record common visitor questions, failed scans, and support incidents.',
+                'Hand over unresolved visitor issues and feedback at shift end.',
+            ],
+        ],
+        'display_ads_manager' => [
+            'group' => 'exploria_team',
+            'label' => 'Display advertising manager',
+            'scope' => 'display_network',
+            'reports_to' => 'project_admin',
+            'responsibilities' => [
+                'Schedule, monitor, and reconcile advertising on fixed and mobile display devices.',
+                'Validate creative format, placement priority, timing, venue rules, and playback status.',
+                'Coordinate sponsor, partner, hub, and campaign display needs with admin approval rules.',
+            ],
+            'daily_operations' => [
+                'Review display device health, scheduled placements, conflicts, and failed playback telemetry.',
+                'Prepare the next day ad schedule and resolve priority clashes.',
+                'Confirm approved sponsor and partner campaigns are assigned to correct devices and time slots.',
+                'Export playback exceptions and billing-relevant evidence for admin review.',
+            ],
+        ],
+        'venue_executive' => [
+            'group' => 'external_partner',
+            'label' => 'Venue executive manager',
+            'scope' => 'venue',
+            'reports_to' => 'project_admin',
+            'responsibilities' => [
+                'Represent the operating venue and supervise local business, safety, and execution constraints.',
+                'Review venue-level campaign calendar, hub performance, partner participation, and visitor impact.',
+                'Coordinate with Exploria project admin without accessing unrelated venues.',
+            ],
+            'daily_operations' => [
+                'Review today campaign schedule, visitor flow, venue notices, and operational restrictions.',
+                'Check hub manager summaries and urgent venue requests.',
+                'Approve local execution adjustments that affect venue operations.',
+                'Share venue feedback and next-day constraints with the project admin.',
+            ],
+        ],
+        'hub_manager' => [
+            'group' => 'external_partner',
+            'label' => 'Hub manager',
+            'scope' => 'hub',
+            'reports_to' => 'venue_executive',
+            'responsibilities' => [
+                'Manage a specific hub such as ravaq, science, education, culture, food, or commerce.',
+                'Supervise shops, internal sponsors, local offers, reward readiness, and hub display placements.',
+                'Approve or comment on hub-scoped partner offers and advertising where policy allows.',
+            ],
+            'daily_operations' => [
+                'Review hub dashboard, partner status, reward inventory, pending ads, and display schedule.',
+                'Follow up with shops or units that have low readiness or unresolved redemptions.',
+                'Approve, reject, or escalate hub-scoped offers and advertising requests.',
+                'Send hub summary to venue executive and Exploria project admin.',
+            ],
+        ],
+        'shop_manager' => [
+            'group' => 'external_partner',
+            'label' => 'Shop or unit manager',
+            'scope' => 'partner',
+            'reports_to' => 'hub_manager',
+            'responsibilities' => [
+                'Manage one shop, food unit, cultural unit, commercial unit, or service partner account.',
+                'Maintain profile, offers, rewards, redemption codes, inventory, and partner advertising requests.',
+                'Serve visitors according to approved campaign and reward rules.',
+            ],
+            'daily_operations' => [
+                'Check pending redemptions, available inventory, offer status, and operating notes.',
+                'Confirm valid customer reward codes and mark fulfilled redemptions.',
+                'Submit or update offers, discounts, and advertising requests for review.',
+                'Report stock, service, or campaign issues to the hub manager.',
+            ],
+        ],
+        'internal_sponsor' => [
+            'group' => 'external_partner',
+            'label' => 'Internal venue or hub sponsor',
+            'scope' => 'hub',
+            'reports_to' => 'hub_manager',
+            'responsibilities' => [
+                'Run sponsor activity that belongs to a specific venue or hub management chain.',
+                'Submit sponsor rewards, messages, route sponsorship, and display placement requests.',
+                'Coordinate activation timing with the relevant hub manager and Exploria approval flow.',
+            ],
+            'daily_operations' => [
+                'Review sponsor placement status, approved creatives, reward stock, and campaign performance.',
+                'Respond to hub manager feedback or admin review notes.',
+                'Confirm sponsor activation assets are ready for the day.',
+                'Record sponsor outcomes and requests for tomorrow.',
+            ],
+        ],
+        'external_sponsor' => [
+            'group' => 'external_partner',
+            'label' => 'External sponsor',
+            'scope' => 'region',
+            'reports_to' => 'regional_admin',
+            'responsibilities' => [
+                'Run independent sponsor campaigns that are not owned by one venue or hub.',
+                'Submit cross-venue or regional sponsorship requests under platform and regional admin supervision.',
+                'Maintain sponsor profile, approved creatives, reward commitments, and reporting expectations.',
+            ],
+            'daily_operations' => [
+                'Review active sponsor campaigns, creative approvals, display placements, and reward usage.',
+                'Submit new sponsor requests or requested changes with target region and campaign goals.',
+                'Respond to admin notes and upload missing assets or terms.',
+                'Check daily sponsor KPIs and settlement-relevant evidence.',
+            ],
+        ],
+        'participant' => [
+            'group' => 'public',
+            'label' => 'Visitor or campaign participant',
+            'scope' => 'team',
+            'reports_to' => null,
+            'responsibilities' => [
+                'Participate in campaigns as an individual, family, or team.',
+                'Scan QR codes, complete missions, discover treasures, earn points, and redeem eligible rewards.',
+                'Follow campaign rules, consent, privacy, safety, and fair-play requirements.',
+            ],
+            'daily_operations' => [
+                'Start or continue the active campaign journey.',
+                'Complete eligible missions and check progress, rewards, and team status.',
+                'Redeem approved rewards at participating shops or campaign points.',
+                'Report issues, feedback, or lost access through the visitor support flow.',
+            ],
+        ],
+    ],
+];
