@@ -9,19 +9,20 @@ use App\Services\HubManagerAccessService;
 use App\Services\StandaloneAdvertisingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class AdvertisingController extends Controller
 {
-    public function page(StandaloneAdvertisingService $service): Response
+    public function page(Request $request, StandaloneAdvertisingService $service): Response
     {
-        return Inertia::render('admin/ads/index', $service->adminOverview());
+        return Inertia::render('admin/ads/index', $service->adminOverview($request->user()));
     }
 
-    public function index(StandaloneAdvertisingService $service): JsonResponse
+    public function index(Request $request, StandaloneAdvertisingService $service): JsonResponse
     {
-        return response()->json(['status' => 'success', 'data' => $service->adminOverview()]);
+        return response()->json(['status' => 'success', 'data' => $service->adminOverview($request->user())]);
     }
 
     public function approve(ReviewAdRequestRequest $request, AdRequest $adRequest, StandaloneAdvertisingService $service, HubManagerAccessService $access): JsonResponse|RedirectResponse

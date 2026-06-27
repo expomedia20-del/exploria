@@ -24,9 +24,9 @@ class VenueRegistryTest extends TestCase
         $this->getJson('/api/v1/admin/venues')->assertUnauthorized();
     }
 
-    public function test_viewer_can_read_venue_registry(): void
+    public function test_admin_can_read_full_venue_registry(): void
     {
-        $viewer = User::factory()->create(['role' => UserRole::Viewer]);
+        $viewer = User::factory()->create(['role' => UserRole::Admin]);
 
         $this->actingAs($viewer)
             ->getJson('/api/v1/admin/venues')
@@ -50,9 +50,9 @@ class VenueRegistryTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('admin/venues/index')
-                ->has('venues', 3)
+                ->has('venues', 1)
                 ->where('venues.0.code', 'ecopark-abbasabad')
-                ->where('venues.0.hubsCount', 4)
-                ->has('venues.0.zones.0.hubs', 4));
+                ->where('venues.0.hubsCount', 1)
+                ->has('venues.0.zones.0.hubs', 1));
     }
 }

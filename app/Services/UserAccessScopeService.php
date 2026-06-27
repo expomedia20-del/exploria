@@ -26,6 +26,62 @@ class UserAccessScopeService
     }
 
     /** @return Collection<int, string> */
+    public function assignedVenueIds(User $user): Collection
+    {
+        if ($this->hasGlobalAccess($user)) {
+            return Venue::query()
+                ->where('status', RecordStatus::Active)
+                ->pluck('id')
+                ->values();
+        }
+
+        return $this->directScopeIds($user, 'venue');
+    }
+
+    /** @return Collection<int, string> */
+    public function assignedHubIds(User $user): Collection
+    {
+        if ($this->hasGlobalAccess($user)) {
+            return Hub::query()
+                ->where('status', RecordStatus::Active)
+                ->pluck('id')
+                ->values();
+        }
+
+        $legacyHubIds = HubManagementAssignment::query()
+            ->where('user_id', $user->id)
+            ->where('status', RecordStatus::Active)
+            ->pluck('hub_id');
+
+        return $this->directScopeIds($user, 'hub')
+            ->merge($legacyHubIds)
+            ->filter()
+            ->unique()
+            ->values();
+    }
+
+    /** @return Collection<int, string> */
+    public function assignedPartnerIds(User $user): Collection
+    {
+        if ($this->hasGlobalAccess($user)) {
+            return PartnerAccount::query()
+                ->where('status', RecordStatus::Active)
+                ->pluck('id')
+                ->values();
+        }
+
+        $legacyPartnerIds = PartnerUser::query()
+            ->where('user_id', $user->id)
+            ->where('status', RecordStatus::Active)
+            ->pluck('partner_account_id');
+
+        return $this->directScopeIds($user, 'partner')
+            ->merge($legacyPartnerIds)
+            ->filter()
+            ->unique()
+            ->values();
+    }
+    /** @return Collection<int, string> */
     public function venueIds(User $user): Collection
     {
         if ($this->hasGlobalAccess($user)) {

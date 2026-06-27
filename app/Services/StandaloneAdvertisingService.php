@@ -17,7 +17,7 @@ use Illuminate\Validation\ValidationException;
 
 class StandaloneAdvertisingService
 {
-    public function __construct(private readonly PartnerDashboardService $partnerDashboardService) {}
+    public function __construct(private readonly PartnerDashboardService $partnerDashboardService, private readonly UserAccessScopeService $accessScopes) {}
 
     /** @return array<string, mixed> */
     public function partnerOverview(User $user): array
@@ -52,9 +52,19 @@ class StandaloneAdvertisingService
     }
 
     /** @return array<string, mixed> */
-    public function adminOverview(): array
+    public function adminOverview(?User $user = null): array
     {
+        $venueIds = $user ? $this->accessScopes->assignedVenueIds($user) : collect();
+        $hubIds = $user ? $this->accessScopes->hubIds($user) : collect();
+        $partnerIds = $user ? $this->accessScopes->partnerIds($user) : collect();
+        $isGlobal = $user === null || $this->accessScopes->hasGlobalAccess($user);
+
         $adRequests = AdRequest::query()
+            ->when(! $isGlobal, fn ($query) => $query->where(function ($query) use ($venueIds, $hubIds, $partnerIds): void {
+                $query->whereIn('venue_id', $venueIds)
+                    ->orWhereIn('hub_id', $hubIds)
+                    ->orWhereIn('partner_account_id', $partnerIds);
+            }))
             ->with([
                 'venue:id,code,name',
                 'partnerAccount:id,code,name,partner_type',
@@ -70,6 +80,10 @@ class StandaloneAdvertisingService
             ->map(fn (AdRequest $adRequest): array => $this->serializeAdRequest($adRequest));
 
         $devices = DisplayDevice::query()
+            ->when(! $isGlobal, fn ($query) => $query->where(function ($query) use ($venueIds, $hubIds): void {
+                $query->whereIn('venue_id', $venueIds)
+                    ->orWhereIn('hub_id', $hubIds);
+            }))
             ->with(['venue:id,code,name', 'hub:id,code,name', 'touchpoint:id,code,label'])
             ->orderBy('created_at')
             ->get()

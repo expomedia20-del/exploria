@@ -7,22 +7,23 @@ use App\Http\Requests\Admin\StoreCampaignRequest;
 use App\Services\CampaignRegistryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class CampaignRegistryController extends Controller
 {
-    public function page(CampaignRegistryService $service): Response
+    public function page(Request $request, CampaignRegistryService $service): Response
     {
         return Inertia::render('admin/campaigns/index', [
-            'campaigns' => $service->list(),
-            'venueOptions' => $service->venueOptions(),
+            'campaigns' => $service->list($request->user()),
+            'venueOptions' => $service->venueOptions($request->user()),
         ]);
     }
 
-    public function index(CampaignRegistryService $service): JsonResponse
+    public function index(Request $request, CampaignRegistryService $service): JsonResponse
     {
-        return response()->json(['status' => 'success', 'data' => $service->list()]);
+        return response()->json(['status' => 'success', 'data' => $service->list($request->user())]);
     }
 
     public function store(StoreCampaignRequest $request, CampaignRegistryService $service): JsonResponse|RedirectResponse

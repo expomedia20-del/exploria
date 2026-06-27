@@ -79,9 +79,9 @@ class PartnerFoundationTest extends TestCase
         $this->getJson('/api/v1/admin/partners')->assertUnauthorized();
     }
 
-    public function test_viewer_can_read_partner_registry(): void
+    public function test_admin_can_read_partner_registry(): void
     {
-        $viewer = User::factory()->create(['role' => UserRole::Viewer]);
+        $viewer = User::factory()->create(['role' => UserRole::Admin]);
 
         $this->actingAs($viewer)
             ->getJson('/api/v1/admin/partners')
@@ -100,7 +100,8 @@ class PartnerFoundationTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('admin/partners/index')
-                ->has('partners', 3)
+                ->has('partners', 1)
+                ->where('partners.0.code', 'ravaq-store')
                 ->where('partners.0.venue.code', 'ecopark-abbasabad'));
     }
 

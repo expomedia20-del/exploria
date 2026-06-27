@@ -4,17 +4,31 @@ namespace App\Services;
 
 use App\Models\Hub;
 use App\Models\HubManagementAssignment;
+use App\Models\User;
 use App\Models\Venue;
 use App\Models\Zone;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 class VenueRegistryService
 {
+    public function __construct(private readonly UserAccessScopeService $accessScopes) {}
+
     /** @return Collection<int, array<string, mixed>> */
-    public function list(): Collection
+    public function list(?User $user = null): Collection
     {
+        $hubIds = $user ? $this->accessScopes->hubIds($user) : collect();
+        $assignedVenueIds = $user ? $this->accessScopes->assignedVenueIds($user) : collect();
+        $venueIds = $user ? $this->accessScopes->venueIds($user) : collect();
+        $isGlobal = $user === null || $this->accessScopes->hasGlobalAccess($user);
+
         return Venue::query()
+            ->when(! $isGlobal, fn (Builder $query) => $query->whereIn('id', $venueIds))
             ->with([
+                'zones.hubs' => fn ($query) => $query->when(! $isGlobal, fn ($query) => $query->where(function ($query) use ($hubIds, $assignedVenueIds): void {
+                    $query->whereIn('id', $hubIds)
+                        ->orWhereHas('zone', fn ($query) => $query->whereIn('venue_id', $assignedVenueIds));
+                })),
                 'zones.hubs.touchpoints:id,hub_id,code,label,type,status',
                 'zones.hubs.partnerLocations.partnerAccount:id,code,name,partner_type,status',
                 'zones.hubs.managementAssignments.user:id,name,email,role',

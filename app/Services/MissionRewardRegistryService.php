@@ -5,13 +5,26 @@ namespace App\Services;
 use App\Models\MissionInstance;
 use App\Models\RewardDefinition;
 use App\Models\Treasure;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 
 class MissionRewardRegistryService
 {
+    public function __construct(private readonly UserAccessScopeService $accessScopes) {}
+
     /** @return array<string, mixed> */
-    public function overview(): array
+    public function overview(?User $user = null): array
     {
+        $venueIds = $user ? $this->accessScopes->assignedVenueIds($user) : collect();
+        $hubIds = $user ? $this->accessScopes->hubIds($user) : collect();
+        $partnerIds = $user ? $this->accessScopes->partnerIds($user) : collect();
+        $isGlobal = $user === null || $this->accessScopes->hasGlobalAccess($user);
+
         $missions = MissionInstance::query()
+            ->when(! $isGlobal, fn (Builder $query) => $query->where(function (Builder $query) use ($venueIds, $hubIds): void {
+                $query->whereIn('venue_id', $venueIds)
+                    ->orWhereIn('hub_id', $hubIds);
+            }))
             ->with([
                 'missionTemplate:id,code,title,mission_type,trigger_type,point_value,status',
                 'campaign:id,code,name',
@@ -27,6 +40,10 @@ class MissionRewardRegistryService
             ->map(fn (MissionInstance $mission): array => $this->serializeMission($mission));
 
         $rewards = RewardDefinition::query()
+            ->when(! $isGlobal, fn (Builder $query) => $query->where(function (Builder $query) use ($venueIds, $partnerIds): void {
+                $query->whereIn('venue_id', $venueIds)
+                    ->orWhereIn('partner_account_id', $partnerIds);
+            }))
             ->with(['campaign:id,code,name', 'venue:id,code,name', 'partnerAccount:id,code,name,partner_type'])
             ->withCount('userRewards')
             ->orderBy('created_at')
@@ -35,6 +52,7 @@ class MissionRewardRegistryService
             ->map(fn (RewardDefinition $reward): array => $this->serializeReward($reward));
 
         $treasures = Treasure::query()
+            ->when(! $isGlobal, fn (Builder $query) => $query->whereIn('venue_id', $venueIds))
             ->with(['campaign:id,code,name', 'venue:id,code,name', 'missionInstance:id,code'])
             ->orderBy('created_at')
             ->get()
@@ -73,32 +91,11 @@ class MissionRewardRegistryService
             'endsAt' => $mission->ends_at?->toIso8601String(),
             'unlockRule' => $mission->unlock_rule,
             'progressCount' => (int) $mission->getAttribute('progress_records_count'),
-            'campaign' => $mission->campaign ? [
-                'id' => $mission->campaign->id,
-                'code' => $mission->campaign->code,
-                'name' => $mission->campaign->name,
-            ] : null,
-            'venue' => $mission->venue ? [
-                'id' => $mission->venue->id,
-                'code' => $mission->venue->code,
-                'name' => $mission->venue->name,
-            ] : null,
-            'hub' => $mission->hub ? [
-                'id' => $mission->hub->id,
-                'code' => $mission->hub->code,
-                'name' => $mission->hub->name,
-            ] : null,
-            'touchpoint' => $mission->touchpoint ? [
-                'id' => $mission->touchpoint->id,
-                'code' => $mission->touchpoint->code,
-                'label' => $mission->touchpoint->label,
-            ] : null,
-            'treasure' => $mission->treasure ? [
-                'id' => $mission->treasure->id,
-                'code' => $mission->treasure->code,
-                'name' => $mission->treasure->name,
-                'treasureType' => $mission->treasure->treasure_type,
-            ] : null,
+            'campaign' => $mission->campaign ? ['id' => $mission->campaign->id, 'code' => $mission->campaign->code, 'name' => $mission->campaign->name] : null,
+            'venue' => $mission->venue ? ['id' => $mission->venue->id, 'code' => $mission->venue->code, 'name' => $mission->venue->name] : null,
+            'hub' => $mission->hub ? ['id' => $mission->hub->id, 'code' => $mission->hub->code, 'name' => $mission->hub->name] : null,
+            'touchpoint' => $mission->touchpoint ? ['id' => $mission->touchpoint->id, 'code' => $mission->touchpoint->code, 'label' => $mission->touchpoint->label] : null,
+            'treasure' => $mission->treasure ? ['id' => $mission->treasure->id, 'code' => $mission->treasure->code, 'name' => $mission->treasure->name, 'treasureType' => $mission->treasure->treasure_type] : null,
         ];
     }
 
@@ -123,22 +120,9 @@ class MissionRewardRegistryService
             'pointCost' => $reward->point_cost,
             'stockQuantity' => $reward->stock_quantity,
             'awardedCount' => (int) $reward->getAttribute('user_rewards_count'),
-            'campaign' => $reward->campaign ? [
-                'id' => $reward->campaign->id,
-                'code' => $reward->campaign->code,
-                'name' => $reward->campaign->name,
-            ] : null,
-            'venue' => $reward->venue ? [
-                'id' => $reward->venue->id,
-                'code' => $reward->venue->code,
-                'name' => $reward->venue->name,
-            ] : null,
-            'partner' => $reward->partnerAccount ? [
-                'id' => $reward->partnerAccount->id,
-                'code' => $reward->partnerAccount->code,
-                'name' => $reward->partnerAccount->name,
-                'partnerType' => $reward->partnerAccount->partner_type,
-            ] : null,
+            'campaign' => $reward->campaign ? ['id' => $reward->campaign->id, 'code' => $reward->campaign->code, 'name' => $reward->campaign->name] : null,
+            'venue' => $reward->venue ? ['id' => $reward->venue->id, 'code' => $reward->venue->code, 'name' => $reward->venue->name] : null,
+            'partner' => $reward->partnerAccount ? ['id' => $reward->partnerAccount->id, 'code' => $reward->partnerAccount->code, 'name' => $reward->partnerAccount->name, 'partnerType' => $reward->partnerAccount->partner_type] : null,
         ];
     }
 
@@ -152,16 +136,8 @@ class MissionRewardRegistryService
             'treasureType' => $treasure->treasure_type,
             'status' => $treasure->status->value,
             'revealRule' => $treasure->reveal_rule,
-            'campaign' => $treasure->campaign ? [
-                'id' => $treasure->campaign->id,
-                'code' => $treasure->campaign->code,
-                'name' => $treasure->campaign->name,
-            ] : null,
-            'venue' => $treasure->venue ? [
-                'id' => $treasure->venue->id,
-                'code' => $treasure->venue->code,
-                'name' => $treasure->venue->name,
-            ] : null,
+            'campaign' => $treasure->campaign ? ['id' => $treasure->campaign->id, 'code' => $treasure->campaign->code, 'name' => $treasure->campaign->name] : null,
+            'venue' => $treasure->venue ? ['id' => $treasure->venue->id, 'code' => $treasure->venue->code, 'name' => $treasure->venue->name] : null,
             'missionCode' => $treasure->missionInstance?->code,
         ];
     }

@@ -104,9 +104,9 @@ class MissionRewardFoundationTest extends TestCase
         $this->assertSame(1, $user->rewards()->count());
     }
 
-    public function test_viewer_can_read_mission_reward_registry_api(): void
+    public function test_admin_can_read_mission_reward_registry_api(): void
     {
-        $viewer = User::factory()->create(['role' => UserRole::Viewer]);
+        $viewer = User::factory()->create(['role' => UserRole::Admin]);
 
         $this->actingAs($viewer)
             ->getJson('/api/v1/admin/missions')
@@ -127,9 +127,9 @@ class MissionRewardFoundationTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('admin/missions/index')
-                ->where('stats.missions', 4)
-                ->has('missions', 4)
-                ->has('rewards', 4)
-                ->has('treasures', 1));
+                ->where('stats.missions', 1)
+                ->has('missions', 1)
+                ->has('rewards', 0)
+                ->has('treasures', 0));
     }
 }

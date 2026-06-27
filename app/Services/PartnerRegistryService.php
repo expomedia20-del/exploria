@@ -5,14 +5,22 @@ namespace App\Services;
 use App\Models\PartnerAccount;
 use App\Models\PartnerLocation;
 use App\Models\PartnerUser;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 class PartnerRegistryService
 {
+    public function __construct(private readonly UserAccessScopeService $accessScopes) {}
+
     /** @return Collection<int, array<string, mixed>> */
-    public function list(): Collection
+    public function list(?User $user = null): Collection
     {
+        $partnerIds = $user ? $this->accessScopes->partnerIds($user) : collect();
+        $isGlobal = $user === null || $this->accessScopes->hasGlobalAccess($user);
+
         return PartnerAccount::query()
+            ->when(! $isGlobal, fn (Builder $query) => $query->whereIn('id', $partnerIds))
             ->with([
                 'venue:id,name,code',
                 'locations.hub:id,name,code,hub_type',
