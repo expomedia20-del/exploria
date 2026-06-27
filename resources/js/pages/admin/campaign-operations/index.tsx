@@ -1,4 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
+import { useState } from 'react';
 import {
     Gift,
     Building2,
@@ -13,6 +14,15 @@ import {
     Store,
     Trophy,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+    Sheet,
+    SheetContent,
+    SheetDescription,
+    SheetFooter,
+    SheetHeader,
+    SheetTitle,
+} from '@/components/ui/sheet';
 
 type Entity = { id: string; code: string; name: string };
 type Hub = Entity & { hubType?: string };
@@ -83,6 +93,13 @@ type CampaignBlueprint = {
         commercial: JourneySection;
         media: JourneySection;
     };
+};
+
+type OperationSelection = {
+    item: JourneyItem | Participant;
+    sectionTitle: string;
+    href: string;
+    campaign: CampaignBlueprint;
 };
 
 type Props = {
@@ -168,7 +185,58 @@ function itemHref(item: JourneyItem | Participant) {
 
     return '/admin/campaign-operations';
 }
-function JourneyColumn({ id, section }: { id: keyof CampaignBlueprint['journey']; section: JourneySection }) {
+function itemKind(item: JourneyItem | Participant) {
+    if ('participationRole' in item) return label(typeLabels, item.participantType);
+
+    const journeyItem = item as JourneyItem;
+    if (journeyItem.type === 'qr') return 'نقطه شروع QR';
+    if (journeyItem.type === 'mission') return 'ماموریت';
+    if (journeyItem.type === 'reward') return 'پاداش';
+    if (journeyItem.type === 'treasure') return 'گنج';
+    if (journeyItem.type === 'ad') return 'تبلیغ';
+    if (journeyItem.type === 'display') return 'نمایشگر';
+
+    return journeyItem.type;
+}
+
+function detailRows(item: JourneyItem | Participant, campaign: CampaignBlueprint) {
+    const baseRows = [
+        ['کمپین', campaign.name],
+        ['مکان', campaign.venue?.name ?? 'ثبت نشده'],
+        ['نوع آیتم', itemKind(item)],
+        ['وضعیت', 'status' in item && item.status ? item.status : 'ثبت نشده'],
+    ];
+
+    if ('participationRole' in item) {
+        return [
+            ...baseRows,
+            ['عضو', item.partner?.name ?? 'عضو بدون شریک'],
+            ['نقش در کمپین', label(roleLabels, item.participationRole)],
+            ['هاب', item.hub?.name ?? 'بدون هاب'],
+            ['وضعیت آماده سازی', item.onboardingStatus],
+            ['اتصال ها', `${fa(item.connections.rewards)} پاداش، ${fa(item.connections.ads)} تبلیغ، ${fa(item.connections.missions)} ماموریت`],
+        ];
+    }
+
+    const journeyItem = item as JourneyItem;
+
+    return [
+        ...baseRows,
+        ['کد', journeyItem.code ?? 'ثبت نشده'],
+        ['هاب', journeyItem.hub?.name ?? 'بدون هاب'],
+        ['شریک', journeyItem.partner?.name ?? 'بدون شریک'],
+        ['جزئیات', itemMeta(item)],
+    ];
+}
+function JourneyColumn({
+    id,
+    section,
+    onSelect,
+}: {
+    id: keyof CampaignBlueprint['journey'];
+    section: JourneySection;
+    onSelect: (item: JourneyItem | Participant) => void;
+}) {
     const Icon = sectionIcons[id];
 
     return (
@@ -182,14 +250,15 @@ function JourneyColumn({ id, section }: { id: keyof CampaignBlueprint['journey']
                     <p className="text-xs text-muted-foreground">هنوز آیتمی ثبت نشده است.</p>
                 ) : (
                     section.items.slice(0, 6).map((item) => (
-                        <Link
+                        <button
                             key={item.id}
-                            href={itemHref(item)}
-                            className="block rounded-md border border-sidebar-border/60 px-2 py-2 text-xs transition hover:border-primary/40 hover:bg-muted/60 dark:border-sidebar-border"
+                            type="button"
+                            onClick={() => onSelect(item)}
+                            className="block w-full rounded-md border border-sidebar-border/60 px-2 py-2 text-right text-xs transition hover:border-primary/40 hover:bg-muted/60 dark:border-sidebar-border"
                         >
                             <p className="line-clamp-1 font-medium">{itemTitle(item)}</p>
                             <p className="mt-1 line-clamp-1 text-muted-foreground">{itemMeta(item)}</p>
-                        </Link>
+                        </button>
                     ))
                 )}
             </div>
@@ -197,10 +266,62 @@ function JourneyColumn({ id, section }: { id: keyof CampaignBlueprint['journey']
     );
 }
 
+
+function OperationDetailsSheet({
+    selection,
+    onOpenChange,
+}: {
+    selection: OperationSelection | null;
+    onOpenChange: (open: boolean) => void;
+}) {
+    const rows = selection ? detailRows(selection.item, selection.campaign) : [];
+
+    return (
+        <Sheet open={selection !== null} onOpenChange={onOpenChange}>
+            <SheetContent side="left" className="w-full overflow-y-auto sm:max-w-md" dir="rtl">
+                {selection ? (
+                    <>
+                        <SheetHeader>
+                            <SheetTitle>{itemTitle(selection.item)}</SheetTitle>
+                            <SheetDescription>
+                                {selection.sectionTitle} در {selection.campaign.name}
+                            </SheetDescription>
+                        </SheetHeader>
+
+                        <div className="space-y-3 px-4">
+                            <div className="rounded-lg border border-sidebar-border/70 p-3 dark:border-sidebar-border">
+                                <p className="text-xs text-muted-foreground">مسیر مدیریتی</p>
+                                <p className="mt-1 text-sm font-medium">{selection.href}</p>
+                            </div>
+
+                            <div className="divide-y divide-sidebar-border/70 rounded-lg border border-sidebar-border/70 dark:divide-sidebar-border dark:border-sidebar-border">
+                                {rows.map(([title, value]) => (
+                                    <div key={title} className="grid grid-cols-[0.85fr_1.15fr] gap-3 px-3 py-2 text-sm">
+                                        <span className="text-muted-foreground">{title}</span>
+                                        <span className="font-medium">{value}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <SheetFooter>
+                            <Button asChild>
+                                <Link href={selection.href}>رفتن به صفحه مدیریت</Link>
+                            </Button>
+                        </SheetFooter>
+                    </>
+                ) : null}
+            </SheetContent>
+        </Sheet>
+    );
+}
 export default function CampaignOperationsIndex({ stats, campaigns }: Props) {
+    const [selectedOperation, setSelectedOperation] = useState<OperationSelection | null>(null);
+
     return (
         <>
             <Head title="نقشه عملیات کمپین" />
+            <OperationDetailsSheet selection={selectedOperation} onOpenChange={(open) => !open && setSelectedOperation(null)} />
             <div dir="rtl" className="flex h-full flex-1 flex-col gap-5 overflow-x-auto p-4">
                 <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                     <div>
@@ -264,11 +385,66 @@ export default function CampaignOperationsIndex({ stats, campaigns }: Props) {
                                         <h3 className="font-semibold">چرخه کاربر در کمپین</h3>
                                     </div>
                                     <div className="flex gap-3 overflow-x-auto pb-1">
-                                        <JourneyColumn id="entry" section={campaign.journey.entry} />
-                                        <JourneyColumn id="missions" section={campaign.journey.missions} />
-                                        <JourneyColumn id="incentives" section={campaign.journey.incentives} />
-                                        <JourneyColumn id="commercial" section={campaign.journey.commercial} />
-                                        <JourneyColumn id="media" section={campaign.journey.media} />
+                                        <JourneyColumn
+                                            id="entry"
+                                            section={campaign.journey.entry}
+                                            onSelect={(item) =>
+                                                setSelectedOperation({
+                                                    item,
+                                                    sectionTitle: campaign.journey.entry.title,
+                                                    href: itemHref(item),
+                                                    campaign,
+                                                })
+                                            }
+                                        />
+                                        <JourneyColumn
+                                            id="missions"
+                                            section={campaign.journey.missions}
+                                            onSelect={(item) =>
+                                                setSelectedOperation({
+                                                    item,
+                                                    sectionTitle: campaign.journey.missions.title,
+                                                    href: itemHref(item),
+                                                    campaign,
+                                                })
+                                            }
+                                        />
+                                        <JourneyColumn
+                                            id="incentives"
+                                            section={campaign.journey.incentives}
+                                            onSelect={(item) =>
+                                                setSelectedOperation({
+                                                    item,
+                                                    sectionTitle: campaign.journey.incentives.title,
+                                                    href: itemHref(item),
+                                                    campaign,
+                                                })
+                                            }
+                                        />
+                                        <JourneyColumn
+                                            id="commercial"
+                                            section={campaign.journey.commercial}
+                                            onSelect={(item) =>
+                                                setSelectedOperation({
+                                                    item,
+                                                    sectionTitle: campaign.journey.commercial.title,
+                                                    href: itemHref(item),
+                                                    campaign,
+                                                })
+                                            }
+                                        />
+                                        <JourneyColumn
+                                            id="media"
+                                            section={campaign.journey.media}
+                                            onSelect={(item) =>
+                                                setSelectedOperation({
+                                                    item,
+                                                    sectionTitle: campaign.journey.media.title,
+                                                    href: itemHref(item),
+                                                    campaign,
+                                                })
+                                            }
+                                        />
                                     </div>
                                 </div>
 
