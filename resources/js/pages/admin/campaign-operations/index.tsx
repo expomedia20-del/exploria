@@ -1,6 +1,6 @@
 import { Head } from '@inertiajs/react';
 import {
-    BadgeGift,
+    Gift,
     Building2,
     ChevronLeft,
     Gem,
@@ -118,7 +118,7 @@ const typeLabels: Record<string, string> = {
 const sectionIcons = {
     entry: QrCode,
     missions: Trophy,
-    incentives: BadgeGift,
+    incentives: Gift,
     commercial: Store,
     media: MonitorPlay,
 };
