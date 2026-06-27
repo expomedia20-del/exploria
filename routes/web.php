@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AdvertisingController;
 use App\Http\Controllers\Admin\CampaignRegistryController;
 use App\Http\Controllers\Admin\CampaignParticipantController;
+use App\Http\Controllers\Admin\CampaignOperationsController;
 use App\Http\Controllers\Admin\DisplayOperationsController;
 use App\Http\Controllers\Admin\MissionRewardRegistryController;
 use App\Http\Controllers\Admin\PartnerRegistryController;
@@ -108,6 +109,10 @@ Route::get('/admin/campaigns', [CampaignRegistryController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
     ->name('admin.campaigns.page');
 
+Route::get('/admin/campaign-operations', [CampaignOperationsController::class, 'page'])
+    ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
+    ->name('admin.campaign-operations.page');
+
 Route::get('/admin/campaign-participants', [CampaignParticipantController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
     ->name('admin.campaign-participants.page');
@@ -186,6 +191,10 @@ Route::get('/api/v1/admin/partners', [PartnerRegistryController::class, 'index']
 Route::get('/api/v1/admin/campaigns', [CampaignRegistryController::class, 'index'])
     ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
     ->name('admin.campaigns.index');
+
+Route::get('/api/v1/admin/campaign-operations', [CampaignOperationsController::class, 'index'])
+    ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
+    ->name('admin.campaign-operations.index');
 
 Route::get('/api/v1/admin/campaign-participants', [CampaignParticipantController::class, 'index'])
     ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])

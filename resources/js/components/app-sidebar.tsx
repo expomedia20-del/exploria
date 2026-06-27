@@ -8,6 +8,7 @@ import {
     MonitorPlay,
     Network,
     QrCode,
+    Route,
     ShieldCheck,
     ShoppingBag,
     Store,
@@ -62,12 +63,19 @@ const mainNavItems: RoleAwareNavItem[] = [
         title: 'مدیریت QR',
         href: '/admin/qr-codes',
         icon: QrCode,
+    Route,
         roles: ['admin', 'operator', 'viewer'],
     },
     {
         title: 'کمپین‌ها',
         href: '/admin/campaigns',
         icon: Megaphone,
+        roles: ['admin', 'operator', 'viewer', 'hub_manager'],
+    },
+    {
+        title: 'نقشه عملیات',
+        href: '/admin/campaign-operations',
+        icon: Route,
         roles: ['admin', 'operator', 'viewer', 'hub_manager'],
     },
     {
