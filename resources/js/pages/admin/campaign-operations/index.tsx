@@ -95,10 +95,13 @@ type CampaignBlueprint = {
     };
 };
 
+type OperationGuide = { steps: string[]; navigation: string[] };
+
 type OperationSelection = {
     item?: JourneyItem | Participant;
     title?: string;
     rows?: string[][];
+    guide?: OperationGuide;
     sectionTitle: string;
     href: string;
     campaign: CampaignBlueprint;
@@ -257,6 +260,137 @@ function sponsorDetailRows(type: 'internal' | 'external', sponsors: Participant[
         ['اعضا', participantNames(sponsors)],
     ];
 }
+function itemOperationalGuide(item: JourneyItem | Participant, campaign: CampaignBlueprint): OperationGuide {
+    const venue = campaign.venue?.name ?? 'مکان پروژه';
+    const hub = 'hub' in item ? item.hub?.name : null;
+    const partner = 'partner' in item ? item.partner?.name : null;
+
+    if ('participationRole' in item) {
+        return {
+            steps: [
+                `نقش ${label(roleLabels, item.participationRole)} را برای ${item.partner?.name ?? 'عضو کمپین'} فعال کنید.`,
+                'تعهدات، پاداش ها، کدهای QR و تبلیغات مرتبط با این عضو را در صفحه اعضای کمپین کنترل کنید.',
+                'وضعیت آماده سازی را تا زمان تحویل تجربه به کاربر نهایی پیگیری کنید.',
+            ],
+            navigation: [
+                item.hub?.name ? `این عضو در محدوده ${item.hub.name} دیده می شود.` : 'این عضو به هاب مشخصی وصل نشده و باید جایگاه مکانی آن تعیین شود.',
+                'برای استفاده میدانی، نقطه شروع کاربر و نزدیک ترین QR یا مأموریت مرتبط با این عضو را در نقشه کمپین مشخص کنید.',
+            ],
+        };
+    }
+
+    const journeyItem = item as JourneyItem;
+
+    if (journeyItem.type === 'qr') {
+        return {
+            steps: [
+                'کاربر کمپین را با اسکن این QR آغاز می کند و ورود او به مسیر ثبت می شود.',
+                'بعد از اسکن، سیستم باید مأموریت بعدی یا اولین نقطه بازدید را به کاربر نشان دهد.',
+                'در اجرا، سلامت کد، محل نصب و پیام بعد از اسکن باید قبل از شروع کمپین تست شود.',
+            ],
+            navigation: [
+                `QR باید در ورودی قابل مشاهده ${venue} یا نزدیک نقطه شروع مسیر نصب شود.`,
+                'اگر چند ورودی وجود دارد، برای هر ورودی یک QR مستقل و قابل گزارش تعریف کنید.',
+            ],
+        };
+    }
+
+    if (journeyItem.type === 'mission') {
+        return {
+            steps: [
+                `کاربر مأموریت «${itemTitle(item)}» را در محل تعیین شده انجام می دهد.`,
+                'راهنمای مأموریت باید کوتاه، قابل فهم و قابل انجام در همان نقطه باشد؛ مثل عکس، پاسخ، مشاهده یا ثبت خاطره.',
+                'بعد از ارسال یا تأیید مأموریت، امتیاز کاربر و وضعیت مرحله بعد به روز می شود.',
+            ],
+            navigation: [
+                hub ? `کاربر باید به محدوده ${hub} هدایت شود.` : 'برای این مأموریت هنوز هاب یا نقطه مکانی مشخص نشده است.',
+                'در نسخه کاربری، این آیتم باید با راهنمای نزدیک ترین مسیر، نشانه محیطی و فاصله تقریبی همراه شود.',
+            ],
+        };
+    }
+
+    if (journeyItem.type === 'reward' || journeyItem.type === 'treasure') {
+        return {
+            steps: [
+                `کاربر پس از تکمیل شرط لازم، مشوق «${itemTitle(item)}» را باز می کند.`,
+                'نوع دریافت باید روشن باشد: کوپن، قرعه کشی، نشان، جایزه حضوری یا هدیه شریک تجاری.',
+                'تحویل یا مصرف پاداش باید با کد، اسکن یا تأیید مسئول همان نقطه ثبت شود.',
+            ],
+            navigation: [
+                partner ? `محل دریافت یا مصرف این مشوق به ${partner} وصل است.` : 'برای این مشوق هنوز شریک تحویل دهنده مشخص نشده است.',
+                'اگر مشوق حضوری است، مسیر کاربر باید تا نقطه تحویل پاداش یا گنج ادامه پیدا کند.',
+            ],
+        };
+    }
+
+    if (journeyItem.type === 'ad') {
+        return {
+            steps: [
+                'پیام تبلیغاتی باید با کمپین، مکان و مرحله حضور کاربر هماهنگ شود.',
+                'قبل از انتشار، زمان نمایش، مخاطب هدف، جایگاه نمایش و تأیید محتوایی کنترل شود.',
+                'بعد از اجرا، بازدید، کلیک یا اسکن مرتبط با تبلیغ برای گزارش اسپانسر ثبت شود.',
+            ],
+            navigation: [
+                hub ? `این تبلیغ در محدوده ${hub} معنا پیدا می کند.` : 'برای تبلیغ هنوز محدوده مکانی مشخص نشده است.',
+                'اگر تبلیغ مسیر کاربر را تغییر می دهد، مقصد بعدی باید در راهنمای کاربر مشخص باشد.',
+            ],
+        };
+    }
+
+    if (journeyItem.type === 'display') {
+        return {
+            steps: [
+                'نمایشگر باید محتوای درست کمپین را در زمان و مکان تعیین شده پخش کند.',
+                'قبل از اجرا، وضعیت اتصال، برنامه پخش و نسخه محتوا کنترل شود.',
+                'در پایان هر بازه، گزارش پخش و رخدادهای خطا برای تیم عملیات ثبت شود.',
+            ],
+            navigation: [
+                hub ? `نمایشگر به محدوده ${hub} وابسته است.` : 'برای نمایشگر هنوز هاب یا نقطه نصب مشخص نشده است.',
+                'در نقشه اجرایی، نمایشگرهای ثابت و سیار باید از مسیر مأموریت و نقاط تجمع جدا و قابل تشخیص باشند.',
+            ],
+        };
+    }
+
+    return {
+        steps: ['این آیتم باید در صفحه مدیریت تکمیل و به یک نقش عملیاتی مشخص وصل شود.'],
+        navigation: ['اگر آیتم وابسته به مکان است، هاب، شریک و نقطه اجرای آن باید مشخص شود.'],
+    };
+}
+
+function hubOperationalGuide(group: HubGroup, campaign: CampaignBlueprint): OperationGuide {
+    const hubName = group.hub?.name ?? 'بدون هاب / خارجی';
+
+    return {
+        steps: [
+            `اعضای ${hubName} را از نظر نقش، آمادگی اجرا و ارتباط با مأموریت ها کنترل کنید.`,
+            'برای هر عضو مشخص کنید آیا نقطه شروع، مأموریت، مشوق، تبلیغ یا تحویل پاداش دارد یا نه.',
+            'اگر تعداد اعضا زیاد شد، آنها را به مسیرهای کوچک تر یا سناریوهای جداگانه تقسیم کنید.',
+        ],
+        navigation: [
+            group.hub ? `این گروه در نقشه مکانی باید زیر محدوده ${hubName} نمایش داده شود.` : 'این گروه باید قبل از اجرا به یک محدوده مکانی یا مسیر خارجی وصل شود.',
+            `در ${campaign.name} مسیر کاربر باید نشان دهد از کدام QR وارد این هاب می شود و بعد به کدام نقطه می رود.`,
+        ],
+    };
+}
+
+function sponsorOperationalGuide(type: 'internal' | 'external', sponsors: Participant[], campaign: CampaignBlueprint): OperationGuide {
+    const label = type === 'internal' ? 'داخلی' : 'خارجی';
+
+    return {
+        steps: [
+            `اسپانسرهای ${label} را از نظر نوع حمایت، تعهد محتوایی و خروجی قابل گزارش ثبت کنید.`,
+            'برای هر اسپانسر مشخص کنید حمایت او پاداش، کوپن، تبلیغ، جایزه، محتوا یا مسیر ویژه است.',
+            'قبل از اجرا، دسترسی گزارش گیری و سطح دیده شدن اسپانسر برای نقش های مجاز تعیین شود.',
+        ],
+        navigation: [
+            type === 'internal'
+                ? 'اسپانسر داخلی معمولاً باید به هاب یا واحد اجرایی همان مکان وصل شود.'
+                : 'اسپانسر خارجی ممکن است خارج از مکان پروژه باشد و فقط در سطح ادمین مرکزی یا منطقه ای دیده شود.',
+            `در ${campaign.name} باید مشخص باشد پیام اسپانسر در کدام مرحله از مسیر کاربر دیده می شود.`,
+            sponsors.length === 0 ? 'هنوز اسپانسری ثبت نشده؛ بعد از ثبت، نقطه اثرگذاری آن در مسیر کمپین مشخص می شود.' : 'برای هر اسپانسر ثبت شده، نقطه تماس با کاربر یا گزارش تبلیغاتی را مشخص کنید.',
+        ],
+    };
+}
 function JourneyColumn({
     id,
     section,
@@ -304,6 +438,7 @@ function OperationDetailsSheet({
     onOpenChange: (open: boolean) => void;
 }) {
     const rows = selection ? (selection.rows ?? (selection.item ? detailRows(selection.item, selection.campaign) : [])) : [];
+    const guide = selection?.guide;
 
     return (
         <Sheet open={selection !== null} onOpenChange={onOpenChange}>
@@ -331,6 +466,31 @@ function OperationDetailsSheet({
                                     </div>
                                 ))}
                             </div>
+
+                            {guide ? (
+                                <div className="space-y-3">
+                                    <section className="rounded-lg border border-sidebar-border/70 p-3 dark:border-sidebar-border">
+                                        <h3 className="text-sm font-semibold">راهنمای اجرا</h3>
+                                        <ol className="mt-3 space-y-2 text-sm text-muted-foreground">
+                                            {guide.steps.map((step, index) => (
+                                                <li key={step} className="flex gap-2">
+                                                    <span className="font-semibold text-foreground">{fa(index + 1)}</span>
+                                                    <span>{step}</span>
+                                                </li>
+                                            ))}
+                                        </ol>
+                                    </section>
+
+                                    <section className="rounded-lg border border-sidebar-border/70 p-3 dark:border-sidebar-border">
+                                        <h3 className="text-sm font-semibold">راهنمای مسیر و ناوبری</h3>
+                                        <div className="mt-3 space-y-2 text-sm text-muted-foreground">
+                                            {guide.navigation.map((item) => (
+                                                <p key={item}>{item}</p>
+                                            ))}
+                                        </div>
+                                    </section>
+                                </div>
+                            ) : null}
                         </div>
 
                         <SheetFooter>
@@ -422,6 +582,7 @@ export default function CampaignOperationsIndex({ stats, campaigns }: Props) {
                                                     item,
                                                     sectionTitle: campaign.journey.entry.title,
                                                     href: itemHref(item),
+                                                    guide: itemOperationalGuide(item, campaign),
                                                     campaign,
                                                 })
                                             }
@@ -434,6 +595,7 @@ export default function CampaignOperationsIndex({ stats, campaigns }: Props) {
                                                     item,
                                                     sectionTitle: campaign.journey.missions.title,
                                                     href: itemHref(item),
+                                                    guide: itemOperationalGuide(item, campaign),
                                                     campaign,
                                                 })
                                             }
@@ -446,6 +608,7 @@ export default function CampaignOperationsIndex({ stats, campaigns }: Props) {
                                                     item,
                                                     sectionTitle: campaign.journey.incentives.title,
                                                     href: itemHref(item),
+                                                    guide: itemOperationalGuide(item, campaign),
                                                     campaign,
                                                 })
                                             }
@@ -458,6 +621,7 @@ export default function CampaignOperationsIndex({ stats, campaigns }: Props) {
                                                     item,
                                                     sectionTitle: campaign.journey.commercial.title,
                                                     href: itemHref(item),
+                                                    guide: itemOperationalGuide(item, campaign),
                                                     campaign,
                                                 })
                                             }
@@ -470,6 +634,7 @@ export default function CampaignOperationsIndex({ stats, campaigns }: Props) {
                                                     item,
                                                     sectionTitle: campaign.journey.media.title,
                                                     href: itemHref(item),
+                                                    guide: itemOperationalGuide(item, campaign),
                                                     campaign,
                                                 })
                                             }
@@ -492,6 +657,7 @@ export default function CampaignOperationsIndex({ stats, campaigns }: Props) {
                                                         setSelectedOperation({
                                                             title: group.hub?.name ?? 'بدون هاب / خارجی',
                                                             rows: hubDetailRows(group, campaign),
+                                                            guide: hubOperationalGuide(group, campaign),
                                                             sectionTitle: 'اعضا به تفکیک هاب',
                                                             href: '/admin/campaign-participants',
                                                             campaign,
@@ -518,6 +684,7 @@ export default function CampaignOperationsIndex({ stats, campaigns }: Props) {
                                                 setSelectedOperation({
                                                     title: 'اسپانسر داخلی',
                                                     rows: sponsorDetailRows('internal', campaign.sponsors.internal, campaign),
+                                                    guide: sponsorOperationalGuide('internal', campaign.sponsors.internal, campaign),
                                                     sectionTitle: 'اسپانسرهای کمپین',
                                                     href: '/admin/campaign-participants',
                                                     campaign,
@@ -537,6 +704,7 @@ export default function CampaignOperationsIndex({ stats, campaigns }: Props) {
                                                 setSelectedOperation({
                                                     title: 'اسپانسر خارجی',
                                                     rows: sponsorDetailRows('external', campaign.sponsors.external, campaign),
+                                                    guide: sponsorOperationalGuide('external', campaign.sponsors.external, campaign),
                                                     sectionTitle: 'اسپانسرهای کمپین',
                                                     href: '/admin/campaign-participants',
                                                     campaign,
