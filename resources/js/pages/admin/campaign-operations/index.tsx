@@ -96,7 +96,9 @@ type CampaignBlueprint = {
 };
 
 type OperationSelection = {
-    item: JourneyItem | Participant;
+    item?: JourneyItem | Participant;
+    title?: string;
+    rows?: string[][];
     sectionTitle: string;
     href: string;
     campaign: CampaignBlueprint;
@@ -228,6 +230,33 @@ function detailRows(item: JourneyItem | Participant, campaign: CampaignBlueprint
         ['جزئیات', itemMeta(item)],
     ];
 }
+function participantNames(participants: Participant[]) {
+    const names = participants.map((participant) => participant.partner?.name).filter(Boolean);
+
+    return names.length === 0 ? 'ثبت نشده' : names.join('، ');
+}
+
+function hubDetailRows(group: HubGroup, campaign: CampaignBlueprint) {
+    return [
+        ['کمپین', campaign.name],
+        ['مکان', campaign.venue?.name ?? 'ثبت نشده'],
+        ['هاب', group.hub?.name ?? 'بدون هاب / خارجی'],
+        ['تعداد اعضا', `${fa(group.participantsCount)} عضو`],
+        ['تعداد اسپانسر', `${fa(group.sponsorsCount)} اسپانسر`],
+        ['نقش ها', group.roles.length === 0 ? 'ثبت نشده' : group.roles.map((role) => label(roleLabels, role)).join('، ')],
+        ['اعضا', participantNames(group.participants)],
+    ];
+}
+
+function sponsorDetailRows(type: 'internal' | 'external', sponsors: Participant[], campaign: CampaignBlueprint) {
+    return [
+        ['کمپین', campaign.name],
+        ['مکان', campaign.venue?.name ?? 'ثبت نشده'],
+        ['نوع اسپانسر', type === 'internal' ? 'داخلی' : 'خارجی'],
+        ['تعداد', `${fa(sponsors.length)} اسپانسر`],
+        ['اعضا', participantNames(sponsors)],
+    ];
+}
 function JourneyColumn({
     id,
     section,
@@ -274,7 +303,7 @@ function OperationDetailsSheet({
     selection: OperationSelection | null;
     onOpenChange: (open: boolean) => void;
 }) {
-    const rows = selection ? detailRows(selection.item, selection.campaign) : [];
+    const rows = selection ? (selection.rows ?? (selection.item ? detailRows(selection.item, selection.campaign) : [])) : [];
 
     return (
         <Sheet open={selection !== null} onOpenChange={onOpenChange}>
@@ -282,7 +311,7 @@ function OperationDetailsSheet({
                 {selection ? (
                     <>
                         <SheetHeader>
-                            <SheetTitle>{itemTitle(selection.item)}</SheetTitle>
+                            <SheetTitle>{selection.title ?? (selection.item ? itemTitle(selection.item) : selection.sectionTitle)}</SheetTitle>
                             <SheetDescription>
                                 {selection.sectionTitle} در {selection.campaign.name}
                             </SheetDescription>
@@ -456,7 +485,20 @@ export default function CampaignOperationsIndex({ stats, campaigns }: Props) {
                                         </div>
                                         <div className="space-y-3">
                                             {campaign.participantsByHub.map((group) => (
-                                                <Link key={group.hub?.id ?? 'external'} href="/admin/campaign-participants" className="block rounded-md px-2 py-2 text-sm transition hover:bg-muted/60">
+                                                <button
+                                                    key={group.hub?.id ?? 'external'}
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setSelectedOperation({
+                                                            title: group.hub?.name ?? 'بدون هاب / خارجی',
+                                                            rows: hubDetailRows(group, campaign),
+                                                            sectionTitle: 'اعضا به تفکیک هاب',
+                                                            href: '/admin/campaign-participants',
+                                                            campaign,
+                                                        })
+                                                    }
+                                                    className="block w-full rounded-md px-2 py-2 text-right text-sm transition hover:bg-muted/60"
+                                                >
                                                     <div className="flex items-center justify-between gap-2">
                                                         <span className="font-medium">{group.hub?.name ?? 'بدون هاب / خارجی'}</span>
                                                         <span className="text-xs text-muted-foreground">{fa(group.participantsCount)} عضو</span>
@@ -464,26 +506,50 @@ export default function CampaignOperationsIndex({ stats, campaigns }: Props) {
                                                     <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
                                                         {group.roles.map((role) => label(roleLabels, role)).join('، ')}
                                                     </p>
-                                                </Link>
+                                                </button>
                                             ))}
                                         </div>
                                     </div>
 
                                     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-                                        <Link href="/admin/campaign-participants" className="block rounded-lg border border-sidebar-border/70 p-3 transition hover:bg-muted/60 dark:border-sidebar-border">
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setSelectedOperation({
+                                                    title: 'اسپانسر داخلی',
+                                                    rows: sponsorDetailRows('internal', campaign.sponsors.internal, campaign),
+                                                    sectionTitle: 'اسپانسرهای کمپین',
+                                                    href: '/admin/campaign-participants',
+                                                    campaign,
+                                                })
+                                            }
+                                            className="block w-full rounded-lg border border-sidebar-border/70 p-3 text-right transition hover:bg-muted/60 dark:border-sidebar-border"
+                                        >
                                             <div className="mb-2 flex items-center gap-2">
                                                 <Building2 className="size-4 text-muted-foreground" />
                                                 <h3 className="text-sm font-semibold">اسپانسر داخلی</h3>
                                             </div>
-                                            <p className="text-xs text-muted-foreground">{campaign.sponsors.internal.length === 0 ? 'ثبت نشده' : campaign.sponsors.internal.map((item) => item.partner?.name).join('، ')}</p>
-                                        </Link>
-                                        <Link href="/admin/campaign-participants" className="block rounded-lg border border-sidebar-border/70 p-3 transition hover:bg-muted/60 dark:border-sidebar-border">
+                                            <p className="text-xs text-muted-foreground">{participantNames(campaign.sponsors.internal)}</p>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setSelectedOperation({
+                                                    title: 'اسپانسر خارجی',
+                                                    rows: sponsorDetailRows('external', campaign.sponsors.external, campaign),
+                                                    sectionTitle: 'اسپانسرهای کمپین',
+                                                    href: '/admin/campaign-participants',
+                                                    campaign,
+                                                })
+                                            }
+                                            className="block w-full rounded-lg border border-sidebar-border/70 p-3 text-right transition hover:bg-muted/60 dark:border-sidebar-border"
+                                        >
                                             <div className="mb-2 flex items-center gap-2">
                                                 <Gem className="size-4 text-muted-foreground" />
                                                 <h3 className="text-sm font-semibold">اسپانسر خارجی</h3>
                                             </div>
-                                            <p className="text-xs text-muted-foreground">{campaign.sponsors.external.length === 0 ? 'ثبت نشده' : campaign.sponsors.external.map((item) => item.partner?.name).join('، ')}</p>
-                                        </Link>
+                                            <p className="text-xs text-muted-foreground">{participantNames(campaign.sponsors.external)}</p>
+                                        </button>
                                     </div>
                                 </aside>
                             </div>
