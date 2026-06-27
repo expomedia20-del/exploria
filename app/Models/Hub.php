@@ -71,4 +71,9 @@ class Hub extends Model
     {
         return $this->hasMany(DisplayDevice::class);
     }
+    /** @return HasMany<CampaignParticipant, $this> */
+    public function campaignParticipants(): HasMany
+    {
+        return $this->hasMany(CampaignParticipant::class);
+    }
 }

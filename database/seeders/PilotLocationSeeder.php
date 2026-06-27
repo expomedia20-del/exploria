@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Enums\RecordStatus;
 use App\Enums\UserRole;
 use App\Models\Campaign;
+use App\Models\CampaignParticipant;
 use App\Models\DisplayDevice;
 use App\Models\Hub;
 use App\Models\HubManagementAssignment;
@@ -232,6 +233,34 @@ class PilotLocationSeeder extends Seeder
             ],
         );
 
+        $campaignParticipants = [
+            'cafe-eco' => ['participation_role' => 'reward_redemption', 'onboarding_status' => 'ready', 'connections' => ['rewards' => 1, 'ads' => 0, 'qr_codes' => 0, 'missions' => 1]],
+            'ravaq-store' => ['participation_role' => 'commercial_activation', 'onboarding_status' => 'ready', 'connections' => ['rewards' => 0, 'ads' => 1, 'qr_codes' => 0, 'missions' => 1]],
+            'family-route-sponsor' => ['participation_role' => 'route_sponsor', 'onboarding_status' => 'invited', 'connections' => ['rewards' => 1, 'ads' => 1, 'qr_codes' => 0, 'missions' => 1]],
+        ];
+
+        foreach ($campaignParticipants as $partnerCode => $participantData) {
+            $participantPartner = PartnerAccount::query()->where('code', $partnerCode)->first();
+            $participantLocation = $participantPartner?->locations()->where('status', RecordStatus::Active)->first();
+
+            if (! $participantPartner) {
+                continue;
+            }
+
+            CampaignParticipant::query()->updateOrCreate(
+                ['campaign_id' => $campaign->id, 'partner_account_id' => $participantPartner->id],
+                [
+                    'venue_id' => $ecoPark->id,
+                    'hub_id' => $participantLocation?->hub_id,
+                    'participant_type' => $participantPartner->partner_type,
+                    'participation_role' => $participantData['participation_role'],
+                    'status' => RecordStatus::Active,
+                    'onboarding_status' => $participantData['onboarding_status'],
+                    'joined_at' => $participantData['onboarding_status'] === 'ready' ? now() : null,
+                    'metadata' => ['is_demo' => true, 'campaign_participant_seed' => true, 'connections' => $participantData['connections']],
+                ],
+            );
+        }
         QrCode::query()->updateOrCreate(
             ['code' => self::DEMO_QR_CODE],
             [

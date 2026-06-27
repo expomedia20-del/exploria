@@ -73,4 +73,9 @@ class Campaign extends Model
     {
         return $this->hasMany(UserReward::class);
     }
+    /** @return HasMany<CampaignParticipant, $this> */
+    public function campaignParticipants(): HasMany
+    {
+        return $this->hasMany(CampaignParticipant::class);
+    }
 }

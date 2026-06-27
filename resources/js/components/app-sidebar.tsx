@@ -13,6 +13,7 @@ import {
     Store,
     Trophy,
     UserCog,
+    UsersRound,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
@@ -67,6 +68,12 @@ const mainNavItems: RoleAwareNavItem[] = [
         title: 'کمپین‌ها',
         href: '/admin/campaigns',
         icon: Megaphone,
+        roles: ['admin', 'operator', 'viewer', 'hub_manager'],
+    },
+    {
+        title: 'اعضای کمپین',
+        href: '/admin/campaign-participants',
+        icon: UsersRound,
         roles: ['admin', 'operator', 'viewer', 'hub_manager'],
     },
     {
