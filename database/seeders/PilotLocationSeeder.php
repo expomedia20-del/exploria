@@ -18,6 +18,7 @@ use App\Models\RewardDefinition;
 use App\Models\Touchpoint;
 use App\Models\Treasure;
 use App\Models\User;
+use App\Models\UserAccessScope;
 use App\Models\Venue;
 use App\Models\Zone;
 use Illuminate\Database\Seeder;
@@ -127,6 +128,10 @@ class PilotLocationSeeder extends Seeder
             ['hub_id' => $ravaqHub->id, 'user_id' => $ravaqManager->id, 'assignment_role' => 'ravaq_manager'],
             ['status' => RecordStatus::Active, 'metadata' => ['is_demo' => true]],
         );
+        UserAccessScope::query()->updateOrCreate(
+            ['user_id' => $ravaqManager->id, 'role_key' => 'hub_manager', 'scope_type' => 'hub', 'scope_id' => $ravaqHub->id],
+            ['status' => RecordStatus::Active, 'metadata' => ['source' => 'pilot_seed', 'legacy_table' => 'hub_management_assignments']],
+        );
 
         $partners = [
             [
@@ -203,6 +208,15 @@ class PilotLocationSeeder extends Seeder
             PartnerUser::query()->updateOrCreate(
                 ['partner_account_id' => $partner->id, 'user_id' => $partnerUser->id],
                 ['role' => 'manager', 'status' => RecordStatus::Active, 'metadata' => ['is_demo' => true]],
+            );
+            UserAccessScope::query()->updateOrCreate(
+                [
+                    'user_id' => $partnerUser->id,
+                    'role_key' => $partnerData['user_role'] === UserRole::Sponsor ? 'internal_sponsor' : 'shop_manager',
+                    'scope_type' => 'partner',
+                    'scope_id' => $partner->id,
+                ],
+                ['status' => RecordStatus::Active, 'metadata' => ['source' => 'pilot_seed', 'legacy_table' => 'partner_users']],
             );
         }
 

@@ -2,13 +2,10 @@
 
 namespace App\Services;
 
-use App\Enums\RecordStatus;
 use App\Enums\UserRole;
 use App\Models\AdRequest;
 use App\Models\DisplayDevice;
 use App\Models\Hub;
-use App\Models\HubManagementAssignment;
-use App\Models\PartnerLocation;
 use App\Models\RewardDefinition;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -16,38 +13,18 @@ use Illuminate\Support\Collection;
 
 class HubManagerAccessService
 {
+    public function __construct(private readonly UserAccessScopeService $accessScopes) {}
+
     /** @return Collection<int, string> */
     public function managedHubIds(User $user): Collection
     {
-        if ($this->isPlatformReviewer($user)) {
-            return Hub::query()
-                ->where('status', RecordStatus::Active)
-                ->pluck('id')
-                ->values();
-        }
-
-        return HubManagementAssignment::query()
-            ->where('user_id', $user->id)
-            ->where('status', RecordStatus::Active)
-            ->pluck('hub_id')
-            ->values();
+        return $this->accessScopes->hubIds($user);
     }
 
     /** @return Collection<int, string> */
     public function managedPartnerIds(User $user): Collection
     {
-        $hubIds = $this->managedHubIds($user);
-
-        if ($hubIds->isEmpty()) {
-            return collect();
-        }
-
-        return PartnerLocation::query()
-            ->whereIn('hub_id', $hubIds)
-            ->where('status', RecordStatus::Active)
-            ->pluck('partner_account_id')
-            ->unique()
-            ->values();
+        return $this->accessScopes->partnerIds($user);
     }
 
     /** @return Collection<int, Hub> */
@@ -70,7 +47,7 @@ class HubManagerAccessService
         }
 
         if ($user->role !== UserRole::HubManager) {
-            throw new AuthorizationException('Ø´Ù…Ø§ Ø§Ø¬Ø§Ø²Ù‡ Ø¨Ø§Ø²Ø¨ÛŒÙ†ÛŒ Ø§ÛŒÙ† ØªØ¨Ù„ÛŒØº Ø±Ø§ Ù†Ø¯Ø§Ø±ÛŒØ¯.');
+            throw new AuthorizationException('شما اجازه بازبینی این تبلیغ را ندارید.');
         }
 
         $hubIds = $this->managedHubIds($user);
@@ -80,7 +57,7 @@ class HubManagerAccessService
         $isPartnerAd = $adRequest->partner_account_id !== null && $partnerIds->contains($adRequest->partner_account_id);
 
         if (! $isDirectHubAd && ! $isPartnerAd) {
-            throw new AuthorizationException('Ø§ÛŒÙ† ØªØ¨Ù„ÛŒØº Ø®Ø§Ø±Ø¬ Ø§Ø² Ù…Ø­Ø¯ÙˆØ¯Ù‡ Ø±ÙˆØ§Ù‚ Ø´Ù…Ø§Ø³Øª.');
+            throw new AuthorizationException('این تبلیغ خارج از محدوده رواق شماست.');
         }
     }
 
@@ -106,11 +83,11 @@ class HubManagerAccessService
         }
 
         if ($user->role !== UserRole::HubManager) {
-            throw new AuthorizationException('Ø´Ù…Ø§ Ø§Ø¬Ø§Ø²Ù‡ Ø¨Ø§Ø²Ø¨ÛŒÙ†ÛŒ Ø§ÛŒÙ† Ù¾ÛŒØ´Ù†Ù‡Ø§Ø¯ Ø±Ø§ Ù†Ø¯Ø§Ø±ÛŒØ¯.');
+            throw new AuthorizationException('شما اجازه بازبینی این پیشنهاد را ندارید.');
         }
 
         if (! $reward->partner_account_id || ! $this->managedPartnerIds($user)->contains($reward->partner_account_id)) {
-            throw new AuthorizationException('Ø§ÛŒÙ† Ù¾ÛŒØ´Ù†Ù‡Ø§Ø¯ Ø®Ø§Ø±Ø¬ Ø§Ø² Ù…Ø­Ø¯ÙˆØ¯Ù‡ Ø±ÙˆØ§Ù‚ Ø´Ù…Ø§Ø³Øª.');
+            throw new AuthorizationException('این پیشنهاد خارج از محدوده رواق شماست.');
         }
     }
 

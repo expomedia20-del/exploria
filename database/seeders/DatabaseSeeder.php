@@ -2,8 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Enums\RecordStatus;
 use App\Enums\UserRole;
 use App\Models\User;
+use App\Models\UserAccessScope;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -40,6 +42,13 @@ class DatabaseSeeder extends Seeder
                 'password' => Hash::make('password'),
                 'role' => UserRole::Viewer,
             ],
+        );
+
+        $admin = User::query()->where('email', 'admin@example.test')->firstOrFail();
+
+        UserAccessScope::query()->updateOrCreate(
+            ['user_id' => $admin->id, 'role_key' => 'super_admin', 'scope_type' => 'global', 'scope_id' => null],
+            ['status' => RecordStatus::Active, 'metadata' => ['source' => 'database_seed']],
         );
     }
 }

@@ -29,6 +29,7 @@ class PartnerFoundationTest extends TestCase
         $this->assertDatabaseCount('partner_locations', 3);
         $this->assertDatabaseCount('partner_users', 3);
         $this->assertDatabaseCount('hub_management_assignments', 1);
+        $this->assertDatabaseCount('user_access_scopes', 4);
 
         $this->assertDatabaseHas('partner_accounts', [
             'code' => 'cafe-eco',
@@ -50,6 +51,7 @@ class PartnerFoundationTest extends TestCase
         $this->assertDatabaseCount('partner_locations', 3);
         $this->assertDatabaseCount('partner_users', 3);
         $this->assertDatabaseCount('hub_management_assignments', 1);
+        $this->assertDatabaseCount('user_access_scopes', 4);
     }
 
     public function test_partner_accounts_are_bound_to_ecopark_hubs_and_users(): void

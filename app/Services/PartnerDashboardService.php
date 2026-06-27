@@ -18,6 +18,8 @@ use Illuminate\Validation\ValidationException;
 
 class PartnerDashboardService
 {
+    public function __construct(private readonly UserAccessScopeService $accessScopes) {}
+
     public function partnerForUser(User $user): PartnerAccount
     {
         if (in_array($user->role, [UserRole::Admin, UserRole::Operator], true)) {
@@ -30,6 +32,18 @@ class PartnerDashboardService
             if ($partner) {
                 return $partner;
             }
+        }
+
+        $partnerIds = $this->accessScopes->partnerIds($user);
+        $scopedPartner = PartnerAccount::query()
+            ->with('venue:id,code,name')
+            ->whereIn('id', $partnerIds)
+            ->where('status', RecordStatus::Active)
+            ->orderBy('created_at')
+            ->first();
+
+        if ($scopedPartner) {
+            return $scopedPartner;
         }
 
         $partnerUser = PartnerUser::query()
