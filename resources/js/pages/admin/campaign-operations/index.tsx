@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import {
     Gift,
     Building2,
@@ -154,6 +154,20 @@ function itemMeta(item: JourneyItem | Participant) {
     return journeyItem.status ?? journeyItem.type;
 }
 
+function itemHref(item: JourneyItem | Participant) {
+    if ('participationRole' in item) {
+        return '/admin/campaign-participants';
+    }
+
+    const journeyItem = item as JourneyItem;
+
+    if (journeyItem.type === 'qr') return '/admin/qr-codes';
+    if (journeyItem.type === 'mission' || journeyItem.type === 'reward' || journeyItem.type === 'treasure') return '/admin/missions';
+    if (journeyItem.type === 'ad') return '/admin/ads';
+    if (journeyItem.type === 'display') return '/admin/display-operations';
+
+    return '/admin/campaign-operations';
+}
 function JourneyColumn({ id, section }: { id: keyof CampaignBlueprint['journey']; section: JourneySection }) {
     const Icon = sectionIcons[id];
 
@@ -168,10 +182,14 @@ function JourneyColumn({ id, section }: { id: keyof CampaignBlueprint['journey']
                     <p className="text-xs text-muted-foreground">هنوز آیتمی ثبت نشده است.</p>
                 ) : (
                     section.items.slice(0, 6).map((item) => (
-                        <div key={item.id} className="rounded-md border border-sidebar-border/60 px-2 py-2 text-xs dark:border-sidebar-border">
+                        <Link
+                            key={item.id}
+                            href={itemHref(item)}
+                            className="block rounded-md border border-sidebar-border/60 px-2 py-2 text-xs transition hover:border-primary/40 hover:bg-muted/60 dark:border-sidebar-border"
+                        >
                             <p className="line-clamp-1 font-medium">{itemTitle(item)}</p>
                             <p className="mt-1 line-clamp-1 text-muted-foreground">{itemMeta(item)}</p>
-                        </div>
+                        </Link>
                     ))
                 )}
             </div>
@@ -262,7 +280,7 @@ export default function CampaignOperationsIndex({ stats, campaigns }: Props) {
                                         </div>
                                         <div className="space-y-3">
                                             {campaign.participantsByHub.map((group) => (
-                                                <div key={group.hub?.id ?? 'external'} className="text-sm">
+                                                <Link key={group.hub?.id ?? 'external'} href="/admin/campaign-participants" className="block rounded-md px-2 py-2 text-sm transition hover:bg-muted/60">
                                                     <div className="flex items-center justify-between gap-2">
                                                         <span className="font-medium">{group.hub?.name ?? 'بدون هاب / خارجی'}</span>
                                                         <span className="text-xs text-muted-foreground">{fa(group.participantsCount)} عضو</span>
@@ -270,26 +288,26 @@ export default function CampaignOperationsIndex({ stats, campaigns }: Props) {
                                                     <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
                                                         {group.roles.map((role) => label(roleLabels, role)).join('، ')}
                                                     </p>
-                                                </div>
+                                                </Link>
                                             ))}
                                         </div>
                                     </div>
 
                                     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-                                        <div className="rounded-lg border border-sidebar-border/70 p-3 dark:border-sidebar-border">
+                                        <Link href="/admin/campaign-participants" className="block rounded-lg border border-sidebar-border/70 p-3 transition hover:bg-muted/60 dark:border-sidebar-border">
                                             <div className="mb-2 flex items-center gap-2">
                                                 <Building2 className="size-4 text-muted-foreground" />
                                                 <h3 className="text-sm font-semibold">اسپانسر داخلی</h3>
                                             </div>
                                             <p className="text-xs text-muted-foreground">{campaign.sponsors.internal.length === 0 ? 'ثبت نشده' : campaign.sponsors.internal.map((item) => item.partner?.name).join('، ')}</p>
-                                        </div>
-                                        <div className="rounded-lg border border-sidebar-border/70 p-3 dark:border-sidebar-border">
+                                        </Link>
+                                        <Link href="/admin/campaign-participants" className="block rounded-lg border border-sidebar-border/70 p-3 transition hover:bg-muted/60 dark:border-sidebar-border">
                                             <div className="mb-2 flex items-center gap-2">
                                                 <Gem className="size-4 text-muted-foreground" />
                                                 <h3 className="text-sm font-semibold">اسپانسر خارجی</h3>
                                             </div>
                                             <p className="text-xs text-muted-foreground">{campaign.sponsors.external.length === 0 ? 'ثبت نشده' : campaign.sponsors.external.map((item) => item.partner?.name).join('، ')}</p>
-                                        </div>
+                                        </Link>
                                     </div>
                                 </aside>
                             </div>
