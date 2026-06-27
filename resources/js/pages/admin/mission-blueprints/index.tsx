@@ -90,6 +90,10 @@ export default function MissionBlueprintIndex({
 }: Props) {
     const families = useMemo(() => ['همه', ...Array.from(new Set(templates.map((template) => template.family)))], [templates]);
     const [activeFamily, setActiveFamily] = useState(families[0] ?? 'همه');
+    const mvpTemplates = useMemo(
+        () => [...templates].filter((template) => template.mvpPriority < 99).sort((a, b) => a.mvpPriority - b.mvpPriority),
+        [templates],
+    );
     const visibleTemplates = activeFamily === 'همه' ? templates : templates.filter((template) => template.family === activeFamily);
 
     return (
