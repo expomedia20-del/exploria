@@ -29,6 +29,27 @@ type ParticipantConnections = {
     missions: number;
 };
 
+
+type RewardBasketTier = {
+    level: string;
+    items: string[];
+};
+
+type SelectedBlueprint = {
+    code: string;
+    title: string;
+    missionGoal: string;
+    evidenceType: string;
+    userSteps: string[];
+    navigationHint: string;
+    points: { base: number; bonus: string };
+    rewardIdeas: string[];
+    stakeholders: string[];
+    connectedSurfaces: string[];
+    rewardBasket: RewardBasketTier[];
+    nextBuildAction: string;
+};
+
 type CampaignParticipant = {
     id: string;
     participantType: string;
@@ -69,6 +90,7 @@ type Props = {
     participants: CampaignParticipant[];
     campaignGroups: CampaignGroup[];
     hubGroups: HubGroup[];
+    selectedBlueprint: SelectedBlueprint | null;
 };
 
 const statusLabels: Record<string, string> = {
@@ -117,8 +139,8 @@ export default function CampaignParticipantsIndex({
     participants,
     campaignGroups,
     hubGroups,
+    selectedBlueprint,
 }: Props) {
-    const selectedBlueprint = typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('blueprint');
 
     return (
         <>
@@ -146,9 +168,21 @@ export default function CampaignParticipantsIndex({
                 </header>
 
                 {selectedBlueprint ? (
-                    <section className="rounded-lg border border-primary/25 bg-primary/5 p-4 text-sm">
-                        <p className="font-semibold">الگوی انتخاب‌شده از گنجینه: <span dir="ltr">{selectedBlueprint}</span></p>
-                        <p className="mt-1 text-muted-foreground">اینجا باید مالک پاداش، فروشگاه یا هاب تحویل‌دهنده، اسپانسر داخلی/خارجی و نقش اجرایی هر عضو مشخص شود.</p>
+                    <section className="rounded-lg border border-primary/25 bg-primary/5 p-4 text-sm shadow-sm">
+                        <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                            <div>
+                                <p className="text-xs text-muted-foreground">الگوی آماده برای اقدام</p>
+                                <h2 className="mt-1 text-lg font-semibold">{selectedBlueprint.title}</h2>
+                                <p className="mt-1 text-muted-foreground">داده الگو آمده تا مالک پاداش، هاب، فروشگاه یا اسپانسر مرتبط با آن مشخص شود.</p>
+                            </div>
+                            <span className="rounded-full bg-background px-3 py-1 text-xs" dir="ltr">{selectedBlueprint.code}</span>
+                        </div>
+                        <div className="mt-4 grid gap-3 lg:grid-cols-3">
+                            <div className="rounded-lg bg-background/75 p-3"><p className="font-medium">ذی‌نفعان</p><div className="mt-2 flex flex-wrap gap-2">{selectedBlueprint.stakeholders.map((item) => <span key={item} className="rounded-full bg-muted px-2 py-1 text-xs">{item}</span>)}</div></div>
+                            <div className="rounded-lg bg-background/75 p-3"><p className="font-medium">سطوح پاداش</p><div className="mt-2 flex flex-wrap gap-2">{selectedBlueprint.rewardBasket.map((tier) => <span key={tier.level} className="rounded-full bg-muted px-2 py-1 text-xs">{tier.level}</span>)}</div></div>
+                            <div className="rounded-lg bg-background/75 p-3"><p className="font-medium">صفحات و بخش‌های مرتبط</p><div className="mt-2 flex flex-wrap gap-2">{selectedBlueprint.connectedSurfaces.slice(0, 5).map((item) => <span key={item} className="rounded-full bg-muted px-2 py-1 text-xs">{item}</span>)}</div></div>
+                        </div>
+                        <p className="mt-3 rounded-lg bg-background/75 p-3 text-muted-foreground"><span className="font-medium text-foreground">اقدام بعدی: </span>{selectedBlueprint.nextBuildAction}</p>
                     </section>
                 ) : null}
 

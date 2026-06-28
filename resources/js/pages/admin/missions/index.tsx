@@ -61,6 +61,27 @@ type RewardItem = {
     partner: (RegistryEntity & { partnerType: string }) | null;
 };
 
+
+type RewardBasketTier = {
+    level: string;
+    items: string[];
+};
+
+type SelectedBlueprint = {
+    code: string;
+    title: string;
+    missionGoal: string;
+    evidenceType: string;
+    userSteps: string[];
+    navigationHint: string;
+    points: { base: number; bonus: string };
+    rewardIdeas: string[];
+    stakeholders: string[];
+    connectedSurfaces: string[];
+    rewardBasket: RewardBasketTier[];
+    nextBuildAction: string;
+};
+
 type TreasureItem = {
     id: string;
     code: string;
@@ -87,6 +108,7 @@ type Props = {
     missions: MissionItem[];
     rewards: RewardItem[];
     treasures: TreasureItem[];
+    selectedBlueprint: SelectedBlueprint | null;
 };
 
 const statusLabels: Record<string, string> = {
@@ -144,8 +166,8 @@ export default function MissionRewardRegistryIndex({
     missions,
     rewards,
     treasures,
+    selectedBlueprint,
 }: Props) {
-    const selectedBlueprint = typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('blueprint');
 
     return (
         <>
@@ -200,9 +222,25 @@ export default function MissionRewardRegistryIndex({
                 </header>
 
                 {selectedBlueprint ? (
-                    <section className="rounded-lg border border-primary/25 bg-primary/5 p-4 text-sm">
-                        <p className="font-semibold">الگوی انتخاب‌شده از گنجینه: <span dir="ltr">{selectedBlueprint}</span></p>
-                        <p className="mt-1 text-muted-foreground">در این صفحه باید مأموریت واقعی، امتیاز عددی هر مرحله، شرط تأیید، سطح پاداش و ظرفیت مصرف ثبت شود.</p>
+                    <section className="rounded-lg border border-primary/25 bg-primary/5 p-4 text-sm shadow-sm">
+                        <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                            <div>
+                                <p className="text-xs text-muted-foreground">الگوی آماده برای اقدام</p>
+                                <h2 className="mt-1 text-lg font-semibold">{selectedBlueprint.title}</h2>
+                                <p className="mt-1 text-muted-foreground">داده الگو به این صفحه آمده تا بر اساس آن مأموریت، امتیاز، مدرک و پاداش واقعی تعریف شود.</p>
+                            </div>
+                            <span className="rounded-full bg-background px-3 py-1 text-xs" dir="ltr">{selectedBlueprint.code}</span>
+                        </div>
+                        <div className="mt-4 grid gap-3 lg:grid-cols-3">
+                            <div className="rounded-lg bg-background/75 p-3"><p className="font-medium">هدف</p><p className="mt-1 text-muted-foreground">{selectedBlueprint.missionGoal}</p></div>
+                            <div className="rounded-lg bg-background/75 p-3"><p className="font-medium">مدرک انجام</p><p className="mt-1 text-muted-foreground">{selectedBlueprint.evidenceType}</p></div>
+                            <div className="rounded-lg bg-background/75 p-3"><p className="font-medium">امتیاز پیشنهادی</p><p className="mt-1 text-muted-foreground">{selectedBlueprint.points.base.toLocaleString('fa-IR')} + {selectedBlueprint.points.bonus}</p></div>
+                        </div>
+                        <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                            <div className="rounded-lg bg-background/75 p-3"><p className="font-medium">مراحل کاربر</p><ol className="mt-2 space-y-1 text-muted-foreground">{selectedBlueprint.userSteps.map((step, index) => <li key={step}>{(index + 1).toLocaleString('fa-IR')}. {step}</li>)}</ol></div>
+                            <div className="rounded-lg bg-background/75 p-3"><p className="font-medium">سطوح پاداش</p><div className="mt-2 flex flex-wrap gap-2">{selectedBlueprint.rewardBasket.slice(0, 4).map((tier) => <span key={tier.level} className="rounded-full bg-muted px-2 py-1 text-xs">{tier.level}: {tier.items.slice(0, 2).join(' / ')}</span>)}</div></div>
+                        </div>
+                        <p className="mt-3 rounded-lg bg-background/75 p-3 text-muted-foreground"><span className="font-medium text-foreground">اقدام بعدی: </span>{selectedBlueprint.nextBuildAction}</p>
                     </section>
                 ) : null}
 

@@ -4,6 +4,18 @@ namespace App\Services;
 
 class MissionRewardBlueprintService
 {
+    /** @return array<string, mixed>|null */
+    public function handoff(?string $code): ?array
+    {
+        if (blank($code)) {
+            return null;
+        }
+
+        return collect($this->templates())
+            ->map(fn (array $template) => $this->enrichTemplate($template))
+            ->firstWhere('code', $code);
+    }
+
     /** @return array<string, mixed> */
     public function overview(): array
     {
