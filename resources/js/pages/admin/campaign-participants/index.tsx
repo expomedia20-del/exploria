@@ -118,6 +118,8 @@ export default function CampaignParticipantsIndex({
     campaignGroups,
     hubGroups,
 }: Props) {
+    const selectedBlueprint = typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('blueprint');
+
     return (
         <>
             <Head title="اعضای کمپین" />
@@ -142,6 +144,13 @@ export default function CampaignParticipantsIndex({
                         ))}
                     </div>
                 </header>
+
+                {selectedBlueprint ? (
+                    <section className="rounded-lg border border-primary/25 bg-primary/5 p-4 text-sm">
+                        <p className="font-semibold">الگوی انتخاب‌شده از گنجینه: <span dir="ltr">{selectedBlueprint}</span></p>
+                        <p className="mt-1 text-muted-foreground">اینجا باید مالک پاداش، فروشگاه یا هاب تحویل‌دهنده، اسپانسر داخلی/خارجی و نقش اجرایی هر عضو مشخص شود.</p>
+                    </section>
+                ) : null}
 
                 <section className="grid gap-4 lg:grid-cols-2">
                     <div className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">

@@ -145,6 +145,8 @@ export default function MissionRewardRegistryIndex({
     rewards,
     treasures,
 }: Props) {
+    const selectedBlueprint = typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('blueprint');
+
     return (
         <>
             <Head title="ماموریت و پاداش" />
@@ -196,6 +198,13 @@ export default function MissionRewardRegistryIndex({
                         />
                     </div>
                 </header>
+
+                {selectedBlueprint ? (
+                    <section className="rounded-lg border border-primary/25 bg-primary/5 p-4 text-sm">
+                        <p className="font-semibold">الگوی انتخاب‌شده از گنجینه: <span dir="ltr">{selectedBlueprint}</span></p>
+                        <p className="mt-1 text-muted-foreground">در این صفحه باید مأموریت واقعی، امتیاز عددی هر مرحله، شرط تأیید، سطح پاداش و ظرفیت مصرف ثبت شود.</p>
+                    </section>
+                ) : null}
 
                 <section className="rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border">
                     <div className="grid min-w-[980px] grid-cols-[1.3fr_0.9fr_0.9fr_0.9fr_0.75fr_1fr_0.8fr] gap-3 border-b border-sidebar-border/70 px-4 py-3 text-xs font-medium text-muted-foreground dark:border-sidebar-border">

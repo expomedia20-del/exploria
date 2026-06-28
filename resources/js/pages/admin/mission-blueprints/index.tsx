@@ -336,6 +336,17 @@ export default function MissionBlueprintIndex({
                                                 <div className="mt-3 flex flex-wrap gap-2">
                                                     {template.connectedSurfaces.slice(0, 5).map((surface) => <Chip key={surface}>{surface}</Chip>)}
                                                 </div>
+                                                <div className="mt-3 grid gap-2 rounded-md border border-dashed border-border/80 bg-background/70 p-2 text-xs sm:grid-cols-3">
+                                                    <Button asChild variant="outline" className="h-8 text-xs">
+                                                        <Link href={`/admin/missions?blueprint=${template.code}`}>ثبت مأموریت واقعی</Link>
+                                                    </Button>
+                                                    <Button asChild variant="outline" className="h-8 text-xs">
+                                                        <Link href={`/admin/campaign-participants?blueprint=${template.code}`}>تعیین مالک پاداش</Link>
+                                                    </Button>
+                                                    <Button asChild variant="outline" className="h-8 text-xs">
+                                                        <Link href={`/admin/campaign-operations?blueprint=${template.code}`}>اتصال به نقشه عملیات</Link>
+                                                    </Button>
+                                                </div>
                                                 <div className="mt-3 rounded-md bg-muted/50 p-2">
                                                     <p className="text-xs font-medium">سطوح پاداش و شرط پیشنهادی</p>
                                                     <div className="mt-2 grid gap-2">

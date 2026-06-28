@@ -506,6 +506,7 @@ function OperationDetailsSheet({
 }
 export default function CampaignOperationsIndex({ stats, campaigns }: Props) {
     const [selectedOperation, setSelectedOperation] = useState<OperationSelection | null>(null);
+    const selectedBlueprint = typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('blueprint');
 
     return (
         <>
@@ -532,6 +533,13 @@ export default function CampaignOperationsIndex({ stats, campaigns }: Props) {
                         ))}
                     </div>
                 </header>
+
+                {selectedBlueprint ? (
+                    <section className="rounded-lg border border-primary/25 bg-primary/5 p-4 text-sm">
+                        <p className="font-semibold">الگوی انتخاب‌شده از گنجینه: <span dir="ltr">{selectedBlueprint}</span></p>
+                        <p className="mt-1 text-muted-foreground">در نقشه عملیات باید نقطه شروع، مسیر، QR، محل تحویل پاداش و شاخه‌های بعدی کاربر به این الگو وصل شود.</p>
+                    </section>
+                ) : null}
 
                 {campaigns.length === 0 ? (
                     <section className="rounded-lg border border-sidebar-border/70 bg-background p-8 text-center text-sm text-muted-foreground dark:border-sidebar-border">

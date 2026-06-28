@@ -120,7 +120,7 @@ Route::get('/admin/campaign-participants', [CampaignParticipantController::class
     ->name('admin.campaign-participants.page');
 
 Route::get('/admin/mission-blueprints', [MissionRewardBlueprintController::class, 'page'])
-    ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
+    ->middleware(['auth', 'role:admin'])
     ->name('admin.mission-blueprints.page');
 Route::get('/admin/missions', [MissionRewardRegistryController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
@@ -206,7 +206,7 @@ Route::get('/api/v1/admin/campaign-participants', [CampaignParticipantController
     ->name('admin.campaign-participants.index');
 
 Route::get('/api/v1/admin/mission-blueprints', [MissionRewardBlueprintController::class, 'index'])
-    ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
+    ->middleware(['auth', 'role:admin'])
     ->name('admin.mission-blueprints.index');
 Route::get('/api/v1/admin/missions', [MissionRewardRegistryController::class, 'index'])
     ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
