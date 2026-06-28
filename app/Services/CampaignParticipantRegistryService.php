@@ -12,7 +12,7 @@ class CampaignParticipantRegistryService
     public function __construct(private readonly UserAccessScopeService $accessScopes) {}
 
     /** @return array<string, mixed> */
-    public function overview(?User $user = null): array
+    public function overview(?User $user = null, ?string $campaignId = null): array
     {
         $venueIds = $user ? $this->accessScopes->assignedVenueIds($user) : collect();
         $hubIds = $user ? $this->accessScopes->hubIds($user) : collect();
@@ -20,6 +20,7 @@ class CampaignParticipantRegistryService
         $isGlobal = $user === null || $this->accessScopes->hasGlobalAccess($user);
 
         $participants = CampaignParticipant::query()
+            ->when($campaignId, fn (Builder $query) => $query->where('campaign_id', $campaignId))
             ->when(! $isGlobal, fn (Builder $query) => $query->where(function (Builder $query) use ($venueIds, $hubIds, $partnerIds): void {
                 $query->whereIn('venue_id', $venueIds)
                     ->orWhereIn('hub_id', $hubIds)

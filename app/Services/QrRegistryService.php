@@ -14,9 +14,10 @@ use Illuminate\Validation\ValidationException;
 class QrRegistryService
 {
     /** @return Collection<int, array<string, mixed>> */
-    public function list(): Collection
+    public function list(?string $campaignId = null): Collection
     {
         return QrCode::query()
+            ->when($campaignId, fn ($query) => $query->where('campaign_id', $campaignId))
             ->with(['venue:id,name,code', 'touchpoint:id,label,code', 'campaign:id,name,code'])
             ->orderBy('created_at')
             ->get()

@@ -13,7 +13,7 @@ class MissionRewardRegistryService
     public function __construct(private readonly UserAccessScopeService $accessScopes) {}
 
     /** @return array<string, mixed> */
-    public function overview(?User $user = null): array
+    public function overview(?User $user = null, ?string $campaignId = null): array
     {
         $venueIds = $user ? $this->accessScopes->assignedVenueIds($user) : collect();
         $hubIds = $user ? $this->accessScopes->hubIds($user) : collect();
@@ -21,6 +21,7 @@ class MissionRewardRegistryService
         $isGlobal = $user === null || $this->accessScopes->hasGlobalAccess($user);
 
         $missions = MissionInstance::query()
+            ->when($campaignId, fn (Builder $query) => $query->where('campaign_id', $campaignId))
             ->when(! $isGlobal, fn (Builder $query) => $query->where(function (Builder $query) use ($venueIds, $hubIds): void {
                 $query->whereIn('venue_id', $venueIds)
                     ->orWhereIn('hub_id', $hubIds);
@@ -40,6 +41,7 @@ class MissionRewardRegistryService
             ->map(fn (MissionInstance $mission): array => $this->serializeMission($mission));
 
         $rewards = RewardDefinition::query()
+            ->when($campaignId, fn (Builder $query) => $query->where('campaign_id', $campaignId))
             ->when(! $isGlobal, fn (Builder $query) => $query->where(function (Builder $query) use ($venueIds, $partnerIds): void {
                 $query->whereIn('venue_id', $venueIds)
                     ->orWhereIn('partner_account_id', $partnerIds);
@@ -52,6 +54,7 @@ class MissionRewardRegistryService
             ->map(fn (RewardDefinition $reward): array => $this->serializeReward($reward));
 
         $treasures = Treasure::query()
+            ->when($campaignId, fn (Builder $query) => $query->where('campaign_id', $campaignId))
             ->when(! $isGlobal, fn (Builder $query) => $query->whereIn('venue_id', $venueIds))
             ->with(['campaign:id,code,name', 'venue:id,code,name', 'missionInstance:id,code'])
             ->orderBy('created_at')

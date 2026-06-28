@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\CampaignRegistryService;
 use App\Services\MissionRewardRegistryService;
 use App\Services\MissionRewardBlueprintService;
 use Illuminate\Http\JsonResponse;
@@ -12,16 +13,20 @@ use Inertia\Response;
 
 class MissionRewardRegistryController extends Controller
 {
-    public function page(Request $request, MissionRewardRegistryService $service, MissionRewardBlueprintService $blueprints): Response
+    public function page(Request $request, MissionRewardRegistryService $service, MissionRewardBlueprintService $blueprints, CampaignRegistryService $campaigns): Response
     {
-        $data = $service->overview($request->user());
+        $selectedCampaign = $campaigns->context($request->user(), $request->query('campaign'));
+        $data = $service->overview($request->user(), $selectedCampaign['id'] ?? null);
+        $data['selectedCampaign'] = $selectedCampaign;
         $data['selectedBlueprint'] = $blueprints->handoff($request->query('blueprint'));
 
         return Inertia::render('admin/missions/index', $data);
     }
 
-    public function index(Request $request, MissionRewardRegistryService $service): JsonResponse
+    public function index(Request $request, MissionRewardRegistryService $service, CampaignRegistryService $campaigns): JsonResponse
     {
-        return response()->json(['status' => 'success', 'data' => $service->overview($request->user())]);
+        $selectedCampaign = $campaigns->context($request->user(), $request->query('campaign'));
+
+        return response()->json(['status' => 'success', 'data' => $service->overview($request->user(), $selectedCampaign['id'] ?? null)]);
     }
 }

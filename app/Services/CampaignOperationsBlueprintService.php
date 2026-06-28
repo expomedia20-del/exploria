@@ -19,11 +19,12 @@ class CampaignOperationsBlueprintService
     public function __construct(private readonly UserAccessScopeService $accessScopes) {}
 
     /** @return array<string, mixed> */
-    public function overview(?User $user = null): array
+    public function overview(?User $user = null, ?string $campaignId = null): array
     {
         $scope = $this->scope($user);
 
         $campaigns = Campaign::query()
+            ->when($campaignId, fn (Builder $query) => $query->where('id', $campaignId))
             ->when(! $scope['isGlobal'], fn (Builder $query) => $query->whereIn('venue_id', $scope['venueIds']))
             ->with('venue:id,code,name')
             ->orderBy('created_at')
@@ -78,6 +79,7 @@ class CampaignOperationsBlueprintService
             'code' => $campaign->code,
             'name' => $campaign->name,
             'campaignType' => $campaign->campaign_type,
+            'blueprintCode' => $campaign->metadata['blueprint_code'] ?? null,
             'status' => $campaign->status->value,
             'startAt' => $campaign->start_at?->toIso8601String(),
             'endAt' => $campaign->end_at?->toIso8601String(),

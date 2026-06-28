@@ -35,6 +35,13 @@ type QrRegistryItem = {
     duplicateWindowSeconds: number;
 };
 
+type SelectedCampaign = RegistryEntity & {
+    campaignType: string;
+    blueprintCode: string | null;
+    status: string;
+    venue: RegistryEntity | null;
+};
+
 type OptionItem = RegistryEntity & {
     venueId?: string | null;
     venueName?: string | null;
@@ -48,6 +55,7 @@ type Props = {
         campaigns: OptionItem[];
         touchpoints: OptionItem[];
     };
+    selectedCampaign: SelectedCampaign | null;
 };
 
 type SharedProps = {
@@ -98,9 +106,13 @@ function canMutate(role?: string) {
     return role === 'admin' || role === 'operator';
 }
 
-export default function QrRegistryIndex({ qrCodes, formOptions }: Props) {
+export default function QrRegistryIndex({ qrCodes, formOptions, selectedCampaign }: Props) {
     const { flash, auth } = usePage<SharedProps>().props;
     const activeCount = qrCodes.filter((qr) => qr.status === 'active').length;
+    const selectedCampaignOption = formOptions.campaigns.find((campaign) => campaign.id === selectedCampaign?.id);
+    const selectedVenueId = selectedCampaign?.venue?.id ?? selectedCampaignOption?.venueId ?? formOptions.venues[0]?.id ?? '';
+    const selectedCampaignId = selectedCampaign?.id ?? formOptions.campaigns[0]?.id ?? '';
+    const campaignContextUrl = selectedCampaign ? `?campaign=${selectedCampaign.code}` : '';
 
     return (
         <>
@@ -144,6 +156,22 @@ export default function QrRegistryIndex({ qrCodes, formOptions }: Props) {
                     </Alert>
                 ) : null}
 
+                {selectedCampaign ? (
+                    <section className="rounded-lg border border-primary/25 bg-primary/5 p-4 text-sm shadow-sm">
+                        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                            <div>
+                                <p className="text-xs text-muted-foreground">زمینه کمپین فعال</p>
+                                <h2 className="mt-1 font-semibold">{selectedCampaign.name}</h2>
+                                <p className="mt-1 text-muted-foreground">کدهای QR این صفحه به عنوان نقاط شروع، اسکن یا تماس همین کمپین ثبت و فیلتر می‌شوند.</p>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                <span className="rounded-full bg-background px-3 py-1 text-xs" dir="ltr">{selectedCampaign.code}</span>
+                                {selectedCampaign.blueprintCode ? <span className="rounded-full bg-background px-3 py-1 text-xs" dir="ltr">{selectedCampaign.blueprintCode}</span> : null}
+                            </div>
+                        </div>
+                    </section>
+                ) : null}
+
                 {canMutate(auth.user.role) ? (
                     <section className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
                         <div className="mb-4 flex items-center gap-2">
@@ -151,7 +179,7 @@ export default function QrRegistryIndex({ qrCodes, formOptions }: Props) {
                             <h2 className="font-semibold">ثبت QR جدید</h2>
                         </div>
                         <Form
-                            action="/admin/qr-codes"
+                            action={`/admin/qr-codes${campaignContextUrl}`}
                             method="post"
                             options={{ preserveScroll: true }}
                             className="grid gap-4 md:grid-cols-6"
@@ -164,9 +192,7 @@ export default function QrRegistryIndex({ qrCodes, formOptions }: Props) {
                                             id="venue_id"
                                             name="venue_id"
                                             required
-                                            defaultValue={
-                                                formOptions.venues[0]?.id ?? ''
-                                            }
+                                            defaultValue={selectedVenueId}
                                             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                         >
                                             {formOptions.venues.map((venue) => (
@@ -188,10 +214,7 @@ export default function QrRegistryIndex({ qrCodes, formOptions }: Props) {
                                             id="campaign_id"
                                             name="campaign_id"
                                             required
-                                            defaultValue={
-                                                formOptions.campaigns[0]?.id ??
-                                                ''
-                                            }
+                                            defaultValue={selectedCampaignId}
                                             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                         >
                                             {formOptions.campaigns.map(

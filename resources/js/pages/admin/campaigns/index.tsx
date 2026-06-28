@@ -1,4 +1,4 @@
-import { Form, Head, usePage } from '@inertiajs/react';
+import { Form, Head, Link, usePage } from '@inertiajs/react';
 import {
     CalendarClock,
     Megaphone,
@@ -355,6 +355,22 @@ export default function CampaignRegistryIndex({
                                                     {campaign.blueprintCode}
                                                 </span>
                                             ) : null}
+                                        </div>
+                                        <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                                            {[
+                                                ['QR', `/admin/qr-codes?campaign=${campaign.code}`],
+                                                ['مأموریت و پاداش', `/admin/missions?campaign=${campaign.code}`],
+                                                ['اعضای کمپین', `/admin/campaign-participants?campaign=${campaign.code}`],
+                                                ['نقشه عملیات', `/admin/campaign-operations?campaign=${campaign.code}`],
+                                            ].map(([label, href]) => (
+                                                <Link
+                                                    key={href}
+                                                    href={href}
+                                                    className="rounded-full border border-primary/20 bg-primary/5 px-2.5 py-1 text-primary transition hover:bg-primary/10"
+                                                >
+                                                    {label}
+                                                </Link>
+                                            ))}
                                         </div>
                                     </div>
                                     <div className="min-w-0">

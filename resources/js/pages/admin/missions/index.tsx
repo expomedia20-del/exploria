@@ -12,6 +12,16 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+type SelectedCampaign = {
+    id: string;
+    code: string;
+    name: string;
+    campaignType: string;
+    blueprintCode: string | null;
+    status: string;
+    venue: { id: string; code: string; name: string } | null;
+};
+
 type RegistryEntity = {
     id: string;
     code: string;
@@ -109,6 +119,7 @@ type Props = {
     rewards: RewardItem[];
     treasures: TreasureItem[];
     selectedBlueprint: SelectedBlueprint | null;
+    selectedCampaign: SelectedCampaign | null;
 };
 
 const statusLabels: Record<string, string> = {
@@ -167,6 +178,7 @@ export default function MissionRewardRegistryIndex({
     rewards,
     treasures,
     selectedBlueprint,
+    selectedCampaign,
 }: Props) {
 
     return (
@@ -220,6 +232,22 @@ export default function MissionRewardRegistryIndex({
                         />
                     </div>
                 </header>
+
+                {selectedCampaign ? (
+                    <section className="rounded-lg border border-primary/25 bg-primary/5 p-4 text-sm shadow-sm">
+                        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                            <div>
+                                <p className="text-xs text-muted-foreground">زمینه کمپین فعال</p>
+                                <h2 className="mt-1 font-semibold">{selectedCampaign.name}</h2>
+                                <p className="mt-1 text-muted-foreground">داده‌های این صفحه فقط برای همین کمپین فیلتر شده‌اند؛ اگر از منوی اصلی وارد شوید، نمای کلی نمایش داده می‌شود.</p>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                <span className="rounded-full bg-background px-3 py-1 text-xs" dir="ltr">{selectedCampaign.code}</span>
+                                {selectedCampaign.blueprintCode ? <span className="rounded-full bg-background px-3 py-1 text-xs" dir="ltr">{selectedCampaign.blueprintCode}</span> : null}
+                            </div>
+                        </div>
+                    </section>
+                ) : null}
 
                 {selectedBlueprint ? (
                     <section className="rounded-lg border border-primary/25 bg-primary/5 p-4 text-sm shadow-sm">

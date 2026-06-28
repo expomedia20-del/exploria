@@ -48,6 +48,41 @@ class CampaignRegistryService
             ]);
     }
 
+    /** @return array<string, mixed>|null */
+    public function context(?User $user, ?string $campaignCode): ?array
+    {
+        if (! $campaignCode) {
+            return null;
+        }
+
+        $venueIds = $user ? $this->accessScopes->venueIds($user) : collect();
+        $isGlobal = $user === null || $this->accessScopes->hasGlobalAccess($user);
+
+        $campaign = Campaign::query()
+            ->when(! $isGlobal, fn (Builder $query) => $query->whereIn('venue_id', $venueIds))
+            ->with('venue:id,code,name')
+            ->where('code', Str::lower($campaignCode))
+            ->first();
+
+        if (! $campaign) {
+            return null;
+        }
+
+        return [
+            'id' => $campaign->id,
+            'code' => $campaign->code,
+            'name' => $campaign->name,
+            'campaignType' => $campaign->campaign_type,
+            'blueprintCode' => $campaign->metadata['blueprint_code'] ?? null,
+            'status' => $campaign->status->value,
+            'venue' => $campaign->venue ? [
+                'id' => $campaign->venue->id,
+                'code' => $campaign->venue->code,
+                'name' => $campaign->venue->name,
+            ] : null,
+        ];
+    }
+
     /** @param array<string, mixed> $data */
     public function create(array $data): Campaign
     {
