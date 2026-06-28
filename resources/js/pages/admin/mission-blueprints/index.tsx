@@ -1,6 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import type { ReactNode } from 'react';
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import {
     BookOpenCheck,
     Compass,
@@ -95,6 +95,10 @@ export default function MissionBlueprintIndex({
         [templates],
     );
     const visibleTemplates = activeFamily === 'همه' ? templates : templates.filter((template) => template.family === activeFamily);
+    const mvpPhases = useMemo(
+        () => Array.from(new Set(mvpTemplates.map((template) => template.launchPhase))),
+        [mvpTemplates],
+    );
 
     return (
         <>
@@ -136,28 +140,55 @@ export default function MissionBlueprintIndex({
 
                 <section className="exploria-panel">
                     <div className="border-b border-border/70 px-4 py-3 dark:border-sidebar-border">
-                        <h2 className="font-semibold">اولویت اجرایی MVP</h2>
-                        <p className="mt-1 text-sm text-muted-foreground">این مسیرها ستون فقرات پایلوت اکوپارک هستند: شروع از خانه، اتصال به حضور واقعی، تبدیل به خرید و پاداش ترکیبی.</p>
+                        <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+                            <div>
+                                <h2 className="font-semibold">نقشه کمپین‌های اولویت‌دار</h2>
+                                <p className="mt-1 text-sm text-muted-foreground">این بخش دیگر فقط چند مأموریت نیست؛ مسیر اجرای کمپین را از شروع مشترک تا شاخه‌های خانواده، هیجان، خرید، طعم‌گردی، علم، روایت شهری، ساعات خلوت و اسپانسرها نشان می‌دهد.</p>
+                            </div>
+                            <div className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                                {fa(mvpTemplates.length)} کمپین/مسیر قابل استفاده
+                            </div>
+                        </div>
                     </div>
-                    <div className="grid gap-3 p-4 lg:grid-cols-4">
-                        {mvpTemplates.slice(0, 4).map((template) => (
-                            <article key={template.code} className="rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm">
-                                <div className="flex items-start justify-between gap-3">
-                                    <div>
-                                        <p className="text-xs text-muted-foreground">اولویت {fa(template.mvpPriority)}</p>
-                                        <h3 className="mt-1 text-sm font-semibold leading-6">{template.title}</h3>
+                    <div className="space-y-5 p-4">
+                        {mvpPhases.map((phase) => {
+                            const phaseTemplates = mvpTemplates.filter((template) => template.launchPhase === phase);
+
+                            return (
+                                <Fragment key={phase}>
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-px flex-1 bg-border" />
+                                        <h3 className="rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold text-muted-foreground">{phase}</h3>
+                                        <div className="h-px flex-1 bg-border" />
                                     </div>
-                                    <Trophy className="size-4 text-muted-foreground" />
-                                </div>
-                                <p className="mt-2 text-xs leading-6 text-muted-foreground">{template.priorityReason}</p>
-                                <div className="mt-3 flex flex-wrap gap-2">
-                                    {template.connectedSurfaces.slice(0, 3).map((surface) => <Chip key={surface}>{surface}</Chip>)}
-                                </div>
-                            </article>
-                        ))}
+                                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                                        {phaseTemplates.map((template) => (
+                                            <article key={template.code} className="rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm">
+                                                <div className="flex items-start justify-between gap-3">
+                                                    <div>
+                                                        <p className="text-xs text-muted-foreground">اولویت {fa(template.mvpPriority)}</p>
+                                                        <h4 className="mt-1 text-sm font-semibold leading-6">{template.title}</h4>
+                                                    </div>
+                                                    <Trophy className="size-4 text-muted-foreground" />
+                                                </div>
+                                                <p className="mt-2 text-xs leading-6 text-muted-foreground">{template.priorityReason}</p>
+                                                <div className="mt-3 flex flex-wrap gap-2">
+                                                    {template.connectedSurfaces.slice(0, 5).map((surface) => <Chip key={surface}>{surface}</Chip>)}
+                                                </div>
+                                                <div className="mt-3 rounded-md bg-muted/50 p-2">
+                                                    <p className="text-xs font-medium">پاداش مرحله‌ای</p>
+                                                    <p className="mt-1 text-xs leading-6 text-muted-foreground">
+                                                        {template.rewardBasket.map((tier) => tier.level).join(' ← ')}
+                                                    </p>
+                                                </div>
+                                            </article>
+                                        ))}
+                                    </div>
+                                </Fragment>
+                            );
+                        })}
                     </div>
                 </section>
-
                 <section className="grid gap-4 xl:grid-cols-[0.85fr_1.15fr]">
                     <div className="exploria-panel">
                         <div className="border-b border-border/70 px-4 py-3 dark:border-sidebar-border">
@@ -194,8 +225,8 @@ export default function MissionBlueprintIndex({
                 <section className="exploria-panel">
                     <div className="flex flex-col gap-3 border-b border-border/70 px-4 py-3 dark:border-sidebar-border lg:flex-row lg:items-center lg:justify-between">
                         <div>
-                            <h2 className="font-semibold">کتابخانه الگوهای مأموریت</h2>
-                            <p className="mt-1 text-sm text-muted-foreground">هر الگو می‌تواند مبنای ساخت مأموریت واقعی در صفحه مأموریت و پاداش باشد.</p>
+                            <h2 className="font-semibold">کتابخانه کمپین‌ها و مأموریت‌های قابل ترکیب</h2>
+                            <p className="mt-1 text-sm text-muted-foreground">هر مورد می‌تواند به‌تنهایی یک کمپین کوتاه باشد یا با مسیر مادر، پاداش‌های چهارسطحی و شاخه‌های اکوپارک ترکیب شود.</p>
                         </div>
                         <div className="flex flex-wrap gap-2">
                             {families.map((family) => (
