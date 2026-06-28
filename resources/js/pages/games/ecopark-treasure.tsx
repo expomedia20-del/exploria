@@ -159,12 +159,22 @@ export default function EcoParkTreasureGame() {
 
                 <section className="mx-auto grid max-w-7xl gap-6 px-5 py-7 sm:px-8 lg:grid-cols-[0.82fr_1.18fr] lg:px-10">
                     <div className="flex flex-col justify-between gap-6">
-                        <div>
-                            <p className="text-sm font-semibold text-emerald-700">Exploria pilot game</p>
-                            <h1 className="mt-3 text-4xl font-semibold leading-tight sm:text-5xl">EcoPark Treasure Map</h1>
-                            <p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-600">
-                                A polished first-playable prototype for the EcoPark campaign. Visitors may start at home, or start on site from a QR, hologram backpack, or display touchpoint.
-                            </p>
+                        <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
+                            <div className="relative min-h-[260px]">
+                                <img
+                                    src="/images/ecopark/hero.webp"
+                                    alt="EcoPark campaign concept"
+                                    className="absolute inset-0 h-full w-full object-cover"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-r from-zinc-950/85 via-zinc-950/45 to-transparent" />
+                                <div className="relative max-w-xl p-5 text-white sm:p-6">
+                                    <p className="text-sm font-semibold text-emerald-200">Exploria pilot game</p>
+                                    <h1 className="mt-3 text-4xl font-semibold leading-tight sm:text-5xl">EcoPark Treasure Map</h1>
+                                    <p className="mt-4 text-sm leading-7 text-zinc-100">
+                                        A first-playable treasure hunt for EcoPark: home pre-game, on-site QR clues, hologram backpacks, partner rewards, and prize baskets.
+                                    </p>
+                                </div>
+                            </div>
                         </div>
 
                         <div className="grid gap-3 sm:grid-cols-2">
@@ -205,7 +215,13 @@ export default function EcoParkTreasureGame() {
                     </div>
 
                     <div className="relative min-h-[560px] overflow-hidden rounded-lg border border-zinc-200 bg-[#eef5ed] p-4 shadow-sm">
-                        <svg className="absolute inset-0 h-full w-full opacity-70" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                        <img
+                            src="/images/ecopark/treasure-route.webp"
+                            alt="EcoPark treasure route concept"
+                            className="absolute inset-0 h-full w-full object-cover opacity-30"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-br from-white/80 via-[#eef5ed]/82 to-white/70" />
+                        <svg className="absolute inset-0 h-full w-full opacity-80" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
                             <path d="M12 74 C24 48, 35 56, 43 66 S53 36, 57 38 S66 58, 72 56 S79 31, 84 27 S89 55, 91 78" fill="none" stroke="rgba(63,63,70,0.42)" strokeWidth="0.7" strokeDasharray="2 2" />
                             <path d="M8 88 C26 82, 34 88, 50 82 S73 84, 95 90" fill="none" stroke="rgba(16,185,129,0.16)" strokeWidth="8" />
                             <path d="M4 28 C28 20, 42 22, 66 15 S84 16, 98 10" fill="none" stroke="rgba(14,165,233,0.14)" strokeWidth="9" />
@@ -307,3 +323,5 @@ export default function EcoParkTreasureGame() {
         </>
     );
 }
+
+
