@@ -107,6 +107,12 @@ export default function MissionBlueprintIndex({
                     </div>
                     <div className="flex flex-wrap gap-2">
                         <Button asChild variant="outline">
+                            <Link href="/games/ecopark-treasure">
+                                <Sparkles className="size-4" />
+                                Treasure Game
+                            </Link>
+                        </Button>
+                        <Button asChild variant="outline">
                             <Link href="/admin/campaign-operations">
                                 <Route className="size-4" />
                                 نقشه عملیات

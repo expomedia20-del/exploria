@@ -35,6 +35,7 @@ Route::inertia('/demo', 'welcome')->name('demo');
 Route::inertia('/demo/ecosystem', 'demo/ecosystem')->name('demo.ecosystem');
 Route::inertia('/demo/missions', 'demo/missions')->name('demo.missions');
 Route::inertia('/demo/proposal', 'demo/proposal')->name('demo.proposal');
+Route::inertia('/games/ecopark-treasure', 'games/ecopark-treasure')->name('games.ecopark-treasure');
 Route::get('/scan/{code}', ScanLandingController::class)->where('code', '[A-Za-z0-9-]+')->name('scan.landing');
 Route::inertia('/access', 'auth/otp')->name('visitor.otp');
 Route::middleware('auth')->group(function () {
