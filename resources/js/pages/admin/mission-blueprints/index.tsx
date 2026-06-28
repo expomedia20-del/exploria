@@ -7,11 +7,14 @@ import {
     Gem,
     Gift,
     Lightbulb,
+    ListChecks,
     MapPinned,
     Route,
     ShieldCheck,
     Sparkles,
+    Target,
     Trophy,
+    UsersRound,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -79,6 +82,68 @@ function Chip({ children }: { children: ReactNode }) {
     return <span className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">{children}</span>;
 }
 
+const campaignFlowSteps = [
+    {
+        title: 'شروع مشترک',
+        body: 'کاربر از خانه، QR ورودی، کوله هولوگرامی یا نمایشگر وارد کمپین می‌شود و مسیر مناسب را انتخاب می‌کند.',
+        icon: Sparkles,
+    },
+    {
+        title: 'انتخاب شاخه',
+        body: 'مسیر به خانواده، هیجان، خرید، طعم‌گردی، علم، روایت شهری یا ساعات خلوت تقسیم می‌شود.',
+        icon: Route,
+    },
+    {
+        title: 'اجرای مأموریت',
+        body: 'هر شاخه چند مأموریت کوتاه با مدرک مشخص دارد: QR، عکس، پاسخ، خرید، حضور یا تأیید مجری.',
+        icon: ListChecks,
+    },
+    {
+        title: 'پاداش مرحله‌ای',
+        body: 'در همان مسیر، پاداش‌های کوچک برنزی و نقره‌ای داده می‌شود تا کاربر ادامه دهد.',
+        icon: Gift,
+    },
+    {
+        title: 'گنج نهایی',
+        body: 'با تکمیل مسیر، سطح طلایی یا الماسی و سبد ترکیبی چند شریک فعال می‌شود.',
+        icon: Gem,
+    },
+];
+
+function CampaignFlowInfographic() {
+    return (
+        <section className="exploria-panel overflow-hidden">
+            <div className="border-b border-border/70 px-4 py-3">
+                <h2 className="font-semibold">راهنمای اینفوگرافی مسیر کمپین</h2>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                    این نقشه نشان می‌دهد هر ایده در گنجینه چگونه از ورود کاربر به مسیر، مأموریت، ناوبری و پاداش تبدیل می‌شود.
+                </p>
+            </div>
+            <div className="grid gap-3 p-4 lg:grid-cols-5">
+                {campaignFlowSteps.map((step, index) => {
+                    const Icon = step.icon;
+
+                    return (
+                        <article key={step.title} className="relative rounded-lg border border-border/80 bg-card/80 p-3 shadow-sm">
+                            {index < campaignFlowSteps.length - 1 && (
+                                <div className="absolute left-[-1.25rem] top-8 hidden h-px w-5 bg-border lg:block" />
+                            )}
+                            <div className="flex items-center gap-2">
+                                <span className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+                                    <Icon className="size-4" />
+                                </span>
+                                <span className="text-xs text-muted-foreground">مرحله {fa(index + 1)}</span>
+                            </div>
+                            <h3 className="mt-3 text-sm font-semibold">{step.title}</h3>
+                            <p className="mt-2 text-xs leading-6 text-muted-foreground">{step.body}</p>
+                        </article>
+                    );
+                })}
+            </div>
+        </section>
+    );
+}
+
 export default function MissionBlueprintIndex({
     stats,
     principles,
@@ -138,6 +203,8 @@ export default function MissionBlueprintIndex({
                     <Stat icon={ShieldCheck} label="نوع مدرک" value={stats.evidenceTypes} />
                 </section>
 
+                <CampaignFlowInfographic />
+
                 <section className="exploria-panel">
                     <div className="border-b border-border/70 px-4 py-3 dark:border-sidebar-border">
                         <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
@@ -172,6 +239,47 @@ export default function MissionBlueprintIndex({
                                                     <Trophy className="size-4 text-muted-foreground" />
                                                 </div>
                                                 <p className="mt-2 text-xs leading-6 text-muted-foreground">{template.priorityReason}</p>
+                                                <div className="mt-3 grid gap-2 text-xs text-muted-foreground">
+                                                    <div className="rounded-md bg-muted/45 p-2">
+                                                        <div className="mb-1 flex items-center gap-1.5 font-medium text-foreground">
+                                                            <Target className="size-3.5" />
+                                                            هدف مأموریت
+                                                        </div>
+                                                        <p className="leading-6">{template.missionGoal}</p>
+                                                    </div>
+                                                    <div className="rounded-md bg-muted/45 p-2">
+                                                        <div className="mb-1 flex items-center gap-1.5 font-medium text-foreground">
+                                                            <Compass className="size-3.5" />
+                                                            ناوبری و مسیر
+                                                        </div>
+                                                        <p className="leading-6">{template.navigationHint}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="mt-3 grid gap-2 text-xs md:grid-cols-2">
+                                                    <div className="rounded-md border border-border/70 p-2">
+                                                        <div className="mb-1 flex items-center gap-1.5 font-medium">
+                                                            <ListChecks className="size-3.5" />
+                                                            مراحل کاربر
+                                                        </div>
+                                                        <ol className="space-y-1 text-muted-foreground">
+                                                            {template.userSteps.slice(0, 3).map((step, index) => (
+                                                                <li key={step} className="flex gap-1.5 leading-5">
+                                                                    <span className="text-foreground">{fa(index + 1)}</span>
+                                                                    <span>{step}</span>
+                                                                </li>
+                                                            ))}
+                                                        </ol>
+                                                    </div>
+                                                    <div className="rounded-md border border-border/70 p-2">
+                                                        <div className="mb-1 flex items-center gap-1.5 font-medium">
+                                                            <UsersRound className="size-3.5" />
+                                                            ذی‌نفعان
+                                                        </div>
+                                                        <div className="flex flex-wrap gap-1.5">
+                                                            {template.stakeholders.slice(0, 4).map((stakeholder) => <Chip key={stakeholder}>{stakeholder}</Chip>)}
+                                                        </div>
+                                                    </div>
+                                                </div>
                                                 <div className="mt-3 flex flex-wrap gap-2">
                                                     {template.connectedSurfaces.slice(0, 5).map((surface) => <Chip key={surface}>{surface}</Chip>)}
                                                 </div>
@@ -180,6 +288,9 @@ export default function MissionBlueprintIndex({
                                                     <p className="mt-1 text-xs leading-6 text-muted-foreground">
                                                         {template.rewardBasket.map((tier) => tier.level).join(' ← ')}
                                                     </p>
+                                                    <div className="mt-2 flex flex-wrap gap-1.5">
+                                                        {template.rewardIdeas.slice(0, 4).map((idea) => <Chip key={idea}>{idea}</Chip>)}
+                                                    </div>
                                                 </div>
                                             </article>
                                         ))}
