@@ -143,14 +143,14 @@ export default function EcoParkTreasureGame() {
     return (
         <>
             <Head title="EcoPark Treasure Map Game" />
-            <main className="min-h-screen bg-zinc-950 text-white" dir="ltr">
-                <section className="border-b border-white/10">
+            <main className="min-h-screen bg-[#f6f7f2] text-zinc-950" dir="ltr">
+                <section className="border-b border-zinc-200 bg-white/90 backdrop-blur">
                     <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-5 py-4 sm:px-8 lg:px-10">
-                        <Link href="/admin/mission-blueprints" className="inline-flex items-center gap-2 text-sm text-zinc-300 hover:text-white">
+                        <Link href="/admin/mission-blueprints" className="inline-flex items-center gap-2 text-sm font-medium text-zinc-600 hover:text-zinc-950">
                             <ArrowLeft className="size-4" />
                             Mission blueprints
                         </Link>
-                        <Link href="/dashboard" className="inline-flex h-9 items-center gap-2 rounded-md border border-white/15 px-3 text-sm text-white hover:bg-white/10">
+                        <Link href="/dashboard" className="inline-flex h-9 items-center gap-2 rounded-md border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-700 hover:bg-zinc-100">
                             <Compass className="size-4" />
                             Dashboard
                         </Link>
@@ -160,10 +160,10 @@ export default function EcoParkTreasureGame() {
                 <section className="mx-auto grid max-w-7xl gap-6 px-5 py-7 sm:px-8 lg:grid-cols-[0.82fr_1.18fr] lg:px-10">
                     <div className="flex flex-col justify-between gap-6">
                         <div>
-                            <p className="text-sm font-medium text-emerald-300">Exploria pilot game</p>
+                            <p className="text-sm font-semibold text-emerald-700">Exploria pilot game</p>
                             <h1 className="mt-3 text-4xl font-semibold leading-tight sm:text-5xl">EcoPark Treasure Map</h1>
-                            <p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-300">
-                                A first playable prototype for the EcoPark campaign. Visitors may start at home, or start on site from a QR, hologram backpack, or display touchpoint.
+                            <p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-600">
+                                A polished first-playable prototype for the EcoPark campaign. Visitors may start at home, or start on site from a QR, hologram backpack, or display touchpoint.
                             </p>
                         </div>
 
@@ -171,7 +171,7 @@ export default function EcoParkTreasureGame() {
                             <button
                                 type="button"
                                 onClick={() => setMode('home')}
-                                className={`rounded-lg border p-4 text-left transition ${mode === 'home' ? 'border-emerald-300 bg-emerald-300 text-zinc-950' : 'border-white/10 bg-white/5 hover:bg-white/10'}`}
+                                className={`rounded-lg border p-4 text-left transition ${mode === 'home' ? 'border-emerald-300 bg-emerald-50 text-emerald-950 shadow-sm' : 'border-zinc-200 bg-white hover:bg-zinc-50 shadow-sm'}`}
                             >
                                 <Home className="size-5" />
                                 <p className="mt-3 font-semibold">Start from home</p>
@@ -180,7 +180,7 @@ export default function EcoParkTreasureGame() {
                             <button
                                 type="button"
                                 onClick={() => setMode('onsite')}
-                                className={`rounded-lg border p-4 text-left transition ${mode === 'onsite' ? 'border-cyan-300 bg-cyan-300 text-zinc-950' : 'border-white/10 bg-white/5 hover:bg-white/10'}`}
+                                className={`rounded-lg border p-4 text-left transition ${mode === 'onsite' ? 'border-cyan-300 bg-cyan-50 text-cyan-950 shadow-sm' : 'border-zinc-200 bg-white hover:bg-zinc-50 shadow-sm'}`}
                             >
                                 <QrCode className="size-5" />
                                 <p className="mt-3 font-semibold">Start at EcoPark</p>
@@ -189,26 +189,26 @@ export default function EcoParkTreasureGame() {
                         </div>
 
                         <div className="grid gap-3 sm:grid-cols-3">
-                            <div className="rounded-lg border border-white/10 bg-white/5 p-4">
-                                <p className="text-xs text-zinc-400">Progress</p>
+                            <div className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
+                                <p className="text-xs text-zinc-500">Progress</p>
                                 <p className="mt-2 text-2xl font-semibold">{formatFa(progress)}%</p>
                             </div>
-                            <div className="rounded-lg border border-white/10 bg-white/5 p-4">
-                                <p className="text-xs text-zinc-400">Points</p>
+                            <div className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
+                                <p className="text-xs text-zinc-500">Points</p>
                                 <p className="mt-2 text-2xl font-semibold">{formatFa(points)}</p>
                             </div>
-                            <div className="rounded-lg border border-white/10 bg-white/5 p-4">
-                                <p className="text-xs text-zinc-400">Seals</p>
+                            <div className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
+                                <p className="text-xs text-zinc-500">Seals</p>
                                 <p className="mt-2 text-2xl font-semibold">{formatFa(completed.length)} / {formatFa(nodes.length)}</p>
                             </div>
                         </div>
                     </div>
 
-                    <div className="relative min-h-[520px] overflow-hidden rounded-lg border border-white/10 bg-[radial-gradient(circle_at_30%_20%,rgba(16,185,129,0.25),transparent_30%),radial-gradient(circle_at_75%_35%,rgba(14,165,233,0.25),transparent_28%),linear-gradient(135deg,#102018,#111827_52%,#18181b)] p-4">
+                    <div className="relative min-h-[560px] overflow-hidden rounded-lg border border-zinc-200 bg-[#eef5ed] p-4 shadow-sm">
                         <svg className="absolute inset-0 h-full w-full opacity-70" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-                            <path d="M12 74 C24 48, 35 56, 43 66 S53 36, 57 38 S66 58, 72 56 S79 31, 84 27 S89 55, 91 78" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="0.7" strokeDasharray="2 2" />
-                            <path d="M8 88 C26 82, 34 88, 50 82 S73 84, 95 90" fill="none" stroke="rgba(16,185,129,0.18)" strokeWidth="8" />
-                            <path d="M4 28 C28 20, 42 22, 66 15 S84 16, 98 10" fill="none" stroke="rgba(56,189,248,0.12)" strokeWidth="9" />
+                            <path d="M12 74 C24 48, 35 56, 43 66 S53 36, 57 38 S66 58, 72 56 S79 31, 84 27 S89 55, 91 78" fill="none" stroke="rgba(63,63,70,0.42)" strokeWidth="0.7" strokeDasharray="2 2" />
+                            <path d="M8 88 C26 82, 34 88, 50 82 S73 84, 95 90" fill="none" stroke="rgba(16,185,129,0.16)" strokeWidth="8" />
+                            <path d="M4 28 C28 20, 42 22, 66 15 S84 16, 98 10" fill="none" stroke="rgba(14,165,233,0.14)" strokeWidth="9" />
                         </svg>
 
                         {nodes.map((node, index) => {
@@ -226,26 +226,26 @@ export default function EcoParkTreasureGame() {
                                     <span className={`flex size-12 items-center justify-center rounded-full border text-sm font-bold shadow-lg ${done ? 'border-emerald-200 bg-emerald-300 text-zinc-950' : active ? 'border-white bg-white text-zinc-950' : `border-white/30 ${node.accent} text-zinc-950`}`}>
                                         {done ? <CheckCircle2 className="size-5" /> : index + 1}
                                     </span>
-                                    <span className="max-w-28 rounded-full bg-black/45 px-2 py-1 text-center text-[11px] leading-4 backdrop-blur">{node.title}</span>
+                                    <span className="max-w-28 rounded-full border border-zinc-200 bg-white/95 px-2 py-1 text-center text-[11px] font-medium leading-4 text-zinc-950 shadow-sm backdrop-blur">{node.title}</span>
                                 </button>
                             );
                         })}
 
-                        <div className="absolute bottom-4 left-4 right-4 z-20 rounded-lg border border-white/10 bg-zinc-950/82 p-4 backdrop-blur">
+                        <div className="absolute bottom-4 left-4 right-4 z-20 rounded-lg border border-zinc-200 bg-white/95 p-4 text-zinc-950 shadow-lg backdrop-blur">
                             <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
                                 <div>
                                     <div className="flex flex-wrap items-center gap-2">
                                         <MapPin className="size-4 text-emerald-300" />
-                                        <p className="text-xs text-zinc-400">{selectedNode.place}</p>
+                                        <p className="text-xs text-zinc-500">{selectedNode.place}</p>
                                     </div>
-                                    <h2 className="mt-2 text-xl font-semibold">{selectedNode.title}</h2>
-                                    <p className="mt-2 text-sm leading-6 text-zinc-300">{selectedNode.clue}</p>
-                                    <p className="mt-2 text-sm leading-6 text-zinc-100">Mission: {selectedNode.mission}</p>
+                                    <h2 className="mt-2 text-xl font-semibold text-zinc-950">{selectedNode.title}</h2>
+                                    <p className="mt-2 text-sm leading-6 text-zinc-600">{selectedNode.clue}</p>
+                                    <p className="mt-2 text-sm leading-6 text-zinc-900">Mission: {selectedNode.mission}</p>
                                 </div>
                                 <button
                                     type="button"
                                     onClick={() => completeNode(selectedNode.id)}
-                                    className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-emerald-300 px-4 text-sm font-semibold text-zinc-950 hover:bg-emerald-200"
+                                    className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white hover:bg-zinc-800"
                                 >
                                     <BadgeCheck className="size-4" />
                                     Collect clue
@@ -256,7 +256,7 @@ export default function EcoParkTreasureGame() {
                 </section>
 
                 <section className="mx-auto grid max-w-7xl gap-5 px-5 pb-8 sm:px-8 lg:grid-cols-[1fr_0.9fr] lg:px-10">
-                    <div className="rounded-lg border border-white/10 bg-white p-4 text-zinc-950">
+                    <div className="rounded-lg border border-zinc-200 bg-white p-4 text-zinc-950 shadow-sm">
                         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-200 pb-4">
                             <div>
                                 <p className="text-sm text-zinc-500">Continuation code</p>
@@ -280,22 +280,22 @@ export default function EcoParkTreasureGame() {
                         </div>
                     </div>
 
-                    <aside className="rounded-lg border border-white/10 bg-white/5 p-4">
+                    <aside className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
                         <div className="flex items-center gap-2">
-                            <Trophy className="size-5 text-amber-300" />
+                            <Trophy className="size-5 text-amber-600" />
                             <h2 className="font-semibold">Prize basket ladder</h2>
                         </div>
                         <div className="mt-4 grid gap-2">
                             {baskets.map((basket, index) => {
                                 const unlocked = completed.length >= index + 1;
                                 return (
-                                    <div key={basket.level} className={`rounded-md border p-3 ${unlocked ? 'border-amber-200/40 bg-amber-300/10' : 'border-white/10 bg-zinc-900'}`}>
+                                    <div key={basket.level} className={`rounded-md border p-3 ${unlocked ? 'border-amber-200 bg-amber-50' : 'border-zinc-200 bg-zinc-50'}`}>
                                         <div className="flex items-center justify-between gap-3">
                                             <p className="font-medium">{basket.level}</p>
-                                            {unlocked ? <WalletCards className="size-4 text-amber-200" /> : <Sparkles className="size-4 text-zinc-500" />}
+                                            {unlocked ? <WalletCards className="size-4 text-amber-700" /> : <Sparkles className="size-4 text-zinc-500" />}
                                         </div>
                                         <div className="mt-2 flex flex-wrap gap-2">
-                                            {basket.items.map((item) => <span key={item} className="rounded-full bg-white/10 px-2 py-1 text-xs text-zinc-200">{item}</span>)}
+                                            {basket.items.map((item) => <span key={item} className="rounded-full bg-zinc-100 px-2 py-1 text-xs text-zinc-700">{item}</span>)}
                                         </div>
                                     </div>
                                 );
