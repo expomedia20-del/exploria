@@ -12,6 +12,27 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
+
+type RewardBasketTier = {
+    level: string;
+    items: string[];
+};
+
+type SelectedBlueprint = {
+    code: string;
+    title: string;
+    missionGoal: string;
+    evidenceType: string;
+    userSteps: string[];
+    navigationHint: string;
+    points: { base: number; bonus: string };
+    rewardIdeas: string[];
+    stakeholders: string[];
+    connectedSurfaces: string[];
+    rewardBasket: RewardBasketTier[];
+    nextBuildAction: string;
+};
+
 type RegistryEntity = {
     id: string;
     code: string;
@@ -23,6 +44,7 @@ type CampaignItem = {
     code: string;
     name: string;
     campaignType: string;
+    blueprintCode: string | null;
     status: string;
     startAt: string | null;
     endAt: string | null;
@@ -34,6 +56,7 @@ type CampaignItem = {
 type Props = {
     campaigns: CampaignItem[];
     venueOptions: RegistryEntity[];
+    selectedBlueprint: SelectedBlueprint | null;
 };
 
 type SharedProps = {
@@ -79,6 +102,7 @@ function canMutate(role?: string) {
 export default function CampaignRegistryIndex({
     campaigns,
     venueOptions,
+    selectedBlueprint,
 }: Props) {
     const { flash, auth } = usePage<SharedProps>().props;
     const activeCount = campaigns.filter(
@@ -129,6 +153,25 @@ export default function CampaignRegistryIndex({
                     </div>
                 </header>
 
+
+                {selectedBlueprint ? (
+                    <section className="rounded-lg border border-primary/25 bg-primary/5 p-4 text-sm shadow-sm">
+                        <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                            <div>
+                                <p className="text-xs text-muted-foreground">الگوی مرجع برای ساخت کمپین</p>
+                                <h2 className="mt-1 text-lg font-semibold">{selectedBlueprint.title}</h2>
+                                <p className="mt-1 text-muted-foreground">این الگو باید اول به کمپین تبدیل شود؛ بعد از ثبت کمپین، QR، اعضا، مأموریت، پاداش و نقشه عملیات باید تابع همین کمپین باشند.</p>
+                            </div>
+                            <span className="rounded-full bg-background px-3 py-1 text-xs" dir="ltr">{selectedBlueprint.code}</span>
+                        </div>
+                        <div className="mt-4 grid gap-3 lg:grid-cols-3">
+                            <div className="rounded-lg bg-background/75 p-3"><p className="font-medium">هدف کمپین</p><p className="mt-1 text-muted-foreground">{selectedBlueprint.missionGoal}</p></div>
+                            <div className="rounded-lg bg-background/75 p-3"><p className="font-medium">مسیر و ناوبری</p><p className="mt-1 text-muted-foreground">{selectedBlueprint.navigationHint}</p></div>
+                            <div className="rounded-lg bg-background/75 p-3"><p className="font-medium">بخش‌های تابع کمپین</p><div className="mt-2 flex flex-wrap gap-2">{selectedBlueprint.connectedSurfaces.slice(0, 5).map((item) => <span key={item} className="rounded-full bg-muted px-2 py-1 text-xs">{item}</span>)}</div></div>
+                        </div>
+                    </section>
+                ) : null}
+
                 {flash?.success ? (
                     <Alert>
                         <AlertDescription>{flash.success}</AlertDescription>
@@ -149,6 +192,7 @@ export default function CampaignRegistryIndex({
                         >
                             {({ processing, errors }) => (
                                 <>
+                                    {selectedBlueprint ? <input type="hidden" name="blueprint_code" value={selectedBlueprint.code} /> : null}
                                     <div className="grid gap-2 md:col-span-2">
                                         <Label htmlFor="venue_id">مکان</Label>
                                         <select
@@ -189,6 +233,7 @@ export default function CampaignRegistryIndex({
                                             required
                                             dir="ltr"
                                             placeholder="summer-treasure"
+                                            defaultValue={selectedBlueprint?.code ? `${selectedBlueprint.code}-campaign` : ''}
                                         />
                                         <InputError message={errors.code} />
                                     </div>
@@ -201,7 +246,7 @@ export default function CampaignRegistryIndex({
                                             name="campaign_type"
                                             required
                                             dir="ltr"
-                                            defaultValue="pilot_visit"
+                                            defaultValue={selectedBlueprint ? 'blueprint_campaign' : 'pilot_visit'}
                                         />
                                         <InputError
                                             message={errors.campaign_type}
@@ -305,6 +350,11 @@ export default function CampaignRegistryIndex({
                                             >
                                                 {campaign.code}
                                             </span>
+                                            {campaign.blueprintCode ? (
+                                                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary" dir="ltr">
+                                                    {campaign.blueprintCode}
+                                                </span>
+                                            ) : null}
                                         </div>
                                     </div>
                                     <div className="min-w-0">

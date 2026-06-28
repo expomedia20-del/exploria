@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreCampaignRequest;
 use App\Services\CampaignRegistryService;
+use App\Services\MissionRewardBlueprintService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,11 +14,12 @@ use Inertia\Response;
 
 class CampaignRegistryController extends Controller
 {
-    public function page(Request $request, CampaignRegistryService $service): Response
+    public function page(Request $request, CampaignRegistryService $service, MissionRewardBlueprintService $blueprints): Response
     {
         return Inertia::render('admin/campaigns/index', [
             'campaigns' => $service->list($request->user()),
             'venueOptions' => $service->venueOptions($request->user()),
+            'selectedBlueprint' => $blueprints->handoff($request->query('blueprint')),
         ]);
     }
 

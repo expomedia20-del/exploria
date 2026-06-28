@@ -27,6 +27,7 @@ class StoreCampaignRequest extends FormRequest
             ],
             'name' => ['required', 'string', 'max:255'],
             'campaign_type' => ['required', 'string', 'max:64', 'alpha_dash:ascii'],
+            'blueprint_code' => ['nullable', 'string', 'max:128', 'alpha_dash:ascii'],
             'status' => ['required', Rule::enum(RecordStatus::class)],
             'start_at' => ['nullable', 'date'],
             'end_at' => ['nullable', 'date', 'after_or_equal:start_at'],

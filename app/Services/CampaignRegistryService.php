@@ -59,7 +59,10 @@ class CampaignRegistryService
             'status' => $data['status'],
             'start_at' => $data['start_at'] ?: null,
             'end_at' => $data['end_at'] ?: null,
-            'metadata' => ['created_from' => 'admin_campaign_registry'],
+            'metadata' => array_filter([
+                'created_from' => 'admin_campaign_registry',
+                'blueprint_code' => $data['blueprint_code'] ?? null,
+            ]),
         ]));
     }
 
@@ -71,6 +74,7 @@ class CampaignRegistryService
             'code' => $campaign->code,
             'name' => $campaign->name,
             'campaignType' => $campaign->campaign_type,
+            'blueprintCode' => $campaign->metadata['blueprint_code'] ?? null,
             'status' => $campaign->status->value,
             'startAt' => $campaign->start_at?->toIso8601String(),
             'endAt' => $campaign->end_at?->toIso8601String(),

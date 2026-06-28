@@ -338,13 +338,13 @@ export default function MissionBlueprintIndex({
                                                 </div>
                                                 <div className="mt-3 grid gap-2 rounded-md border border-dashed border-border/80 bg-background/70 p-2 text-xs sm:grid-cols-3">
                                                     <Button asChild variant="outline" className="h-8 text-xs">
-                                                        <Link href={`/admin/missions?blueprint=${template.code}`}>ثبت مأموریت واقعی</Link>
+                                                        <Link href={`/admin/campaigns?blueprint=${template.code}`}>ساخت کمپین از الگو</Link>
                                                     </Button>
                                                     <Button asChild variant="outline" className="h-8 text-xs">
-                                                        <Link href={`/admin/campaign-participants?blueprint=${template.code}`}>تعیین مالک پاداش</Link>
+                                                        <Link href={`/admin/campaigns?blueprint=${template.code}`}>کمپین مرجع اجزا</Link>
                                                     </Button>
                                                     <Button asChild variant="outline" className="h-8 text-xs">
-                                                        <Link href={`/admin/campaign-operations?blueprint=${template.code}`}>اتصال به نقشه عملیات</Link>
+                                                        <Link href={`/admin/campaigns?blueprint=${template.code}`}>کمپین مرجع مسیر</Link>
                                                     </Button>
                                                 </div>
                                                 <div className="mt-3 rounded-md bg-muted/50 p-2">
