@@ -102,19 +102,19 @@ export default function CampaignRegistryIndex({
                         </h1>
                     </div>
                     <div className="grid grid-cols-3 gap-3 text-sm">
-                        <div className="rounded-lg border border-sidebar-border/70 px-3 py-2 dark:border-sidebar-border">
+                        <div className="rounded-lg border border-border/80 bg-card/80 px-3 py-2 shadow-sm">
                             <p className="text-muted-foreground">کل کمپین‌ها</p>
                             <p className="mt-1 font-semibold">
                                 {campaigns.length.toLocaleString('fa-IR')}
                             </p>
                         </div>
-                        <div className="rounded-lg border border-sidebar-border/70 px-3 py-2 dark:border-sidebar-border">
+                        <div className="rounded-lg border border-border/80 bg-card/80 px-3 py-2 shadow-sm">
                             <p className="text-muted-foreground">فعال</p>
                             <p className="mt-1 font-semibold">
                                 {activeCount.toLocaleString('fa-IR')}
                             </p>
                         </div>
-                        <div className="rounded-lg border border-sidebar-border/70 px-3 py-2 dark:border-sidebar-border">
+                        <div className="rounded-lg border border-border/80 bg-card/80 px-3 py-2 shadow-sm">
                             <p className="text-muted-foreground">QR متصل</p>
                             <p className="mt-1 font-semibold">
                                 {campaigns
@@ -259,8 +259,8 @@ export default function CampaignRegistryIndex({
                     </section>
                 ) : null}
 
-                <section className="rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border">
-                    <div className="grid min-w-[860px] grid-cols-[1.25fr_1fr_1fr_0.8fr_1fr_0.8fr] gap-3 border-b border-sidebar-border/70 px-4 py-3 text-xs font-medium text-muted-foreground dark:border-sidebar-border">
+                <section className="exploria-panel">
+                    <div className="grid min-w-[860px] grid-cols-[1.25fr_1fr_1fr_0.8fr_1fr_0.8fr] gap-3 border-b border-border/70 px-4 py-3 text-xs font-medium text-muted-foreground dark:border-sidebar-border">
                         <span>کمپین</span>
                         <span>مکان</span>
                         <span>نوع</span>
@@ -274,7 +274,7 @@ export default function CampaignRegistryIndex({
                             هنوز کمپینی ثبت نشده است.
                         </div>
                     ) : (
-                        <div className="min-w-[860px] divide-y divide-sidebar-border/70 dark:divide-sidebar-border">
+                        <div className="min-w-[860px] divide-y divide-border/70">
                             {campaigns.map((campaign) => (
                                 <article
                                     key={campaign.id}

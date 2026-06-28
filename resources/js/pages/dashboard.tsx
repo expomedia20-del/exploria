@@ -72,8 +72,8 @@ export default function Dashboard({ stats, latestVisits }: Props) {
                     ))}
                 </div>
 
-                <section className="rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border">
-                    <div className="border-b border-sidebar-border/70 p-4 dark:border-sidebar-border">
+                <section className="exploria-panel">
+                    <div className="border-b border-border/70 p-4 dark:border-sidebar-border">
                         <h2 className="text-lg font-semibold">
                             آخرین بازدیدهای ثبت‌شده
                         </h2>
@@ -88,7 +88,7 @@ export default function Dashboard({ stats, latestVisits }: Props) {
                             هنوز بازدیدی ثبت نشده است.
                         </div>
                     ) : (
-                        <div className="divide-y divide-sidebar-border/70 dark:divide-sidebar-border">
+                        <div className="divide-y divide-border/70">
                             {latestVisits.map((visit) => (
                                 <article
                                     key={visit.id}

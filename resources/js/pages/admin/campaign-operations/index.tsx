@@ -453,7 +453,7 @@ function OperationDetailsSheet({
                         </SheetHeader>
 
                         <div className="space-y-3 px-4">
-                            <div className="rounded-lg border border-sidebar-border/70 p-3 dark:border-sidebar-border">
+                            <div className="rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm">
                                 <p className="text-xs text-muted-foreground">مسیر مدیریتی</p>
                                 <p className="mt-1 text-sm font-medium">{selection.href}</p>
                             </div>
@@ -469,7 +469,7 @@ function OperationDetailsSheet({
 
                             {guide ? (
                                 <div className="space-y-3">
-                                    <section className="rounded-lg border border-sidebar-border/70 p-3 dark:border-sidebar-border">
+                                    <section className="rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm">
                                         <h3 className="text-sm font-semibold">راهنمای اجرا</h3>
                                         <ol className="mt-3 space-y-2 text-sm text-muted-foreground">
                                             {guide.steps.map((step, index) => (
@@ -481,7 +481,7 @@ function OperationDetailsSheet({
                                         </ol>
                                     </section>
 
-                                    <section className="rounded-lg border border-sidebar-border/70 p-3 dark:border-sidebar-border">
+                                    <section className="rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm">
                                         <h3 className="text-sm font-semibold">راهنمای مسیر و ناوبری</h3>
                                         <div className="mt-3 space-y-2 text-sm text-muted-foreground">
                                             {guide.navigation.map((item) => (
@@ -525,7 +525,7 @@ export default function CampaignOperationsIndex({ stats, campaigns }: Props) {
                             ['اسپانسر خارجی', stats.externalSponsors],
                             ['مشوق', stats.incentives],
                         ].map(([title, value]) => (
-                            <div key={title} className="rounded-lg border border-sidebar-border/70 px-3 py-2 dark:border-sidebar-border">
+                            <div key={title} className="rounded-lg border border-border/80 bg-card/80 px-3 py-2 shadow-sm">
                                 <p className="text-muted-foreground">{title}</p>
                                 <p className="mt-1 font-semibold">{fa(Number(value))}</p>
                             </div>
@@ -539,8 +539,8 @@ export default function CampaignOperationsIndex({ stats, campaigns }: Props) {
                     </section>
                 ) : (
                     campaigns.map((campaign) => (
-                        <section key={campaign.id} className="rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border">
-                            <div className="flex flex-col gap-3 border-b border-sidebar-border/70 p-4 dark:border-sidebar-border lg:flex-row lg:items-start lg:justify-between">
+                        <section key={campaign.id} className="exploria-panel">
+                            <div className="flex flex-col gap-3 border-b border-border/70 p-4 dark:border-sidebar-border lg:flex-row lg:items-start lg:justify-between">
                                 <div>
                                     <div className="flex items-center gap-2">
                                         <Route className="size-5 text-muted-foreground" />
@@ -643,7 +643,7 @@ export default function CampaignOperationsIndex({ stats, campaigns }: Props) {
                                 </div>
 
                                 <aside className="space-y-4">
-                                    <div className="rounded-lg border border-sidebar-border/70 p-3 dark:border-sidebar-border">
+                                    <div className="rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm">
                                         <div className="mb-3 flex items-center gap-2">
                                             <Network className="size-4 text-muted-foreground" />
                                             <h3 className="text-sm font-semibold">اعضا به تفکیک هاب</h3>

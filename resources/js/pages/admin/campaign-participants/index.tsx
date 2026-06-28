@@ -135,7 +135,7 @@ export default function CampaignParticipantsIndex({
                             ['هاب', stats.hubs],
                             ['کمپین', stats.campaigns],
                         ].map(([title, value]) => (
-                            <div key={title} className="rounded-lg border border-sidebar-border/70 px-3 py-2 dark:border-sidebar-border">
+                            <div key={title} className="rounded-lg border border-border/80 bg-card/80 px-3 py-2 shadow-sm">
                                 <p className="text-muted-foreground">{title}</p>
                                 <p className="mt-1 font-semibold">{formatNumber(Number(value))}</p>
                             </div>
@@ -183,8 +183,8 @@ export default function CampaignParticipantsIndex({
                     </div>
                 </section>
 
-                <section className="rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border">
-                    <div className="grid min-w-[1100px] grid-cols-[1.2fr_1fr_0.9fr_0.9fr_0.9fr_0.9fr_0.9fr] gap-3 border-b border-sidebar-border/70 px-4 py-3 text-xs font-medium text-muted-foreground dark:border-sidebar-border">
+                <section className="exploria-panel">
+                    <div className="grid min-w-[1100px] grid-cols-[1.2fr_1fr_0.9fr_0.9fr_0.9fr_0.9fr_0.9fr] gap-3 border-b border-border/70 px-4 py-3 text-xs font-medium text-muted-foreground dark:border-sidebar-border">
                         <span>عضو</span>
                         <span>کمپین</span>
                         <span>هاب</span>
@@ -197,7 +197,7 @@ export default function CampaignParticipantsIndex({
                     {participants.length === 0 ? (
                         <div className="p-8 text-center text-sm text-muted-foreground">هنوز عضوی برای کمپین های قابل مشاهده ثبت نشده است.</div>
                     ) : (
-                        <div className="min-w-[1100px] divide-y divide-sidebar-border/70 dark:divide-sidebar-border">
+                        <div className="min-w-[1100px] divide-y divide-border/70">
                             {participants.map((participant) => (
                                 <article key={participant.id} className="grid grid-cols-[1.2fr_1fr_0.9fr_0.9fr_0.9fr_0.9fr_0.9fr] items-center gap-3 px-4 py-3 text-sm">
                                     <div className="min-w-0">
