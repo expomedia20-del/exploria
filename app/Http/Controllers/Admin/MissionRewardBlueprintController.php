@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Services\MissionRewardBlueprintService;
 use Illuminate\Http\JsonResponse;
@@ -27,6 +28,6 @@ class MissionRewardBlueprintController extends Controller
 
     private function authorizeCentralAdmin(Request $request): void
     {
-        abort_unless($request->user()?->role === 'admin', 403);
+        abort_unless($request->user()?->role === UserRole::Admin, 403);
     }
 }
