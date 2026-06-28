@@ -82,6 +82,57 @@ function Chip({ children }: { children: ReactNode }) {
     return <span className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">{children}</span>;
 }
 
+function rewardRule(template: BlueprintTemplate, tierIndex: number) {
+    const stepCount = Math.max(template.userSteps.length, 1);
+    const base = template.points.base;
+
+    if (tierIndex === 0) return `پس از انجام اولین کنش معتبر یا شروع مسیر؛ حدود ${fa(Math.max(20, Math.round(base * 0.2)))} امتیاز.`;
+    if (tierIndex === 1) return `پس از تکمیل حدود نیمی از مسیر یا ${fa(Math.max(2, Math.ceil(stepCount / 2)))} مرحله؛ حدود ${fa(Math.round(base * 0.5))} امتیاز.`;
+    if (tierIndex === 2) return `پس از تکمیل مسیر اصلی کمپین؛ حدود ${fa(base)} امتیاز.`;
+
+    return 'برای تکمیل کامل مسیر، انجام کنش تکمیلی، بازگشت، خرید/تعامل معتبر یا انتخاب به‌عنوان کاربر برتر.';
+}
+
+function BlueprintSystemGuide() {
+    return (
+        <section className="exploria-panel">
+            <div className="border-b border-border/70 px-4 py-3">
+                <h2 className="font-semibold">ارتباط گنجینه با اجرای واقعی کمپین</h2>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                    این صفحه محل طراحی و انتخاب الگو است؛ امتیاز قطعی، ظرفیت جایزه، مالک پاداش و محل تحویل باید هنگام ساخت مأموریت واقعی ثبت شود.
+                </p>
+            </div>
+            <div className="grid gap-3 p-4 lg:grid-cols-4">
+                <article className="rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm">
+                    <h3 className="text-sm font-semibold">۱. انتخاب الگو</h3>
+                    <p className="mt-2 text-xs leading-6 text-muted-foreground">از همین گنجینه، مسیر یا کمپین مناسب انتخاب می‌شود؛ مثلا طعم‌گردی، رواق، اقیانوس پارک یا مسیر خلوت.</p>
+                </article>
+                <article className="rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm">
+                    <h3 className="text-sm font-semibold">۲. ثبت مأموریت واقعی</h3>
+                    <p className="mt-2 text-xs leading-6 text-muted-foreground">در صفحه مأموریت و پاداش، مراحل، امتیاز، مدرک انجام، سطح پاداش و قوانین مصرف ثبت می‌شود.</p>
+                    <Button asChild variant="outline" className="mt-3 h-8 text-xs">
+                        <Link href="/admin/missions">رفتن به مأموریت و پاداش</Link>
+                    </Button>
+                </article>
+                <article className="rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm">
+                    <h3 className="text-sm font-semibold">۳. تعیین مالک پاداش</h3>
+                    <p className="mt-2 text-xs leading-6 text-muted-foreground">فروشگاه، مدیر هاب، اسپانسر داخلی/خارجی یا ادمین کمپین باید به پاداش وصل شود.</p>
+                    <Button asChild variant="outline" className="mt-3 h-8 text-xs">
+                        <Link href="/admin/campaign-participants">اعضای کمپین</Link>
+                    </Button>
+                </article>
+                <article className="rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm">
+                    <h3 className="text-sm font-semibold">۴. اتصال به مسیر</h3>
+                    <p className="mt-2 text-xs leading-6 text-muted-foreground">مأموریت به QR، مکان، هاب، فروشگاه، نمایشگر یا شاخه مسیر در نقشه عملیات وصل می‌شود.</p>
+                    <Button asChild variant="outline" className="mt-3 h-8 text-xs">
+                        <Link href="/admin/campaign-operations">نقشه عملیات</Link>
+                    </Button>
+                </article>
+            </div>
+        </section>
+    );
+}
+
 const campaignFlowSteps = [
     {
         title: 'شروع مشترک',
@@ -205,6 +256,8 @@ export default function MissionBlueprintIndex({
 
                 <CampaignFlowInfographic />
 
+                <BlueprintSystemGuide />
+
                 <section className="exploria-panel">
                     <div className="border-b border-border/70 px-4 py-3 dark:border-sidebar-border">
                         <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
@@ -284,12 +337,25 @@ export default function MissionBlueprintIndex({
                                                     {template.connectedSurfaces.slice(0, 5).map((surface) => <Chip key={surface}>{surface}</Chip>)}
                                                 </div>
                                                 <div className="mt-3 rounded-md bg-muted/50 p-2">
-                                                    <p className="text-xs font-medium">پاداش مرحله‌ای</p>
-                                                    <p className="mt-1 text-xs leading-6 text-muted-foreground">
-                                                        {template.rewardBasket.map((tier) => tier.level).join(' ← ')}
-                                                    </p>
-                                                    <div className="mt-2 flex flex-wrap gap-1.5">
-                                                        {template.rewardIdeas.slice(0, 4).map((idea) => <Chip key={idea}>{idea}</Chip>)}
+                                                    <p className="text-xs font-medium">سطوح پاداش و شرط پیشنهادی</p>
+                                                    <div className="mt-2 grid gap-2">
+                                                        {template.rewardBasket.map((tier, tierIndex) => (
+                                                            <div key={tier.level} className="rounded-md border border-border/70 bg-background/60 p-2">
+                                                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                                                    <p className="text-xs font-semibold">{tier.level}</p>
+                                                                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] text-primary">{rewardRule(template, tierIndex)}</span>
+                                                                </div>
+                                                                <div className="mt-2 flex flex-wrap gap-1.5">
+                                                                    {tier.items.slice(0, 3).map((item) => <Chip key={item}>{item}</Chip>)}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                    <div className="mt-2 rounded-md border border-dashed border-border/80 p-2">
+                                                        <p className="text-xs font-medium">ایده‌های جایزه قابل انتخاب در ثبت نهایی</p>
+                                                        <div className="mt-2 flex flex-wrap gap-1.5">
+                                                            {template.rewardIdeas.slice(0, 4).map((idea) => <Chip key={idea}>{idea}</Chip>)}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </article>
