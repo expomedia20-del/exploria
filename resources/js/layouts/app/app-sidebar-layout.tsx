@@ -11,12 +11,15 @@ export default function AppSidebarLayout({
     return (
         <AppShell variant="sidebar">
             <AppSidebar />
-            <AppContent variant="sidebar" className="exploria-app-surface overflow-x-hidden">
+            <AppContent
+                variant="sidebar"
+                dir="rtl"
+                className="exploria-app-surface overflow-x-hidden"
+            >
                 <AppSidebarHeader breadcrumbs={breadcrumbs} />
                 {children}
             </AppContent>
         </AppShell>
     );
 }
-
 
