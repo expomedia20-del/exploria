@@ -59,12 +59,15 @@ type RewardItem = {
     status: string;
     approvalStatus: string;
     rewardTier: string | null;
+    rewardOption: string | null;
+    cycleStep: { index: number | null; label: string | null };
     description: string | null;
     terms: string | null;
     reviewNotes: string | null;
     availabilityStatus: string;
     availableFrom: string | null;
     availableUntil: string | null;
+    fulfillmentWindow: string | null;
     submittedAt: string | null;
     reviewedAt: string | null;
     pointCost: number | null;
@@ -81,12 +84,29 @@ type RewardBasketTier = {
     items: string[];
 };
 
+type RewardDesignTier = RewardBasketTier & {
+    tierKey: string;
+    suggestedOptionCount: number;
+    options: string[];
+};
+
+type RewardDesign = {
+    tiers: RewardDesignTier[];
+    hiddenTreasures: {
+        code: string;
+        title: string;
+        rule: string;
+    }[];
+};
+
 type MissionPlanStep = {
     index: number;
     userStep: string;
     recommendedTemplateCode: string;
     title: string;
     suggestedCodeSuffix: string;
+    suggestedUnlockMinPoints: number;
+    rewardTier: string;
     routeIntent: string;
     operationLink: string;
 };
@@ -103,6 +123,7 @@ type SelectedBlueprint = {
     stakeholders: string[];
     connectedSurfaces: string[];
     rewardBasket: RewardBasketTier[];
+    rewardDesign: RewardDesign;
     missionPlan: MissionPlanStep[];
     nextBuildAction: string;
 };
@@ -271,6 +292,19 @@ function missionCodeSuggestion(campaignCode: string, suffix: string, missions: M
     return existingCount > 0 ? `${base}-${existingCount + 1}`.slice(0, 96) : base;
 }
 
+function rewardCodeSuggestion(campaignCode: string, step: MissionPlanStep | null, tierKey: string, rewards: RewardItem[]) {
+    const suffix = step ? `step-${step.index}-${tierKey}-reward` : `${tierKey}-reward`;
+    const base = `${campaignCode}-${suffix}`
+        .toLowerCase()
+        .replace(/[^a-z0-9-]+/g, '-')
+        .replace(/-{2,}/g, '-')
+        .replace(/^-|-$/g, '')
+        .slice(0, 86);
+    const existingCount = rewards.filter((reward) => reward.code === base || reward.code.startsWith(`${base}-`)).length;
+
+    return existingCount > 0 ? `${base}-${existingCount + 1}`.slice(0, 96) : base;
+}
+
 export default function MissionRewardRegistryIndex({
     stats,
     missions,
@@ -282,19 +316,38 @@ export default function MissionRewardRegistryIndex({
 }: Props) {
     const { flash, auth } = usePage<SharedProps>().props;
     const canMutate = auth.user.role === 'admin' || auth.user.role === 'operator';
-    const [selectedMissionTemplateId, setSelectedMissionTemplateId] = useState(formOptions.missionTemplates[0]?.id ?? '');
-    const [selectedMissionPlanIndex, setSelectedMissionPlanIndex] = useState(0);
     const missionPlan = selectedBlueprint?.missionPlan ?? [];
+    const firstMissionPlan = missionPlan[0] ?? null;
+    const firstMissionTemplateId = formOptions.missionTemplates.find((template) => template.code === firstMissionPlan?.recommendedTemplateCode)?.id ?? formOptions.missionTemplates[0]?.id ?? '';
+    const [selectedMissionTemplateId, setSelectedMissionTemplateId] = useState(firstMissionTemplateId);
+    const [selectedMissionPlanIndex, setSelectedMissionPlanIndex] = useState(0);
+    const [selectedHubId, setSelectedHubId] = useState(formOptions.hubs[0]?.id ?? '');
     const selectedMissionPlan = missionPlan[selectedMissionPlanIndex] ?? null;
     const selectedMissionTemplate = formOptions.missionTemplates.find((template) => template.id === selectedMissionTemplateId) ?? formOptions.missionTemplates[0] ?? null;
+    const missionPlanTemplate = formOptions.missionTemplates.find((template) => template.code === selectedMissionPlan?.recommendedTemplateCode) ?? selectedMissionTemplate;
+    const filteredTouchpoints = selectedHubId
+        ? formOptions.touchpoints.filter((touchpoint) => touchpoint.hubId === selectedHubId)
+        : formOptions.touchpoints;
+    const rewardDesignTiers = selectedBlueprint?.rewardDesign?.tiers ?? [];
+    const suggestedRewardTier = selectedMissionPlan?.rewardTier ?? rewardDesignTiers[0]?.tierKey ?? 'bronze';
+    const [selectedRewardTier, setSelectedRewardTier] = useState(suggestedRewardTier);
+    const [selectedRewardOptionText, setSelectedRewardOptionText] = useState('');
+    const selectedRewardDesignTier = rewardDesignTiers.find((tier) => tier.tierKey === selectedRewardTier) ?? rewardDesignTiers[0] ?? null;
+    const selectedRewardOption = selectedRewardOptionText || selectedRewardDesignTier?.options[0] || '';
     const suggestedMissionSuffix = selectedMissionPlan?.suggestedCodeSuffix ?? selectedMissionTemplate?.code ?? 'mission';
     const suggestedMissionCode = useMemo(
         () => missionCodeSuggestion(selectedCampaign?.code ?? 'campaign', suggestedMissionSuffix, missions),
         [missions, selectedCampaign?.code, suggestedMissionSuffix],
     );
+    const suggestedRewardCode = useMemo(
+        () => rewardCodeSuggestion(selectedCampaign?.code ?? 'campaign', selectedMissionPlan, selectedRewardTier, rewards),
+        [rewards, selectedCampaign?.code, selectedMissionPlan, selectedRewardTier],
+    );
 
     function selectMissionPlanStep(step: MissionPlanStep, index: number) {
         setSelectedMissionPlanIndex(index);
+        setSelectedRewardTier(step.rewardTier);
+        setSelectedRewardOptionText('');
 
         const matchingTemplate = formOptions.missionTemplates.find((template) => template.code === step.recommendedTemplateCode);
         if (matchingTemplate) {
@@ -463,37 +516,47 @@ export default function MissionRewardRegistryIndex({
                                             </div>
                                         ) : null}
                                         <div className="grid gap-1.5">
-                                            <label htmlFor="mission_template_id" className="text-xs font-medium">قالب مأموریت</label>
-                                            <select
-                                                id="mission_template_id"
-                                                name="mission_template_id"
-                                                required
-                                                value={selectedMissionTemplate?.id ?? ''}
-                                                onChange={(event) => setSelectedMissionTemplateId(event.target.value)}
-                                                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                                            >
-                                                {formOptions.missionTemplates.map((template) => (
-                                                    <option key={template.id} value={template.id}>
-                                                        {template.code === selectedMissionPlan?.recommendedTemplateCode ? 'گام چرخه - ' : template.recommended ? 'پیشنهادی - ' : ''}{template.title} - {template.points.toLocaleString('fa-IR')} امتیاز
-                                                    </option>
-                                                ))}
-                                            </select>
+                                            <label htmlFor="mission_template_id" className="text-xs font-medium">قالب مأموریت همین گام</label>
+                                            {missionPlanTemplate ? (
+                                                <>
+                                                    <input type="hidden" name="mission_template_id" value={missionPlanTemplate.id} />
+                                                    <div className="rounded-md border border-primary/20 bg-primary/5 px-3 py-2 text-sm">
+                                                        <p className="font-medium">{missionPlanTemplate.title}</p>
+                                                        <p className="mt-1 text-xs text-muted-foreground" dir="ltr">{missionPlanTemplate.code} · {missionPlanTemplate.points.toLocaleString('fa-IR')} امتیاز</p>
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <select
+                                                    id="mission_template_id"
+                                                    name="mission_template_id"
+                                                    required
+                                                    value={selectedMissionTemplate?.id ?? ''}
+                                                    onChange={(event) => setSelectedMissionTemplateId(event.target.value)}
+                                                    className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                                >
+                                                    {formOptions.missionTemplates.map((template) => (
+                                                        <option key={template.id} value={template.id}>
+                                                            {template.title} - {template.points.toLocaleString('fa-IR')} امتیاز
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            )}
                                             <InputError message={errors.mission_template_id} />
                                         </div>
-                                        {selectedMissionTemplate ? (
+                                        {missionPlanTemplate ? (
                                             <div className="rounded-md bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
                                                 <div className="flex flex-wrap items-center gap-2">
-                                                    {selectedMissionTemplate.recommended ? (
+                                                    {missionPlanTemplate.recommended ? (
                                                         <span className="rounded-full bg-primary/10 px-2 py-1 font-medium text-primary">پیشنهادی برای این کمپین</span>
                                                     ) : null}
-                                                    <span dir="ltr">{selectedMissionTemplate.missionType}</span>
-                                                    <span dir="ltr">{selectedMissionTemplate.triggerType}</span>
+                                                    <span dir="ltr">{missionPlanTemplate.missionType}</span>
+                                                    <span dir="ltr">{missionPlanTemplate.triggerType}</span>
                                                 </div>
-                                                {selectedMissionTemplate.recommendationReason ? (
-                                                    <p className="mt-2">{selectedMissionTemplate.recommendationReason}</p>
+                                                {missionPlanTemplate.recommendationReason ? (
+                                                    <p className="mt-2">{missionPlanTemplate.recommendationReason}</p>
                                                 ) : null}
-                                                {selectedMissionTemplate.description ? (
-                                                    <p className="mt-1">{selectedMissionTemplate.description}</p>
+                                                {missionPlanTemplate.description ? (
+                                                    <p className="mt-1">{missionPlanTemplate.description}</p>
                                                 ) : null}
                                                 {selectedMissionPlan ? (
                                                     <p className="mt-2 rounded-md bg-background px-2 py-1">
@@ -523,13 +586,25 @@ export default function MissionRewardRegistryIndex({
                                             </div>
                                             <div className="grid gap-1.5">
                                                 <label htmlFor="unlock_min_points" className="text-xs font-medium">حداقل امتیاز باز شدن</label>
-                                                <input id="unlock_min_points" name="unlock_min_points" type="number" min="0" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                                <input key={`unlock-${selectedMissionPlan?.index ?? 'none'}`} id="unlock_min_points" name="unlock_min_points" type="number" min="0" defaultValue={selectedMissionPlan?.suggestedUnlockMinPoints ?? 0} className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                            </div>
+                                        </div>
+                                        <div className="grid gap-2 sm:grid-cols-2">
+                                            <div className="grid gap-1.5">
+                                                <label htmlFor="starts_at" className="text-xs font-medium">شروع اعتبار مأموریت</label>
+                                                <input id="starts_at" name="starts_at" type="datetime-local" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                                <InputError message={errors.starts_at} />
+                                            </div>
+                                            <div className="grid gap-1.5">
+                                                <label htmlFor="ends_at" className="text-xs font-medium">پایان اعتبار مأموریت</label>
+                                                <input id="ends_at" name="ends_at" type="datetime-local" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                                <InputError message={errors.ends_at} />
                                             </div>
                                         </div>
                                         <div className="grid gap-2 sm:grid-cols-2">
                                             <div className="grid gap-1.5">
                                                 <label htmlFor="hub_id" className="text-xs font-medium">هاب</label>
-                                                <select id="hub_id" name="hub_id" className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                                <select id="hub_id" name="hub_id" value={selectedHubId} onChange={(event) => setSelectedHubId(event.target.value)} className="h-9 rounded-md border border-input bg-background px-3 text-sm">
                                                     <option value="">بدون هاب</option>
                                                     {formOptions.hubs.map((hub) => <option key={hub.id} value={hub.id}>{hub.name}</option>)}
                                                 </select>
@@ -539,11 +614,16 @@ export default function MissionRewardRegistryIndex({
                                                 <label htmlFor="touchpoint_id" className="text-xs font-medium">نقطه تماس</label>
                                                 <select id="touchpoint_id" name="touchpoint_id" className="h-9 rounded-md border border-input bg-background px-3 text-sm">
                                                     <option value="">بدون نقطه تماس</option>
-                                                    {formOptions.touchpoints.map((touchpoint) => <option key={touchpoint.id} value={touchpoint.id}>{touchpoint.label}</option>)}
+                                                    {filteredTouchpoints.map((touchpoint) => <option key={touchpoint.id} value={touchpoint.id}>{touchpoint.label}</option>)}
                                                 </select>
                                                 <InputError message={errors.touchpoint_id} />
                                             </div>
                                         </div>
+                                        {formOptions.hubs.length === 0 || formOptions.touchpoints.length === 0 ? (
+                                            <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
+                                                برای این مکان هنوز هاب یا نقطه تماس کافی تعریف نشده است؛ تکمیل مکان و نقاط تماس باعث می‌شود مأموریت در نقشه عملیات دقیق‌تر بنشیند.
+                                            </p>
+                                        ) : null}
                                         <p className="rounded-md bg-primary/5 px-3 py-2 text-xs text-muted-foreground">
                                             در نقشه عملیات، همین مأموریت زیر بخش «مأموریت‌ها» و در صورت انتخاب هاب/نقطه تماس، روی مسیر همان نقطه دیده می‌شود.
                                         </p>
@@ -559,19 +639,26 @@ export default function MissionRewardRegistryIndex({
                                 {({ processing, errors }) => (
                                     <>
                                         <input type="hidden" name="campaign_id" value={selectedCampaign.id} />
+                                        {selectedMissionPlan ? (
+                                            <>
+                                                <input type="hidden" name="cycle_step_index" value={selectedMissionPlan.index} />
+                                                <input type="hidden" name="cycle_step_label" value={selectedMissionPlan.userStep} />
+                                            </>
+                                        ) : null}
+                                        <input type="hidden" name="reward_option" value={selectedRewardOption} />
                                         <div>
                                             <h3 className="font-semibold">پاداش</h3>
                                             <p className="mt-1 text-xs text-muted-foreground">پاداش قابل دریافت یا هزینه امتیازی را برای کمپین بسازید.</p>
                                         </div>
                                         <div className="grid gap-1.5">
                                             <label htmlFor="reward_name" className="text-xs font-medium">نام پاداش</label>
-                                            <input id="reward_name" name="name" required autoComplete="off" placeholder="مثلا کوپن نوشیدنی" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                            <input key={`reward-name-${selectedRewardOption}`} id="reward_name" name="name" required autoComplete="off" defaultValue={selectedRewardOption} placeholder="مثلا کوپن نوشیدنی" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
                                             <InputError message={errors.name} />
                                         </div>
                                         <div className="grid gap-2 sm:grid-cols-2">
                                             <div className="grid gap-1.5">
                                                 <label htmlFor="reward_code" className="text-xs font-medium">کد</label>
-                                                <input id="reward_code" name="code" required dir="ltr" autoComplete="off" placeholder="drink-coupon" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                                <input key={suggestedRewardCode} id="reward_code" name="code" required dir="ltr" autoComplete="off" defaultValue={suggestedRewardCode} className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
                                                 <InputError message={errors.code} />
                                             </div>
                                             <div className="grid gap-1.5">
@@ -583,7 +670,7 @@ export default function MissionRewardRegistryIndex({
                                         <div className="grid gap-2 sm:grid-cols-2">
                                             <div className="grid gap-1.5">
                                                 <label htmlFor="point_cost" className="text-xs font-medium">هزینه امتیازی</label>
-                                                <input id="point_cost" name="point_cost" type="number" min="0" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                                <input key={`reward-points-${selectedMissionPlan?.index ?? 'none'}`} id="point_cost" name="point_cost" type="number" min="0" defaultValue={selectedMissionPlan?.suggestedUnlockMinPoints ?? 0} className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
                                             </div>
                                             <div className="grid gap-1.5">
                                                 <label htmlFor="stock_quantity" className="text-xs font-medium">موجودی</label>
@@ -592,24 +679,40 @@ export default function MissionRewardRegistryIndex({
                                         </div>
                                         <div className="grid gap-1.5">
                                             <label htmlFor="reward_tier" className="text-xs font-medium">سطح پاداش</label>
-                                            <select id="reward_tier" name="reward_tier" defaultValue="bronze" className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                            <select id="reward_tier" name="reward_tier" value={selectedRewardTier} onChange={(event) => { setSelectedRewardTier(event.target.value); setSelectedRewardOptionText(''); }} className="h-9 rounded-md border border-input bg-background px-3 text-sm">
                                                 <option value="">بدون سطح</option>
-                                                {rewardTierOptions.map((tier) => (
-                                                    <option key={tier.value} value={tier.value}>
-                                                        {tier.label}
+                                                {(rewardDesignTiers.length > 0 ? rewardDesignTiers : rewardTierOptions).map((tier) => (
+                                                    <option key={'tierKey' in tier ? tier.tierKey : tier.value} value={'tierKey' in tier ? tier.tierKey : tier.value}>
+                                                        {'tierKey' in tier ? tier.level : tier.label}
                                                     </option>
                                                 ))}
+                                                <option value="custom">سفارشی</option>
                                             </select>
                                             <InputError message={errors.reward_tier} />
                                         </div>
-                                        {selectedBlueprint?.rewardBasket?.length ? (
+                                        {selectedRewardDesignTier ? (
                                             <div className="rounded-md bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-                                                <p className="font-medium text-foreground">سطوح پیشنهادی همین الگو</p>
-                                                <div className="mt-2 flex flex-wrap gap-1.5">
-                                                    {selectedBlueprint.rewardBasket.slice(0, 4).map((tier) => (
-                                                        <span key={tier.level} className="rounded-full bg-background px-2 py-1">
-                                                            {tier.level}: {tier.items.slice(0, 2).join(' / ')}
-                                                        </span>
+                                                <p className="font-medium text-foreground">گزینه‌های ترکیبی سطح {selectedRewardDesignTier.level}</p>
+                                                <div className="mt-2 grid gap-1.5">
+                                                    {selectedRewardDesignTier.options.map((option) => (
+                                                        <button
+                                                            key={option}
+                                                            type="button"
+                                                            onClick={() => setSelectedRewardOptionText(option)}
+                                                            className={`rounded-md border px-3 py-2 text-right transition ${selectedRewardOption === option ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-background hover:border-primary/50'}`}
+                                                        >
+                                                            {option}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ) : null}
+                                        {selectedBlueprint?.rewardDesign?.hiddenTreasures?.length ? (
+                                            <div className="rounded-md border border-dashed border-primary/30 bg-primary/5 px-3 py-2 text-xs text-muted-foreground">
+                                                <p className="font-medium text-foreground">گنج پنهان برای انگیزش ادامه مسیر</p>
+                                                <div className="mt-2 grid gap-1.5">
+                                                    {selectedBlueprint.rewardDesign.hiddenTreasures.map((treasure) => (
+                                                        <p key={treasure.code}>{treasure.title}: {treasure.rule}</p>
                                                     ))}
                                                 </div>
                                             </div>
@@ -631,6 +734,23 @@ export default function MissionRewardRegistryIndex({
                                                     <option value="inactive">غیرفعال</option>
                                                 </select>
                                             </div>
+                                        </div>
+                                        <div className="grid gap-2 sm:grid-cols-2">
+                                            <div className="grid gap-1.5">
+                                                <label htmlFor="available_from" className="text-xs font-medium">شروع اعتبار پاداش</label>
+                                                <input id="available_from" name="available_from" type="datetime-local" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                                <InputError message={errors.available_from} />
+                                            </div>
+                                            <div className="grid gap-1.5">
+                                                <label htmlFor="available_until" className="text-xs font-medium">پایان اعتبار پاداش</label>
+                                                <input id="available_until" name="available_until" type="datetime-local" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                                <InputError message={errors.available_until} />
+                                            </div>
+                                        </div>
+                                        <div className="grid gap-1.5">
+                                            <label htmlFor="fulfillment_window" className="text-xs font-medium">زمان/روش تحویل پاداش</label>
+                                            <input id="fulfillment_window" name="fulfillment_window" autoComplete="off" placeholder="مثلا همان روز در فروشگاه مالک پاداش یا تا ۴۸ ساعت پس از تایید" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                            <InputError message={errors.fulfillment_window} />
                                         </div>
                                         <textarea name="description" autoComplete="off" placeholder="توضیح کوتاه پاداش" className="min-h-16 rounded-md border border-input bg-background px-3 py-2 text-sm" />
                                         <textarea name="terms" autoComplete="off" placeholder="شرایط استفاده" className="min-h-16 rounded-md border border-input bg-background px-3 py-2 text-sm" />
@@ -863,6 +983,11 @@ export default function MissionRewardRegistryIndex({
                                                     سطح {rewardTierLabels[reward.rewardTier] ?? reward.rewardTier}
                                                 </span>
                                             ) : null}
+                                            {reward.cycleStep?.label ? (
+                                                <p className="mt-1 truncate text-xs text-muted-foreground">
+                                                    گام چرخه: {reward.cycleStep.index?.toLocaleString('fa-IR') ?? '-'} · {reward.cycleStep.label}
+                                                </p>
+                                            ) : null}
                                         </div>
                                         <div className="flex shrink-0 items-center gap-2">
                                             <span
@@ -892,6 +1017,11 @@ export default function MissionRewardRegistryIndex({
                                             {reward.description}
                                         </p>
                                     ) : null}
+                                    {reward.rewardOption ? (
+                                        <p className="line-clamp-2 text-xs text-muted-foreground">
+                                            گزینه انتخابی: {reward.rewardOption}
+                                        </p>
+                                    ) : null}
                                     {reward.terms ? (
                                         <p className="line-clamp-2 text-xs text-muted-foreground">
                                             شرایط: {reward.terms}
@@ -907,6 +1037,10 @@ export default function MissionRewardRegistryIndex({
                                         {statusLabels[reward.availabilityStatus] ??
                                             reward.availabilityStatus}{' '}
                                         · ثبت: {formatDate(reward.submittedAt)}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        اعتبار: {formatDate(reward.availableFrom)} تا {formatDate(reward.availableUntil)}
+                                        {reward.fulfillmentWindow ? ` · تحویل: ${reward.fulfillmentWindow}` : ''}
                                     </p>
                                     {reward.reviewNotes ? (
                                         <p className="rounded-md bg-muted/40 px-3 py-2 text-xs text-muted-foreground">

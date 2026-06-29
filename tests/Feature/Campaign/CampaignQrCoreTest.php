@@ -137,6 +137,7 @@ class CampaignQrCoreTest extends TestCase
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->has('selectedBlueprint.missionPlan')
+                ->has('selectedBlueprint.rewardDesign.tiers')
                 ->where('formOptions.missionTemplates.0.recommended', true)
                 ->has('formOptions.missionTemplates.0.recommendationReason'));
 
@@ -170,9 +171,15 @@ class CampaignQrCoreTest extends TestCase
                 'name' => 'پاداش تست کارگاه',
                 'reward_type' => 'badge',
                 'reward_tier' => 'silver',
+                'reward_option' => 'silver bundle',
+                'cycle_step_index' => 1,
+                'cycle_step_label' => 'builder cycle step',
                 'point_cost' => 100,
                 'stock_quantity' => 50,
                 'status' => RecordStatus::Draft->value,
+                'available_from' => '2026-07-01 09:00:00',
+                'available_until' => '2026-07-10 22:00:00',
+                'fulfillment_window' => 'within 48 hours',
                 'description' => 'پاداش ساخته شده در مرحله سه',
             ])
             ->assertRedirect(route('admin.missions.page', ['campaign' => $campaign->code]));
@@ -211,6 +218,10 @@ class CampaignQrCoreTest extends TestCase
         $reward = RewardDefinition::query()->where('code', 'builder-test-reward')->firstOrFail();
 
         $this->assertSame('silver', $reward->metadata['reward_tier']);
+        $this->assertSame('silver bundle', $reward->metadata['reward_option']);
+        $this->assertSame(1, $reward->metadata['cycle_step_index']);
+        $this->assertSame('2026-07-01 09:00:00', $reward->metadata['available_from']);
+        $this->assertSame('within 48 hours', $reward->metadata['fulfillment_window']);
         $this->assertSame(1, RewardDefinition::query()->where('code', 'builder-test-reward')->count());
         $this->assertSame(1, Treasure::query()->where('code', 'builder-test-treasure')->count());
     }

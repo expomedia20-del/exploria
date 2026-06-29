@@ -81,16 +81,24 @@ class MissionRewardBlueprintService
 
         return array_merge($merged, [
             'missionPlan' => $this->missionPlan($merged),
+            'rewardDesign' => $this->rewardDesign($merged),
         ]);
     }
 
     /** @param array<string, mixed> $template @return array<int, array<string, mixed>> */
     private function missionPlan(array $template): array
     {
-        return collect($template['userSteps'] ?? [])
+        $steps = collect($template['userSteps'] ?? [])->values();
+        $stepCount = max($steps->count(), 1);
+        $basePoints = max((int) data_get($template, 'points.base', 120), 60);
+        $tiers = ['bronze', 'silver', 'gold', 'diamond'];
+
+        return $steps
             ->values()
-            ->map(function (string $step, int $index) use ($template): array {
+            ->map(function (string $step, int $index) use ($template, $stepCount, $basePoints, $tiers): array {
                 $templateCode = $this->missionTemplateCodeForStep($step, $index);
+                $tierIndex = min((int) floor(($index / max($stepCount - 1, 1)) * 3), 3);
+                $unlockMinPoints = $index === 0 ? 0 : (int) round(($basePoints / $stepCount) * $index);
 
                 return [
                     'index' => $index + 1,
@@ -98,11 +106,84 @@ class MissionRewardBlueprintService
                     'recommendedTemplateCode' => $templateCode,
                     'title' => $this->missionTitleForStep($step),
                     'suggestedCodeSuffix' => 'step-'.($index + 1).'-'.$templateCode,
+                    'suggestedUnlockMinPoints' => $unlockMinPoints,
+                    'rewardTier' => $tiers[$tierIndex],
                     'routeIntent' => $this->routeIntentForStep($step, $template['navigationHint'] ?? ''),
                     'operationLink' => $index === 0 ? 'QR/نقطه شروع' : 'هاب، نقطه تماس یا مقصد بعدی',
                 ];
             })
             ->all();
+    }
+
+    /** @param array<string, mixed> $template @return array<string, mixed> */
+    private function rewardDesign(array $template): array
+    {
+        $tierKeys = ['bronze', 'silver', 'gold', 'diamond'];
+        $optionCounts = ['bronze' => 5, 'silver' => 4, 'gold' => 3, 'diamond' => 2];
+        $basket = collect($template['rewardBasket'] ?? [])->values();
+
+        $tiers = $basket->map(function (array $tier, int $index) use ($tierKeys, $optionCounts): array {
+            $tierKey = $tierKeys[$index] ?? 'custom';
+            $items = array_values($tier['items'] ?? []);
+
+            return [
+                'tierKey' => $tierKey,
+                'level' => $tier['level'] ?? $tierKey,
+                'items' => $items,
+                'suggestedOptionCount' => $optionCounts[$tierKey] ?? 1,
+                'options' => $this->rewardOptionsForTier($tierKey, $items),
+            ];
+        })->all();
+
+        return [
+            'tiers' => $tiers,
+            'hiddenTreasures' => [
+                [
+                    'code' => 'hidden-treasure-1',
+                    'title' => 'گنج پنهان ۱',
+                    'rule' => 'برای کاربرانی که مسیر را با بازگشت، مشارکت گروهی یا ارجاع به شریک تکمیل می کنند.',
+                ],
+                [
+                    'code' => 'hidden-treasure-2',
+                    'title' => 'گنج پنهان ۲',
+                    'rule' => 'برای ادامه در کمپین بعدی و کسب امتیاز ویژه.',
+                ],
+            ],
+        ];
+    }
+
+    /** @param array<int, string> $items @return array<int, string> */
+    private function rewardOptionsForTier(string $tierKey, array $items): array
+    {
+        $primary = $items[0] ?? 'پاداش اصلی';
+        $secondary = $items[1] ?? 'امتیاز تکمیل';
+        $third = $items[2] ?? 'نشان مسیر';
+
+        return match ($tierKey) {
+            'bronze' => [
+                $primary,
+                $secondary,
+                $third,
+                $primary.' + امتیاز بازگشت',
+                $secondary.' + ارجاع به یک همراه',
+            ],
+            'silver' => [
+                $primary.' + '.$secondary,
+                $primary.' + مشوق فروشگاه/شریک',
+                $secondary.' + کوپن جایزه دار',
+                $third.' + امتیاز گروهی',
+            ],
+            'gold' => [
+                $primary.' + '.$secondary.' + امتیاز ویژه',
+                $primary.' + پکیج خانوادگی',
+                $third.' + ارجاع به هاب/شریک بعدی',
+            ],
+            'diamond' => [
+                $primary.' + '.$secondary.' + '.$third,
+                $primary.' + گنج پنهان ۱',
+            ],
+            default => $items,
+        };
     }
 
     private function missionTemplateCodeForStep(string $step, int $index): string
