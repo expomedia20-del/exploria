@@ -136,6 +136,7 @@ class CampaignQrCoreTest extends TestCase
             ->get(route('admin.missions.page', ['campaign' => $campaign->code]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
+                ->has('selectedBlueprint.missionPlan')
                 ->where('formOptions.missionTemplates.0.recommended', true)
                 ->has('formOptions.missionTemplates.0.recommendationReason'));
 
@@ -145,6 +146,8 @@ class CampaignQrCoreTest extends TestCase
                 'campaign_id' => $campaign->id,
                 'mission_template_id' => $template->id,
                 'code' => 'builder-first-mission',
+                'cycle_step_index' => 1,
+                'cycle_step_label' => 'builder cycle step',
                 'title_override' => 'ماموریت تست کارگاه',
                 'status' => RecordStatus::Draft->value,
                 'unlock_min_points' => 100,
@@ -155,6 +158,9 @@ class CampaignQrCoreTest extends TestCase
             ->where('campaign_id', $campaign->id)
             ->where('code', 'builder-first-mission')
             ->firstOrFail();
+
+        $this->assertSame(1, $mission->metadata['cycle_step_index']);
+        $this->assertSame('builder cycle step', $mission->metadata['cycle_step_label']);
 
         $this->actingAs($operator)
             ->from(route('admin.missions.page', ['campaign' => $campaign->code]))

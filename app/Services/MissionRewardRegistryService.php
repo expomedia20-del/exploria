@@ -208,7 +208,11 @@ class MissionRewardRegistryService
             'starts_at' => $data['starts_at'] ?? null,
             'ends_at' => $data['ends_at'] ?? null,
             'unlock_rule' => isset($data['unlock_min_points']) ? ['min_points' => (int) $data['unlock_min_points']] : null,
-            'metadata' => ['source' => 'admin_campaign_components'],
+            'metadata' => [
+                'source' => 'admin_campaign_components',
+                'cycle_step_index' => $data['cycle_step_index'] ?? null,
+                'cycle_step_label' => $data['cycle_step_label'] ?? null,
+            ],
         ]));
     }
 
@@ -272,6 +276,10 @@ class MissionRewardRegistryService
             'startsAt' => $mission->starts_at?->toIso8601String(),
             'endsAt' => $mission->ends_at?->toIso8601String(),
             'unlockRule' => $mission->unlock_rule,
+            'cycleStep' => [
+                'index' => $mission->metadata['cycle_step_index'] ?? null,
+                'label' => $mission->metadata['cycle_step_label'] ?? null,
+            ],
             'progressCount' => (int) $mission->getAttribute('progress_records_count'),
             'campaign' => $mission->campaign ? ['id' => $mission->campaign->id, 'code' => $mission->campaign->code, 'name' => $mission->campaign->name] : null,
             'venue' => $mission->venue ? ['id' => $mission->venue->id, 'code' => $mission->venue->code, 'name' => $mission->venue->name] : null,

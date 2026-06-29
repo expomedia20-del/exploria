@@ -66,6 +66,7 @@ type JourneyItem = {
     name?: string;
     status?: string;
     points?: number;
+    cycleStep?: { index: number | null; label: string | null };
     rewardType?: string;
     treasureType?: string;
     adType?: string;
@@ -113,6 +114,16 @@ type RewardBasketTier = {
     items: string[];
 };
 
+type MissionPlanStep = {
+    index: number;
+    userStep: string;
+    recommendedTemplateCode: string;
+    title: string;
+    suggestedCodeSuffix: string;
+    routeIntent: string;
+    operationLink: string;
+};
+
 type SelectedBlueprint = {
     code: string;
     title: string;
@@ -125,6 +136,7 @@ type SelectedBlueprint = {
     stakeholders: string[];
     connectedSurfaces: string[];
     rewardBasket: RewardBasketTier[];
+    missionPlan: MissionPlanStep[];
     nextBuildAction: string;
 };
 
@@ -268,6 +280,7 @@ function detailRows(item: JourneyItem | Participant, campaign: CampaignBlueprint
     return [
         ...baseRows,
         ['کد', journeyItem.code ?? 'ثبت نشده'],
+        ['گام چرخه کاربر', journeyItem.cycleStep?.label ?? 'ثبت نشده'],
         ['هاب', journeyItem.hub?.name ?? 'بدون هاب'],
         ['شریک', journeyItem.partner?.name ?? 'بدون شریک'],
         ['جزئیات', itemMeta(item)],
@@ -618,7 +631,7 @@ export default function CampaignOperationsIndex({ stats, campaigns, selectedBlue
                         </div>
                         <div className="mt-4 grid gap-3 lg:grid-cols-3">
                             <div className="rounded-lg bg-background/75 p-3"><p className="font-medium">ناوبری و مسیر</p><p className="mt-1 text-muted-foreground">{selectedBlueprint.navigationHint}</p></div>
-                            <div className="rounded-lg bg-background/75 p-3"><p className="font-medium">مراحل کاربر</p><ol className="mt-2 space-y-1 text-muted-foreground">{selectedBlueprint.userSteps.slice(0, 4).map((step, index) => <li key={step}>{(index + 1).toLocaleString('fa-IR')}. {step}</li>)}</ol></div>
+                            <div className="rounded-lg bg-background/75 p-3"><p className="font-medium">چرخه و مأموریت‌های متناظر</p><ol className="mt-2 space-y-1 text-muted-foreground">{(selectedBlueprint.missionPlan ?? []).slice(0, 4).map((step) => <li key={step.userStep}>{step.index.toLocaleString('fa-IR')}. {step.userStep} · {step.operationLink}</li>)}</ol></div>
                             <div className="rounded-lg bg-background/75 p-3"><p className="font-medium">صفحات و بخش‌های مرتبط</p><div className="mt-2 flex flex-wrap gap-2">{selectedBlueprint.connectedSurfaces.slice(0, 5).map((item) => <span key={item} className="rounded-full bg-muted px-2 py-1 text-xs">{item}</span>)}</div></div>
                         </div>
                         <p className="mt-3 rounded-lg bg-background/75 p-3 text-muted-foreground"><span className="font-medium text-foreground">اقدام بعدی: </span>{selectedBlueprint.nextBuildAction}</p>

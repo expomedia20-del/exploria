@@ -19,8 +19,11 @@ class CampaignOperationsController extends Controller
     {
         $selectedCampaign = $campaigns->context($request->user(), $request->query('campaign'));
         $data = $service->overview($request->user(), $selectedCampaign['id'] ?? null);
+        $blueprintCode = $request->query('blueprint')
+            ?: ($selectedCampaign['blueprintCode'] ?? null)
+            ?: (($selectedCampaign['campaignType'] ?? null) === 'pilot_visit' ? 'ecopark-pilot-treasure-route' : null);
         $data['selectedCampaign'] = $selectedCampaign;
-        $data['selectedBlueprint'] = $blueprints->handoff($request->query('blueprint'));
+        $data['selectedBlueprint'] = $blueprints->handoff($blueprintCode);
 
         return Inertia::render('admin/campaign-operations/index', $data);
     }

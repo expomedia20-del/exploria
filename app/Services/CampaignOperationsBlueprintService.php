@@ -200,6 +200,10 @@ class CampaignOperationsBlueprintService
                 'triggerType' => $mission->missionTemplate?->trigger_type,
                 'points' => $mission->missionTemplate?->point_value ?? 0,
                 'status' => $mission->status->value,
+                'cycleStep' => [
+                    'index' => $mission->metadata['cycle_step_index'] ?? null,
+                    'label' => $mission->metadata['cycle_step_label'] ?? null,
+                ],
                 'hub' => $mission->hub ? ['id' => $mission->hub->id, 'code' => $mission->hub->code, 'name' => $mission->hub->name] : null,
             ]);
     }

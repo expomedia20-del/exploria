@@ -77,8 +77,71 @@ class MissionRewardBlueprintService
     private function enrichTemplate(array $template): array
     {
         $plan = $this->executionPlans()[$template['code']] ?? $this->defaultExecutionPlan();
+        $merged = array_merge($template, $plan);
 
-        return array_merge($template, $plan);
+        return array_merge($merged, [
+            'missionPlan' => $this->missionPlan($merged),
+        ]);
+    }
+
+    /** @param array<string, mixed> $template @return array<int, array<string, mixed>> */
+    private function missionPlan(array $template): array
+    {
+        return collect($template['userSteps'] ?? [])
+            ->values()
+            ->map(function (string $step, int $index) use ($template): array {
+                $templateCode = $this->missionTemplateCodeForStep($step, $index);
+
+                return [
+                    'index' => $index + 1,
+                    'userStep' => $step,
+                    'recommendedTemplateCode' => $templateCode,
+                    'title' => $this->missionTitleForStep($step),
+                    'suggestedCodeSuffix' => 'step-'.($index + 1).'-'.$templateCode,
+                    'routeIntent' => $this->routeIntentForStep($step, $template['navigationHint'] ?? ''),
+                    'operationLink' => $index === 0 ? 'QR/نقطه شروع' : 'هاب، نقطه تماس یا مقصد بعدی',
+                ];
+            })
+            ->all();
+    }
+
+    private function missionTemplateCodeForStep(string $step, int $index): string
+    {
+        $text = mb_strtolower($step);
+
+        if ($index === 0 || str_contains($text, 'qr') || str_contains($text, 'اسکن') || str_contains($text, 'ورود')) {
+            return 'scan-entry-qr';
+        }
+
+        if (str_contains($text, 'محتوا') || str_contains($text, 'مشاهده') || str_contains($text, 'پرسش') || str_contains($text, 'پاسخ') || str_contains($text, 'نمایشگر')) {
+            return 'watch-place-story';
+        }
+
+        if (str_contains($text, 'عکس') || str_contains($text, 'چالش') || str_contains($text, 'تأیید') || str_contains($text, 'تایید') || str_contains($text, 'ثبت نتیجه')) {
+            return 'photo-memory-challenge';
+        }
+
+        return 'discover-route-guide';
+    }
+
+    private function missionTitleForStep(string $step): string
+    {
+        return 'مأموریت: '.$step;
+    }
+
+    private function routeIntentForStep(string $step, string $navigationHint): string
+    {
+        $text = mb_strtolower($step.' '.$navigationHint);
+
+        if (str_contains($text, 'فروشگاه') || str_contains($text, 'کوپن') || str_contains($text, 'غرفه')) {
+            return 'اتصال به هاب/فروشگاه و نقطه تحویل پاداش';
+        }
+
+        if (str_contains($text, 'نقشه') || str_contains($text, 'مسیر') || str_contains($text, 'نقطه')) {
+            return 'اتصال به نقطه مسیر و مقصد بعدی در نقشه عملیات';
+        }
+
+        return 'اتصال به چرخه کاربر و ثبت در مسیر عملیاتی کمپین';
     }
 
     /** @return array<string, array<string, mixed>> */

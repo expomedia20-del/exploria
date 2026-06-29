@@ -29,6 +29,8 @@ class StoreMissionInstanceRequest extends FormRequest
                 Rule::unique('mission_instances', 'code')->where('campaign_id', $this->string('campaign_id')->toString()),
             ],
             'title_override' => ['nullable', 'string', 'max:255'],
+            'cycle_step_index' => ['nullable', 'integer', 'min:1', 'max:20'],
+            'cycle_step_label' => ['nullable', 'string', 'max:255'],
             'status' => ['required', Rule::enum(RecordStatus::class)],
             'starts_at' => ['nullable', 'date'],
             'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],

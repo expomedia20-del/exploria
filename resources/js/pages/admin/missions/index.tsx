@@ -42,6 +42,7 @@ type MissionItem = {
     startsAt: string | null;
     endsAt: string | null;
     unlockRule: Record<string, unknown> | null;
+    cycleStep: { index: number | null; label: string | null };
     progressCount: number;
     campaign: RegistryEntity | null;
     venue: RegistryEntity | null;
@@ -80,6 +81,16 @@ type RewardBasketTier = {
     items: string[];
 };
 
+type MissionPlanStep = {
+    index: number;
+    userStep: string;
+    recommendedTemplateCode: string;
+    title: string;
+    suggestedCodeSuffix: string;
+    routeIntent: string;
+    operationLink: string;
+};
+
 type SelectedBlueprint = {
     code: string;
     title: string;
@@ -92,6 +103,7 @@ type SelectedBlueprint = {
     stakeholders: string[];
     connectedSurfaces: string[];
     rewardBasket: RewardBasketTier[];
+    missionPlan: MissionPlanStep[];
     nextBuildAction: string;
 };
 
@@ -247,8 +259,8 @@ function blueprintFlowUrl(path: string, blueprintCode: string, action: string, c
     return `${path}?${params.toString()}`;
 }
 
-function missionCodeSuggestion(campaignCode: string, templateCode: string, missions: MissionItem[]) {
-    const base = `${campaignCode}-${templateCode}`
+function missionCodeSuggestion(campaignCode: string, suffix: string, missions: MissionItem[]) {
+    const base = `${campaignCode}-${suffix}`
         .toLowerCase()
         .replace(/[^a-z0-9-]+/g, '-')
         .replace(/-{2,}/g, '-')
@@ -271,11 +283,24 @@ export default function MissionRewardRegistryIndex({
     const { flash, auth } = usePage<SharedProps>().props;
     const canMutate = auth.user.role === 'admin' || auth.user.role === 'operator';
     const [selectedMissionTemplateId, setSelectedMissionTemplateId] = useState(formOptions.missionTemplates[0]?.id ?? '');
+    const [selectedMissionPlanIndex, setSelectedMissionPlanIndex] = useState(0);
+    const missionPlan = selectedBlueprint?.missionPlan ?? [];
+    const selectedMissionPlan = missionPlan[selectedMissionPlanIndex] ?? null;
     const selectedMissionTemplate = formOptions.missionTemplates.find((template) => template.id === selectedMissionTemplateId) ?? formOptions.missionTemplates[0] ?? null;
+    const suggestedMissionSuffix = selectedMissionPlan?.suggestedCodeSuffix ?? selectedMissionTemplate?.code ?? 'mission';
     const suggestedMissionCode = useMemo(
-        () => missionCodeSuggestion(selectedCampaign?.code ?? 'campaign', selectedMissionTemplate?.code ?? 'mission', missions),
-        [missions, selectedCampaign?.code, selectedMissionTemplate?.code],
+        () => missionCodeSuggestion(selectedCampaign?.code ?? 'campaign', suggestedMissionSuffix, missions),
+        [missions, selectedCampaign?.code, suggestedMissionSuffix],
     );
+
+    function selectMissionPlanStep(step: MissionPlanStep, index: number) {
+        setSelectedMissionPlanIndex(index);
+
+        const matchingTemplate = formOptions.missionTemplates.find((template) => template.code === step.recommendedTemplateCode);
+        if (matchingTemplate) {
+            setSelectedMissionTemplateId(matchingTemplate.id);
+        }
+    }
 
     return (
         <>
@@ -361,7 +386,7 @@ export default function MissionRewardRegistryIndex({
                             <div className="rounded-lg bg-background/75 p-3"><p className="font-medium">امتیاز پیشنهادی</p><p className="mt-1 text-muted-foreground">{selectedBlueprint.points.base.toLocaleString('fa-IR')} + {selectedBlueprint.points.bonus}</p></div>
                         </div>
                         <div className="mt-4 grid gap-3 lg:grid-cols-2">
-                            <div className="rounded-lg bg-background/75 p-3"><p className="font-medium">مراحل کاربر</p><ol className="mt-2 space-y-1 text-muted-foreground">{selectedBlueprint.userSteps.map((step, index) => <li key={step}>{(index + 1).toLocaleString('fa-IR')}. {step}</li>)}</ol></div>
+                            <div className="rounded-lg bg-background/75 p-3"><p className="font-medium">چرخه و قالب مأموریت</p><ol className="mt-2 space-y-1 text-muted-foreground">{(selectedBlueprint.missionPlan ?? []).map((step) => <li key={step.userStep}>{step.index.toLocaleString('fa-IR')}. {step.userStep} · {step.recommendedTemplateCode}</li>)}</ol></div>
                             <div className="rounded-lg bg-background/75 p-3"><p className="font-medium">سطوح پاداش</p><div className="mt-2 flex flex-wrap gap-2">{selectedBlueprint.rewardBasket.slice(0, 4).map((tier) => <span key={tier.level} className="rounded-full bg-muted px-2 py-1 text-xs">{tier.level}: {tier.items.slice(0, 2).join(' / ')}</span>)}</div></div>
                         </div>
                         <p className="mt-3 rounded-lg bg-background/75 p-3 text-muted-foreground"><span className="font-medium text-foreground">اقدام بعدی: </span>{selectedBlueprint.nextBuildAction}</p>
@@ -405,10 +430,38 @@ export default function MissionRewardRegistryIndex({
                                 {({ processing, errors }) => (
                                     <>
                                         <input type="hidden" name="campaign_id" value={selectedCampaign.id} />
+                                        {selectedMissionPlan ? (
+                                            <>
+                                                <input type="hidden" name="cycle_step_index" value={selectedMissionPlan.index} />
+                                                <input type="hidden" name="cycle_step_label" value={selectedMissionPlan.userStep} />
+                                            </>
+                                        ) : null}
                                         <div>
                                             <h3 className="font-semibold">مأموریت</h3>
                                             <p className="mt-1 text-xs text-muted-foreground">قالب مأموریت را انتخاب و نمونه اجرایی آن را بسازید.</p>
                                         </div>
+                                        {missionPlan.length > 0 ? (
+                                            <div className="grid gap-2">
+                                                <p className="text-xs font-medium">چرخه کاربر همین کمپین</p>
+                                                <div className="grid gap-2">
+                                                    {missionPlan.map((step, index) => (
+                                                        <button
+                                                            key={`${step.index}-${step.userStep}`}
+                                                            type="button"
+                                                            onClick={() => selectMissionPlanStep(step, index)}
+                                                            className={`rounded-md border px-3 py-2 text-right text-xs transition ${
+                                                                index === selectedMissionPlanIndex
+                                                                    ? 'border-primary bg-primary/10 text-primary'
+                                                                    : 'border-border bg-background text-muted-foreground hover:border-primary/50'
+                                                            }`}
+                                                        >
+                                                            <span className="font-medium">گام {step.index.toLocaleString('fa-IR')}: {step.userStep}</span>
+                                                            <span className="mt-1 block">{step.routeIntent}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ) : null}
                                         <div className="grid gap-1.5">
                                             <label htmlFor="mission_template_id" className="text-xs font-medium">قالب مأموریت</label>
                                             <select
@@ -421,7 +474,7 @@ export default function MissionRewardRegistryIndex({
                                             >
                                                 {formOptions.missionTemplates.map((template) => (
                                                     <option key={template.id} value={template.id}>
-                                                        {template.recommended ? 'پیشنهادی - ' : ''}{template.title} - {template.points.toLocaleString('fa-IR')} امتیاز
+                                                        {template.code === selectedMissionPlan?.recommendedTemplateCode ? 'گام چرخه - ' : template.recommended ? 'پیشنهادی - ' : ''}{template.title} - {template.points.toLocaleString('fa-IR')} امتیاز
                                                     </option>
                                                 ))}
                                             </select>
@@ -442,6 +495,11 @@ export default function MissionRewardRegistryIndex({
                                                 {selectedMissionTemplate.description ? (
                                                     <p className="mt-1">{selectedMissionTemplate.description}</p>
                                                 ) : null}
+                                                {selectedMissionPlan ? (
+                                                    <p className="mt-2 rounded-md bg-background px-2 py-1">
+                                                        اتصال نقشه: {selectedMissionPlan.operationLink} · {selectedMissionPlan.routeIntent}
+                                                    </p>
+                                                ) : null}
                                             </div>
                                         ) : null}
                                         <div className="grid gap-1.5">
@@ -451,7 +509,7 @@ export default function MissionRewardRegistryIndex({
                                         </div>
                                         <div className="grid gap-1.5">
                                             <label htmlFor="title_override" className="text-xs font-medium">عنوان نمایشی</label>
-                                            <input id="title_override" name="title_override" autoComplete="off" placeholder="مثلا اسکن ورودی خانواده" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                            <input key={selectedMissionPlan?.title ?? 'title'} id="title_override" name="title_override" autoComplete="off" defaultValue={selectedMissionPlan?.title ?? ''} placeholder="مثلا اسکن ورودی خانواده" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
                                             <InputError message={errors.title_override} />
                                         </div>
                                         <div className="grid gap-2 sm:grid-cols-2">
@@ -693,6 +751,11 @@ export default function MissionRewardRegistryIndex({
                                                 {mission.code}
                                             </span>
                                         </div>
+                                        {mission.cycleStep?.label ? (
+                                            <p className="mt-1 truncate text-xs text-muted-foreground">
+                                                گام چرخه: {mission.cycleStep.index?.toLocaleString('fa-IR') ?? '-'} · {mission.cycleStep.label}
+                                            </p>
+                                        ) : null}
                                     </div>
 
                                     <div className="min-w-0">
