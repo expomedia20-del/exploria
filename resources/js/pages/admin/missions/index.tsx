@@ -1,4 +1,5 @@
 import { Form, Head, Link, usePage } from '@inertiajs/react';
+import { useMemo, useState } from 'react';
 import {
     BadgeCheck,
     BookOpenCheck,
@@ -148,9 +149,12 @@ type MissionTemplateOption = {
     id: string;
     code: string;
     title: string;
+    description: string | null;
     missionType: string;
     triggerType: string;
     points: number;
+    recommended: boolean;
+    recommendationReason: string | null;
 };
 
 type PartnerOption = FormEntity & {
@@ -243,6 +247,18 @@ function blueprintFlowUrl(path: string, blueprintCode: string, action: string, c
     return `${path}?${params.toString()}`;
 }
 
+function missionCodeSuggestion(campaignCode: string, templateCode: string, missions: MissionItem[]) {
+    const base = `${campaignCode}-${templateCode}`
+        .toLowerCase()
+        .replace(/[^a-z0-9-]+/g, '-')
+        .replace(/-{2,}/g, '-')
+        .replace(/^-|-$/g, '')
+        .slice(0, 86);
+    const existingCount = missions.filter((mission) => mission.code === base || mission.code.startsWith(`${base}-`)).length;
+
+    return existingCount > 0 ? `${base}-${existingCount + 1}`.slice(0, 96) : base;
+}
+
 export default function MissionRewardRegistryIndex({
     stats,
     missions,
@@ -254,6 +270,12 @@ export default function MissionRewardRegistryIndex({
 }: Props) {
     const { flash, auth } = usePage<SharedProps>().props;
     const canMutate = auth.user.role === 'admin' || auth.user.role === 'operator';
+    const [selectedMissionTemplateId, setSelectedMissionTemplateId] = useState(formOptions.missionTemplates[0]?.id ?? '');
+    const selectedMissionTemplate = formOptions.missionTemplates.find((template) => template.id === selectedMissionTemplateId) ?? formOptions.missionTemplates[0] ?? null;
+    const suggestedMissionCode = useMemo(
+        () => missionCodeSuggestion(selectedCampaign?.code ?? 'campaign', selectedMissionTemplate?.code ?? 'mission', missions),
+        [missions, selectedCampaign?.code, selectedMissionTemplate?.code],
+    );
 
     return (
         <>
@@ -389,18 +411,42 @@ export default function MissionRewardRegistryIndex({
                                         </div>
                                         <div className="grid gap-1.5">
                                             <label htmlFor="mission_template_id" className="text-xs font-medium">قالب مأموریت</label>
-                                            <select id="mission_template_id" name="mission_template_id" required className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                            <select
+                                                id="mission_template_id"
+                                                name="mission_template_id"
+                                                required
+                                                value={selectedMissionTemplate?.id ?? ''}
+                                                onChange={(event) => setSelectedMissionTemplateId(event.target.value)}
+                                                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                            >
                                                 {formOptions.missionTemplates.map((template) => (
                                                     <option key={template.id} value={template.id}>
-                                                        {template.title} - {template.points.toLocaleString('fa-IR')} امتیاز
+                                                        {template.recommended ? 'پیشنهادی - ' : ''}{template.title} - {template.points.toLocaleString('fa-IR')} امتیاز
                                                     </option>
                                                 ))}
                                             </select>
                                             <InputError message={errors.mission_template_id} />
                                         </div>
+                                        {selectedMissionTemplate ? (
+                                            <div className="rounded-md bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    {selectedMissionTemplate.recommended ? (
+                                                        <span className="rounded-full bg-primary/10 px-2 py-1 font-medium text-primary">پیشنهادی برای این کمپین</span>
+                                                    ) : null}
+                                                    <span dir="ltr">{selectedMissionTemplate.missionType}</span>
+                                                    <span dir="ltr">{selectedMissionTemplate.triggerType}</span>
+                                                </div>
+                                                {selectedMissionTemplate.recommendationReason ? (
+                                                    <p className="mt-2">{selectedMissionTemplate.recommendationReason}</p>
+                                                ) : null}
+                                                {selectedMissionTemplate.description ? (
+                                                    <p className="mt-1">{selectedMissionTemplate.description}</p>
+                                                ) : null}
+                                            </div>
+                                        ) : null}
                                         <div className="grid gap-1.5">
                                             <label htmlFor="mission_code" className="text-xs font-medium">کد مأموریت</label>
-                                            <input id="mission_code" name="code" required dir="ltr" autoComplete="off" placeholder="first-scan-mission" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                            <input key={suggestedMissionCode} id="mission_code" name="code" required dir="ltr" autoComplete="off" defaultValue={suggestedMissionCode} className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
                                             <InputError message={errors.code} />
                                         </div>
                                         <div className="grid gap-1.5">
@@ -440,6 +486,9 @@ export default function MissionRewardRegistryIndex({
                                                 <InputError message={errors.touchpoint_id} />
                                             </div>
                                         </div>
+                                        <p className="rounded-md bg-primary/5 px-3 py-2 text-xs text-muted-foreground">
+                                            در نقشه عملیات، همین مأموریت زیر بخش «مأموریت‌ها» و در صورت انتخاب هاب/نقطه تماس، روی مسیر همان نقطه دیده می‌شود.
+                                        </p>
                                         <Button disabled={processing}>
                                             <Trophy className="size-4" />
                                             ثبت مأموریت

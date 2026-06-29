@@ -97,16 +97,30 @@ class MissionRewardRegistryService
         return [
             'missionTemplates' => MissionTemplate::query()
                 ->where('status', RecordStatus::Active)
-                ->orderBy('title')
-                ->get(['id', 'code', 'title', 'mission_type', 'trigger_type', 'point_value'])
-                ->map(fn (MissionTemplate $template): array => [
+                ->get(['id', 'code', 'title', 'description', 'mission_type', 'trigger_type', 'point_value'])
+                ->map(function (MissionTemplate $template) use ($campaign): array {
+                    $recommendation = $this->missionTemplateRecommendation($template, $campaign);
+
+                    return [
                     'id' => $template->id,
                     'code' => $template->code,
                     'title' => $template->title,
+                    'description' => $template->description,
                     'missionType' => $template->mission_type,
                     'triggerType' => $template->trigger_type,
                     'points' => $template->point_value,
-                ]),
+                    'recommended' => $recommendation['score'] > 0,
+                    'recommendationReason' => $recommendation['reason'],
+                    '_score' => $recommendation['score'],
+                    ];
+                })
+                ->sortBy([
+                    ['_score', 'desc'],
+                    ['points', 'asc'],
+                    ['title', 'asc'],
+                ])
+                ->values()
+                ->map(fn (array $template): array => collect($template)->except('_score')->all()),
             'hubs' => Hub::query()
                 ->when($venueId, fn (Builder $query) => $query->whereHas('zone', fn (Builder $zone) => $zone->where('venue_id', $venueId)))
                 ->orderBy('name')
@@ -123,6 +137,55 @@ class MissionRewardRegistryService
                 ->get(['id', 'code', 'name', 'partner_type'])
                 ->map(fn (PartnerAccount $partner): array => ['id' => $partner->id, 'code' => $partner->code, 'name' => $partner->name, 'partnerType' => $partner->partner_type]),
         ];
+    }
+
+    /** @return array{score: int, reason: string|null} */
+    private function missionTemplateRecommendation(MissionTemplate $template, ?Campaign $campaign): array
+    {
+        if (! $campaign) {
+            return ['score' => 0, 'reason' => null];
+        }
+
+        $blueprint = (string) ($campaign->metadata['blueprint_code'] ?? '');
+        $context = strtolower($blueprint.' '.$campaign->campaign_type);
+        $code = $template->code;
+
+        $rules = [
+            'scan-entry-qr' => [
+                'score' => 90,
+                'keywords' => ['pilot', 'starter', 'entry', 'online', 'treasure-route', 'hologram'],
+                'reason' => 'برای نقطه شروع، QR ورودی و ساخت اولین گام نقشه عملیات مناسب است.',
+            ],
+            'discover-route-guide' => [
+                'score' => 80,
+                'keywords' => ['route', 'treasure', 'ravaq', 'foodcourt', 'quiet', 'hidden'],
+                'reason' => 'برای اتصال مأموریت به مسیر، هاب و نقطه تماس عملیاتی مناسب است.',
+            ],
+            'watch-place-story' => [
+                'score' => 70,
+                'keywords' => ['online', 'story', 'star', 'science', 'photo', 'bridge'],
+                'reason' => 'برای روایت مکان، محتوای راهنما و مأموریت‌های آموزشی/رسانه‌ای مناسب است.',
+            ],
+            'photo-memory-challenge' => [
+                'score' => 60,
+                'keywords' => ['photo', 'challenge', 'skate', 'family', 'sponsor', 'legendary'],
+                'reason' => 'برای مشارکت عمیق‌تر، تأیید مجری و چالش‌های مرحله‌ای مناسب است.',
+            ],
+        ];
+
+        $rule = $rules[$code] ?? null;
+
+        if (! $rule) {
+            return ['score' => 0, 'reason' => null];
+        }
+
+        foreach ($rule['keywords'] as $keyword) {
+            if (str_contains($context, $keyword)) {
+                return ['score' => $rule['score'], 'reason' => $rule['reason']];
+            }
+        }
+
+        return ['score' => 10, 'reason' => 'قابل استفاده برای این کمپین، اما اولویت پیشنهادی پایین‌تری دارد.'];
     }
 
     /** @param array<string, mixed> $data */

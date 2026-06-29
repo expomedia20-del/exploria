@@ -133,6 +133,13 @@ class CampaignQrCoreTest extends TestCase
         $template = MissionTemplate::query()->where('status', RecordStatus::Active)->firstOrFail();
 
         $this->actingAs($operator)
+            ->get(route('admin.missions.page', ['campaign' => $campaign->code]))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('formOptions.missionTemplates.0.recommended', true)
+                ->has('formOptions.missionTemplates.0.recommendationReason'));
+
+        $this->actingAs($operator)
             ->from(route('admin.missions.page', ['campaign' => $campaign->code]))
             ->post(route('admin.missions.store'), [
                 'campaign_id' => $campaign->id,
