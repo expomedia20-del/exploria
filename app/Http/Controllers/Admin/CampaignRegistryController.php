@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreCampaignRequest;
+use App\Models\Campaign;
 use App\Services\CampaignRegistryService;
 use App\Services\MissionRewardBlueprintService;
 use Illuminate\Http\JsonResponse;
@@ -31,7 +32,8 @@ class CampaignRegistryController extends Controller
 
     public function store(StoreCampaignRequest $request, CampaignRegistryService $service): JsonResponse|RedirectResponse
     {
-        $campaign = $service->create($request->validated());
+        $validated = $request->validated();
+        $campaign = $service->create($validated);
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -44,6 +46,10 @@ class CampaignRegistryController extends Controller
             ], 201);
         }
 
+        if (! empty($validated['campaign_id'])) {
+            return back()->with('success', 'کمپین ویرایش شد.');
+        }
+
         return redirect()
             ->route('admin.campaign-builder.page', array_filter([
                 'campaign' => $campaign->code,
@@ -51,5 +57,16 @@ class CampaignRegistryController extends Controller
                 'blueprint_action' => 'build',
             ]))
             ->with('success', 'کمپین جدید ثبت شد.');
+    }
+
+    public function destroy(Request $request, Campaign $campaign, CampaignRegistryService $service): JsonResponse|RedirectResponse
+    {
+        $service->delete($campaign);
+
+        if ($request->expectsJson()) {
+            return response()->json(['status' => 'success']);
+        }
+
+        return back()->with('success', 'کمپین حذف شد.');
     }
 }

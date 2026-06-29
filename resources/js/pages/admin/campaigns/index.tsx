@@ -1,10 +1,13 @@
 import { Form, Head, Link, usePage } from '@inertiajs/react';
+import { useState } from 'react';
 import {
     CalendarClock,
     Megaphone,
+    Pencil,
     Plus,
     QrCode,
     SquareActivity,
+    Trash2,
 } from 'lucide-react';
 import { DateTimePickerField } from '@/components/date-time-picker-field';
 import InputError from '@/components/input-error';
@@ -107,6 +110,19 @@ function formatDate(value: string | null) {
     }).format(new Date(value));
 }
 
+function formatDateTimeLocal(value: string | null) {
+    if (!value) {
+        return '';
+    }
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+        return '';
+    }
+
+    return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+}
+
 function canMutate(role?: string) {
     return role === 'admin' || role === 'operator';
 }
@@ -145,6 +161,7 @@ export default function CampaignRegistryIndex({
     selectedBlueprint,
 }: Props) {
     const { flash, auth } = usePage<SharedProps>().props;
+    const [editingCampaign, setEditingCampaign] = useState<CampaignItem | null>(null);
     const activeCount = campaigns.filter(
         (campaign) => campaign.status === 'active',
     ).length;
@@ -263,10 +280,10 @@ export default function CampaignRegistryIndex({
                 ) : null}
 
                 {canMutate(auth.user.role) ? (
-                    <section className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
+                    <section id="campaign-form" className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
                         <div className="mb-4 flex items-center gap-2">
                             <Plus className="size-4 text-muted-foreground" />
-                            <h2 className="font-semibold">ثبت کمپین جدید</h2>
+                            <h2 className="font-semibold">{editingCampaign ? 'ویرایش کمپین' : 'ثبت کمپین جدید'}</h2>
                         </div>
                         <Form
                             action="/admin/campaigns"
@@ -276,6 +293,7 @@ export default function CampaignRegistryIndex({
                         >
                             {({ processing, errors }) => (
                                 <>
+                                    {editingCampaign ? <input type="hidden" name="campaign_id" value={editingCampaign.id} /> : null}
                                     {selectedBlueprint ? <input type="hidden" name="blueprint_code" value={selectedBlueprint.code} /> : null}
                                     <div className="grid gap-2 md:col-span-2">
                                         <Label htmlFor="venue_id">مکان</Label>
@@ -283,9 +301,8 @@ export default function CampaignRegistryIndex({
                                             id="venue_id"
                                             name="venue_id"
                                             required
-                                            defaultValue={
-                                                venueOptions[0]?.id ?? ''
-                                            }
+                                            key={`campaign-venue-${editingCampaign?.id ?? 'new'}`}
+                                            defaultValue={editingCampaign?.venue?.id ?? venueOptions[0]?.id ?? ''}
                                             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                         >
                                             {venueOptions.map((venue) => (
@@ -305,6 +322,8 @@ export default function CampaignRegistryIndex({
                                             id="name"
                                             name="name"
                                             required
+                                            key={`campaign-name-${editingCampaign?.id ?? 'new'}`}
+                                            defaultValue={editingCampaign?.name ?? ''}
                                             placeholder="مثلا کمپین گنج تابستان"
                                         />
                                         <InputError message={errors.name} />
@@ -317,7 +336,8 @@ export default function CampaignRegistryIndex({
                                             required
                                             dir="ltr"
                                             placeholder="summer-treasure"
-                                            defaultValue={selectedBlueprint?.code ? `${selectedBlueprint.code}-campaign` : ''}
+                                            key={`campaign-code-${editingCampaign?.id ?? selectedBlueprint?.code ?? 'new'}`}
+                                            defaultValue={editingCampaign?.code ?? (selectedBlueprint?.code ? `${selectedBlueprint.code}-campaign` : '')}
                                         />
                                         <InputError message={errors.code} />
                                     </div>
@@ -330,7 +350,8 @@ export default function CampaignRegistryIndex({
                                             name="campaign_type"
                                             required
                                             dir="ltr"
-                                            defaultValue={selectedBlueprint ? 'blueprint_campaign' : 'pilot_visit'}
+                                            key={`campaign-type-${editingCampaign?.id ?? 'new'}`}
+                                            defaultValue={editingCampaign?.campaignType ?? (selectedBlueprint ? 'blueprint_campaign' : 'pilot_visit')}
                                         />
                                         <InputError
                                             message={errors.campaign_type}
@@ -342,7 +363,8 @@ export default function CampaignRegistryIndex({
                                             id="status"
                                             name="status"
                                             required
-                                            defaultValue="draft"
+                                            key={`campaign-status-${editingCampaign?.id ?? 'new'}`}
+                                            defaultValue={editingCampaign?.status ?? 'draft'}
                                             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                         >
                                             <option value="draft">
@@ -359,12 +381,16 @@ export default function CampaignRegistryIndex({
                                         id="start_at"
                                         name="start_at"
                                         label="شروع"
+                                        key={`campaign-start-${editingCampaign?.id ?? 'new'}`}
+                                        defaultValue={formatDateTimeLocal(editingCampaign?.startAt ?? null)}
                                         error={errors.start_at}
                                     />
                                     <DateTimePickerField
                                         id="end_at"
                                         name="end_at"
                                         label="پایان"
+                                        key={`campaign-end-${editingCampaign?.id ?? 'new'}`}
+                                        defaultValue={formatDateTimeLocal(editingCampaign?.endAt ?? null)}
                                         error={errors.end_at}
                                     />
                                     <div className="flex items-end md:col-span-2">
@@ -373,7 +399,7 @@ export default function CampaignRegistryIndex({
                                             className="w-full"
                                         >
                                             <Plus className="size-4" />
-                                            ثبت کمپین
+                                            {editingCampaign ? 'ذخیره ویرایش کمپین' : 'ثبت کمپین'}
                                         </Button>
                                     </div>
                                 </>
@@ -451,6 +477,39 @@ export default function CampaignRegistryIndex({
                                                 </Link>
                                             ))}
                                         </div>
+                                        {canMutate(auth.user.role) ? (
+                                            <div className="mt-2 flex items-center gap-1.5">
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-8 px-2"
+                                                    title="ویرایش کمپین"
+                                                    onClick={() => {
+                                                        setEditingCampaign(campaign);
+                                                        document.getElementById('campaign-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                                    }}
+                                                >
+                                                    <Pencil className="size-4" />
+                                                </Button>
+                                                <Form
+                                                    action={`/admin/campaigns/${campaign.id}`}
+                                                    method="delete"
+                                                    options={{ preserveScroll: true }}
+                                                    onSubmit={(event) => {
+                                                        if (!window.confirm('این کمپین حذف شود؟ حذف فقط وقتی ممکن است که اجزای وابسته نداشته باشد.')) {
+                                                            event.preventDefault();
+                                                        }
+                                                    }}
+                                                >
+                                                    {({ processing }) => (
+                                                        <Button type="submit" variant="ghost" size="sm" className="h-8 px-2 text-destructive hover:text-destructive" disabled={processing} title="حذف کمپین">
+                                                            <Trash2 className="size-4" />
+                                                        </Button>
+                                                    )}
+                                                </Form>
+                                            </div>
+                                        ) : null}
                                     </div>
                                     <div className="min-w-0">
                                         <p className="truncate">

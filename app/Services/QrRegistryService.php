@@ -132,7 +132,7 @@ class QrRegistryService
 
         $code = Str::lower((string) $data['code']);
 
-        return DB::transaction(fn (): QrCode => QrCode::query()->create([
+        $attributes = [
             'code' => $code,
             'venue_id' => $venueId,
             'touchpoint_id' => $touchpoint->id,
@@ -140,11 +140,32 @@ class QrRegistryService
             'destination_url' => url('/scan/'.$code),
             'label' => $data['label'] ?: null,
             'status' => $data['status'],
-            'valid_from' => $data['valid_from'] ?: null,
-            'valid_until' => $data['valid_until'] ?: null,
+            'valid_from' => ($data['valid_from'] ?? null) ?: null,
+            'valid_until' => ($data['valid_until'] ?? null) ?: null,
             'max_scans_per_user_per_window' => $data['max_scans_per_user_per_window'],
             'duplicate_window_seconds' => $data['duplicate_window_seconds'],
             'metadata' => ['created_from' => 'admin_qr_registry'],
-        ]));
+        ];
+
+        return DB::transaction(function () use ($data, $attributes): QrCode {
+            if (! empty($data['qr_code_id'])) {
+                $qrCode = QrCode::query()->findOrFail($data['qr_code_id']);
+                $metadata = array_merge($qrCode->metadata ?? [], $attributes['metadata']);
+                $qrCode->update(array_merge($attributes, ['metadata' => $metadata]));
+
+                return $qrCode->refresh();
+            }
+
+            return QrCode::query()->create($attributes);
+        });
+    }
+
+    public function delete(QrCode $qrCode): void
+    {
+        if ($qrCode->visits()->exists()) {
+            throw ValidationException::withMessages(['qr_code' => 'این QR سابقه اسکن/بازدید دارد و حذف مستقیم آن مجاز نیست.']);
+        }
+
+        $qrCode->delete();
     }
 }

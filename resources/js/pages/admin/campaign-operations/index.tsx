@@ -703,7 +703,29 @@ export default function CampaignOperationsIndex({ stats, campaigns, selectedBlue
                                                 />
                                                 <Button disabled={processing}>
                                                     <Route className="size-4" />
-                                                    تایید مسیر عملیاتی
+                                                    {activeCampaign.routeReviewedAt ? 'ذخیره ویرایش بازبینی مسیر' : 'تایید مسیر عملیاتی'}
+                                                </Button>
+                                            </>
+                                        )}
+                                    </Form>
+                                ) : null}
+                                {canMutate && activeCampaign.routeReviewedAt ? (
+                                    <Form
+                                        action="/admin/campaign-operations/review"
+                                        method="delete"
+                                        options={{ preserveScroll: true }}
+                                        className="mt-2"
+                                        onSubmit={(event) => {
+                                            if (!window.confirm('بازبینی مسیر عملیات حذف شود؟')) {
+                                                event.preventDefault();
+                                            }
+                                        }}
+                                    >
+                                        {({ processing }) => (
+                                            <>
+                                                <input type="hidden" name="campaign_id" value={selectedCampaign.id} />
+                                                <Button type="submit" variant="outline" disabled={processing} className="w-full">
+                                                    حذف بازبینی مسیر
                                                 </Button>
                                             </>
                                         )}

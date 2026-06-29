@@ -91,7 +91,7 @@ class CampaignParticipantRegistryService
         $this->assertSameVenueHub($campaign, $data['hub_id'] ?? null);
         $this->assertSameVenuePartner($campaign, $data['partner_account_id'] ?? null);
 
-        return DB::transaction(fn (): CampaignParticipant => CampaignParticipant::query()->create([
+        $attributes = [
             'campaign_id' => $campaign->id,
             'venue_id' => $campaign->venue_id,
             'hub_id' => $data['hub_id'] ?? null,
@@ -110,7 +110,24 @@ class CampaignParticipantRegistryService
                     'missions' => (int) ($data['connections_missions'] ?? 0),
                 ],
             ],
-        ]));
+        ];
+
+        return DB::transaction(function () use ($data, $attributes): CampaignParticipant {
+            if (! empty($data['participant_id'])) {
+                $participant = CampaignParticipant::query()->findOrFail($data['participant_id']);
+                $metadata = array_merge($participant->metadata ?? [], $attributes['metadata']);
+                $participant->update(array_merge($attributes, ['metadata' => $metadata]));
+
+                return $participant->refresh();
+            }
+
+            return CampaignParticipant::query()->create($attributes);
+        });
+    }
+
+    public function deleteParticipant(CampaignParticipant $participant): void
+    {
+        $participant->delete();
     }
 
     /** @param Collection<int, array<string, mixed>> $participants */

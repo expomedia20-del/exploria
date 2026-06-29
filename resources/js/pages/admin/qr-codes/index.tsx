@@ -1,11 +1,14 @@
 import { Form, Head, Link, usePage } from '@inertiajs/react';
+import { useState } from 'react';
 import {
     CalendarClock,
     ExternalLink,
     MapPin,
+    Pencil,
     Plus,
     QrCode as QrCodeIcon,
     RadioTower,
+    Trash2,
 } from 'lucide-react';
 import { DateTimePickerField } from '@/components/date-time-picker-field';
 import InputError from '@/components/input-error';
@@ -95,6 +98,19 @@ function formatDate(value: string | null) {
     }).format(new Date(value));
 }
 
+function formatDateTimeLocal(value: string | null) {
+    if (!value) {
+        return '';
+    }
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+        return '';
+    }
+
+    return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+}
+
 function entityLabel(entity: RegistryEntity | null, fallback: string) {
     if (!entity) {
         return fallback;
@@ -109,6 +125,7 @@ function canMutate(role?: string) {
 
 export default function QrRegistryIndex({ qrCodes, formOptions, selectedCampaign }: Props) {
     const { flash, auth } = usePage<SharedProps>().props;
+    const [editingQr, setEditingQr] = useState<QrRegistryItem | null>(null);
     const activeCount = qrCodes.filter((qr) => qr.status === 'active').length;
     const selectedCampaignOption = formOptions.campaigns.find((campaign) => campaign.id === selectedCampaign?.id);
     const selectedVenueId = selectedCampaign?.venue?.id ?? selectedCampaignOption?.venueId ?? formOptions.venues[0]?.id ?? '';
@@ -174,10 +191,10 @@ export default function QrRegistryIndex({ qrCodes, formOptions, selectedCampaign
                 ) : null}
 
                 {canMutate(auth.user.role) ? (
-                    <section className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
+                    <section id="qr-form" className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
                         <div className="mb-4 flex items-center gap-2">
                             <Plus className="size-4 text-muted-foreground" />
-                            <h2 className="font-semibold">ثبت QR جدید</h2>
+                            <h2 className="font-semibold">{editingQr ? 'ویرایش QR' : 'ثبت QR جدید'}</h2>
                         </div>
                         <Form
                             action={`/admin/qr-codes${campaignContextUrl}`}
@@ -187,13 +204,15 @@ export default function QrRegistryIndex({ qrCodes, formOptions, selectedCampaign
                         >
                             {({ processing, errors }) => (
                                 <>
+                                    {editingQr ? <input type="hidden" name="qr_code_id" value={editingQr.id} /> : null}
                                     <div className="grid gap-2 md:col-span-2">
                                         <Label htmlFor="venue_id">مکان</Label>
                                         <select
                                             id="venue_id"
                                             name="venue_id"
                                             required
-                                            defaultValue={selectedVenueId}
+                                            key={`qr-venue-${editingQr?.id ?? selectedVenueId}`}
+                                            defaultValue={editingQr?.venue?.id ?? selectedVenueId}
                                             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                         >
                                             {formOptions.venues.map((venue) => (
@@ -215,7 +234,8 @@ export default function QrRegistryIndex({ qrCodes, formOptions, selectedCampaign
                                             id="campaign_id"
                                             name="campaign_id"
                                             required
-                                            defaultValue={selectedCampaignId}
+                                            key={`qr-campaign-${editingQr?.id ?? selectedCampaignId}`}
+                                            defaultValue={editingQr?.campaign?.id ?? selectedCampaignId}
                                             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                         >
                                             {formOptions.campaigns.map(
@@ -242,10 +262,8 @@ export default function QrRegistryIndex({ qrCodes, formOptions, selectedCampaign
                                             id="touchpoint_id"
                                             name="touchpoint_id"
                                             required
-                                            defaultValue={
-                                                formOptions.touchpoints[0]
-                                                    ?.id ?? ''
-                                            }
+                                            key={`qr-touchpoint-${editingQr?.id ?? 'new'}`}
+                                            defaultValue={editingQr?.touchpoint?.id ?? formOptions.touchpoints[0]?.id ?? ''}
                                             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                         >
                                             {formOptions.touchpoints.map(
@@ -270,6 +288,8 @@ export default function QrRegistryIndex({ qrCodes, formOptions, selectedCampaign
                                         <Input
                                             id="label"
                                             name="label"
+                                            key={`qr-label-${editingQr?.id ?? 'new'}`}
+                                            defaultValue={editingQr?.label ?? ''}
                                             placeholder="مثلا QR ورودی رواق"
                                         />
                                         <InputError message={errors.label} />
@@ -281,6 +301,8 @@ export default function QrRegistryIndex({ qrCodes, formOptions, selectedCampaign
                                             name="code"
                                             required
                                             dir="ltr"
+                                            key={`qr-code-${editingQr?.id ?? 'new'}`}
+                                            defaultValue={editingQr?.code ?? ''}
                                             placeholder="ep1405-ravaq-01"
                                         />
                                         <InputError message={errors.code} />
@@ -291,7 +313,8 @@ export default function QrRegistryIndex({ qrCodes, formOptions, selectedCampaign
                                             id="status"
                                             name="status"
                                             required
-                                            defaultValue="draft"
+                                            key={`qr-status-${editingQr?.id ?? 'new'}`}
+                                            defaultValue={editingQr?.status ?? 'draft'}
                                             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                         >
                                             <option value="draft">
@@ -308,12 +331,16 @@ export default function QrRegistryIndex({ qrCodes, formOptions, selectedCampaign
                                         id="valid_from"
                                         name="valid_from"
                                         label="شروع"
+                                        key={`qr-from-${editingQr?.id ?? 'new'}`}
+                                        defaultValue={formatDateTimeLocal(editingQr?.validFrom ?? null)}
                                         error={errors.valid_from}
                                     />
                                     <DateTimePickerField
                                         id="valid_until"
                                         name="valid_until"
                                         label="پایان"
+                                        key={`qr-until-${editingQr?.id ?? 'new'}`}
+                                        defaultValue={formatDateTimeLocal(editingQr?.validUntil ?? null)}
                                         error={errors.valid_until}
                                     />
                                     <div className="grid gap-2">
@@ -327,7 +354,8 @@ export default function QrRegistryIndex({ qrCodes, formOptions, selectedCampaign
                                             min={1}
                                             max={1000}
                                             required
-                                            defaultValue={1}
+                                            key={`qr-max-${editingQr?.id ?? 'new'}`}
+                                            defaultValue={editingQr?.maxScansPerUserPerWindow ?? 1}
                                         />
                                         <InputError
                                             message={
@@ -346,7 +374,8 @@ export default function QrRegistryIndex({ qrCodes, formOptions, selectedCampaign
                                             min={30}
                                             max={86400}
                                             required
-                                            defaultValue={300}
+                                            key={`qr-window-${editingQr?.id ?? 'new'}`}
+                                            defaultValue={editingQr?.duplicateWindowSeconds ?? 300}
                                         />
                                         <InputError
                                             message={
@@ -360,7 +389,7 @@ export default function QrRegistryIndex({ qrCodes, formOptions, selectedCampaign
                                             className="w-full"
                                         >
                                             <Plus className="size-4" />
-                                            ثبت QR
+                                            {editingQr ? 'ذخیره ویرایش QR' : 'ثبت QR'}
                                         </Button>
                                     </div>
                                 </>
@@ -497,13 +526,48 @@ export default function QrRegistryIndex({ qrCodes, formOptions, selectedCampaign
                                         </p>
                                     </div>
 
-                                    <Link
-                                        href={`/scan/${qr.code}`}
-                                        className="inline-flex h-8 items-center justify-center gap-2 rounded-md border border-input bg-background px-3 text-xs font-medium hover:bg-accent hover:text-accent-foreground"
-                                    >
-                                        <ExternalLink className="size-4" />
-                                        <span>باز کردن</span>
-                                    </Link>
+                                    <div className="flex items-center justify-end gap-1.5">
+                                        <Link
+                                            href={`/scan/${qr.code}`}
+                                            className="inline-flex h-8 items-center justify-center gap-2 rounded-md border border-input bg-background px-3 text-xs font-medium hover:bg-accent hover:text-accent-foreground"
+                                        >
+                                            <ExternalLink className="size-4" />
+                                            <span>باز کردن</span>
+                                        </Link>
+                                        {canMutate(auth.user.role) ? (
+                                            <>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-8 px-2"
+                                                    title="ویرایش QR"
+                                                    onClick={() => {
+                                                        setEditingQr(qr);
+                                                        document.getElementById('qr-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                                    }}
+                                                >
+                                                    <Pencil className="size-4" />
+                                                </Button>
+                                                <Form
+                                                    action={`/admin/qr-codes/${qr.id}`}
+                                                    method="delete"
+                                                    options={{ preserveScroll: true }}
+                                                    onSubmit={(event) => {
+                                                        if (!window.confirm('این QR حذف شود؟ QR دارای سابقه اسکن حذف مستقیم نمی‌شود.')) {
+                                                            event.preventDefault();
+                                                        }
+                                                    }}
+                                                >
+                                                    {({ processing }) => (
+                                                        <Button type="submit" variant="ghost" size="sm" className="h-8 px-2 text-destructive hover:text-destructive" disabled={processing} title="حذف QR">
+                                                            <Trash2 className="size-4" />
+                                                        </Button>
+                                                    )}
+                                                </Form>
+                                            </>
+                                        ) : null}
+                                    </div>
                                 </article>
                             ))}
                         </div>

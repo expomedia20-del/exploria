@@ -69,6 +69,20 @@ class CampaignOperationsBlueprintService
         });
     }
 
+    /** @param array<string, mixed> $data */
+    public function resetRouteReview(array $data): Campaign
+    {
+        return DB::transaction(function () use ($data): Campaign {
+            $campaign = Campaign::query()->findOrFail($data['campaign_id']);
+            $metadata = is_array($campaign->metadata) ? $campaign->metadata : [];
+
+            unset($metadata['route_reviewed_at'], $metadata['route_reviewed_by_user_id'], $metadata['route_review_notes']);
+            $campaign->update(['metadata' => $metadata]);
+
+            return $campaign;
+        });
+    }
+
     /** @return array{isGlobal: bool, venueIds: Collection<int, string>, assignedVenueIds: Collection<int, string>, hubIds: Collection<int, string>, partnerIds: Collection<int, string>} */
     private function scope(?User $user): array
     {

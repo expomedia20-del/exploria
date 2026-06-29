@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class CampaignRegistryService
 {
@@ -86,19 +87,47 @@ class CampaignRegistryService
     /** @param array<string, mixed> $data */
     public function create(array $data): Campaign
     {
-        return DB::transaction(fn (): Campaign => Campaign::query()->create([
+        $attributes = [
             'venue_id' => $data['venue_id'],
             'code' => Str::lower((string) $data['code']),
             'name' => $data['name'],
             'campaign_type' => Str::lower((string) $data['campaign_type']),
             'status' => $data['status'],
-            'start_at' => $data['start_at'] ?: null,
-            'end_at' => $data['end_at'] ?: null,
+            'start_at' => ($data['start_at'] ?? null) ?: null,
+            'end_at' => ($data['end_at'] ?? null) ?: null,
             'metadata' => array_filter([
                 'created_from' => 'admin_campaign_registry',
                 'blueprint_code' => $data['blueprint_code'] ?? null,
             ]),
-        ]));
+        ];
+
+        return DB::transaction(function () use ($data, $attributes): Campaign {
+            if (! empty($data['campaign_id'])) {
+                $campaign = Campaign::query()->findOrFail($data['campaign_id']);
+                $metadata = array_filter(array_merge($campaign->metadata ?? [], $attributes['metadata']));
+                $campaign->update(array_merge($attributes, ['metadata' => $metadata]));
+
+                return $campaign->refresh();
+            }
+
+            return Campaign::query()->create($attributes);
+        });
+    }
+
+    public function delete(Campaign $campaign): void
+    {
+        $hasDependencies = $campaign->qrCodes()->exists()
+            || $campaign->visits()->exists()
+            || $campaign->missionInstances()->exists()
+            || $campaign->rewardDefinitions()->exists()
+            || $campaign->treasures()->exists()
+            || $campaign->campaignParticipants()->exists();
+
+        if ($hasDependencies) {
+            throw ValidationException::withMessages(['campaign' => 'این کمپین اجزای وابسته دارد و حذف مستقیم آن مجاز نیست. ابتدا اجزای متصل را حذف یا غیرفعال کنید.']);
+        }
+
+        $campaign->delete();
     }
 
     /** @return array<string, mixed> */

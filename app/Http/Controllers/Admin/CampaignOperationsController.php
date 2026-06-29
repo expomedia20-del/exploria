@@ -45,4 +45,15 @@ class CampaignOperationsController extends Controller
 
         return back()->with('success', 'مسیر عملیاتی کمپین بازبینی و تایید شد.');
     }
+
+    public function resetReview(StoreCampaignRouteReviewRequest $request, CampaignOperationsBlueprintService $service): JsonResponse|RedirectResponse
+    {
+        $campaign = $service->resetRouteReview($request->validated());
+
+        if ($request->expectsJson()) {
+            return response()->json(['status' => 'success', 'data' => ['id' => $campaign->id, 'code' => $campaign->code]]);
+        }
+
+        return back()->with('success', 'بازبینی مسیر عملیات حذف شد.');
+    }
 }

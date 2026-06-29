@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreCampaignParticipantRequest;
+use App\Models\CampaignParticipant;
 use App\Services\CampaignRegistryService;
 use App\Services\CampaignParticipantRegistryService;
 use App\Services\MissionRewardBlueprintService;
@@ -44,5 +45,16 @@ class CampaignParticipantController extends Controller
         }
 
         return back()->with('success', 'عضو کمپین ثبت شد.');
+    }
+
+    public function destroy(Request $request, CampaignParticipant $participant, CampaignParticipantRegistryService $service): JsonResponse|RedirectResponse
+    {
+        $service->deleteParticipant($participant);
+
+        if ($request->expectsJson()) {
+            return response()->json(['status' => 'success']);
+        }
+
+        return back()->with('success', 'عضو کمپین حذف شد.');
     }
 }

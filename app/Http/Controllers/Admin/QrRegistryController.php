@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreQrCodeRequest;
+use App\Models\QrCode;
 use App\Services\CampaignRegistryService;
 use App\Services\QrRegistryService;
 use Illuminate\Http\JsonResponse;
@@ -48,5 +49,16 @@ class QrRegistryController extends Controller
         }
 
         return back()->with('success', 'QR جدید ثبت شد.');
+    }
+
+    public function destroy(Request $request, QrCode $qrCode, QrRegistryService $service): JsonResponse|RedirectResponse
+    {
+        $service->delete($qrCode);
+
+        if ($request->expectsJson()) {
+            return response()->json(['status' => 'success']);
+        }
+
+        return back()->with('success', 'QR حذف شد.');
     }
 }

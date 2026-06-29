@@ -103,6 +103,9 @@ Route::get('/admin/qr-codes', [QrRegistryController::class, 'page'])
 Route::post('/admin/qr-codes', [QrRegistryController::class, 'store'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.qr-codes.store');
+Route::delete('/admin/qr-codes/{qrCode}', [QrRegistryController::class, 'destroy'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.qr-codes.destroy');
 
 Route::get('/admin/partners', [PartnerRegistryController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
@@ -125,6 +128,9 @@ Route::get('/admin/campaign-operations', [CampaignOperationsController::class, '
 Route::post('/admin/campaign-operations/review', [CampaignOperationsController::class, 'review'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.campaign-operations.review');
+Route::delete('/admin/campaign-operations/review', [CampaignOperationsController::class, 'resetReview'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.campaign-operations.review.destroy');
 
 Route::get('/admin/campaign-participants', [CampaignParticipantController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
@@ -132,6 +138,9 @@ Route::get('/admin/campaign-participants', [CampaignParticipantController::class
 Route::post('/admin/campaign-participants', [CampaignParticipantController::class, 'store'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.campaign-participants.store');
+Route::delete('/admin/campaign-participants/{participant}', [CampaignParticipantController::class, 'destroy'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.campaign-participants.destroy');
 
 Route::get('/admin/mission-blueprints', [MissionRewardBlueprintController::class, 'page'])
     ->middleware(['auth', 'role:admin'])
@@ -178,6 +187,9 @@ Route::post('/admin/ads/{adRequest}/reject', [AdvertisingController::class, 'rej
 Route::post('/admin/campaigns', [CampaignRegistryController::class, 'store'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.campaigns.store');
+Route::delete('/admin/campaigns/{campaign}', [CampaignRegistryController::class, 'destroy'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.campaigns.destroy');
 
 Route::get('/admin/display-operations', [DisplayOperationsController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator'])

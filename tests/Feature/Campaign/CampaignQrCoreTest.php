@@ -74,6 +74,44 @@ class CampaignQrCoreTest extends TestCase
         ]);
     }
 
+    public function test_operator_can_update_and_delete_empty_campaign(): void
+    {
+        $operator = User::factory()->create(['role' => UserRole::Operator]);
+        $venue = Venue::query()->where('code', 'ecopark-abbasabad')->firstOrFail();
+        $campaign = Campaign::query()->create([
+            'venue_id' => $venue->id,
+            'code' => 'editable-empty-campaign',
+            'name' => 'Editable empty campaign',
+            'campaign_type' => 'pilot_visit',
+            'status' => RecordStatus::Draft,
+        ]);
+
+        $this->actingAs($operator)
+            ->from(route('admin.campaigns.page'))
+            ->post(route('admin.campaigns.store'), [
+                'campaign_id' => $campaign->id,
+                'venue_id' => $venue->id,
+                'code' => 'editable-empty-campaign',
+                'name' => 'Updated empty campaign',
+                'campaign_type' => 'pilot_visit',
+                'status' => RecordStatus::Inactive->value,
+            ])
+            ->assertRedirect(route('admin.campaigns.page'));
+
+        $this->assertDatabaseHas('campaigns', [
+            'id' => $campaign->id,
+            'name' => 'Updated empty campaign',
+            'status' => 'inactive',
+        ]);
+
+        $this->actingAs($operator)
+            ->from(route('admin.campaigns.page'))
+            ->delete(route('admin.campaigns.destroy', ['campaign' => $campaign->id]))
+            ->assertRedirect(route('admin.campaigns.page'));
+
+        $this->assertDatabaseMissing('campaigns', ['id' => $campaign->id]);
+    }
+
     public function test_viewer_can_open_campaign_builder_page(): void
     {
         $this->withoutVite();
@@ -356,6 +394,24 @@ class CampaignQrCoreTest extends TestCase
         $this->assertNotEmpty($campaign->metadata['route_reviewed_at'] ?? null);
 
         $this->actingAs($operator)
+            ->from(route('admin.campaign-operations.page', ['campaign' => $campaign->code]))
+            ->delete(route('admin.campaign-operations.review.destroy'), [
+                'campaign_id' => $campaign->id,
+            ])
+            ->assertRedirect(route('admin.campaign-operations.page', ['campaign' => $campaign->code]));
+
+        $campaign->refresh();
+        $this->assertEmpty($campaign->metadata['route_reviewed_at'] ?? null);
+
+        $this->actingAs($operator)
+            ->from(route('admin.campaign-operations.page', ['campaign' => $campaign->code]))
+            ->post(route('admin.campaign-operations.review'), [
+                'campaign_id' => $campaign->id,
+                'route_notes' => 'route reviewed again',
+            ])
+            ->assertRedirect(route('admin.campaign-operations.page', ['campaign' => $campaign->code]));
+
+        $this->actingAs($operator)
             ->from(route('admin.campaign-builder.page', ['campaign' => $campaign->code]))
             ->post(route('admin.campaign-builder.activate', ['campaign' => $campaign->code]))
             ->assertRedirect(route('admin.campaign-builder.page', ['campaign' => $campaign->code]));
@@ -364,6 +420,54 @@ class CampaignQrCoreTest extends TestCase
         $this->assertSame(RecordStatus::Active, $campaign->status);
         $this->assertNotEmpty($campaign->metadata['activated_from_builder_at'] ?? null);
         $this->assertGreaterThanOrEqual(1, CampaignParticipant::query()->where('campaign_id', $campaign->id)->count());
+    }
+
+    public function test_operator_can_update_and_delete_campaign_participant(): void
+    {
+        $operator = User::factory()->create(['role' => UserRole::Operator]);
+        $campaign = Campaign::query()->where('code', 'ecopark-pilot-1405')->firstOrFail();
+
+        $this->actingAs($operator)
+            ->post(route('admin.campaign-participants.store'), [
+                'campaign_id' => $campaign->id,
+                'participant_type' => 'member_shop',
+                'participation_role' => 'reward_redemption',
+                'status' => RecordStatus::Draft->value,
+                'onboarding_status' => 'invited',
+                'connections_rewards' => 1,
+            ])
+            ->assertRedirect();
+
+        $participant = CampaignParticipant::query()
+            ->where('campaign_id', $campaign->id)
+            ->where('participation_role', 'reward_redemption')
+            ->firstOrFail();
+
+        $this->actingAs($operator)
+            ->from(route('admin.campaign-participants.page', ['campaign' => $campaign->code]))
+            ->post(route('admin.campaign-participants.store'), [
+                'participant_id' => $participant->id,
+                'campaign_id' => $campaign->id,
+                'participant_type' => 'sponsor',
+                'participation_role' => 'route_sponsor',
+                'status' => RecordStatus::Active->value,
+                'onboarding_status' => 'ready',
+                'connections_rewards' => 2,
+                'connections_ads' => 1,
+            ])
+            ->assertRedirect(route('admin.campaign-participants.page', ['campaign' => $campaign->code]));
+
+        $participant->refresh();
+        $this->assertSame('sponsor', $participant->participant_type);
+        $this->assertSame('route_sponsor', $participant->participation_role);
+        $this->assertSame(2, $participant->metadata['connections']['rewards']);
+
+        $this->actingAs($operator)
+            ->from(route('admin.campaign-participants.page', ['campaign' => $campaign->code]))
+            ->delete(route('admin.campaign-participants.destroy', ['participant' => $participant->id]))
+            ->assertRedirect(route('admin.campaign-participants.page', ['campaign' => $campaign->code]));
+
+        $this->assertDatabaseMissing('campaign_participants', ['id' => $participant->id]);
     }
 
     public function test_operator_can_create_qr_for_matching_venue_campaign_and_touchpoint(): void
@@ -396,6 +500,58 @@ class CampaignQrCoreTest extends TestCase
         $this->assertSame(url('/scan/ep1405-main-gate-extra'), $qr->destination_url);
         $this->assertSame(2, $qr->max_scans_per_user_per_window);
         $this->assertSame(600, $qr->duplicate_window_seconds);
+    }
+
+    public function test_operator_can_update_and_delete_unused_qr(): void
+    {
+        $operator = User::factory()->create(['role' => UserRole::Operator]);
+        $venue = Venue::query()->where('code', 'ecopark-abbasabad')->firstOrFail();
+        $campaign = Campaign::query()->where('code', 'ecopark-pilot-1405')->firstOrFail();
+        $touchpoint = Touchpoint::query()->where('code', 'main-gate-qr-stand')->firstOrFail();
+
+        $this->actingAs($operator)
+            ->post(route('admin.qr-codes.store'), [
+                'venue_id' => $venue->id,
+                'campaign_id' => $campaign->id,
+                'touchpoint_id' => $touchpoint->id,
+                'code' => 'editable-unused-qr',
+                'label' => 'Editable QR',
+                'status' => RecordStatus::Draft->value,
+                'max_scans_per_user_per_window' => 1,
+                'duplicate_window_seconds' => 300,
+            ])
+            ->assertRedirect();
+
+        $qr = QrCode::query()->where('code', 'editable-unused-qr')->firstOrFail();
+
+        $this->actingAs($operator)
+            ->from(route('admin.qr-codes.page'))
+            ->post(route('admin.qr-codes.store'), [
+                'qr_code_id' => $qr->id,
+                'venue_id' => $venue->id,
+                'campaign_id' => $campaign->id,
+                'touchpoint_id' => $touchpoint->id,
+                'code' => 'editable-unused-qr',
+                'label' => 'Updated QR',
+                'status' => RecordStatus::Inactive->value,
+                'max_scans_per_user_per_window' => 2,
+                'duplicate_window_seconds' => 600,
+            ])
+            ->assertRedirect(route('admin.qr-codes.page'));
+
+        $this->assertDatabaseHas('qr_codes', [
+            'id' => $qr->id,
+            'label' => 'Updated QR',
+            'status' => 'inactive',
+            'duplicate_window_seconds' => 600,
+        ]);
+
+        $this->actingAs($operator)
+            ->from(route('admin.qr-codes.page'))
+            ->delete(route('admin.qr-codes.destroy', ['qrCode' => $qr->id]))
+            ->assertRedirect(route('admin.qr-codes.page'));
+
+        $this->assertDatabaseMissing('qr_codes', ['id' => $qr->id]);
     }
 
     public function test_qr_creation_rejects_cross_venue_campaign(): void

@@ -17,6 +17,7 @@ class StoreCampaignParticipantRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'participant_id' => ['nullable', 'uuid', 'exists:campaign_participants,id'],
             'campaign_id' => ['required', 'uuid', 'exists:campaigns,id'],
             'hub_id' => ['nullable', 'uuid', 'exists:hubs,id'],
             'partner_account_id' => ['nullable', 'uuid', 'exists:partner_accounts,id'],

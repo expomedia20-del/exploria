@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Admin;
 
 use App\Enums\RecordStatus;
+use App\Models\QrCode;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -17,7 +18,25 @@ class StoreQrCodeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'code' => ['required', 'string', 'max:128', 'alpha_dash:ascii', 'unique:qr_codes,code'],
+            'qr_code_id' => ['nullable', 'uuid', 'exists:qr_codes,id'],
+            'code' => [
+                'required',
+                'string',
+                'max:128',
+                'alpha_dash:ascii',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    $qrCodeId = $this->string('qr_code_id')->toString();
+
+                    $exists = QrCode::query()
+                        ->where('code', $value)
+                        ->when($qrCodeId !== '', fn ($query) => $query->whereKeyNot($qrCodeId))
+                        ->exists();
+
+                    if ($exists) {
+                        $fail('کد QR قبلا استفاده شده است.');
+                    }
+                },
+            ],
             'venue_id' => ['required', 'uuid', 'exists:venues,id'],
             'touchpoint_id' => ['required', 'uuid', 'exists:touchpoints,id'],
             'campaign_id' => ['required', 'uuid', 'exists:campaigns,id'],

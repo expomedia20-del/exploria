@@ -1,5 +1,6 @@
 import { Form, Head, Link, usePage } from '@inertiajs/react';
-import { Building2, Link2, Megaphone, Network, Store } from 'lucide-react';
+import { useState } from 'react';
+import { Building2, Link2, Megaphone, Network, Pencil, Store, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import InputError from '@/components/input-error';
 
@@ -180,6 +181,7 @@ export default function CampaignParticipantsIndex({
 }: Props) {
     const { flash, auth } = usePage<SharedProps>().props;
     const canMutate = auth.user.role === 'admin' || auth.user.role === 'operator';
+    const [editingParticipant, setEditingParticipant] = useState<CampaignParticipant | null>(null);
 
     return (
         <>
@@ -266,18 +268,19 @@ export default function CampaignParticipantsIndex({
                 ) : null}
 
                 {selectedCampaign && canMutate ? (
-                    <section className="exploria-panel">
+                    <section id="participant-form" className="exploria-panel">
                         <div className="border-b border-border/70 px-4 py-3 dark:border-sidebar-border">
-                            <h2 className="font-semibold">ثبت عضو، فروشگاه یا اسپانسر مرحله ۴</h2>
+                            <h2 className="font-semibold">{editingParticipant ? 'ویرایش عضو، فروشگاه یا اسپانسر مرحله ۴' : 'ثبت عضو، فروشگاه یا اسپانسر مرحله ۴'}</h2>
                             <p className="mt-1 text-sm text-muted-foreground">عضو مسئول پاداش، فروشگاه، اسپانسر یا زیرمجموعه هاب را به همین کمپین وصل کنید.</p>
                         </div>
                         <Form action="/admin/campaign-participants" method="post" options={{ preserveScroll: true }} className="grid gap-4 p-4 md:grid-cols-6">
                             {({ processing, errors }) => (
                                 <>
+                                    {editingParticipant ? <input type="hidden" name="participant_id" value={editingParticipant.id} /> : null}
                                     <input type="hidden" name="campaign_id" value={selectedCampaign.id} />
                                     <div className="grid gap-1.5 md:col-span-2">
                                         <label htmlFor="partner_account_id" className="text-xs font-medium">شریک / فروشگاه</label>
-                                        <select id="partner_account_id" name="partner_account_id" className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                        <select key={`participant-partner-${editingParticipant?.id ?? 'new'}`} id="partner_account_id" name="partner_account_id" defaultValue={editingParticipant?.partner?.id ?? ''} className="h-9 rounded-md border border-input bg-background px-3 text-sm">
                                             <option value="">بدون شریک مشخص</option>
                                             {formOptions.partners.map((partner) => <option key={partner.id} value={partner.id}>{partner.name}</option>)}
                                         </select>
@@ -285,7 +288,7 @@ export default function CampaignParticipantsIndex({
                                     </div>
                                     <div className="grid gap-1.5">
                                         <label htmlFor="hub_id" className="text-xs font-medium">هاب</label>
-                                        <select id="hub_id" name="hub_id" className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                        <select key={`participant-hub-${editingParticipant?.id ?? 'new'}`} id="hub_id" name="hub_id" defaultValue={editingParticipant?.hub?.id ?? ''} className="h-9 rounded-md border border-input bg-background px-3 text-sm">
                                             <option value="">بدون هاب</option>
                                             {formOptions.hubs.map((hub) => <option key={hub.id} value={hub.id}>{hub.name}</option>)}
                                         </select>
@@ -293,7 +296,7 @@ export default function CampaignParticipantsIndex({
                                     </div>
                                     <div className="grid gap-1.5">
                                         <label htmlFor="participant_type" className="text-xs font-medium">نوع عضو</label>
-                                        <select id="participant_type" name="participant_type" defaultValue="member_shop" className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                        <select key={`participant-type-${editingParticipant?.id ?? 'new'}`} id="participant_type" name="participant_type" defaultValue={editingParticipant?.participantType ?? 'member_shop'} className="h-9 rounded-md border border-input bg-background px-3 text-sm">
                                             <option value="member_shop">واحد عضو</option>
                                             <option value="sponsor">اسپانسر</option>
                                             <option value="external_brand">برند بیرونی</option>
@@ -302,7 +305,7 @@ export default function CampaignParticipantsIndex({
                                     </div>
                                     <div className="grid gap-1.5">
                                         <label htmlFor="participation_role" className="text-xs font-medium">نقش</label>
-                                        <select id="participation_role" name="participation_role" defaultValue="reward_redemption" className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                        <select key={`participant-role-${editingParticipant?.id ?? 'new'}`} id="participation_role" name="participation_role" defaultValue={editingParticipant?.participationRole ?? 'reward_redemption'} className="h-9 rounded-md border border-input bg-background px-3 text-sm">
                                             <option value="reward_redemption">تحویل پاداش</option>
                                             <option value="commercial_activation">فعال‌سازی تجاری</option>
                                             <option value="route_sponsor">اسپانسر مسیر</option>
@@ -312,7 +315,7 @@ export default function CampaignParticipantsIndex({
                                     </div>
                                     <div className="grid gap-1.5">
                                         <label htmlFor="participant_status" className="text-xs font-medium">وضعیت</label>
-                                        <select id="participant_status" name="status" defaultValue="draft" className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                        <select key={`participant-status-${editingParticipant?.id ?? 'new'}`} id="participant_status" name="status" defaultValue={editingParticipant?.status ?? 'draft'} className="h-9 rounded-md border border-input bg-background px-3 text-sm">
                                             <option value="draft">پیش‌نویس</option>
                                             <option value="active">فعال</option>
                                             <option value="inactive">غیرفعال</option>
@@ -320,7 +323,7 @@ export default function CampaignParticipantsIndex({
                                     </div>
                                     <div className="grid gap-1.5">
                                         <label htmlFor="onboarding_status" className="text-xs font-medium">آماده‌سازی</label>
-                                        <select id="onboarding_status" name="onboarding_status" defaultValue="invited" className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                        <select key={`participant-onboarding-${editingParticipant?.id ?? 'new'}`} id="onboarding_status" name="onboarding_status" defaultValue={editingParticipant?.onboardingStatus ?? 'invited'} className="h-9 rounded-md border border-input bg-background px-3 text-sm">
                                             <option value="invited">دعوت شده</option>
                                             <option value="ready">آماده اجرا</option>
                                             <option value="pending_review">در انتظار تایید</option>
@@ -329,24 +332,24 @@ export default function CampaignParticipantsIndex({
                                     </div>
                                     <div className="grid gap-1.5">
                                         <label htmlFor="connections_rewards" className="text-xs font-medium">اتصال پاداش</label>
-                                        <input id="connections_rewards" name="connections_rewards" type="number" min="0" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                        <input key={`participant-rewards-${editingParticipant?.id ?? 'new'}`} id="connections_rewards" name="connections_rewards" type="number" min="0" defaultValue={editingParticipant?.connections.rewards ?? ''} className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
                                     </div>
                                     <div className="grid gap-1.5">
                                         <label htmlFor="connections_missions" className="text-xs font-medium">اتصال مأموریت</label>
-                                        <input id="connections_missions" name="connections_missions" type="number" min="0" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                        <input key={`participant-missions-${editingParticipant?.id ?? 'new'}`} id="connections_missions" name="connections_missions" type="number" min="0" defaultValue={editingParticipant?.connections.missions ?? ''} className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
                                     </div>
                                     <div className="grid gap-1.5">
                                         <label htmlFor="connections_qr_codes" className="text-xs font-medium">اتصال QR</label>
-                                        <input id="connections_qr_codes" name="connections_qr_codes" type="number" min="0" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                        <input key={`participant-qr-${editingParticipant?.id ?? 'new'}`} id="connections_qr_codes" name="connections_qr_codes" type="number" min="0" defaultValue={editingParticipant?.connections.qrCodes ?? ''} className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
                                     </div>
                                     <div className="grid gap-1.5">
                                         <label htmlFor="connections_ads" className="text-xs font-medium">اتصال تبلیغ</label>
-                                        <input id="connections_ads" name="connections_ads" type="number" min="0" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                        <input key={`participant-ads-${editingParticipant?.id ?? 'new'}`} id="connections_ads" name="connections_ads" type="number" min="0" defaultValue={editingParticipant?.connections.ads ?? ''} className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
                                     </div>
                                     <div className="flex items-end md:col-span-2">
                                         <Button disabled={processing} className="w-full">
                                             <Store className="size-4" />
-                                            ثبت عضو کمپین
+                                            {editingParticipant ? 'ذخیره ویرایش عضو' : 'ثبت عضو کمپین'}
                                         </Button>
                                     </div>
                                 </>
@@ -452,6 +455,39 @@ export default function CampaignParticipantsIndex({
                                     <div className="min-w-0 text-xs">
                                         <p className="truncate">{participant.partner?.contactName ?? 'بدون مسئول'}</p>
                                         <p className="mt-1 truncate text-muted-foreground" dir="ltr">{participant.partner?.contactMobile}</p>
+                                        {canMutate ? (
+                                            <div className="mt-2 flex items-center gap-1.5">
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-8 px-2"
+                                                    title="ویرایش عضو"
+                                                    onClick={() => {
+                                                        setEditingParticipant(participant);
+                                                        document.getElementById('participant-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                                    }}
+                                                >
+                                                    <Pencil className="size-4" />
+                                                </Button>
+                                                <Form
+                                                    action={`/admin/campaign-participants/${participant.id}`}
+                                                    method="delete"
+                                                    options={{ preserveScroll: true }}
+                                                    onSubmit={(event) => {
+                                                        if (!window.confirm('این عضو از کمپین حذف شود؟')) {
+                                                            event.preventDefault();
+                                                        }
+                                                    }}
+                                                >
+                                                    {({ processing }) => (
+                                                        <Button type="submit" variant="ghost" size="sm" className="h-8 px-2 text-destructive hover:text-destructive" disabled={processing} title="حذف عضو">
+                                                            <Trash2 className="size-4" />
+                                                        </Button>
+                                                    )}
+                                                </Form>
+                                            </div>
+                                        ) : null}
                                     </div>
                                 </article>
                             ))}
