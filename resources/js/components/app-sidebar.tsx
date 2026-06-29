@@ -63,7 +63,6 @@ const mainNavItems: RoleAwareNavItem[] = [
         title: 'مدیریت QR',
         href: '/admin/qr-codes',
         icon: QrCode,
-    Route,
         roles: ['admin', 'operator', 'viewer'],
     },
     {
