@@ -1,6 +1,7 @@
-import { Head, Link } from '@inertiajs/react';
+import { Form, Head, Link, usePage } from '@inertiajs/react';
 import { Building2, Link2, Megaphone, Network, Store } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import InputError from '@/components/input-error';
 
 type SelectedCampaign = {
     id: string;
@@ -103,6 +104,15 @@ type Props = {
     hubGroups: HubGroup[];
     selectedBlueprint: SelectedBlueprint | null;
     selectedCampaign: SelectedCampaign | null;
+    formOptions: {
+        hubs: RegistryEntity[];
+        partners: (RegistryEntity & { partnerType: string })[];
+    };
+};
+
+type SharedProps = {
+    flash?: { success?: string };
+    auth: { user: { role?: string } };
 };
 
 const statusLabels: Record<string, string> = {
@@ -166,7 +176,10 @@ export default function CampaignParticipantsIndex({
     hubGroups,
     selectedBlueprint,
     selectedCampaign,
+    formOptions,
 }: Props) {
+    const { flash, auth } = usePage<SharedProps>().props;
+    const canMutate = auth.user.role === 'admin' || auth.user.role === 'operator';
 
     return (
         <>
@@ -243,6 +256,102 @@ export default function CampaignParticipantsIndex({
                                 <Link href="/admin/mission-blueprints">بازگشت به گنجینه</Link>
                             </Button>
                         </div>
+                    </section>
+                ) : null}
+
+                {flash?.success ? (
+                    <section className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-100">
+                        {flash.success}
+                    </section>
+                ) : null}
+
+                {selectedCampaign && canMutate ? (
+                    <section className="exploria-panel">
+                        <div className="border-b border-border/70 px-4 py-3 dark:border-sidebar-border">
+                            <h2 className="font-semibold">ثبت عضو، فروشگاه یا اسپانسر مرحله ۴</h2>
+                            <p className="mt-1 text-sm text-muted-foreground">عضو مسئول پاداش، فروشگاه، اسپانسر یا زیرمجموعه هاب را به همین کمپین وصل کنید.</p>
+                        </div>
+                        <Form action="/admin/campaign-participants" method="post" options={{ preserveScroll: true }} className="grid gap-4 p-4 md:grid-cols-6">
+                            {({ processing, errors }) => (
+                                <>
+                                    <input type="hidden" name="campaign_id" value={selectedCampaign.id} />
+                                    <div className="grid gap-1.5 md:col-span-2">
+                                        <label htmlFor="partner_account_id" className="text-xs font-medium">شریک / فروشگاه</label>
+                                        <select id="partner_account_id" name="partner_account_id" className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                            <option value="">بدون شریک مشخص</option>
+                                            {formOptions.partners.map((partner) => <option key={partner.id} value={partner.id}>{partner.name}</option>)}
+                                        </select>
+                                        <InputError message={errors.partner_account_id} />
+                                    </div>
+                                    <div className="grid gap-1.5">
+                                        <label htmlFor="hub_id" className="text-xs font-medium">هاب</label>
+                                        <select id="hub_id" name="hub_id" className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                            <option value="">بدون هاب</option>
+                                            {formOptions.hubs.map((hub) => <option key={hub.id} value={hub.id}>{hub.name}</option>)}
+                                        </select>
+                                        <InputError message={errors.hub_id} />
+                                    </div>
+                                    <div className="grid gap-1.5">
+                                        <label htmlFor="participant_type" className="text-xs font-medium">نوع عضو</label>
+                                        <select id="participant_type" name="participant_type" defaultValue="member_shop" className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                            <option value="member_shop">واحد عضو</option>
+                                            <option value="sponsor">اسپانسر</option>
+                                            <option value="external_brand">برند بیرونی</option>
+                                            <option value="hub_subunit">زیرمجموعه هاب</option>
+                                        </select>
+                                    </div>
+                                    <div className="grid gap-1.5">
+                                        <label htmlFor="participation_role" className="text-xs font-medium">نقش</label>
+                                        <select id="participation_role" name="participation_role" defaultValue="reward_redemption" className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                            <option value="reward_redemption">تحویل پاداش</option>
+                                            <option value="commercial_activation">فعال‌سازی تجاری</option>
+                                            <option value="route_sponsor">اسپانسر مسیر</option>
+                                            <option value="content_partner">محتوا و تجربه</option>
+                                            <option value="display_partner">نمایشگر و تبلیغات</option>
+                                        </select>
+                                    </div>
+                                    <div className="grid gap-1.5">
+                                        <label htmlFor="participant_status" className="text-xs font-medium">وضعیت</label>
+                                        <select id="participant_status" name="status" defaultValue="draft" className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                            <option value="draft">پیش‌نویس</option>
+                                            <option value="active">فعال</option>
+                                            <option value="inactive">غیرفعال</option>
+                                        </select>
+                                    </div>
+                                    <div className="grid gap-1.5">
+                                        <label htmlFor="onboarding_status" className="text-xs font-medium">آماده‌سازی</label>
+                                        <select id="onboarding_status" name="onboarding_status" defaultValue="invited" className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                            <option value="invited">دعوت شده</option>
+                                            <option value="ready">آماده اجرا</option>
+                                            <option value="pending_review">در انتظار تایید</option>
+                                            <option value="paused">متوقف</option>
+                                        </select>
+                                    </div>
+                                    <div className="grid gap-1.5">
+                                        <label htmlFor="connections_rewards" className="text-xs font-medium">اتصال پاداش</label>
+                                        <input id="connections_rewards" name="connections_rewards" type="number" min="0" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                    </div>
+                                    <div className="grid gap-1.5">
+                                        <label htmlFor="connections_missions" className="text-xs font-medium">اتصال مأموریت</label>
+                                        <input id="connections_missions" name="connections_missions" type="number" min="0" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                    </div>
+                                    <div className="grid gap-1.5">
+                                        <label htmlFor="connections_qr_codes" className="text-xs font-medium">اتصال QR</label>
+                                        <input id="connections_qr_codes" name="connections_qr_codes" type="number" min="0" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                    </div>
+                                    <div className="grid gap-1.5">
+                                        <label htmlFor="connections_ads" className="text-xs font-medium">اتصال تبلیغ</label>
+                                        <input id="connections_ads" name="connections_ads" type="number" min="0" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                    </div>
+                                    <div className="flex items-end md:col-span-2">
+                                        <Button disabled={processing} className="w-full">
+                                            <Store className="size-4" />
+                                            ثبت عضو کمپین
+                                        </Button>
+                                    </div>
+                                </>
+                            )}
+                        </Form>
                     </section>
                 ) : null}
 

@@ -5,6 +5,7 @@ namespace Tests\Feature\Campaign;
 use App\Enums\RecordStatus;
 use App\Enums\UserRole;
 use App\Models\Campaign;
+use App\Models\CampaignParticipant;
 use App\Models\MissionInstance;
 use App\Models\MissionTemplate;
 use App\Models\QrCode;
@@ -111,6 +112,18 @@ class CampaignQrCoreTest extends TestCase
         $this->actingAs($viewer)
             ->post(route('admin.treasures.store'), [])
             ->assertForbidden();
+
+        $this->actingAs($viewer)
+            ->post(route('admin.campaign-participants.store'), [])
+            ->assertForbidden();
+
+        $this->actingAs($viewer)
+            ->post(route('admin.campaign-operations.review'), [])
+            ->assertForbidden();
+
+        $this->actingAs($viewer)
+            ->post(route('admin.campaign-builder.activate', ['campaign' => 'ecopark-pilot-1405']))
+            ->assertForbidden();
     }
 
     public function test_operator_can_create_campaign_components(): void
@@ -183,6 +196,55 @@ class CampaignQrCoreTest extends TestCase
 
         $this->assertSame(1, RewardDefinition::query()->where('code', 'builder-test-reward')->count());
         $this->assertSame(1, Treasure::query()->where('code', 'builder-test-treasure')->count());
+    }
+
+    public function test_operator_can_complete_campaign_participants_route_and_launch_review(): void
+    {
+        $operator = User::factory()->create(['role' => UserRole::Operator]);
+        $campaign = Campaign::query()->where('code', 'ecopark-pilot-1405')->firstOrFail();
+        $campaign->update(['status' => RecordStatus::Draft, 'metadata' => ['blueprint_code' => 'family-route']]);
+
+        $this->actingAs($operator)
+            ->from(route('admin.campaign-participants.page', ['campaign' => $campaign->code]))
+            ->post(route('admin.campaign-participants.store'), [
+                'campaign_id' => $campaign->id,
+                'participant_type' => 'member_shop',
+                'participation_role' => 'reward_redemption',
+                'status' => RecordStatus::Active->value,
+                'onboarding_status' => 'ready',
+                'connections_rewards' => 1,
+                'connections_missions' => 1,
+                'connections_qr_codes' => 1,
+            ])
+            ->assertRedirect(route('admin.campaign-participants.page', ['campaign' => $campaign->code]));
+
+        $this->assertDatabaseHas('campaign_participants', [
+            'campaign_id' => $campaign->id,
+            'participant_type' => 'member_shop',
+            'participation_role' => 'reward_redemption',
+            'onboarding_status' => 'ready',
+        ]);
+
+        $this->actingAs($operator)
+            ->from(route('admin.campaign-operations.page', ['campaign' => $campaign->code]))
+            ->post(route('admin.campaign-operations.review'), [
+                'campaign_id' => $campaign->id,
+                'route_notes' => 'مسیر تست کارگاه بررسی شد.',
+            ])
+            ->assertRedirect(route('admin.campaign-operations.page', ['campaign' => $campaign->code]));
+
+        $campaign->refresh();
+        $this->assertNotEmpty($campaign->metadata['route_reviewed_at'] ?? null);
+
+        $this->actingAs($operator)
+            ->from(route('admin.campaign-builder.page', ['campaign' => $campaign->code]))
+            ->post(route('admin.campaign-builder.activate', ['campaign' => $campaign->code]))
+            ->assertRedirect(route('admin.campaign-builder.page', ['campaign' => $campaign->code]));
+
+        $campaign->refresh();
+        $this->assertSame(RecordStatus::Active, $campaign->status);
+        $this->assertNotEmpty($campaign->metadata['activated_from_builder_at'] ?? null);
+        $this->assertGreaterThanOrEqual(1, CampaignParticipant::query()->where('campaign_id', $campaign->id)->count());
     }
 
     public function test_operator_can_create_qr_for_matching_venue_campaign_and_touchpoint(): void

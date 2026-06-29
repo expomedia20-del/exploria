@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Form, Head, Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import {
     Gift,
@@ -82,6 +82,8 @@ type CampaignBlueprint = {
     name: string;
     campaignType: string;
     status: string;
+    routeReviewedAt: string | null;
+    routeReviewNotes: string | null;
     venue: Entity | null;
     stats: {
         participants: number;
@@ -153,6 +155,11 @@ type Props = {
     campaigns: CampaignBlueprint[];
     selectedBlueprint: SelectedBlueprint | null;
     selectedCampaign: SelectedCampaign | null;
+};
+
+type SharedProps = {
+    flash?: { success?: string };
+    auth: { user: { role?: string } };
 };
 
 const roleLabels: Record<string, string> = {
@@ -553,6 +560,9 @@ function blueprintFlowUrl(path: string, blueprintCode: string, action: string, c
 
 export default function CampaignOperationsIndex({ stats, campaigns, selectedBlueprint, selectedCampaign }: Props) {
     const [selectedOperation, setSelectedOperation] = useState<OperationSelection | null>(null);
+    const { flash, auth } = usePage<SharedProps>().props;
+    const canMutate = auth.user.role === 'admin' || auth.user.role === 'operator';
+    const activeCampaign = selectedCampaign ? campaigns.find((campaign) => campaign.id === selectedCampaign.id) : null;
 
     return (
         <>
@@ -629,6 +639,64 @@ export default function CampaignOperationsIndex({ stats, campaigns, selectedBlue
                             <Button asChild variant="ghost" size="sm">
                                 <Link href="/admin/mission-blueprints">بازگشت به گنجینه</Link>
                             </Button>
+                        </div>
+                    </section>
+                ) : null}
+
+                {flash?.success ? (
+                    <section className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-100">
+                        {flash.success}
+                    </section>
+                ) : null}
+
+                {selectedCampaign && activeCampaign ? (
+                    <section className="exploria-panel">
+                        <div className="border-b border-border/70 px-4 py-3 dark:border-sidebar-border">
+                            <h2 className="font-semibold">تایید مرحله ۵: مسیر عملیاتی کمپین</h2>
+                            <p className="mt-1 text-sm text-muted-foreground">بعد از بررسی اتصال QR، مأموریت، مشوق، اعضا و نمایشگرها، مسیر همین کمپین را تایید کنید.</p>
+                        </div>
+                        <div className="grid gap-4 p-4 lg:grid-cols-[1fr_0.8fr]">
+                            <div className="grid gap-3 text-sm sm:grid-cols-5">
+                                {[
+                                    ['QR', activeCampaign.stats.qrCodes],
+                                    ['مأموریت', activeCampaign.stats.missions],
+                                    ['مشوق', activeCampaign.stats.rewards + activeCampaign.stats.treasures],
+                                    ['عضو', activeCampaign.stats.participants],
+                                    ['نمایش/تبلیغ', activeCampaign.stats.adRequests + activeCampaign.stats.displayDevices],
+                                ].map(([labelText, value]) => (
+                                    <div key={String(labelText)} className="rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm">
+                                        <p className="text-xs text-muted-foreground">{labelText}</p>
+                                        <p className="mt-1 font-semibold">{fa(Number(value))}</p>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm">
+                                <p className="text-sm font-semibold">{activeCampaign.routeReviewedAt ? 'مسیر تایید شده است' : 'مسیر هنوز تایید نشده است'}</p>
+                                {activeCampaign.routeReviewedAt ? (
+                                    <p className="mt-1 text-xs text-muted-foreground">
+                                        زمان تایید: {new Intl.DateTimeFormat('fa-IR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(activeCampaign.routeReviewedAt))}
+                                    </p>
+                                ) : null}
+                                {canMutate ? (
+                                    <Form action="/admin/campaign-operations/review" method="post" options={{ preserveScroll: true }} className="mt-3 grid gap-3">
+                                        {({ processing }) => (
+                                            <>
+                                                <input type="hidden" name="campaign_id" value={selectedCampaign.id} />
+                                                <textarea
+                                                    name="route_notes"
+                                                    defaultValue={activeCampaign.routeReviewNotes ?? ''}
+                                                    placeholder="یادداشت کوتاه بازبینی مسیر"
+                                                    className="min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                                />
+                                                <Button disabled={processing}>
+                                                    <Route className="size-4" />
+                                                    تایید مسیر عملیاتی
+                                                </Button>
+                                            </>
+                                        )}
+                                    </Form>
+                                ) : null}
+                            </div>
                         </div>
                     </section>
                 ) : null}

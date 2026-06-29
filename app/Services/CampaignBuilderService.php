@@ -14,6 +14,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class CampaignBuilderService
 {
@@ -30,9 +31,37 @@ class CampaignBuilderService
             'campaigns' => $campaigns->map(fn (Campaign $campaign): array => $this->serializeCampaign($campaign))->values(),
             'selectedCampaign' => $selectedCampaign ? $this->serializeCampaign($selectedCampaign) : null,
             'counts' => $counts,
+            'readiness' => $this->readiness($selectedCampaign, $counts),
             'steps' => $this->steps($selectedCampaign, $counts),
             'roleTracks' => $this->roleTracks($selectedCampaign, $counts),
         ];
+    }
+
+    public function activate(?User $user, string $campaignCode): Campaign
+    {
+        $campaign = $this->selectedCampaign($this->campaigns($user), $campaignCode);
+
+        if (! $campaign) {
+            throw ValidationException::withMessages(['campaign' => 'کمپین انتخاب‌شده در دسترس نیست.']);
+        }
+
+        $readiness = $this->readiness($campaign, $this->counts($campaign));
+
+        if (! $readiness['canActivate']) {
+            throw ValidationException::withMessages(['campaign' => 'کمپین هنوز برای اجرا کامل نیست. موارد باقی‌مانده را در چک نهایی ببینید.']);
+        }
+
+        $metadata = is_array($campaign->metadata) ? $campaign->metadata : [];
+        $campaign->update([
+            'status' => 'active',
+            'metadata' => [
+                ...$metadata,
+                'activated_from_builder_at' => now()->toIso8601String(),
+                'activated_by_user_id' => $user?->id,
+            ],
+        ]);
+
+        return $campaign;
     }
 
     /** @return Collection<int, Campaign> */
@@ -97,6 +126,7 @@ class CampaignBuilderService
             'name' => $campaign->name,
             'campaignType' => $campaign->campaign_type,
             'blueprintCode' => $campaign->metadata['blueprint_code'] ?? null,
+            'routeReviewedAt' => $campaign->metadata['route_reviewed_at'] ?? null,
             'status' => $campaign->status->value,
             'startAt' => $campaign->start_at?->toIso8601String(),
             'endAt' => $campaign->end_at?->toIso8601String(),
@@ -119,8 +149,8 @@ class CampaignBuilderService
             $this->step('qr', 'نقاط ورود و QR', 'ادمین / اپراتور / مدیر مکان', $counts['qrCodes'] > 0, 'حداقل یک QR معتبر برای شروع مسیر کاربر تعریف شود.', '/admin/qr-codes'.($campaignCode ? '?campaign='.$campaignCode : '')),
             $this->step('components', 'مأموریت، امتیاز، پاداش و گنج', 'ادمین / اپراتور / فروشگاه', $counts['missions'] > 0 && ($counts['rewards'] > 0 || $counts['treasures'] > 0), 'مأموریت‌ها، مشوق‌ها، هزینه امتیازی و شرایط تحویل تکمیل شوند.', $this->contextUrl('/admin/missions', $campaignCode, $blueprintCode, 'components')),
             $this->step('partners', 'اعضا، فروشگاه‌ها و اسپانسرها', 'فروشگاه / شریک / ادمین', $counts['participants'] > 0, 'مالک پاداش، نقش فروشگاه‌ها، اسپانسرها و وضعیت آماده‌سازی مشخص شود.', $this->contextUrl('/admin/campaign-participants', $campaignCode, $blueprintCode, 'participants')),
-            $this->step('route', 'مسیر عملیاتی کمپین', 'ادمین / مدیر مکان / مدیر هاب', $counts['qrCodes'] > 0 && $counts['missions'] > 0 && $counts['participants'] > 0, 'ارتباط QR، مأموریت، مکان، فروشگاه، نمایشگر و تبلیغات در یک مسیر قابل اجرا بررسی شود.', $this->contextUrl('/admin/campaign-operations', $campaignCode, $blueprintCode, 'route')),
-            $this->step('review', 'بررسی نهایی و آماده اجرا', 'ادمین', $campaign?->status->value === 'active' && $counts['qrCodes'] > 0 && $counts['missions'] > 0 && $counts['participants'] > 0, 'قبل از فعال‌سازی عمومی، نقص‌ها و مسئولیت‌های باقی‌مانده را مرور کنید.', $this->contextUrl('/admin/campaign-builder', $campaignCode, $blueprintCode, 'review')),
+            $this->step('route', 'مسیر عملیاتی کمپین', 'ادمین / مدیر مکان / مدیر هاب', $counts['qrCodes'] > 0 && $counts['missions'] > 0 && $counts['participants'] > 0 && (bool) ($campaign?->metadata['route_reviewed_at'] ?? false), 'ارتباط QR، مأموریت، مکان، فروشگاه، نمایشگر و تبلیغات در یک مسیر قابل اجرا بررسی و تایید شود.', $this->contextUrl('/admin/campaign-operations', $campaignCode, $blueprintCode, 'route')),
+            $this->step('review', 'بررسی نهایی و آماده اجرا', 'ادمین', $campaign?->status->value === 'active' && $this->readiness($campaign, $counts)['canActivate'], 'قبل از فعال‌سازی عمومی، نقص‌ها و مسئولیت‌های باقی‌مانده را مرور کنید و کمپین را فعال کنید.', $this->contextUrl('/admin/campaign-builder', $campaignCode, $blueprintCode, 'review')),
         ];
     }
 
@@ -180,5 +210,24 @@ class CampaignBuilderService
         ]);
 
         return $path.($params === [] ? '' : '?'.http_build_query($params));
+    }
+
+    /** @param array<string, int> $counts @return array<string, mixed> */
+    private function readiness(?Campaign $campaign, array $counts): array
+    {
+        $checks = [
+            ['key' => 'campaign', 'label' => 'اطلاعات پایه کمپین ثبت شده باشد.', 'complete' => $campaign !== null],
+            ['key' => 'qr', 'label' => 'حداقل یک QR ورودی به کمپین وصل باشد.', 'complete' => $counts['qrCodes'] > 0],
+            ['key' => 'missions', 'label' => 'حداقل یک مأموریت برای کمپین ثبت شده باشد.', 'complete' => $counts['missions'] > 0],
+            ['key' => 'incentives', 'label' => 'حداقل یک پاداش یا گنج برای کمپین ثبت شده باشد.', 'complete' => $counts['rewards'] > 0 || $counts['treasures'] > 0],
+            ['key' => 'participants', 'label' => 'حداقل یک عضو، فروشگاه یا شریک مسئول ثبت شده باشد.', 'complete' => $counts['participants'] > 0],
+            ['key' => 'route', 'label' => 'مسیر عملیاتی کمپین در نقشه عملیات تایید شده باشد.', 'complete' => (bool) ($campaign?->metadata['route_reviewed_at'] ?? false)],
+        ];
+
+        return [
+            'checks' => $checks,
+            'canActivate' => collect($checks)->every(fn (array $check): bool => (bool) $check['complete']),
+            'routeReviewedAt' => $campaign?->metadata['route_reviewed_at'] ?? null,
+        ];
     }
 }

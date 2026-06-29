@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Form, Head, Link, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
     BadgeCheck,
@@ -59,8 +59,21 @@ type Props = {
     campaigns: CampaignSummary[];
     selectedCampaign: CampaignSummary | null;
     counts: Counts;
+    readiness: Readiness;
     steps: BuilderStep[];
     roleTracks: RoleTrack[];
+};
+
+type Readiness = {
+    checks: { key: string; label: string; complete: boolean }[];
+    canActivate: boolean;
+    routeReviewedAt: string | null;
+};
+
+type SharedProps = {
+    flash?: { success?: string };
+    errors?: Record<string, string>;
+    auth: { user: { role?: string } };
 };
 
 type MetricItem = [string, number, typeof Megaphone];
@@ -109,9 +122,11 @@ export default function CampaignBuilderIndex({
     campaigns,
     selectedCampaign,
     counts,
+    readiness,
     steps,
     roleTracks,
 }: Props) {
+    const { flash, errors, auth } = usePage<SharedProps>().props;
     const completedSteps = steps.filter((step) => step.complete).length;
     const progress = steps.length > 0 ? Math.round((completedSteps / steps.length) * 100) : 0;
     const selectedCode = selectedCampaign?.code ?? '';
@@ -121,6 +136,8 @@ export default function CampaignBuilderIndex({
         ['پاداش و گنج', counts.rewards + counts.treasures, BadgeCheck],
         ['عضو و شریک', counts.participants, Store],
     ];
+
+    const canMutate = auth.user.role === 'admin' || auth.user.role === 'operator';
 
     return (
         <>
@@ -309,14 +326,50 @@ export default function CampaignBuilderIndex({
                     </div>
                 </section>
 
+                {flash?.success ? (
+                    <section className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-100">
+                        {flash.success}
+                    </section>
+                ) : null}
+                {errors?.campaign ? (
+                    <section className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-100">
+                        {errors.campaign}
+                    </section>
+                ) : null}
+
                 <section className="rounded-lg border border-sidebar-border/70 bg-background p-4 text-sm dark:border-sidebar-border">
                     <div className="flex items-center gap-2">
                         <Building2 className="size-4 text-muted-foreground" />
-                        <h2 className="font-semibold">چک نهایی قبل از اجرا</h2>
+                        <h2 className="font-semibold">چک نهایی و فعال‌سازی مرحله ۶</h2>
                     </div>
-                    <p className="mt-2 leading-6 text-muted-foreground">
-                        کمپین زمانی آماده اجراست که QR، مأموریت، پاداش یا گنج، اعضای مسئول و مسیر عملیاتی برای همان کد کمپین قابل مشاهده باشند. اگر یکی از مراحل زرد است، همان مرحله را از دکمه «ادامه تکمیل» باز کنید.
-                    </p>
+                    <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_auto]">
+                        <div className="grid gap-2">
+                            {readiness.checks.map((check) => (
+                                <div key={check.key} className="flex items-center gap-2 rounded-md bg-muted/45 px-3 py-2">
+                                    {check.complete ? <CheckCircle2 className="size-4 text-emerald-600" /> : <CircleAlert className="size-4 text-amber-600" />}
+                                    <span className={check.complete ? 'text-foreground' : 'text-muted-foreground'}>{check.label}</span>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="flex min-w-[220px] flex-col justify-between gap-3 rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm">
+                            <div>
+                                <p className="text-sm font-semibold">{readiness.canActivate ? 'آماده فعال‌سازی' : 'هنوز ناقص است'}</p>
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                    وضعیت فعلی: {selectedCampaign?.status === 'active' ? 'فعال' : 'پیش از اجرا'}
+                                </p>
+                            </div>
+                            {selectedCampaign && canMutate ? (
+                                <Form action={`/admin/campaign-builder/${selectedCampaign.code}/activate`} method="post" options={{ preserveScroll: true }}>
+                                    {({ processing }) => (
+                                        <Button disabled={processing || !readiness.canActivate || selectedCampaign.status === 'active'} className="w-full">
+                                            <ClipboardCheck className="size-4" />
+                                            فعال‌سازی کمپین
+                                        </Button>
+                                    )}
+                                </Form>
+                            ) : null}
+                        </div>
+                    </div>
                 </section>
             </div>
         </>

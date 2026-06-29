@@ -13,6 +13,7 @@ use App\Models\Treasure;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class CampaignOperationsBlueprintService
 {
@@ -48,6 +49,26 @@ class CampaignOperationsBlueprintService
         ];
     }
 
+    /** @param array<string, mixed> $data */
+    public function markRouteReviewed(?User $user, array $data): Campaign
+    {
+        return DB::transaction(function () use ($user, $data): Campaign {
+            $campaign = Campaign::query()->findOrFail($data['campaign_id']);
+            $metadata = is_array($campaign->metadata) ? $campaign->metadata : [];
+
+            $campaign->update([
+                'metadata' => [
+                    ...$metadata,
+                    'route_reviewed_at' => now()->toIso8601String(),
+                    'route_reviewed_by_user_id' => $user?->id,
+                    'route_review_notes' => $data['route_notes'] ?? null,
+                ],
+            ]);
+
+            return $campaign;
+        });
+    }
+
     /** @return array{isGlobal: bool, venueIds: Collection<int, string>, assignedVenueIds: Collection<int, string>, hubIds: Collection<int, string>, partnerIds: Collection<int, string>} */
     private function scope(?User $user): array
     {
@@ -80,6 +101,8 @@ class CampaignOperationsBlueprintService
             'name' => $campaign->name,
             'campaignType' => $campaign->campaign_type,
             'blueprintCode' => $campaign->metadata['blueprint_code'] ?? null,
+            'routeReviewedAt' => $campaign->metadata['route_reviewed_at'] ?? null,
+            'routeReviewNotes' => $campaign->metadata['route_review_notes'] ?? null,
             'status' => $campaign->status->value,
             'startAt' => $campaign->start_at?->toIso8601String(),
             'endAt' => $campaign->end_at?->toIso8601String(),

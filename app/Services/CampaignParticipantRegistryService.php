@@ -3,9 +3,15 @@
 namespace App\Services;
 
 use App\Models\CampaignParticipant;
+use App\Models\Campaign;
+use App\Models\Hub;
+use App\Models\PartnerAccount;
 use App\Models\User;
+use App\Enums\RecordStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class CampaignParticipantRegistryService
 {
@@ -49,7 +55,62 @@ class CampaignParticipantRegistryService
             'participants' => $participants,
             'campaignGroups' => $this->campaignGroups($participants),
             'hubGroups' => $this->hubGroups($participants),
+            'formOptions' => $this->formOptions($campaignId),
         ];
+    }
+
+    /** @return array<string, mixed> */
+    private function formOptions(?string $campaignId): array
+    {
+        $campaign = $campaignId ? Campaign::query()->find($campaignId) : null;
+        $venueId = $campaign?->venue_id;
+
+        return [
+            'hubs' => Hub::query()
+                ->when($venueId, fn (Builder $query) => $query->whereHas('zone', fn (Builder $zone) => $zone->where('venue_id', $venueId)))
+                ->orderBy('name')
+                ->get(['id', 'code', 'name'])
+                ->map(fn (Hub $hub): array => ['id' => $hub->id, 'code' => $hub->code, 'name' => $hub->name]),
+            'partners' => PartnerAccount::query()
+                ->when($venueId, fn (Builder $query) => $query->where('venue_id', $venueId))
+                ->orderBy('name')
+                ->get(['id', 'code', 'name', 'partner_type'])
+                ->map(fn (PartnerAccount $partner): array => [
+                    'id' => $partner->id,
+                    'code' => $partner->code,
+                    'name' => $partner->name,
+                    'partnerType' => $partner->partner_type,
+                ]),
+        ];
+    }
+
+    /** @param array<string, mixed> $data */
+    public function createParticipant(array $data): CampaignParticipant
+    {
+        $campaign = Campaign::query()->findOrFail($data['campaign_id']);
+        $this->assertSameVenueHub($campaign, $data['hub_id'] ?? null);
+        $this->assertSameVenuePartner($campaign, $data['partner_account_id'] ?? null);
+
+        return DB::transaction(fn (): CampaignParticipant => CampaignParticipant::query()->create([
+            'campaign_id' => $campaign->id,
+            'venue_id' => $campaign->venue_id,
+            'hub_id' => $data['hub_id'] ?? null,
+            'partner_account_id' => $data['partner_account_id'] ?? null,
+            'participant_type' => $data['participant_type'],
+            'participation_role' => $data['participation_role'],
+            'status' => $data['status'],
+            'onboarding_status' => $data['onboarding_status'],
+            'joined_at' => $data['joined_at'] ?? now(),
+            'metadata' => [
+                'source' => 'admin_campaign_builder',
+                'connections' => [
+                    'rewards' => (int) ($data['connections_rewards'] ?? 0),
+                    'ads' => (int) ($data['connections_ads'] ?? 0),
+                    'qr_codes' => (int) ($data['connections_qr_codes'] ?? 0),
+                    'missions' => (int) ($data['connections_missions'] ?? 0),
+                ],
+            ],
+        ]));
     }
 
     /** @param Collection<int, array<string, mixed>> $participants */
@@ -123,5 +184,32 @@ class CampaignParticipantRegistryService
                 'missions' => (int) ($participant->metadata['connections']['missions'] ?? 0),
             ],
         ];
+    }
+
+    private function assertSameVenueHub(Campaign $campaign, ?string $hubId): void
+    {
+        if (! $hubId) {
+            return;
+        }
+
+        $matches = Hub::query()
+            ->whereKey($hubId)
+            ->whereHas('zone', fn (Builder $query) => $query->where('venue_id', $campaign->venue_id))
+            ->exists();
+
+        if (! $matches) {
+            throw ValidationException::withMessages(['hub_id' => 'هاب انتخاب‌شده به مکان کمپین تعلق ندارد.']);
+        }
+    }
+
+    private function assertSameVenuePartner(Campaign $campaign, ?string $partnerId): void
+    {
+        if (! $partnerId) {
+            return;
+        }
+
+        if (! PartnerAccount::query()->whereKey($partnerId)->where('venue_id', $campaign->venue_id)->exists()) {
+            throw ValidationException::withMessages(['partner_account_id' => 'شریک انتخاب‌شده به مکان کمپین تعلق ندارد.']);
+        }
     }
 }

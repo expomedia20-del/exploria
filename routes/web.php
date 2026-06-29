@@ -115,14 +115,23 @@ Route::get('/admin/campaigns', [CampaignRegistryController::class, 'page'])
 Route::get('/admin/campaign-builder', [CampaignBuilderController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
     ->name('admin.campaign-builder.page');
+Route::post('/admin/campaign-builder/{campaign}/activate', [CampaignBuilderController::class, 'activate'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.campaign-builder.activate');
 
 Route::get('/admin/campaign-operations', [CampaignOperationsController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
     ->name('admin.campaign-operations.page');
+Route::post('/admin/campaign-operations/review', [CampaignOperationsController::class, 'review'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.campaign-operations.review');
 
 Route::get('/admin/campaign-participants', [CampaignParticipantController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
     ->name('admin.campaign-participants.page');
+Route::post('/admin/campaign-participants', [CampaignParticipantController::class, 'store'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.campaign-participants.store');
 
 Route::get('/admin/mission-blueprints', [MissionRewardBlueprintController::class, 'page'])
     ->middleware(['auth', 'role:admin'])
@@ -214,10 +223,16 @@ Route::get('/api/v1/admin/campaigns', [CampaignRegistryController::class, 'index
 Route::get('/api/v1/admin/campaign-operations', [CampaignOperationsController::class, 'index'])
     ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
     ->name('admin.campaign-operations.index');
+Route::post('/api/v1/admin/campaign-operations/review', [CampaignOperationsController::class, 'review'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.campaign-operations.api.review');
 
 Route::get('/api/v1/admin/campaign-participants', [CampaignParticipantController::class, 'index'])
     ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
     ->name('admin.campaign-participants.index');
+Route::post('/api/v1/admin/campaign-participants', [CampaignParticipantController::class, 'store'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.campaign-participants.api.store');
 
 Route::get('/api/v1/admin/mission-blueprints', [MissionRewardBlueprintController::class, 'index'])
     ->middleware(['auth', 'role:admin'])
