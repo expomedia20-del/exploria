@@ -227,7 +227,11 @@ export default function CampaignParticipantsIndex({
                         <p className="mt-3 rounded-lg bg-background/75 p-3 text-muted-foreground"><span className="font-medium text-foreground">اقدام بعدی: </span>{selectedBlueprint.nextBuildAction}</p>
                         <div className="mt-4 flex flex-wrap gap-2">
                             <Button asChild variant="outline" size="sm">
-                                <Link href={blueprintFlowUrl('/admin/campaigns', selectedBlueprint.code, 'build', selectedCampaign?.code)}>ساخت کمپین مرجع</Link>
+                                {selectedCampaign ? (
+                                    <Link href={`/admin/campaign-builder?campaign=${selectedCampaign.code}`}>بازگشت به کارگاه همین کمپین</Link>
+                                ) : (
+                                    <Link href={blueprintFlowUrl('/admin/campaigns', selectedBlueprint.code, 'build')}>ساخت کمپین مرجع</Link>
+                                )}
                             </Button>
                             <Button asChild variant="outline" size="sm">
                                 <Link href={blueprintFlowUrl('/admin/missions', selectedBlueprint.code, 'components', selectedCampaign?.code)}>تکمیل اجزای کمپین</Link>

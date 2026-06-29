@@ -45,7 +45,7 @@ class CampaignRegistryController extends Controller
         }
 
         return redirect()
-            ->route('admin.campaigns.page', array_filter([
+            ->route('admin.campaign-builder.page', array_filter([
                 'campaign' => $campaign->code,
                 'blueprint' => $campaign->metadata['blueprint_code'] ?? null,
                 'blueprint_action' => 'build',
