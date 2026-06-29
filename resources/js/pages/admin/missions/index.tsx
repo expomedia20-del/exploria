@@ -269,6 +269,20 @@ export default function MissionRewardRegistryIndex({
                             <div className="rounded-lg bg-background/75 p-3"><p className="font-medium">سطوح پاداش</p><div className="mt-2 flex flex-wrap gap-2">{selectedBlueprint.rewardBasket.slice(0, 4).map((tier) => <span key={tier.level} className="rounded-full bg-muted px-2 py-1 text-xs">{tier.level}: {tier.items.slice(0, 2).join(' / ')}</span>)}</div></div>
                         </div>
                         <p className="mt-3 rounded-lg bg-background/75 p-3 text-muted-foreground"><span className="font-medium text-foreground">اقدام بعدی: </span>{selectedBlueprint.nextBuildAction}</p>
+                        <div className="mt-4 flex flex-wrap gap-2">
+                            <Button asChild variant="outline" size="sm">
+                                <Link href={`/admin/campaigns?blueprint=${selectedBlueprint.code}&blueprint_action=build`}>ساخت کمپین مرجع</Link>
+                            </Button>
+                            <Button asChild variant="outline" size="sm">
+                                <Link href={`/admin/campaign-operations?blueprint=${selectedBlueprint.code}&blueprint_action=route`}>رفتن به مسیر کمپین</Link>
+                            </Button>
+                            <Button asChild variant="outline" size="sm">
+                                <Link href={`/admin/campaign-participants?blueprint=${selectedBlueprint.code}&blueprint_action=participants`}>مالک پاداش و اعضا</Link>
+                            </Button>
+                            <Button asChild variant="ghost" size="sm">
+                                <Link href="/admin/mission-blueprints">بازگشت به گنجینه</Link>
+                            </Button>
+                        </div>
                     </section>
                 ) : null}
 

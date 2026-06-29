@@ -170,6 +170,17 @@ export default function CampaignRegistryIndex({
                             <div className="rounded-lg bg-background/75 p-3"><p className="font-medium">مسیر و ناوبری</p><p className="mt-1 text-muted-foreground">{selectedBlueprint.navigationHint}</p></div>
                             <div className="rounded-lg bg-background/75 p-3"><p className="font-medium">بخش‌های تابع کمپین</p><div className="mt-2 flex flex-wrap gap-2">{selectedBlueprint.connectedSurfaces.slice(0, 5).map((item) => <span key={item} className="rounded-full bg-muted px-2 py-1 text-xs">{item}</span>)}</div></div>
                         </div>
+                        <div className="mt-4 flex flex-wrap gap-2">
+                            <Button asChild variant="outline" size="sm">
+                                <Link href={`/admin/missions?blueprint=${selectedBlueprint.code}&blueprint_action=components`}>تکمیل اجزای کمپین</Link>
+                            </Button>
+                            <Button asChild variant="outline" size="sm">
+                                <Link href={`/admin/campaign-operations?blueprint=${selectedBlueprint.code}&blueprint_action=route`}>طراحی مسیر کمپین</Link>
+                            </Button>
+                            <Button asChild variant="ghost" size="sm">
+                                <Link href="/admin/mission-blueprints">بازگشت به گنجینه</Link>
+                            </Button>
+                        </div>
                     </section>
                 ) : null}
 
