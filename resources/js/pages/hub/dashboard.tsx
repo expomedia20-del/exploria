@@ -11,6 +11,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
+import { DateTimePickerField } from '@/components/date-time-picker-field';
 import { Button } from '@/components/ui/button';
 
 type HubItem = {
@@ -294,26 +295,20 @@ function ScheduleActions({
                                 className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                             />
                         </label>
-                        <label className="grid gap-1 text-xs text-muted-foreground">
-                            شروع نمایش
-                            <input
-                                name="starts_at"
-                                type="datetime-local"
-                                defaultValue={toDateTimeLocal(
-                                    adRequest.startsAt,
-                                )}
-                                className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                            />
-                        </label>
-                        <label className="grid gap-1 text-xs text-muted-foreground">
-                            پایان نمایش
-                            <input
-                                name="ends_at"
-                                type="datetime-local"
-                                defaultValue={toDateTimeLocal(adRequest.endsAt)}
-                                className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                            />
-                        </label>
+                        <DateTimePickerField
+                            name="starts_at"
+                            label="شروع نمایش"
+                            defaultValue={toDateTimeLocal(adRequest.startsAt)}
+                            hint={null}
+                            wrapperClassName="gap-1 text-xs text-muted-foreground"
+                        />
+                        <DateTimePickerField
+                            name="ends_at"
+                            label="پایان نمایش"
+                            defaultValue={toDateTimeLocal(adRequest.endsAt)}
+                            hint={null}
+                            wrapperClassName="gap-1 text-xs text-muted-foreground"
+                        />
                     </div>
                     <Button size="sm" type="submit" disabled={processing}>
                         <MonitorPlay className="size-4" />

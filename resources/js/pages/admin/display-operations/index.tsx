@@ -8,6 +8,7 @@ import {
     XCircle,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { DateTimePickerField } from '@/components/date-time-picker-field';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 
@@ -417,21 +418,21 @@ export default function AdminDisplayOperationsIndex({
                                                         }
                                                         className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                                     />
-                                                    <input
+                                                    <DateTimePickerField
                                                         name="starts_at"
-                                                        type="datetime-local"
                                                         defaultValue={toDateTimeLocal(
                                                             placement.startsAt,
                                                         )}
-                                                        className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                                        hint={null}
+                                                        wrapperClassName="gap-0"
                                                     />
-                                                    <input
+                                                    <DateTimePickerField
                                                         name="ends_at"
-                                                        type="datetime-local"
                                                         defaultValue={toDateTimeLocal(
                                                             placement.endsAt,
                                                         )}
-                                                        className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                                        hint={null}
+                                                        wrapperClassName="gap-0"
                                                     />
                                                     <Button
                                                         size="sm"

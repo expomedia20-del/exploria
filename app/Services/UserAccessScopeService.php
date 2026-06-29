@@ -18,7 +18,7 @@ class UserAccessScopeService
 {
     public function hasGlobalAccess(User $user): bool
     {
-        if (in_array($user->role, [UserRole::Admin, UserRole::Operator], true)) {
+        if (in_array($user->role, [UserRole::Admin, UserRole::Operator, UserRole::Viewer], true)) {
             return true;
         }
 

@@ -139,13 +139,13 @@ export default function Welcome() {
             <Head title="دموی کارفرمایی اکسپلوریا" />
             <main
                 dir="rtl"
-                className="min-h-screen bg-stone-50 text-slate-950 dark:bg-slate-950 dark:text-slate-50"
+                className="min-h-screen bg-stone-50 text-slate-950"
             >
-                <section className="bg-slate-950 text-white">
+                <section className="border-b border-emerald-100 bg-gradient-to-br from-white via-emerald-50 to-sky-50 text-slate-950">
                     <div className="mx-auto flex min-h-[84vh] max-w-7xl flex-col justify-between px-5 py-5 sm:px-8 lg:px-10">
                         <header className="flex flex-wrap items-center justify-between gap-3">
                             <div>
-                                <p className="text-sm text-slate-300">
+                                <p className="text-sm text-emerald-700">
                                     EXPLORIA
                                 </p>
                                 <p className="mt-1 text-lg font-semibold">
@@ -162,7 +162,7 @@ export default function Welcome() {
                                 </Link>
                                 <Link
                                     href="/admin/qr-codes"
-                                    className="inline-flex h-9 items-center gap-2 rounded-md border border-white/20 px-3 text-white hover:bg-white/10"
+                                    className="inline-flex h-9 items-center gap-2 rounded-md border border-emerald-200 bg-white/70 px-3 text-emerald-900 hover:bg-white"
                                 >
                                     <QrCode className="size-4" />
                                     QR
@@ -172,14 +172,14 @@ export default function Welcome() {
 
                         <div className="grid gap-8 py-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
                             <div>
-                                <p className="text-sm font-medium text-emerald-300">
+                                <p className="text-sm font-medium text-emerald-700">
                                     دموی قابل ارائه به کارفرما
                                 </p>
                                 <h1 className="mt-4 max-w-3xl text-4xl leading-tight font-semibold sm:text-5xl">
                                     مسیر کامل بازدیدکننده، از اسکن QR تا داشبورد
                                     عملیات
                                 </h1>
-                                <p className="mt-5 max-w-2xl text-base leading-8 text-slate-300">
+                                <p className="mt-5 max-w-2xl text-base leading-8 text-slate-700">
                                     این نسخه، حلقه اصلی محصول را زنده نشان می
                                     دهد: ورود از QR، احراز سریع موبایلی، رضایت
                                     نامه فارسی، ثبت بازدید و مشاهده خروجی در پنل
@@ -188,25 +188,25 @@ export default function Welcome() {
                                 <div className="mt-7 flex flex-wrap gap-3">
                                     <Link
                                         href="/board"
-                                        className="inline-flex h-11 items-center gap-2 rounded-md bg-emerald-400 px-4 text-sm font-semibold text-slate-950 hover:bg-emerald-300"
+                                        className="inline-flex h-11 items-center gap-2 rounded-md bg-emerald-600 px-4 text-sm font-semibold text-white hover:bg-emerald-500"
                                     >
                                         ورود رسمی هیئت‌مدیره
                                         <ArrowLeft className="size-4" />
                                     </Link>
                                     <Link
                                         href={dashboard()}
-                                        className="inline-flex h-11 items-center gap-2 rounded-md border border-white/20 px-4 text-sm font-semibold text-white hover:bg-white/10"
+                                        className="inline-flex h-11 items-center gap-2 rounded-md border border-slate-300 bg-white/70 px-4 text-sm font-semibold text-slate-800 hover:bg-white"
                                     >
                                         مشاهده داشبورد
                                     </Link>
                                 </div>
                             </div>
 
-                            <div className="rounded-lg border border-white/15 bg-white/5 p-4">
+                            <div className="rounded-lg border border-emerald-100 bg-white/80 p-4 shadow-sm backdrop-blur">
                                 <div className="grid gap-4 sm:grid-cols-[auto_1fr] sm:items-center">
                                     <QrVisual />
                                     <div>
-                                        <p className="text-sm text-slate-300">
+                                        <p className="text-sm text-slate-500">
                                             کد دمو
                                         </p>
                                         <p
@@ -215,7 +215,7 @@ export default function Welcome() {
                                         >
                                             {demoQrCode}
                                         </p>
-                                        <p className="mt-3 flex items-center gap-2 text-sm text-emerald-300">
+                                        <p className="mt-3 flex items-center gap-2 text-sm text-emerald-700">
                                             <MapPin className="size-4" />
                                             متصل به اکوپارک عباس آباد
                                         </p>
@@ -225,9 +225,9 @@ export default function Welcome() {
                                     {flow.map((item, index) => (
                                         <div
                                             key={item}
-                                            className="rounded-md border border-white/10 bg-slate-900 px-3 py-3 text-center text-xs text-slate-200"
+                                            className="rounded-md border border-emerald-100 bg-emerald-50 px-3 py-3 text-center text-xs text-slate-700"
                                         >
-                                            <span className="block text-emerald-300">
+                                            <span className="block text-emerald-700">
                                                 {(index + 1).toLocaleString(
                                                     'fa-IR',
                                                 )}
@@ -259,7 +259,7 @@ export default function Welcome() {
                     </div>
                 </section>
 
-                <section className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+                <section className="border-b border-slate-200 bg-white">
                     <div className="mx-auto grid max-w-7xl gap-4 px-5 py-8 sm:grid-cols-4 sm:px-8 lg:px-10">
                         {[
                             ['۳', 'مکان پایلوت'],
@@ -274,7 +274,7 @@ export default function Welcome() {
                                 <p className="text-2xl font-semibold">
                                     {value}
                                 </p>
-                                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                                <p className="mt-1 text-sm text-slate-500">
                                     {label}
                                 </p>
                             </div>
@@ -284,7 +284,7 @@ export default function Welcome() {
 
                 <section className="mx-auto max-w-7xl px-5 py-10 sm:px-8 lg:px-10">
                     <div className="flex flex-col gap-2">
-                        <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                        <p className="text-sm font-medium text-emerald-700">
                             بخش های قابل نمایش
                         </p>
                         <h2 className="text-2xl font-semibold">
@@ -296,13 +296,13 @@ export default function Welcome() {
                         {modules.map((module) => (
                             <article
                                 key={module.title}
-                                className="rounded-lg border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
+                                className="rounded-lg border border-slate-200 bg-white p-5"
                             >
-                                <module.icon className="size-5 text-slate-600 dark:text-slate-300" />
+                                <module.icon className="size-5 text-slate-600" />
                                 <h3 className="mt-4 font-semibold">
                                     {module.title}
                                 </h3>
-                                <p className="mt-2 text-sm leading-7 text-slate-600 dark:text-slate-300">
+                                <p className="mt-2 text-sm leading-7 text-slate-600">
                                     {module.body}
                                 </p>
                             </article>
@@ -310,10 +310,10 @@ export default function Welcome() {
                     </div>
                 </section>
 
-                <section className="bg-white dark:bg-slate-900">
+                <section className="bg-white">
                     <div className="mx-auto grid max-w-7xl gap-6 px-5 py-10 sm:px-8 lg:grid-cols-[0.8fr_1.2fr] lg:px-10">
                         <div>
-                            <p className="text-sm font-medium text-sky-700 dark:text-sky-300">
+                            <p className="text-sm font-medium text-sky-700">
                                 آمادگی پایلوت
                             </p>
                             <h2 className="mt-2 text-2xl font-semibold">
@@ -329,10 +329,10 @@ export default function Welcome() {
                             ].map((item) => (
                                 <div
                                     key={item}
-                                    className="flex gap-3 rounded-lg border border-slate-200 p-4 dark:border-slate-800"
+                                    className="flex gap-3 rounded-lg border border-slate-200 p-4"
                                 >
                                     <ShieldCheck className="mt-0.5 size-5 shrink-0 text-emerald-600" />
-                                    <p className="text-sm leading-7 text-slate-700 dark:text-slate-200">
+                                    <p className="text-sm leading-7 text-slate-700">
                                         {item}
                                     </p>
                                 </div>

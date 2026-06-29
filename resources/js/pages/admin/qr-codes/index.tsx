@@ -7,6 +7,7 @@ import {
     QrCode as QrCodeIcon,
     RadioTower,
 } from 'lucide-react';
+import { DateTimePickerField } from '@/components/date-time-picker-field';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -303,30 +304,18 @@ export default function QrRegistryIndex({ qrCodes, formOptions, selectedCampaign
                                         </select>
                                         <InputError message={errors.status} />
                                     </div>
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="valid_from">شروع</Label>
-                                        <Input
-                                            id="valid_from"
-                                            type="datetime-local"
-                                            name="valid_from"
-                                        />
-                                        <InputError
-                                            message={errors.valid_from}
-                                        />
-                                    </div>
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="valid_until">
-                                            پایان
-                                        </Label>
-                                        <Input
-                                            id="valid_until"
-                                            type="datetime-local"
-                                            name="valid_until"
-                                        />
-                                        <InputError
-                                            message={errors.valid_until}
-                                        />
-                                    </div>
+                                    <DateTimePickerField
+                                        id="valid_from"
+                                        name="valid_from"
+                                        label="شروع"
+                                        error={errors.valid_from}
+                                    />
+                                    <DateTimePickerField
+                                        id="valid_until"
+                                        name="valid_until"
+                                        label="پایان"
+                                        error={errors.valid_until}
+                                    />
                                     <div className="grid gap-2">
                                         <Label htmlFor="max_scans_per_user_per_window">
                                             سقف تکرار

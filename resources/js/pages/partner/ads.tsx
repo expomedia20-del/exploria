@@ -7,6 +7,7 @@ import {
     RadioTower,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { DateTimePickerField } from '@/components/date-time-picker-field';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -310,26 +311,18 @@ export default function PartnerAds({
                                     />
                                     <InputError message={errors.asset_url} />
                                 </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="starts_at">
-                                        شروع نمایش
-                                    </Label>
-                                    <Input
-                                        id="starts_at"
-                                        name="starts_at"
-                                        type="datetime-local"
-                                    />
-                                    <InputError message={errors.starts_at} />
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="ends_at">پایان نمایش</Label>
-                                    <Input
-                                        id="ends_at"
-                                        name="ends_at"
-                                        type="datetime-local"
-                                    />
-                                    <InputError message={errors.ends_at} />
-                                </div>
+                                <DateTimePickerField
+                                    id="starts_at"
+                                    name="starts_at"
+                                    label="شروع نمایش"
+                                    error={errors.starts_at}
+                                />
+                                <DateTimePickerField
+                                    id="ends_at"
+                                    name="ends_at"
+                                    label="پایان نمایش"
+                                    error={errors.ends_at}
+                                />
                                 <div className="grid gap-2">
                                     <Label htmlFor="budget_amount">
                                         بودجه پیشنهادی

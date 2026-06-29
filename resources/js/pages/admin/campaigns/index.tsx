@@ -6,6 +6,7 @@ import {
     QrCode,
     SquareActivity,
 } from 'lucide-react';
+import { DateTimePickerField } from '@/components/date-time-picker-field';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -271,24 +272,18 @@ export default function CampaignRegistryIndex({
                                         </select>
                                         <InputError message={errors.status} />
                                     </div>
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="start_at">شروع</Label>
-                                        <Input
-                                            id="start_at"
-                                            type="datetime-local"
-                                            name="start_at"
-                                        />
-                                        <InputError message={errors.start_at} />
-                                    </div>
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="end_at">پایان</Label>
-                                        <Input
-                                            id="end_at"
-                                            type="datetime-local"
-                                            name="end_at"
-                                        />
-                                        <InputError message={errors.end_at} />
-                                    </div>
+                                    <DateTimePickerField
+                                        id="start_at"
+                                        name="start_at"
+                                        label="شروع"
+                                        error={errors.start_at}
+                                    />
+                                    <DateTimePickerField
+                                        id="end_at"
+                                        name="end_at"
+                                        label="پایان"
+                                        error={errors.end_at}
+                                    />
                                     <div className="flex items-end md:col-span-2">
                                         <Button
                                             disabled={processing}

@@ -9,6 +9,7 @@ import {
     TicketCheck,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { DateTimePickerField } from '@/components/date-time-picker-field';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -665,30 +666,20 @@ export default function PartnerDashboard({
                                                         </select>
                                                         <InputError message={errors.availability_status} />
                                                     </div>
-                                                    <div className="grid gap-2">
-                                                        <Label htmlFor={`reward_from_${reward.id}`}>
-                                                            شروع اعتبار
-                                                        </Label>
-                                                        <Input
-                                                            id={`reward_from_${reward.id}`}
-                                                            name="available_from"
-                                                            type="datetime-local"
-                                                            defaultValue={formatDateTimeLocal(reward.availableFrom)}
-                                                        />
-                                                        <InputError message={errors.available_from} />
-                                                    </div>
-                                                    <div className="grid gap-2">
-                                                        <Label htmlFor={`reward_until_${reward.id}`}>
-                                                            پایان اعتبار
-                                                        </Label>
-                                                        <Input
-                                                            id={`reward_until_${reward.id}`}
-                                                            name="available_until"
-                                                            type="datetime-local"
-                                                            defaultValue={formatDateTimeLocal(reward.availableUntil)}
-                                                        />
-                                                        <InputError message={errors.available_until} />
-                                                    </div>
+                                                    <DateTimePickerField
+                                                        id={`reward_from_${reward.id}`}
+                                                        name="available_from"
+                                                        label="شروع اعتبار"
+                                                        defaultValue={formatDateTimeLocal(reward.availableFrom)}
+                                                        error={errors.available_from}
+                                                    />
+                                                    <DateTimePickerField
+                                                        id={`reward_until_${reward.id}`}
+                                                        name="available_until"
+                                                        label="پایان اعتبار"
+                                                        defaultValue={formatDateTimeLocal(reward.availableUntil)}
+                                                        error={errors.available_until}
+                                                    />
                                                     <div className="flex items-end">
                                                         <Button size="sm" disabled={processing}>
                                                             ذخیره تنظیمات
