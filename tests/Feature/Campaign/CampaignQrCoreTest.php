@@ -165,6 +165,28 @@ class CampaignQrCoreTest extends TestCase
 
         $this->actingAs($operator)
             ->from(route('admin.missions.page', ['campaign' => $campaign->code]))
+            ->post(route('admin.missions.store'), [
+                'campaign_id' => $campaign->id,
+                'mission_template_id' => $template->id,
+                'code' => 'builder-first-mission',
+                'cycle_step_index' => 1,
+                'cycle_step_label' => 'builder cycle step',
+                'title_override' => 'builder mission replacement',
+                'status' => RecordStatus::Draft->value,
+                'unlock_min_points' => 120,
+            ])
+            ->assertRedirect(route('admin.missions.page', ['campaign' => $campaign->code]));
+
+        $mission = MissionInstance::query()
+            ->where('campaign_id', $campaign->id)
+            ->where('code', 'builder-first-mission')
+            ->firstOrFail();
+
+        $this->assertSame('builder mission replacement', $mission->title_override);
+        $this->assertSame(1, MissionInstance::query()->where('campaign_id', $campaign->id)->where('metadata->cycle_step_index', 1)->count());
+
+        $this->actingAs($operator)
+            ->from(route('admin.missions.page', ['campaign' => $campaign->code]))
             ->post(route('admin.rewards.store'), [
                 'campaign_id' => $campaign->id,
                 'code' => 'builder-test-reward',
@@ -186,6 +208,27 @@ class CampaignQrCoreTest extends TestCase
 
         $this->actingAs($operator)
             ->from(route('admin.missions.page', ['campaign' => $campaign->code]))
+            ->post(route('admin.rewards.store'), [
+                'campaign_id' => $campaign->id,
+                'code' => 'builder-test-reward',
+                'name' => 'builder reward replacement',
+                'reward_type' => 'badge',
+                'reward_tier' => 'gold',
+                'reward_option' => 'gold bundle',
+                'cycle_step_index' => 1,
+                'cycle_step_label' => 'builder cycle step',
+                'point_cost' => 120,
+                'stock_quantity' => 40,
+                'status' => RecordStatus::Draft->value,
+                'available_from' => '2026-07-02 09:00:00',
+                'available_until' => '2026-07-11 22:00:00',
+                'fulfillment_window' => 'same day',
+                'description' => 'replacement reward for stage three',
+            ])
+            ->assertRedirect(route('admin.missions.page', ['campaign' => $campaign->code]));
+
+        $this->actingAs($operator)
+            ->from(route('admin.missions.page', ['campaign' => $campaign->code]))
             ->post(route('admin.treasures.store'), [
                 'campaign_id' => $campaign->id,
                 'mission_instance_id' => $mission->id,
@@ -200,13 +243,13 @@ class CampaignQrCoreTest extends TestCase
         $this->assertDatabaseHas('mission_instances', [
             'campaign_id' => $campaign->id,
             'code' => 'builder-first-mission',
-            'title_override' => 'ماموریت تست کارگاه',
+            'title_override' => 'builder mission replacement',
         ]);
 
         $this->assertDatabaseHas('reward_definitions', [
             'campaign_id' => $campaign->id,
             'code' => 'builder-test-reward',
-            'name' => 'پاداش تست کارگاه',
+            'name' => 'builder reward replacement',
         ]);
 
         $this->assertDatabaseHas('treasures', [
@@ -217,12 +260,13 @@ class CampaignQrCoreTest extends TestCase
 
         $reward = RewardDefinition::query()->where('code', 'builder-test-reward')->firstOrFail();
 
-        $this->assertSame('silver', $reward->metadata['reward_tier']);
-        $this->assertSame('silver bundle', $reward->metadata['reward_option']);
+        $this->assertSame('gold', $reward->metadata['reward_tier']);
+        $this->assertSame('gold bundle', $reward->metadata['reward_option']);
         $this->assertSame(1, $reward->metadata['cycle_step_index']);
-        $this->assertSame('2026-07-01 09:00:00', $reward->metadata['available_from']);
-        $this->assertSame('within 48 hours', $reward->metadata['fulfillment_window']);
+        $this->assertSame('2026-07-02 09:00:00', $reward->metadata['available_from']);
+        $this->assertSame('same day', $reward->metadata['fulfillment_window']);
         $this->assertSame(1, RewardDefinition::query()->where('code', 'builder-test-reward')->count());
+        $this->assertSame(1, RewardDefinition::query()->where('campaign_id', $campaign->id)->where('metadata->cycle_step_index', 1)->count());
         $this->assertSame(1, Treasure::query()->where('code', 'builder-test-treasure')->count());
     }
 

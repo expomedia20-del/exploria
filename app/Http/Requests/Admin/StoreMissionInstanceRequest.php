@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Admin;
 
 use App\Enums\RecordStatus;
+use App\Models\MissionInstance;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -26,7 +27,20 @@ class StoreMissionInstanceRequest extends FormRequest
                 'string',
                 'max:96',
                 'alpha_dash:ascii',
-                Rule::unique('mission_instances', 'code')->where('campaign_id', $this->string('campaign_id')->toString()),
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    $campaignId = $this->string('campaign_id')->toString();
+                    $cycleStepIndex = $this->integer('cycle_step_index');
+
+                    $conflict = MissionInstance::query()
+                        ->where('campaign_id', $campaignId)
+                        ->where('code', $value)
+                        ->get(['metadata'])
+                        ->contains(fn (MissionInstance $mission): bool => (int) ($mission->metadata['cycle_step_index'] ?? 0) !== $cycleStepIndex);
+
+                    if ($conflict) {
+                        $fail('کد مأموریت برای همین کمپین قبلا در گام دیگری استفاده شده است.');
+                    }
+                },
             ],
             'title_override' => ['nullable', 'string', 'max:255'],
             'cycle_step_index' => ['nullable', 'integer', 'min:1', 'max:20'],

@@ -196,7 +196,7 @@ class MissionRewardRegistryService
         $this->assertSameVenueHub($campaign, $data['hub_id'] ?? null);
         $this->assertSameVenueTouchpoint($campaign, $data['touchpoint_id'] ?? null);
 
-        return DB::transaction(fn (): MissionInstance => MissionInstance::query()->create([
+        $attributes = [
             'mission_template_id' => $data['mission_template_id'],
             'campaign_id' => $campaign->id,
             'venue_id' => $campaign->venue_id,
@@ -213,7 +213,9 @@ class MissionRewardRegistryService
                 'cycle_step_index' => $data['cycle_step_index'] ?? null,
                 'cycle_step_label' => $data['cycle_step_label'] ?? null,
             ],
-        ]));
+        ];
+
+        return DB::transaction(fn (): MissionInstance => $this->replaceMissionCycleStep($campaign, $data['cycle_step_index'] ?? null, $attributes));
     }
 
     /** @param array<string, mixed> $data */
@@ -222,7 +224,7 @@ class MissionRewardRegistryService
         $campaign = Campaign::query()->findOrFail($data['campaign_id']);
         $this->assertSameVenuePartner($campaign, $data['partner_account_id'] ?? null);
 
-        return DB::transaction(fn (): RewardDefinition => RewardDefinition::query()->create([
+        $attributes = [
             'campaign_id' => $campaign->id,
             'venue_id' => $campaign->venue_id,
             'partner_account_id' => $data['partner_account_id'] ?? null,
@@ -246,7 +248,9 @@ class MissionRewardRegistryService
                 'description' => $data['description'] ?? null,
                 'terms' => $data['terms'] ?? null,
             ],
-        ]));
+        ];
+
+        return DB::transaction(fn (): RewardDefinition => $this->replaceRewardCycleStep($campaign, $data['cycle_step_index'] ?? null, $attributes));
     }
 
     /** @param array<string, mixed> $data */
@@ -266,6 +270,66 @@ class MissionRewardRegistryService
             'reveal_rule' => isset($data['required_completed_missions']) ? ['required_completed_missions' => (int) $data['required_completed_missions']] : null,
             'metadata' => ['source' => 'admin_campaign_components'],
         ]));
+    }
+
+    /** @param array<string, mixed> $attributes */
+    private function replaceMissionCycleStep(Campaign $campaign, mixed $cycleStepIndex, array $attributes): MissionInstance
+    {
+        if (! $cycleStepIndex) {
+            return MissionInstance::query()->create($attributes);
+        }
+
+        $previousMissions = MissionInstance::query()
+            ->where('campaign_id', $campaign->id)
+            ->where('metadata->source', 'admin_campaign_components')
+            ->where('metadata->cycle_step_index', (int) $cycleStepIndex)
+            ->withCount('progressRecords')
+            ->latest()
+            ->get();
+
+        $missionWithProgress = $previousMissions->first(fn (MissionInstance $mission): bool => (int) $mission->getAttribute('progress_records_count') > 0);
+
+        $previousMissions
+            ->reject(fn (MissionInstance $mission): bool => $missionWithProgress?->is($mission) ?? false)
+            ->each(fn (MissionInstance $mission): ?bool => $mission->delete());
+
+        if ($missionWithProgress) {
+            $missionWithProgress->update($attributes);
+
+            return $missionWithProgress->refresh();
+        }
+
+        return MissionInstance::query()->create($attributes);
+    }
+
+    /** @param array<string, mixed> $attributes */
+    private function replaceRewardCycleStep(Campaign $campaign, mixed $cycleStepIndex, array $attributes): RewardDefinition
+    {
+        if (! $cycleStepIndex) {
+            return RewardDefinition::query()->create($attributes);
+        }
+
+        $previousRewards = RewardDefinition::query()
+            ->where('campaign_id', $campaign->id)
+            ->where('metadata->source', 'admin_campaign_components')
+            ->where('metadata->cycle_step_index', (int) $cycleStepIndex)
+            ->withCount('userRewards')
+            ->latest()
+            ->get();
+
+        $rewardWithUsers = $previousRewards->first(fn (RewardDefinition $reward): bool => (int) $reward->getAttribute('user_rewards_count') > 0);
+
+        $previousRewards
+            ->reject(fn (RewardDefinition $reward): bool => $rewardWithUsers?->is($reward) ?? false)
+            ->each(fn (RewardDefinition $reward): ?bool => $reward->delete());
+
+        if ($rewardWithUsers) {
+            $rewardWithUsers->update($attributes);
+
+            return $rewardWithUsers->refresh();
+        }
+
+        return RewardDefinition::query()->create($attributes);
     }
 
     /** @return array<string, mixed> */

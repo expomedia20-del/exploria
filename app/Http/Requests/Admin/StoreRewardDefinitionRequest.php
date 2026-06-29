@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Admin;
 
 use App\Enums\RecordStatus;
+use App\Models\RewardDefinition;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -24,7 +25,20 @@ class StoreRewardDefinitionRequest extends FormRequest
                 'string',
                 'max:96',
                 'alpha_dash:ascii',
-                Rule::unique('reward_definitions', 'code')->where('campaign_id', $this->string('campaign_id')->toString()),
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    $campaignId = $this->string('campaign_id')->toString();
+                    $cycleStepIndex = $this->integer('cycle_step_index');
+
+                    $conflict = RewardDefinition::query()
+                        ->where('campaign_id', $campaignId)
+                        ->where('code', $value)
+                        ->get(['metadata'])
+                        ->contains(fn (RewardDefinition $reward): bool => (int) ($reward->metadata['cycle_step_index'] ?? 0) !== $cycleStepIndex);
+
+                    if ($conflict) {
+                        $fail('کد پاداش برای همین کمپین قبلا در گام دیگری استفاده شده است.');
+                    }
+                },
             ],
             'name' => ['required', 'string', 'max:255'],
             'reward_type' => ['required', 'string', 'max:64', 'alpha_dash:ascii'],
