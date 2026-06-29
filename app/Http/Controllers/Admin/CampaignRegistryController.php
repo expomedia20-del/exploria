@@ -19,6 +19,7 @@ class CampaignRegistryController extends Controller
         return Inertia::render('admin/campaigns/index', [
             'campaigns' => $service->list($request->user()),
             'venueOptions' => $service->venueOptions($request->user()),
+            'selectedCampaign' => $service->context($request->user(), $request->query('campaign')),
             'selectedBlueprint' => $blueprints->handoff($request->query('blueprint')),
         ]);
     }
@@ -43,6 +44,12 @@ class CampaignRegistryController extends Controller
             ], 201);
         }
 
-        return back()->with('success', 'کمپین جدید ثبت شد.');
+        return redirect()
+            ->route('admin.campaigns.page', array_filter([
+                'campaign' => $campaign->code,
+                'blueprint' => $campaign->metadata['blueprint_code'] ?? null,
+                'blueprint_action' => 'build',
+            ]))
+            ->with('success', 'کمپین جدید ثبت شد.');
     }
 }

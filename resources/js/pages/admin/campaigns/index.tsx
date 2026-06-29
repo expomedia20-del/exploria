@@ -54,9 +54,20 @@ type CampaignItem = {
     venue: RegistryEntity | null;
 };
 
+type SelectedCampaign = {
+    id: string;
+    code: string;
+    name: string;
+    campaignType: string;
+    blueprintCode: string | null;
+    status: string;
+    venue: RegistryEntity | null;
+};
+
 type Props = {
     campaigns: CampaignItem[];
     venueOptions: RegistryEntity[];
+    selectedCampaign: SelectedCampaign | null;
     selectedBlueprint: SelectedBlueprint | null;
 };
 
@@ -100,9 +111,37 @@ function canMutate(role?: string) {
     return role === 'admin' || role === 'operator';
 }
 
+function blueprintFlowUrl(path: string, blueprintCode: string, action: string, campaignCode?: string) {
+    const params = new URLSearchParams({
+        blueprint: blueprintCode,
+        blueprint_action: action,
+    });
+
+    if (campaignCode) {
+        params.set('campaign', campaignCode);
+    }
+
+    return `${path}?${params.toString()}`;
+}
+
+function campaignContextUrl(path: string, campaign: CampaignItem, action?: string) {
+    const params = new URLSearchParams({ campaign: campaign.code });
+
+    if (campaign.blueprintCode) {
+        params.set('blueprint', campaign.blueprintCode);
+    }
+
+    if (action) {
+        params.set('blueprint_action', action);
+    }
+
+    return `${path}?${params.toString()}`;
+}
+
 export default function CampaignRegistryIndex({
     campaigns,
     venueOptions,
+    selectedCampaign,
     selectedBlueprint,
 }: Props) {
     const { flash, auth } = usePage<SharedProps>().props;
@@ -172,13 +211,43 @@ export default function CampaignRegistryIndex({
                         </div>
                         <div className="mt-4 flex flex-wrap gap-2">
                             <Button asChild variant="outline" size="sm">
-                                <Link href={`/admin/missions?blueprint=${selectedBlueprint.code}&blueprint_action=components`}>تکمیل اجزای کمپین</Link>
+                                <Link href={blueprintFlowUrl('/admin/missions', selectedBlueprint.code, 'components', selectedCampaign?.code)}>تکمیل اجزای کمپین</Link>
                             </Button>
                             <Button asChild variant="outline" size="sm">
-                                <Link href={`/admin/campaign-operations?blueprint=${selectedBlueprint.code}&blueprint_action=route`}>طراحی مسیر کمپین</Link>
+                                <Link href={blueprintFlowUrl('/admin/campaign-operations', selectedBlueprint.code, 'route', selectedCampaign?.code)}>طراحی مسیر کمپین</Link>
                             </Button>
                             <Button asChild variant="ghost" size="sm">
                                 <Link href="/admin/mission-blueprints">بازگشت به گنجینه</Link>
+                            </Button>
+                        </div>
+                    </section>
+                ) : null}
+
+                {selectedCampaign ? (
+                    <section className="rounded-lg border border-sidebar-border/70 bg-background p-4 text-sm shadow-sm dark:border-sidebar-border">
+                        <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                            <div>
+                                <p className="text-xs text-muted-foreground">کمپین فعال برای تکمیل مرحله‌ای</p>
+                                <h2 className="mt-1 text-lg font-semibold">{selectedCampaign.name}</h2>
+                                <p className="mt-1 text-muted-foreground">از اینجا ادامه کار را برای همین کمپین انجام دهید؛ هر مرحله با کد همین کمپین باز می‌شود تا تنظیمات از هم جدا نشوند.</p>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                <span className="rounded-full bg-muted px-3 py-1 text-xs" dir="ltr">{selectedCampaign.code}</span>
+                                {selectedCampaign.blueprintCode ? <span className="rounded-full bg-primary/10 px-3 py-1 text-xs text-primary" dir="ltr">{selectedCampaign.blueprintCode}</span> : null}
+                            </div>
+                        </div>
+                        <div className="mt-4 grid gap-2 md:grid-cols-4">
+                            <Button asChild variant="outline" size="sm">
+                                <Link href={`/admin/qr-codes?campaign=${selectedCampaign.code}`}>اتصال QR</Link>
+                            </Button>
+                            <Button asChild variant="outline" size="sm">
+                                <Link href={selectedCampaign.blueprintCode ? blueprintFlowUrl('/admin/missions', selectedCampaign.blueprintCode, 'components', selectedCampaign.code) : `/admin/missions?campaign=${selectedCampaign.code}`}>تکمیل اجزا</Link>
+                            </Button>
+                            <Button asChild variant="outline" size="sm">
+                                <Link href={selectedCampaign.blueprintCode ? blueprintFlowUrl('/admin/campaign-participants', selectedCampaign.blueprintCode, 'participants', selectedCampaign.code) : `/admin/campaign-participants?campaign=${selectedCampaign.code}`}>اعضا و مالک پاداش</Link>
+                            </Button>
+                            <Button asChild size="sm">
+                                <Link href={selectedCampaign.blueprintCode ? blueprintFlowUrl('/admin/campaign-operations', selectedCampaign.blueprintCode, 'route', selectedCampaign.code) : `/admin/campaign-operations?campaign=${selectedCampaign.code}`}>طراحی مسیر</Link>
                             </Button>
                         </div>
                     </section>
@@ -364,10 +433,10 @@ export default function CampaignRegistryIndex({
                                         </div>
                                         <div className="mt-3 flex flex-wrap gap-2 text-xs">
                                             {[
-                                                ['QR', `/admin/qr-codes?campaign=${campaign.code}`],
-                                                ['مأموریت و پاداش', `/admin/missions?campaign=${campaign.code}`],
-                                                ['اعضای کمپین', `/admin/campaign-participants?campaign=${campaign.code}`],
-                                                ['نقشه عملیات', `/admin/campaign-operations?campaign=${campaign.code}`],
+                                                ['QR', campaignContextUrl('/admin/qr-codes', campaign)],
+                                                ['مأموریت و پاداش', campaignContextUrl('/admin/missions', campaign, 'components')],
+                                                ['اعضای کمپین', campaignContextUrl('/admin/campaign-participants', campaign, 'participants')],
+                                                ['نقشه عملیات', campaignContextUrl('/admin/campaign-operations', campaign, 'route')],
                                             ].map(([label, href]) => (
                                                 <Link
                                                     key={href}

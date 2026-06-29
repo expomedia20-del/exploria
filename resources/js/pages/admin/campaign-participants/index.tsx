@@ -146,6 +146,19 @@ function connectionTotal(connections: ParticipantConnections) {
     return connections.rewards + connections.ads + connections.qrCodes + connections.missions;
 }
 
+function blueprintFlowUrl(path: string, blueprintCode: string, action: string, campaignCode?: string) {
+    const params = new URLSearchParams({
+        blueprint: blueprintCode,
+        blueprint_action: action,
+    });
+
+    if (campaignCode) {
+        params.set('campaign', campaignCode);
+    }
+
+    return `${path}?${params.toString()}`;
+}
+
 export default function CampaignParticipantsIndex({
     stats,
     participants,
@@ -214,13 +227,13 @@ export default function CampaignParticipantsIndex({
                         <p className="mt-3 rounded-lg bg-background/75 p-3 text-muted-foreground"><span className="font-medium text-foreground">اقدام بعدی: </span>{selectedBlueprint.nextBuildAction}</p>
                         <div className="mt-4 flex flex-wrap gap-2">
                             <Button asChild variant="outline" size="sm">
-                                <Link href={`/admin/campaigns?blueprint=${selectedBlueprint.code}&blueprint_action=build`}>ساخت کمپین مرجع</Link>
+                                <Link href={blueprintFlowUrl('/admin/campaigns', selectedBlueprint.code, 'build', selectedCampaign?.code)}>ساخت کمپین مرجع</Link>
                             </Button>
                             <Button asChild variant="outline" size="sm">
-                                <Link href={`/admin/missions?blueprint=${selectedBlueprint.code}&blueprint_action=components`}>تکمیل اجزای کمپین</Link>
+                                <Link href={blueprintFlowUrl('/admin/missions', selectedBlueprint.code, 'components', selectedCampaign?.code)}>تکمیل اجزای کمپین</Link>
                             </Button>
                             <Button asChild variant="outline" size="sm">
-                                <Link href={`/admin/campaign-operations?blueprint=${selectedBlueprint.code}&blueprint_action=route`}>رفتن به مسیر کمپین</Link>
+                                <Link href={blueprintFlowUrl('/admin/campaign-operations', selectedBlueprint.code, 'route', selectedCampaign?.code)}>رفتن به مسیر کمپین</Link>
                             </Button>
                             <Button asChild variant="ghost" size="sm">
                                 <Link href="/admin/mission-blueprints">بازگشت به گنجینه</Link>

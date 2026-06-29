@@ -50,11 +50,16 @@ class CampaignQrCoreTest extends TestCase
                 'code' => 'family-route-1405',
                 'name' => 'مسیر خانوادگی ۱۴۰۵',
                 'campaign_type' => 'family_route',
+                'blueprint_code' => 'family-route',
                 'status' => RecordStatus::Draft->value,
                 'start_at' => '2026-07-01 09:00:00',
                 'end_at' => '2026-08-01 22:00:00',
             ])
-            ->assertRedirect();
+            ->assertRedirect(route('admin.campaigns.page', [
+                'campaign' => 'family-route-1405',
+                'blueprint' => 'family-route',
+                'blueprint_action' => 'build',
+            ]));
 
         $this->assertDatabaseHas('campaigns', [
             'venue_id' => $venue->id,
