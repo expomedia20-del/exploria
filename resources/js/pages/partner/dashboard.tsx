@@ -349,17 +349,19 @@ export default function PartnerDashboard({
                             method="post"
                             options={{ preserveScroll: true }}
                             className="grid gap-4 md:grid-cols-2"
+                            autoComplete="off"
                         >
                             {({ processing, errors }) => (
                                 <>
                                     <div className="grid gap-2">
-                                        <Label htmlFor="name">
+                                        <Label htmlFor="offer_name">
                                             عنوان پیشنهاد
                                         </Label>
                                         <Input
-                                            id="name"
+                                            id="offer_name"
                                             name="name"
                                             required
+                                            autoComplete="off"
                                             placeholder="مثلا ۲۰٪ تخفیف نوشیدنی خانواده"
                                         />
                                         <InputError message={errors.name} />
@@ -402,6 +404,7 @@ export default function PartnerDashboard({
                                             name="point_cost"
                                             type="number"
                                             min="0"
+                                            autoComplete="off"
                                             placeholder="اختیاری"
                                         />
                                         <InputError
@@ -417,6 +420,7 @@ export default function PartnerDashboard({
                                             name="stock_quantity"
                                             type="number"
                                             min="1"
+                                            autoComplete="off"
                                             placeholder="اختیاری"
                                         />
                                         <InputError
@@ -430,6 +434,7 @@ export default function PartnerDashboard({
                                         <textarea
                                             id="description"
                                             name="description"
+                                            autoComplete="off"
                                             className="min-h-20 rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                                             placeholder="این پیشنهاد کجا و برای چه مخاطبی قابل استفاده است؟"
                                         />
@@ -444,6 +449,7 @@ export default function PartnerDashboard({
                                         <textarea
                                             id="terms"
                                             name="terms"
+                                            autoComplete="off"
                                             className="min-h-20 rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                                             placeholder="مثلا فقط روزهای کاری، یک‌بار برای هر کاربر، غیرقابل تبدیل به وجه نقد"
                                         />

@@ -362,7 +362,7 @@ export default function MissionRewardRegistryIndex({
                             </p>
                         </div>
                         <div className="grid gap-4 p-4 xl:grid-cols-3">
-                            <Form action="/admin/missions" method="post" options={{ preserveScroll: true }} className="grid gap-3 rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm">
+                            <Form action="/admin/missions" method="post" options={{ preserveScroll: true }} className="grid gap-3 rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm" autoComplete="off">
                                 {({ processing, errors }) => (
                                     <>
                                         <input type="hidden" name="campaign_id" value={selectedCampaign.id} />
@@ -383,12 +383,12 @@ export default function MissionRewardRegistryIndex({
                                         </div>
                                         <div className="grid gap-1.5">
                                             <label htmlFor="mission_code" className="text-xs font-medium">کد مأموریت</label>
-                                            <input id="mission_code" name="code" required dir="ltr" placeholder="first-scan-mission" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                            <input id="mission_code" name="code" required dir="ltr" autoComplete="off" placeholder="first-scan-mission" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
                                             <InputError message={errors.code} />
                                         </div>
                                         <div className="grid gap-1.5">
                                             <label htmlFor="title_override" className="text-xs font-medium">عنوان نمایشی</label>
-                                            <input id="title_override" name="title_override" placeholder="مثلا اسکن ورودی خانواده" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                            <input id="title_override" name="title_override" autoComplete="off" placeholder="مثلا اسکن ورودی خانواده" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
                                             <InputError message={errors.title_override} />
                                         </div>
                                         <div className="grid gap-2 sm:grid-cols-2">
@@ -431,7 +431,7 @@ export default function MissionRewardRegistryIndex({
                                 )}
                             </Form>
 
-                            <Form action="/admin/rewards" method="post" options={{ preserveScroll: true }} className="grid gap-3 rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm">
+                            <Form action="/admin/rewards" method="post" options={{ preserveScroll: true }} className="grid gap-3 rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm" autoComplete="off">
                                 {({ processing, errors }) => (
                                     <>
                                         <input type="hidden" name="campaign_id" value={selectedCampaign.id} />
@@ -441,18 +441,18 @@ export default function MissionRewardRegistryIndex({
                                         </div>
                                         <div className="grid gap-1.5">
                                             <label htmlFor="reward_name" className="text-xs font-medium">نام پاداش</label>
-                                            <input id="reward_name" name="name" required placeholder="مثلا کوپن نوشیدنی" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                            <input id="reward_name" name="name" required autoComplete="off" placeholder="مثلا کوپن نوشیدنی" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
                                             <InputError message={errors.name} />
                                         </div>
                                         <div className="grid gap-2 sm:grid-cols-2">
                                             <div className="grid gap-1.5">
                                                 <label htmlFor="reward_code" className="text-xs font-medium">کد</label>
-                                                <input id="reward_code" name="code" required dir="ltr" placeholder="drink-coupon" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                                <input id="reward_code" name="code" required dir="ltr" autoComplete="off" placeholder="drink-coupon" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
                                                 <InputError message={errors.code} />
                                             </div>
                                             <div className="grid gap-1.5">
                                                 <label htmlFor="reward_type" className="text-xs font-medium">نوع</label>
-                                                <input id="reward_type" name="reward_type" required dir="ltr" defaultValue="partner_coupon" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                                <input id="reward_type" name="reward_type" required dir="ltr" autoComplete="off" defaultValue="partner_coupon" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
                                                 <InputError message={errors.reward_type} />
                                             </div>
                                         </div>
@@ -484,8 +484,8 @@ export default function MissionRewardRegistryIndex({
                                                 </select>
                                             </div>
                                         </div>
-                                        <textarea name="description" placeholder="توضیح کوتاه پاداش" className="min-h-16 rounded-md border border-input bg-background px-3 py-2 text-sm" />
-                                        <textarea name="terms" placeholder="شرایط استفاده" className="min-h-16 rounded-md border border-input bg-background px-3 py-2 text-sm" />
+                                        <textarea name="description" autoComplete="off" placeholder="توضیح کوتاه پاداش" className="min-h-16 rounded-md border border-input bg-background px-3 py-2 text-sm" />
+                                        <textarea name="terms" autoComplete="off" placeholder="شرایط استفاده" className="min-h-16 rounded-md border border-input bg-background px-3 py-2 text-sm" />
                                         <Button disabled={processing}>
                                             <Gift className="size-4" />
                                             ثبت پاداش
@@ -494,7 +494,7 @@ export default function MissionRewardRegistryIndex({
                                 )}
                             </Form>
 
-                            <Form action="/admin/treasures" method="post" options={{ preserveScroll: true }} className="grid gap-3 rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm">
+                            <Form action="/admin/treasures" method="post" options={{ preserveScroll: true }} className="grid gap-3 rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm" autoComplete="off">
                                 {({ processing, errors }) => (
                                     <>
                                         <input type="hidden" name="campaign_id" value={selectedCampaign.id} />
@@ -504,18 +504,18 @@ export default function MissionRewardRegistryIndex({
                                         </div>
                                         <div className="grid gap-1.5">
                                             <label htmlFor="treasure_name" className="text-xs font-medium">نام گنج</label>
-                                            <input id="treasure_name" name="name" required placeholder="مثلا گنج مسیر خانوادگی" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                            <input id="treasure_name" name="name" required autoComplete="off" placeholder="مثلا گنج مسیر خانوادگی" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
                                             <InputError message={errors.name} />
                                         </div>
                                         <div className="grid gap-2 sm:grid-cols-2">
                                             <div className="grid gap-1.5">
                                                 <label htmlFor="treasure_code" className="text-xs font-medium">کد</label>
-                                                <input id="treasure_code" name="code" required dir="ltr" placeholder="family-route-treasure" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                                <input id="treasure_code" name="code" required dir="ltr" autoComplete="off" placeholder="family-route-treasure" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
                                                 <InputError message={errors.code} />
                                             </div>
                                             <div className="grid gap-1.5">
                                                 <label htmlFor="treasure_type" className="text-xs font-medium">نوع</label>
-                                                <input id="treasure_type" name="treasure_type" required dir="ltr" defaultValue="final_treasure" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                                <input id="treasure_type" name="treasure_type" required dir="ltr" autoComplete="off" defaultValue="final_treasure" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
                                                 <InputError message={errors.treasure_type} />
                                             </div>
                                         </div>
