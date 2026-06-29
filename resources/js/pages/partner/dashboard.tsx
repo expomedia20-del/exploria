@@ -42,11 +42,20 @@ type RewardDefinition = {
     campaignName: string | null;
     approvalStatus: string;
     availabilityStatus: string;
+    rewardTier: string | null;
+    rewardOption: string | null;
     availableFrom: string | null;
     availableUntil: string | null;
     description: string | null;
     terms: string | null;
     reviewNotes: string | null;
+};
+
+type RewardDesignTier = {
+    tierKey: string;
+    level: string;
+    suggestedOptionCount: number;
+    options: string[];
 };
 
 type Redemption = {
@@ -91,6 +100,14 @@ type Props = {
     rewardDefinitions: RewardDefinition[];
     redemptions: Redemption[];
     adRequests: PartnerAdRequest[];
+    proposalContext: {
+        campaign: {
+            id: string;
+            code: string;
+            name: string;
+        } | null;
+        rewardTiers: RewardDesignTier[];
+    };
 };
 
 type SharedProps = {
@@ -165,6 +182,7 @@ export default function PartnerDashboard({
     rewardDefinitions,
     redemptions,
     adRequests,
+    proposalContext,
 }: Props) {
     const { flash } = usePage<SharedProps>().props;
 
@@ -344,6 +362,16 @@ export default function PartnerDashboard({
                                 ثبت پیشنهاد/تخفیف جدید
                             </h2>
                         </div>
+                        <div className="mb-4 rounded-md bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                            {proposalContext.campaign ? (
+                                <>
+                                    <p className="font-medium text-foreground">کمپین فعال: {proposalContext.campaign.name}</p>
+                                    <p className="mt-1">سطح و گزینه پیشنهادی برای بررسی ادمین ثبت می‌شود و اجرای نهایی در مرحله مأموریت و پاداش انجام می‌شود.</p>
+                                </>
+                            ) : (
+                                <p>برای ثبت پیشنهاد پاداش، ابتدا باید یک کمپین فعال برای مکان این فروشگاه وجود داشته باشد.</p>
+                            )}
+                        </div>
                         <Form
                             action="/partner/offers"
                             method="post"
@@ -394,6 +422,46 @@ export default function PartnerDashboard({
                                         <InputError
                                             message={errors.reward_type}
                                         />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="reward_tier">
+                                            سطح پاداش پیشنهادی
+                                        </Label>
+                                        <select
+                                            id="reward_tier"
+                                            name="reward_tier"
+                                            className="h-9 rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                            defaultValue={proposalContext.rewardTiers[0]?.tierKey ?? ''}
+                                        >
+                                            <option value="">بدون سطح مشخص</option>
+                                            {proposalContext.rewardTiers.map((tier) => (
+                                                <option key={tier.tierKey} value={tier.tierKey}>
+                                                    {tier.level}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <InputError message={errors.reward_tier} />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="reward_option">
+                                            گزینه/ترکیب پیشنهادی
+                                        </Label>
+                                        <select
+                                            id="reward_option"
+                                            name="reward_option"
+                                            className="h-9 rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                            defaultValue=""
+                                        >
+                                            <option value="">انتخاب آزاد توسط ادمین</option>
+                                            {proposalContext.rewardTiers.flatMap((tier) =>
+                                                tier.options.map((option) => (
+                                                    <option key={`${tier.tierKey}-${option}`} value={option}>
+                                                        {tier.level} - {option}
+                                                    </option>
+                                                )),
+                                            )}
+                                        </select>
+                                        <InputError message={errors.reward_option} />
                                     </div>
                                     <div className="grid gap-2">
                                         <Label htmlFor="point_cost">
@@ -456,7 +524,7 @@ export default function PartnerDashboard({
                                         <InputError message={errors.terms} />
                                     </div>
                                     <div className="md:col-span-2">
-                                        <Button disabled={processing}>
+                                        <Button disabled={processing || !proposalContext.campaign}>
                                             <Gift className="size-4" />
                                             ارسال برای تایید
                                         </Button>

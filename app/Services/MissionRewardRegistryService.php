@@ -389,6 +389,7 @@ class MissionRewardRegistryService
             'status' => $reward->status->value,
             'approvalStatus' => $reward->metadata['approval_status'] ?? $reward->status->value,
             'availabilityStatus' => $reward->metadata['availability_status'] ?? ($reward->status->value === 'inactive' ? 'paused' : 'active'),
+            'source' => $reward->metadata['source'] ?? null,
             'rewardTier' => $reward->metadata['reward_tier'] ?? null,
             'rewardOption' => $reward->metadata['reward_option'] ?? null,
             'cycleStep' => [

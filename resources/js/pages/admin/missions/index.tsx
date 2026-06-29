@@ -62,6 +62,7 @@ type RewardItem = {
     status: string;
     approvalStatus: string;
     rewardTier: string | null;
+    source: string | null;
     rewardOption: string | null;
     cycleStep: { index: number | null; label: string | null };
     description: string | null;
@@ -499,7 +500,28 @@ export default function MissionRewardRegistryIndex({
                         </div>
                         <div className="mt-4 grid gap-3 lg:grid-cols-2">
                             <div className="rounded-lg bg-background/75 p-3"><p className="font-medium">چرخه و قالب مأموریت</p><ol className="mt-2 space-y-1 text-muted-foreground">{(selectedBlueprint.missionPlan ?? []).map((step) => <li key={step.userStep}>{step.index.toLocaleString('fa-IR')}. {step.userStep} · {step.recommendedTemplateCode}</li>)}</ol></div>
-                            <div className="rounded-lg bg-background/75 p-3"><p className="font-medium">سطوح پاداش</p><div className="mt-2 flex flex-wrap gap-2">{selectedBlueprint.rewardBasket.slice(0, 4).map((tier) => <span key={tier.level} className="rounded-full bg-muted px-2 py-1 text-xs">{tier.level}: {tier.items.slice(0, 2).join(' / ')}</span>)}</div></div>
+                            <div className="rounded-lg bg-background/75 p-3">
+                                <p className="font-medium">سطوح چندگزینه‌ای پاداش</p>
+                                <div className="mt-2 grid gap-2">
+                                    {(selectedBlueprint.rewardDesign?.tiers ?? []).map((tier) => (
+                                        <div key={tier.tierKey} className="rounded-md border border-border/70 bg-background px-3 py-2">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <p className="text-xs font-medium">{tier.level}</p>
+                                                <span className="text-[11px] text-muted-foreground">
+                                                    {tier.suggestedOptionCount.toLocaleString('fa-IR')} گزینه پیشنهادی
+                                                </span>
+                                            </div>
+                                            <div className="mt-2 flex flex-wrap gap-1.5">
+                                                {tier.options.map((option) => (
+                                                    <span key={option} className="rounded-full bg-muted px-2 py-1 text-[11px]">
+                                                        {option}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                         <p className="mt-3 rounded-lg bg-background/75 p-3 text-muted-foreground"><span className="font-medium text-foreground">اقدام بعدی: </span>{selectedBlueprint.nextBuildAction}</p>
                         <div className="mt-4 flex flex-wrap gap-2">
@@ -1063,6 +1085,11 @@ export default function MissionRewardRegistryIndex({
                                             {reward.rewardTier ? (
                                                 <span className="mt-2 inline-flex rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
                                                     سطح {rewardTierLabels[reward.rewardTier] ?? reward.rewardTier}
+                                                </span>
+                                            ) : null}
+                                            {reward.source === 'partner_offer_submission' ? (
+                                                <span className="mt-2 mr-2 inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800 dark:bg-amber-950 dark:text-amber-200">
+                                                    پیشنهاد فروشگاه/اسپانسر
                                                 </span>
                                             ) : null}
                                             {reward.cycleStep?.label ? (

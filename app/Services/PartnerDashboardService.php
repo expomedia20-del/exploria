@@ -18,7 +18,10 @@ use Illuminate\Validation\ValidationException;
 
 class PartnerDashboardService
 {
-    public function __construct(private readonly UserAccessScopeService $accessScopes) {}
+    public function __construct(
+        private readonly UserAccessScopeService $accessScopes,
+        private readonly MissionRewardBlueprintService $blueprints,
+    ) {}
 
     public function partnerForUser(User $user): PartnerAccount
     {
@@ -66,6 +69,14 @@ class PartnerDashboardService
     {
         $partner = $this->partnerForUser($user);
         $partner->load(['venue:id,code,name']);
+        $activeCampaign = Campaign::query()
+            ->where('venue_id', $partner->venue_id)
+            ->where('status', RecordStatus::Active)
+            ->latest('created_at')
+            ->first();
+        $blueprintCode = $activeCampaign?->metadata['blueprint_code'] ?? null;
+        $blueprint = $this->blueprints->handoff(is_string($blueprintCode) ? $blueprintCode : null);
+        $rewardTiers = $blueprint['rewardDesign']['tiers'] ?? [];
         $rewardDefinitions = $partner->rewardDefinitions()
             ->with(['campaign:id,code,name'])
             ->withCount(['userRewards', 'userRewards as awarded_count' => fn ($query) => $query->where('status', 'awarded')])
@@ -140,6 +151,14 @@ class PartnerDashboardService
                 'pendingAds' => $adRequests->where('status', 'pending_review')->count(),
                 'scheduledAds' => $adRequests->where('placementStatus', 'scheduled')->count(),
             ],
+            'proposalContext' => [
+                'campaign' => $activeCampaign ? [
+                    'id' => $activeCampaign->id,
+                    'code' => $activeCampaign->code,
+                    'name' => $activeCampaign->name,
+                ] : null,
+                'rewardTiers' => $rewardTiers,
+            ],
             'rewardDefinitions' => $rewardDefinitions,
             'redemptions' => $redemptions,
             'adRequests' => $adRequests,
@@ -190,6 +209,8 @@ class PartnerDashboardService
                 'approval_status' => 'pending_review',
                 'submitted_by_user_id' => $partnerUser->id,
                 'submitted_at' => now()->toIso8601String(),
+                'reward_tier' => $data['reward_tier'] ?? null,
+                'reward_option' => $data['reward_option'] ?? null,
                 'description' => $data['description'] ?? null,
                 'terms' => $data['terms'] ?? null,
             ],
@@ -252,6 +273,8 @@ class PartnerDashboardService
             'campaignName' => $reward->campaign?->name,
             'approvalStatus' => $reward->metadata['approval_status'] ?? $reward->status->value,
             'availabilityStatus' => $reward->metadata['availability_status'] ?? ($reward->status === RecordStatus::Inactive ? 'paused' : 'active'),
+            'rewardTier' => $reward->metadata['reward_tier'] ?? null,
+            'rewardOption' => $reward->metadata['reward_option'] ?? null,
             'availableFrom' => $reward->metadata['available_from'] ?? null,
             'availableUntil' => $reward->metadata['available_until'] ?? null,
             'description' => $reward->metadata['description'] ?? null,

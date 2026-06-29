@@ -53,6 +53,8 @@ class PartnerRewardRedemptionTest extends TestCase
                 ->component('partner/dashboard')
                 ->where('partner.code', 'cafe-eco')
                 ->where('stats.rewardDefinitions', 1)
+                ->where('proposalContext.campaign.code', 'ecopark-pilot-1405')
+                ->has('proposalContext.rewardTiers')
                 ->has('rewardDefinitions', 1));
     }
 
@@ -188,6 +190,8 @@ class PartnerRewardRedemptionTest extends TestCase
             ->postJson(route('partner.offers.api.store'), [
                 'name' => 'Ã˜ÂªÃ˜Â®Ã™ÂÃ›Å’Ã™Â Ã™â€ Ã™Ë†Ã˜Â´Ã›Å’Ã˜Â¯Ã™â€ Ã›Å’ Ã˜Â®Ã˜Â§Ã™â€ Ã™Ë†Ã˜Â§Ã˜Â¯ÃšÂ¯Ã›Å’',
                 'reward_type' => 'discount',
+                'reward_tier' => 'silver',
+                'reward_option' => 'family drink bundle',
                 'point_cost' => 250,
                 'stock_quantity' => 30,
                 'description' => 'Ã˜Â¨Ã˜Â±Ã˜Â§Ã›Å’ Ã˜Â®Ã˜Â§Ã™â€ Ã™Ë†Ã˜Â§Ã˜Â¯Ã™â€¡Ã¢â‚¬Å’Ã™â€¡Ã˜Â§Ã›Å’Ã›Å’ ÃšÂ©Ã™â€¡ Ã™â€¦Ã˜Â³Ã›Å’Ã˜Â± Ã˜Â§ÃšÂ©Ã™Ë†Ã™Â¾Ã˜Â§Ã˜Â±ÃšÂ© Ã˜Â±Ã˜Â§ ÃšÂ©Ã˜Â§Ã™â€¦Ã™â€ž Ã™â€¦Ã›Å’Ã¢â‚¬Å’ÃšÂ©Ã™â€ Ã™â€ Ã˜Â¯.',
@@ -205,6 +209,8 @@ class PartnerRewardRedemptionTest extends TestCase
         $this->assertSame('draft', $offer->status->value);
         $this->assertSame('pending_review', $offer->metadata['approval_status']);
         $this->assertSame('partner_offer_submission', $offer->metadata['source']);
+        $this->assertSame('silver', $offer->metadata['reward_tier']);
+        $this->assertSame('family drink bundle', $offer->metadata['reward_option']);
     }
 
     public function test_partner_can_update_own_store_profile(): void
@@ -357,6 +363,9 @@ class PartnerRewardRedemptionTest extends TestCase
         $this->assertNotNull($reward);
         $this->assertSame('pending_review', $reward['approvalStatus']);
         $this->assertSame('active', $reward['availabilityStatus']);
+        $this->assertSame('partner_offer_submission', $reward['source']);
+        $this->assertSame('bronze', $reward['rewardTier']);
+        $this->assertSame('partner starter option', $reward['rewardOption']);
         $this->assertSame('cafe-eco', $reward['partner']['code']);
         $this->assertArrayHasKey('submittedAt', $reward);
     }
@@ -379,6 +388,8 @@ class PartnerRewardRedemptionTest extends TestCase
             ->postJson(route('partner.offers.api.store'), [
                 'name' => $name,
                 'reward_type' => 'partner_coupon',
+                'reward_tier' => 'bronze',
+                'reward_option' => 'partner starter option',
                 'point_cost' => 120,
                 'stock_quantity' => 10,
             ])

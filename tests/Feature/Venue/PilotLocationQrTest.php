@@ -58,7 +58,8 @@ class PilotLocationQrTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('scan/landing')
                 ->where('qr.venueName', 'اکوپارک عباس‌آباد')
-                ->where('qr.isDemo', true));
+                ->where('qr.isDemo', true)
+                ->has('rewardOptions'));
     }
 
     public function test_inactive_qr_does_not_open_an_accepted_landing(): void

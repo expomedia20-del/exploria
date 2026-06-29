@@ -18,6 +18,8 @@ class StorePartnerOfferRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:160'],
             'reward_type' => ['required', 'string', Rule::in(['partner_coupon', 'discount', 'gift', 'service_credit', 'sponsor_reward'])],
+            'reward_tier' => ['nullable', 'string', 'max:64', 'alpha_dash:ascii'],
+            'reward_option' => ['nullable', 'string', 'max:255'],
             'point_cost' => ['nullable', 'integer', 'min:0', 'max:1000000'],
             'stock_quantity' => ['nullable', 'integer', 'min:1', 'max:1000000'],
             'description' => ['nullable', 'string', 'max:1000'],

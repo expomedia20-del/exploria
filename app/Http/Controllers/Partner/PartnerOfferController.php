@@ -28,7 +28,7 @@ class PartnerOfferController extends Controller
             ], 201);
         }
 
-        return back()->with('success', 'Partner offer submitted for review.');
+        return back()->with('success', 'پیشنهاد پاداش برای بررسی ادمین ثبت شد.');
     }
 
     public function update(UpdatePartnerOfferRequest $request, RewardDefinition $reward, PartnerDashboardService $service): JsonResponse|RedirectResponse
@@ -42,6 +42,6 @@ class PartnerOfferController extends Controller
             ]);
         }
 
-        return back()->with('success', 'Partner offer settings updated.');
+        return back()->with('success', 'تنظیمات پیشنهاد پاداش ذخیره شد.');
     }
 }
