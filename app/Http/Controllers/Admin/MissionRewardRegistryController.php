@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreMissionInstanceRequest;
 use App\Http\Requests\Admin\StoreRewardDefinitionRequest;
 use App\Http\Requests\Admin\StoreTreasureRequest;
+use App\Models\MissionInstance;
+use App\Models\RewardDefinition;
 use App\Services\CampaignRegistryService;
 use App\Services\MissionRewardRegistryService;
 use App\Services\MissionRewardBlueprintService;
@@ -68,5 +70,27 @@ class MissionRewardRegistryController extends Controller
         }
 
         return back()->with('success', 'گنج کمپین ثبت شد.');
+    }
+
+    public function destroyMission(Request $request, MissionInstance $mission, MissionRewardRegistryService $service): JsonResponse|RedirectResponse
+    {
+        $service->deleteMission($mission);
+
+        if ($request->expectsJson()) {
+            return response()->json(['status' => 'success']);
+        }
+
+        return back()->with('success', 'مأموریت کمپین حذف شد.');
+    }
+
+    public function destroyReward(Request $request, RewardDefinition $reward, MissionRewardRegistryService $service): JsonResponse|RedirectResponse
+    {
+        $service->deleteReward($reward);
+
+        if ($request->expectsJson()) {
+            return response()->json(['status' => 'success']);
+        }
+
+        return back()->with('success', 'پاداش کمپین حذف شد.');
     }
 }

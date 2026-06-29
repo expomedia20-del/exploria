@@ -7,7 +7,9 @@ import {
     CheckCircle2,
     Gift,
     MapPin,
+    Pencil,
     Sparkles,
+    Trash2,
     Trophy,
     XCircle,
 } from 'lucide-react';
@@ -36,6 +38,7 @@ type MissionItem = {
     code: string;
     title: string | null;
     status: string;
+    missionTemplate: { id: string; code: string; title: string } | null;
     missionType: string | null;
     triggerType: string | null;
     points: number;
@@ -245,6 +248,21 @@ function formatDate(value: string | null) {
     }).format(new Date(value));
 }
 
+function formatDateTimeLocal(value: string | null) {
+    if (!value) {
+        return '';
+    }
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+        return '';
+    }
+
+    const offsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+
+    return offsetDate.toISOString().slice(0, 16);
+}
+
 function Stat({
     label,
     value,
@@ -322,6 +340,8 @@ export default function MissionRewardRegistryIndex({
     const [selectedMissionTemplateId, setSelectedMissionTemplateId] = useState(firstMissionTemplateId);
     const [selectedMissionPlanIndex, setSelectedMissionPlanIndex] = useState(0);
     const [selectedHubId, setSelectedHubId] = useState(formOptions.hubs[0]?.id ?? '');
+    const [editingMission, setEditingMission] = useState<MissionItem | null>(null);
+    const [editingReward, setEditingReward] = useState<RewardItem | null>(null);
     const selectedMissionPlan = missionPlan[selectedMissionPlanIndex] ?? null;
     const selectedMissionTemplate = formOptions.missionTemplates.find((template) => template.id === selectedMissionTemplateId) ?? formOptions.missionTemplates[0] ?? null;
     const missionPlanTemplate = formOptions.missionTemplates.find((template) => template.code === selectedMissionPlan?.recommendedTemplateCode) ?? selectedMissionTemplate;
@@ -348,11 +368,50 @@ export default function MissionRewardRegistryIndex({
         setSelectedMissionPlanIndex(index);
         setSelectedRewardTier(step.rewardTier);
         setSelectedRewardOptionText('');
+        setEditingMission(null);
+        setEditingReward(null);
 
         const matchingTemplate = formOptions.missionTemplates.find((template) => template.code === step.recommendedTemplateCode);
         if (matchingTemplate) {
             setSelectedMissionTemplateId(matchingTemplate.id);
         }
+    }
+
+    function scrollToStageThreeForms() {
+        document.getElementById('stage-three-forms')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function startEditMission(mission: MissionItem) {
+        setEditingMission(mission);
+
+        const stepIndex = mission.cycleStep?.index ? mission.cycleStep.index - 1 : -1;
+        if (stepIndex >= 0 && missionPlan[stepIndex]) {
+            setSelectedMissionPlanIndex(stepIndex);
+        }
+
+        const matchingTemplate = formOptions.missionTemplates.find((template) => template.id === mission.missionTemplate?.id || template.code === mission.missionTemplate?.code);
+        if (matchingTemplate) {
+            setSelectedMissionTemplateId(matchingTemplate.id);
+        }
+
+        setSelectedHubId(mission.hub?.id ?? '');
+        scrollToStageThreeForms();
+    }
+
+    function startEditReward(reward: RewardItem) {
+        setEditingReward(reward);
+
+        const stepIndex = reward.cycleStep?.index ? reward.cycleStep.index - 1 : -1;
+        if (stepIndex >= 0 && missionPlan[stepIndex]) {
+            setSelectedMissionPlanIndex(stepIndex);
+        }
+
+        if (reward.rewardTier) {
+            setSelectedRewardTier(reward.rewardTier);
+        }
+
+        setSelectedRewardOptionText(reward.rewardOption ?? '');
+        scrollToStageThreeForms();
     }
 
     return (
@@ -471,7 +530,7 @@ export default function MissionRewardRegistryIndex({
                 ) : null}
 
                 {selectedCampaign && canMutate ? (
-                    <section className="exploria-panel">
+                    <section id="stage-three-forms" className="exploria-panel">
                         <div className="border-b border-border/70 px-4 py-3 dark:border-sidebar-border">
                             <h2 className="font-semibold">ثبت اجزای مرحله ۳ برای همین کمپین</h2>
                             <p className="mt-1 text-sm text-muted-foreground">
@@ -567,18 +626,18 @@ export default function MissionRewardRegistryIndex({
                                         ) : null}
                                         <div className="grid gap-1.5">
                                             <label htmlFor="mission_code" className="text-xs font-medium">کد مأموریت</label>
-                                            <input key={suggestedMissionCode} id="mission_code" name="code" required dir="ltr" autoComplete="off" defaultValue={suggestedMissionCode} className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                            <input key={`mission-code-${editingMission?.id ?? suggestedMissionCode}`} id="mission_code" name="code" required dir="ltr" autoComplete="off" defaultValue={editingMission?.code ?? suggestedMissionCode} className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
                                             <InputError message={errors.code} />
                                         </div>
                                         <div className="grid gap-1.5">
                                             <label htmlFor="title_override" className="text-xs font-medium">عنوان نمایشی</label>
-                                            <input key={selectedMissionPlan?.title ?? 'title'} id="title_override" name="title_override" autoComplete="off" defaultValue={selectedMissionPlan?.title ?? ''} placeholder="مثلا اسکن ورودی خانواده" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                            <input key={`mission-title-${editingMission?.id ?? selectedMissionPlan?.title ?? 'title'}`} id="title_override" name="title_override" autoComplete="off" defaultValue={editingMission?.title ?? selectedMissionPlan?.title ?? ''} placeholder="مثلا اسکن ورودی خانواده" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
                                             <InputError message={errors.title_override} />
                                         </div>
                                         <div className="grid gap-2 sm:grid-cols-2">
                                             <div className="grid gap-1.5">
                                                 <label htmlFor="mission_status" className="text-xs font-medium">وضعیت</label>
-                                                <select id="mission_status" name="status" defaultValue="draft" className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                                <select key={`mission-status-${editingMission?.id ?? 'new'}`} id="mission_status" name="status" defaultValue={editingMission?.status ?? 'draft'} className="h-9 rounded-md border border-input bg-background px-3 text-sm">
                                                     <option value="draft">پیش‌نویس</option>
                                                     <option value="active">فعال</option>
                                                     <option value="inactive">غیرفعال</option>
@@ -586,18 +645,18 @@ export default function MissionRewardRegistryIndex({
                                             </div>
                                             <div className="grid gap-1.5">
                                                 <label htmlFor="unlock_min_points" className="text-xs font-medium">حداقل امتیاز باز شدن</label>
-                                                <input key={`unlock-${selectedMissionPlan?.index ?? 'none'}`} id="unlock_min_points" name="unlock_min_points" type="number" min="0" defaultValue={selectedMissionPlan?.suggestedUnlockMinPoints ?? 0} className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                                <input key={`unlock-${editingMission?.id ?? selectedMissionPlan?.index ?? 'none'}`} id="unlock_min_points" name="unlock_min_points" type="number" min="0" defaultValue={Number(editingMission?.unlockRule?.min_points ?? selectedMissionPlan?.suggestedUnlockMinPoints ?? 0)} className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
                                             </div>
                                         </div>
                                         <div className="grid gap-2 sm:grid-cols-2">
                                             <div className="grid gap-1.5">
                                                 <label htmlFor="starts_at" className="text-xs font-medium">شروع اعتبار مأموریت</label>
-                                                <input id="starts_at" name="starts_at" type="datetime-local" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                                <input key={`starts-${editingMission?.id ?? 'new'}`} id="starts_at" name="starts_at" type="datetime-local" defaultValue={formatDateTimeLocal(editingMission?.startsAt ?? null)} className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
                                                 <InputError message={errors.starts_at} />
                                             </div>
                                             <div className="grid gap-1.5">
                                                 <label htmlFor="ends_at" className="text-xs font-medium">پایان اعتبار مأموریت</label>
-                                                <input id="ends_at" name="ends_at" type="datetime-local" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                                <input key={`ends-${editingMission?.id ?? 'new'}`} id="ends_at" name="ends_at" type="datetime-local" defaultValue={formatDateTimeLocal(editingMission?.endsAt ?? null)} className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
                                                 <InputError message={errors.ends_at} />
                                             </div>
                                         </div>
@@ -612,7 +671,7 @@ export default function MissionRewardRegistryIndex({
                                             </div>
                                             <div className="grid gap-1.5">
                                                 <label htmlFor="touchpoint_id" className="text-xs font-medium">نقطه تماس</label>
-                                                <select id="touchpoint_id" name="touchpoint_id" className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                                <select key={`touchpoint-${editingMission?.id ?? selectedHubId}`} id="touchpoint_id" name="touchpoint_id" defaultValue={editingMission?.touchpoint?.id ?? ''} className="h-9 rounded-md border border-input bg-background px-3 text-sm">
                                                     <option value="">بدون نقطه تماس</option>
                                                     {filteredTouchpoints.map((touchpoint) => <option key={touchpoint.id} value={touchpoint.id}>{touchpoint.label}</option>)}
                                                 </select>
@@ -629,7 +688,7 @@ export default function MissionRewardRegistryIndex({
                                         </p>
                                         <Button disabled={processing}>
                                             <Trophy className="size-4" />
-                                            ثبت مأموریت
+                                            {editingMission ? 'ذخیره ویرایش مأموریت' : 'ثبت مأموریت'}
                                         </Button>
                                     </>
                                 )}
@@ -652,29 +711,29 @@ export default function MissionRewardRegistryIndex({
                                         </div>
                                         <div className="grid gap-1.5">
                                             <label htmlFor="reward_name" className="text-xs font-medium">نام پاداش</label>
-                                            <input key={`reward-name-${selectedRewardOption}`} id="reward_name" name="name" required autoComplete="off" defaultValue={selectedRewardOption} placeholder="مثلا کوپن نوشیدنی" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                            <input key={`reward-name-${editingReward?.id ?? selectedRewardOption}`} id="reward_name" name="name" required autoComplete="off" defaultValue={editingReward?.name ?? selectedRewardOption} placeholder="مثلا کوپن نوشیدنی" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
                                             <InputError message={errors.name} />
                                         </div>
                                         <div className="grid gap-2 sm:grid-cols-2">
                                             <div className="grid gap-1.5">
                                                 <label htmlFor="reward_code" className="text-xs font-medium">کد</label>
-                                                <input key={suggestedRewardCode} id="reward_code" name="code" required dir="ltr" autoComplete="off" defaultValue={suggestedRewardCode} className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                                <input key={`reward-code-${editingReward?.id ?? suggestedRewardCode}`} id="reward_code" name="code" required dir="ltr" autoComplete="off" defaultValue={editingReward?.code ?? suggestedRewardCode} className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
                                                 <InputError message={errors.code} />
                                             </div>
                                             <div className="grid gap-1.5">
                                                 <label htmlFor="reward_type" className="text-xs font-medium">نوع</label>
-                                                <input id="reward_type" name="reward_type" required dir="ltr" autoComplete="off" defaultValue="partner_coupon" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                                <input key={`reward-type-${editingReward?.id ?? 'new'}`} id="reward_type" name="reward_type" required dir="ltr" autoComplete="off" defaultValue={editingReward?.rewardType ?? 'partner_coupon'} className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
                                                 <InputError message={errors.reward_type} />
                                             </div>
                                         </div>
                                         <div className="grid gap-2 sm:grid-cols-2">
                                             <div className="grid gap-1.5">
                                                 <label htmlFor="point_cost" className="text-xs font-medium">هزینه امتیازی</label>
-                                                <input key={`reward-points-${selectedMissionPlan?.index ?? 'none'}`} id="point_cost" name="point_cost" type="number" min="0" defaultValue={selectedMissionPlan?.suggestedUnlockMinPoints ?? 0} className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                                <input key={`reward-points-${editingReward?.id ?? selectedMissionPlan?.index ?? 'none'}`} id="point_cost" name="point_cost" type="number" min="0" defaultValue={editingReward?.pointCost ?? selectedMissionPlan?.suggestedUnlockMinPoints ?? 0} className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
                                             </div>
                                             <div className="grid gap-1.5">
                                                 <label htmlFor="stock_quantity" className="text-xs font-medium">موجودی</label>
-                                                <input id="stock_quantity" name="stock_quantity" type="number" min="0" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                                <input key={`reward-stock-${editingReward?.id ?? 'new'}`} id="stock_quantity" name="stock_quantity" type="number" min="0" defaultValue={editingReward?.stockQuantity ?? ''} className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
                                             </div>
                                         </div>
                                         <div className="grid gap-1.5">
@@ -720,7 +779,7 @@ export default function MissionRewardRegistryIndex({
                                         <div className="grid gap-2 sm:grid-cols-2">
                                             <div className="grid gap-1.5">
                                                 <label htmlFor="partner_account_id" className="text-xs font-medium">مالک پاداش</label>
-                                                <select id="partner_account_id" name="partner_account_id" className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                                <select key={`reward-partner-${editingReward?.id ?? 'new'}`} id="partner_account_id" name="partner_account_id" defaultValue={editingReward?.partner?.id ?? ''} className="h-9 rounded-md border border-input bg-background px-3 text-sm">
                                                     <option value="">پلتفرم / ادمین</option>
                                                     {formOptions.partners.map((partner) => <option key={partner.id} value={partner.id}>{partner.name}</option>)}
                                                 </select>
@@ -728,7 +787,7 @@ export default function MissionRewardRegistryIndex({
                                             </div>
                                             <div className="grid gap-1.5">
                                                 <label htmlFor="reward_status" className="text-xs font-medium">وضعیت</label>
-                                                <select id="reward_status" name="status" defaultValue="draft" className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                                <select key={`reward-status-${editingReward?.id ?? 'new'}`} id="reward_status" name="status" defaultValue={editingReward?.status ?? 'draft'} className="h-9 rounded-md border border-input bg-background px-3 text-sm">
                                                     <option value="draft">پیش‌نویس</option>
                                                     <option value="active">فعال</option>
                                                     <option value="inactive">غیرفعال</option>
@@ -738,25 +797,25 @@ export default function MissionRewardRegistryIndex({
                                         <div className="grid gap-2 sm:grid-cols-2">
                                             <div className="grid gap-1.5">
                                                 <label htmlFor="available_from" className="text-xs font-medium">شروع اعتبار پاداش</label>
-                                                <input id="available_from" name="available_from" type="datetime-local" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                                <input key={`reward-from-${editingReward?.id ?? 'new'}`} id="available_from" name="available_from" type="datetime-local" defaultValue={formatDateTimeLocal(editingReward?.availableFrom ?? null)} className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
                                                 <InputError message={errors.available_from} />
                                             </div>
                                             <div className="grid gap-1.5">
                                                 <label htmlFor="available_until" className="text-xs font-medium">پایان اعتبار پاداش</label>
-                                                <input id="available_until" name="available_until" type="datetime-local" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                                <input key={`reward-until-${editingReward?.id ?? 'new'}`} id="available_until" name="available_until" type="datetime-local" defaultValue={formatDateTimeLocal(editingReward?.availableUntil ?? null)} className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
                                                 <InputError message={errors.available_until} />
                                             </div>
                                         </div>
                                         <div className="grid gap-1.5">
                                             <label htmlFor="fulfillment_window" className="text-xs font-medium">زمان/روش تحویل پاداش</label>
-                                            <input id="fulfillment_window" name="fulfillment_window" autoComplete="off" placeholder="مثلا همان روز در فروشگاه مالک پاداش یا تا ۴۸ ساعت پس از تایید" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                            <input key={`reward-window-${editingReward?.id ?? 'new'}`} id="fulfillment_window" name="fulfillment_window" autoComplete="off" defaultValue={editingReward?.fulfillmentWindow ?? ''} placeholder="مثلا همان روز در فروشگاه مالک پاداش یا تا ۴۸ ساعت پس از تایید" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
                                             <InputError message={errors.fulfillment_window} />
                                         </div>
-                                        <textarea name="description" autoComplete="off" placeholder="توضیح کوتاه پاداش" className="min-h-16 rounded-md border border-input bg-background px-3 py-2 text-sm" />
-                                        <textarea name="terms" autoComplete="off" placeholder="شرایط استفاده" className="min-h-16 rounded-md border border-input bg-background px-3 py-2 text-sm" />
+                                        <textarea key={`reward-desc-${editingReward?.id ?? 'new'}`} name="description" autoComplete="off" defaultValue={editingReward?.description ?? ''} placeholder="توضیح کوتاه پاداش" className="min-h-16 rounded-md border border-input bg-background px-3 py-2 text-sm" />
+                                        <textarea key={`reward-terms-${editingReward?.id ?? 'new'}`} name="terms" autoComplete="off" defaultValue={editingReward?.terms ?? ''} placeholder="شرایط استفاده" className="min-h-16 rounded-md border border-input bg-background px-3 py-2 text-sm" />
                                         <Button disabled={processing}>
                                             <Gift className="size-4" />
-                                            ثبت پاداش
+                                            {editingReward ? 'ذخیره ویرایش پاداش' : 'ثبت پاداش'}
                                         </Button>
                                     </>
                                 )}
@@ -876,6 +935,29 @@ export default function MissionRewardRegistryIndex({
                                                 گام چرخه: {mission.cycleStep.index?.toLocaleString('fa-IR') ?? '-'} · {mission.cycleStep.label}
                                             </p>
                                         ) : null}
+                                        {canMutate ? (
+                                            <div className="mt-2 flex items-center gap-1.5">
+                                                <Button type="button" variant="ghost" size="sm" className="h-8 px-2" onClick={() => startEditMission(mission)} title="ویرایش مأموریت">
+                                                    <Pencil className="size-4" />
+                                                </Button>
+                                                <Form
+                                                    action={`/admin/missions/${mission.id}`}
+                                                    method="delete"
+                                                    options={{ preserveScroll: true }}
+                                                    onSubmit={(event) => {
+                                                        if (!window.confirm('این مأموریت از لیست مرحله ۳ حذف شود؟')) {
+                                                            event.preventDefault();
+                                                        }
+                                                    }}
+                                                >
+                                                    {({ processing }) => (
+                                                        <Button type="submit" variant="ghost" size="sm" className="h-8 px-2 text-destructive hover:text-destructive" disabled={processing} title="حذف مأموریت">
+                                                            <Trash2 className="size-4" />
+                                                        </Button>
+                                                    )}
+                                                </Form>
+                                            </div>
+                                        ) : null}
                                     </div>
 
                                     <div className="min-w-0">
@@ -987,6 +1069,29 @@ export default function MissionRewardRegistryIndex({
                                                 <p className="mt-1 truncate text-xs text-muted-foreground">
                                                     گام چرخه: {reward.cycleStep.index?.toLocaleString('fa-IR') ?? '-'} · {reward.cycleStep.label}
                                                 </p>
+                                            ) : null}
+                                            {canMutate ? (
+                                                <div className="mt-2 flex items-center gap-1.5">
+                                                    <Button type="button" variant="ghost" size="sm" className="h-8 px-2" onClick={() => startEditReward(reward)} title="ویرایش پاداش">
+                                                        <Pencil className="size-4" />
+                                                    </Button>
+                                                    <Form
+                                                        action={`/admin/rewards/${reward.id}`}
+                                                        method="delete"
+                                                        options={{ preserveScroll: true }}
+                                                        onSubmit={(event) => {
+                                                            if (!window.confirm('این پاداش از لیست مرحله ۳ حذف شود؟')) {
+                                                                event.preventDefault();
+                                                            }
+                                                        }}
+                                                    >
+                                                        {({ processing }) => (
+                                                            <Button type="submit" variant="ghost" size="sm" className="h-8 px-2 text-destructive hover:text-destructive" disabled={processing} title="حذف پاداش">
+                                                                <Trash2 className="size-4" />
+                                                            </Button>
+                                                        )}
+                                                    </Form>
+                                                </div>
                                             ) : null}
                                         </div>
                                         <div className="flex shrink-0 items-center gap-2">

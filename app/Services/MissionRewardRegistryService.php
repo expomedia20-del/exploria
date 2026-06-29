@@ -272,6 +272,24 @@ class MissionRewardRegistryService
         ]));
     }
 
+    public function deleteMission(MissionInstance $mission): void
+    {
+        if ($mission->progressRecords()->exists()) {
+            throw ValidationException::withMessages(['mission' => 'این مأموریت سابقه پیشرفت کاربر دارد و حذف مستقیم آن مجاز نیست.']);
+        }
+
+        $mission->delete();
+    }
+
+    public function deleteReward(RewardDefinition $reward): void
+    {
+        if ($reward->userRewards()->exists()) {
+            throw ValidationException::withMessages(['reward' => 'این پاداش سابقه دریافت کاربر دارد و حذف مستقیم آن مجاز نیست.']);
+        }
+
+        $reward->delete();
+    }
+
     /** @param array<string, mixed> $attributes */
     private function replaceMissionCycleStep(Campaign $campaign, mixed $cycleStepIndex, array $attributes): MissionInstance
     {
@@ -340,6 +358,7 @@ class MissionRewardRegistryService
             'code' => $mission->code,
             'title' => $mission->title_override ?? $mission->missionTemplate?->title,
             'status' => $mission->status->value,
+            'missionTemplate' => $mission->missionTemplate ? ['id' => $mission->missionTemplate->id, 'code' => $mission->missionTemplate->code, 'title' => $mission->missionTemplate->title] : null,
             'missionType' => $mission->missionTemplate?->mission_type,
             'triggerType' => $mission->missionTemplate?->trigger_type,
             'points' => $mission->missionTemplate->point_value,

@@ -142,9 +142,15 @@ Route::get('/admin/missions', [MissionRewardRegistryController::class, 'page'])
 Route::post('/admin/missions', [MissionRewardRegistryController::class, 'storeMission'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.missions.store');
+Route::delete('/admin/missions/{mission}', [MissionRewardRegistryController::class, 'destroyMission'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.missions.destroy');
 Route::post('/admin/rewards', [MissionRewardRegistryController::class, 'storeReward'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.rewards.store');
+Route::delete('/admin/rewards/{reward}', [MissionRewardRegistryController::class, 'destroyReward'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.rewards.destroy');
 Route::post('/admin/treasures', [MissionRewardRegistryController::class, 'storeTreasure'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.treasures.store');

@@ -270,6 +270,53 @@ class CampaignQrCoreTest extends TestCase
         $this->assertSame(1, Treasure::query()->where('code', 'builder-test-treasure')->count());
     }
 
+    public function test_operator_can_delete_draft_campaign_components(): void
+    {
+        $operator = User::factory()->create(['role' => UserRole::Operator]);
+        $campaign = Campaign::query()->where('code', 'ecopark-pilot-1405')->firstOrFail();
+        $template = MissionTemplate::query()->where('status', RecordStatus::Active)->firstOrFail();
+
+        $this->actingAs($operator)
+            ->post(route('admin.missions.store'), [
+                'campaign_id' => $campaign->id,
+                'mission_template_id' => $template->id,
+                'code' => 'delete-test-mission',
+                'cycle_step_index' => 2,
+                'cycle_step_label' => 'delete cycle step',
+                'title_override' => 'delete test mission',
+                'status' => RecordStatus::Draft->value,
+            ])
+            ->assertRedirect();
+
+        $mission = MissionInstance::query()->where('code', 'delete-test-mission')->firstOrFail();
+
+        $this->actingAs($operator)
+            ->post(route('admin.rewards.store'), [
+                'campaign_id' => $campaign->id,
+                'code' => 'delete-test-reward',
+                'name' => 'delete test reward',
+                'reward_type' => 'badge',
+                'reward_tier' => 'bronze',
+                'cycle_step_index' => 2,
+                'cycle_step_label' => 'delete cycle step',
+                'status' => RecordStatus::Draft->value,
+            ])
+            ->assertRedirect();
+
+        $reward = RewardDefinition::query()->where('code', 'delete-test-reward')->firstOrFail();
+
+        $this->actingAs($operator)
+            ->delete(route('admin.rewards.destroy', ['reward' => $reward->id]))
+            ->assertRedirect();
+
+        $this->actingAs($operator)
+            ->delete(route('admin.missions.destroy', ['mission' => $mission->id]))
+            ->assertRedirect();
+
+        $this->assertDatabaseMissing('reward_definitions', ['id' => $reward->id]);
+        $this->assertDatabaseMissing('mission_instances', ['id' => $mission->id]);
+    }
+
     public function test_operator_can_complete_campaign_participants_route_and_launch_review(): void
     {
         $operator = User::factory()->create(['role' => UserRole::Operator]);
