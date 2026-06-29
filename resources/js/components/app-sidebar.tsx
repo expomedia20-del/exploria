@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
     BookOpen,
+    ClipboardCheck,
     FolderGit2,
     LayoutGrid,
     MapPinned,
@@ -69,6 +70,12 @@ const mainNavItems: RoleAwareNavItem[] = [
         title: 'کمپین‌ها',
         href: '/admin/campaigns',
         icon: Megaphone,
+        roles: ['admin', 'operator', 'viewer', 'hub_manager'],
+    },
+    {
+        title: 'کارگاه ساخت کمپین',
+        href: '/admin/campaign-builder',
+        icon: ClipboardCheck,
         roles: ['admin', 'operator', 'viewer', 'hub_manager'],
     },
     {

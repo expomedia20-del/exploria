@@ -236,7 +236,10 @@ export default function CampaignRegistryIndex({
                                 {selectedCampaign.blueprintCode ? <span className="rounded-full bg-primary/10 px-3 py-1 text-xs text-primary" dir="ltr">{selectedCampaign.blueprintCode}</span> : null}
                             </div>
                         </div>
-                        <div className="mt-4 grid gap-2 md:grid-cols-4">
+                        <div className="mt-4 grid gap-2 md:grid-cols-5">
+                            <Button asChild size="sm">
+                                <Link href={`/admin/campaign-builder?campaign=${selectedCampaign.code}`}>ادامه تکمیل در کارگاه</Link>
+                            </Button>
                             <Button asChild variant="outline" size="sm">
                                 <Link href={`/admin/qr-codes?campaign=${selectedCampaign.code}`}>اتصال QR</Link>
                             </Button>
@@ -246,7 +249,7 @@ export default function CampaignRegistryIndex({
                             <Button asChild variant="outline" size="sm">
                                 <Link href={selectedCampaign.blueprintCode ? blueprintFlowUrl('/admin/campaign-participants', selectedCampaign.blueprintCode, 'participants', selectedCampaign.code) : `/admin/campaign-participants?campaign=${selectedCampaign.code}`}>اعضا و مالک پاداش</Link>
                             </Button>
-                            <Button asChild size="sm">
+                            <Button asChild variant="outline" size="sm">
                                 <Link href={selectedCampaign.blueprintCode ? blueprintFlowUrl('/admin/campaign-operations', selectedCampaign.blueprintCode, 'route', selectedCampaign.code) : `/admin/campaign-operations?campaign=${selectedCampaign.code}`}>طراحی مسیر</Link>
                             </Button>
                         </div>
@@ -433,6 +436,7 @@ export default function CampaignRegistryIndex({
                                         </div>
                                         <div className="mt-3 flex flex-wrap gap-2 text-xs">
                                             {[
+                                                ['ادامه تکمیل', `/admin/campaign-builder?campaign=${campaign.code}`],
                                                 ['QR', campaignContextUrl('/admin/qr-codes', campaign)],
                                                 ['مأموریت و پاداش', campaignContextUrl('/admin/missions', campaign, 'components')],
                                                 ['اعضای کمپین', campaignContextUrl('/admin/campaign-participants', campaign, 'participants')],

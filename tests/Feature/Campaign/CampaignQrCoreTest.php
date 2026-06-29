@@ -69,6 +69,21 @@ class CampaignQrCoreTest extends TestCase
         ]);
     }
 
+    public function test_viewer_can_open_campaign_builder_page(): void
+    {
+        $this->withoutVite();
+        $viewer = User::factory()->create(['role' => UserRole::Viewer]);
+
+        $this->actingAs($viewer)
+            ->get(route('admin.campaign-builder.page', ['campaign' => 'ecopark-pilot-1405']))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('admin/campaign-builder/index')
+                ->where('selectedCampaign.code', 'ecopark-pilot-1405')
+                ->has('steps', 6)
+                ->has('roleTracks', 4));
+    }
+
     public function test_viewer_cannot_create_campaign_or_qr(): void
     {
         $viewer = User::factory()->create(['role' => UserRole::Viewer]);

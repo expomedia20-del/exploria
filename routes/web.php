@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AdvertisingController;
 use App\Http\Controllers\Admin\CampaignRegistryController;
+use App\Http\Controllers\Admin\CampaignBuilderController;
 use App\Http\Controllers\Admin\CampaignParticipantController;
 use App\Http\Controllers\Admin\CampaignOperationsController;
 use App\Http\Controllers\Admin\DisplayOperationsController;
@@ -110,6 +111,10 @@ Route::get('/admin/partners', [PartnerRegistryController::class, 'page'])
 Route::get('/admin/campaigns', [CampaignRegistryController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
     ->name('admin.campaigns.page');
+
+Route::get('/admin/campaign-builder', [CampaignBuilderController::class, 'page'])
+    ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
+    ->name('admin.campaign-builder.page');
 
 Route::get('/admin/campaign-operations', [CampaignOperationsController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
