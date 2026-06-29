@@ -56,6 +56,7 @@ type RewardItem = {
     rewardType: string;
     status: string;
     approvalStatus: string;
+    rewardTier: string | null;
     description: string | null;
     terms: string | null;
     reviewNotes: string | null;
@@ -179,6 +180,22 @@ const statusClasses: Record<string, string> = {
     inactive: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200',
     placeholder: 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-200',
 };
+
+const rewardTierLabels: Record<string, string> = {
+    bronze: 'برنزی',
+    silver: 'نقره‌ای',
+    gold: 'طلایی',
+    diamond: 'الماسی',
+    custom: 'سفارشی',
+};
+
+const rewardTierOptions = [
+    { value: 'bronze', label: 'برنزی' },
+    { value: 'silver', label: 'نقره‌ای' },
+    { value: 'gold', label: 'طلایی' },
+    { value: 'diamond', label: 'الماسی' },
+    { value: 'custom', label: 'سفارشی' },
+];
 
 function formatDate(value: string | null) {
     if (!value) {
@@ -466,6 +483,30 @@ export default function MissionRewardRegistryIndex({
                                                 <input id="stock_quantity" name="stock_quantity" type="number" min="0" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
                                             </div>
                                         </div>
+                                        <div className="grid gap-1.5">
+                                            <label htmlFor="reward_tier" className="text-xs font-medium">سطح پاداش</label>
+                                            <select id="reward_tier" name="reward_tier" defaultValue="bronze" className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                                <option value="">بدون سطح</option>
+                                                {rewardTierOptions.map((tier) => (
+                                                    <option key={tier.value} value={tier.value}>
+                                                        {tier.label}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <InputError message={errors.reward_tier} />
+                                        </div>
+                                        {selectedBlueprint?.rewardBasket?.length ? (
+                                            <div className="rounded-md bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                                                <p className="font-medium text-foreground">سطوح پیشنهادی همین الگو</p>
+                                                <div className="mt-2 flex flex-wrap gap-1.5">
+                                                    {selectedBlueprint.rewardBasket.slice(0, 4).map((tier) => (
+                                                        <span key={tier.level} className="rounded-full bg-background px-2 py-1">
+                                                            {tier.level}: {tier.items.slice(0, 2).join(' / ')}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ) : null}
                                         <div className="grid gap-2 sm:grid-cols-2">
                                             <div className="grid gap-1.5">
                                                 <label htmlFor="partner_account_id" className="text-xs font-medium">مالک پاداش</label>
@@ -705,6 +746,11 @@ export default function MissionRewardRegistryIndex({
                                                 {reward.code} ·{' '}
                                                 {reward.rewardType}
                                             </p>
+                                            {reward.rewardTier ? (
+                                                <span className="mt-2 inline-flex rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+                                                    سطح {rewardTierLabels[reward.rewardTier] ?? reward.rewardTier}
+                                                </span>
+                                            ) : null}
                                         </div>
                                         <div className="flex shrink-0 items-center gap-2">
                                             <span

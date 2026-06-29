@@ -28,6 +28,7 @@ class StoreRewardDefinitionRequest extends FormRequest
             ],
             'name' => ['required', 'string', 'max:255'],
             'reward_type' => ['required', 'string', 'max:64', 'alpha_dash:ascii'],
+            'reward_tier' => ['nullable', 'string', 'max:64', 'alpha_dash:ascii'],
             'point_cost' => ['nullable', 'integer', 'min:0', 'max:1000000'],
             'stock_quantity' => ['nullable', 'integer', 'min:0', 'max:1000000'],
             'status' => ['required', Rule::enum(RecordStatus::class)],

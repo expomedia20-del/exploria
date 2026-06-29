@@ -156,6 +156,7 @@ class CampaignQrCoreTest extends TestCase
                 'code' => 'builder-test-reward',
                 'name' => 'پاداش تست کارگاه',
                 'reward_type' => 'badge',
+                'reward_tier' => 'silver',
                 'point_cost' => 100,
                 'stock_quantity' => 50,
                 'status' => RecordStatus::Draft->value,
@@ -194,6 +195,9 @@ class CampaignQrCoreTest extends TestCase
             'code' => 'builder-test-treasure',
         ]);
 
+        $reward = RewardDefinition::query()->where('code', 'builder-test-reward')->firstOrFail();
+
+        $this->assertSame('silver', $reward->metadata['reward_tier']);
         $this->assertSame(1, RewardDefinition::query()->where('code', 'builder-test-reward')->count());
         $this->assertSame(1, Treasure::query()->where('code', 'builder-test-treasure')->count());
     }
