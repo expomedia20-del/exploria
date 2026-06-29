@@ -3,10 +3,18 @@
 namespace App\Services;
 
 use App\Models\MissionInstance;
+use App\Models\MissionTemplate;
+use App\Models\Campaign;
+use App\Models\Hub;
+use App\Models\PartnerAccount;
 use App\Models\RewardDefinition;
+use App\Models\Touchpoint;
 use App\Models\Treasure;
 use App\Models\User;
+use App\Enums\RecordStatus;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class MissionRewardRegistryService
 {
@@ -76,7 +84,114 @@ class MissionRewardRegistryService
             'missions' => $missions,
             'rewards' => $rewards,
             'treasures' => $treasures,
+            'formOptions' => $this->formOptions($campaignId),
         ];
+    }
+
+    /** @return array<string, mixed> */
+    public function formOptions(?string $campaignId): array
+    {
+        $campaign = $campaignId ? Campaign::query()->find($campaignId) : null;
+        $venueId = $campaign?->venue_id;
+
+        return [
+            'missionTemplates' => MissionTemplate::query()
+                ->where('status', RecordStatus::Active)
+                ->orderBy('title')
+                ->get(['id', 'code', 'title', 'mission_type', 'trigger_type', 'point_value'])
+                ->map(fn (MissionTemplate $template): array => [
+                    'id' => $template->id,
+                    'code' => $template->code,
+                    'title' => $template->title,
+                    'missionType' => $template->mission_type,
+                    'triggerType' => $template->trigger_type,
+                    'points' => $template->point_value,
+                ]),
+            'hubs' => Hub::query()
+                ->when($venueId, fn (Builder $query) => $query->whereHas('zone', fn (Builder $zone) => $zone->where('venue_id', $venueId)))
+                ->orderBy('name')
+                ->get(['id', 'code', 'name'])
+                ->map(fn (Hub $hub): array => ['id' => $hub->id, 'code' => $hub->code, 'name' => $hub->name]),
+            'touchpoints' => Touchpoint::query()
+                ->when($venueId, fn (Builder $query) => $query->whereHas('hub.zone', fn (Builder $zone) => $zone->where('venue_id', $venueId)))
+                ->orderBy('label')
+                ->get(['id', 'hub_id', 'code', 'label'])
+                ->map(fn (Touchpoint $touchpoint): array => ['id' => $touchpoint->id, 'hubId' => $touchpoint->hub_id, 'code' => $touchpoint->code, 'label' => $touchpoint->label]),
+            'partners' => PartnerAccount::query()
+                ->when($venueId, fn (Builder $query) => $query->where('venue_id', $venueId))
+                ->orderBy('name')
+                ->get(['id', 'code', 'name', 'partner_type'])
+                ->map(fn (PartnerAccount $partner): array => ['id' => $partner->id, 'code' => $partner->code, 'name' => $partner->name, 'partnerType' => $partner->partner_type]),
+        ];
+    }
+
+    /** @param array<string, mixed> $data */
+    public function createMission(array $data): MissionInstance
+    {
+        $campaign = Campaign::query()->findOrFail($data['campaign_id']);
+
+        $this->assertSameVenueHub($campaign, $data['hub_id'] ?? null);
+        $this->assertSameVenueTouchpoint($campaign, $data['touchpoint_id'] ?? null);
+
+        return DB::transaction(fn (): MissionInstance => MissionInstance::query()->create([
+            'mission_template_id' => $data['mission_template_id'],
+            'campaign_id' => $campaign->id,
+            'venue_id' => $campaign->venue_id,
+            'hub_id' => $data['hub_id'] ?? null,
+            'touchpoint_id' => $data['touchpoint_id'] ?? null,
+            'code' => $data['code'],
+            'title_override' => $data['title_override'] ?? null,
+            'status' => $data['status'],
+            'starts_at' => $data['starts_at'] ?? null,
+            'ends_at' => $data['ends_at'] ?? null,
+            'unlock_rule' => isset($data['unlock_min_points']) ? ['min_points' => (int) $data['unlock_min_points']] : null,
+            'metadata' => ['source' => 'admin_campaign_components'],
+        ]));
+    }
+
+    /** @param array<string, mixed> $data */
+    public function createReward(array $data): RewardDefinition
+    {
+        $campaign = Campaign::query()->findOrFail($data['campaign_id']);
+        $this->assertSameVenuePartner($campaign, $data['partner_account_id'] ?? null);
+
+        return DB::transaction(fn (): RewardDefinition => RewardDefinition::query()->create([
+            'campaign_id' => $campaign->id,
+            'venue_id' => $campaign->venue_id,
+            'partner_account_id' => $data['partner_account_id'] ?? null,
+            'code' => $data['code'],
+            'name' => $data['name'],
+            'reward_type' => $data['reward_type'],
+            'point_cost' => $data['point_cost'] ?? null,
+            'stock_quantity' => $data['stock_quantity'] ?? null,
+            'status' => $data['status'],
+            'metadata' => [
+                'source' => 'admin_campaign_components',
+                'approval_status' => $data['status'],
+                'availability_status' => $data['status'] === RecordStatus::Inactive->value ? 'paused' : 'active',
+                'description' => $data['description'] ?? null,
+                'terms' => $data['terms'] ?? null,
+            ],
+        ]));
+    }
+
+    /** @param array<string, mixed> $data */
+    public function createTreasure(array $data): Treasure
+    {
+        $campaign = Campaign::query()->findOrFail($data['campaign_id']);
+        $this->assertSameCampaignMission($campaign, $data['mission_instance_id'] ?? null);
+
+        return DB::transaction(fn (): Treasure => Treasure::query()->create([
+            'campaign_id' => $campaign->id,
+            'venue_id' => $campaign->venue_id,
+            'mission_instance_id' => $data['mission_instance_id'] ?? null,
+            'code' => $data['code'],
+            'name' => $data['name'],
+            'treasure_type' => $data['treasure_type'],
+            'status' => $data['status'],
+            'reveal_rule' => isset($data['required_completed_missions']) ? ['required_completed_missions' => (int) $data['required_completed_missions']] : null,
+            'metadata' => ['source' => 'admin_campaign_components'],
+        ]));
     }
 
     /** @return array<string, mixed> */
@@ -143,5 +258,59 @@ class MissionRewardRegistryService
             'venue' => $treasure->venue ? ['id' => $treasure->venue->id, 'code' => $treasure->venue->code, 'name' => $treasure->venue->name] : null,
             'missionCode' => $treasure->missionInstance?->code,
         ];
+    }
+
+    private function assertSameVenueHub(Campaign $campaign, ?string $hubId): void
+    {
+        if (! $hubId) {
+            return;
+        }
+
+        $matches = Hub::query()
+            ->whereKey($hubId)
+            ->whereHas('zone', fn (Builder $query) => $query->where('venue_id', $campaign->venue_id))
+            ->exists();
+
+        if (! $matches) {
+            throw ValidationException::withMessages(['hub_id' => 'هاب انتخاب‌شده به مکان کمپین تعلق ندارد.']);
+        }
+    }
+
+    private function assertSameVenueTouchpoint(Campaign $campaign, ?string $touchpointId): void
+    {
+        if (! $touchpointId) {
+            return;
+        }
+
+        $matches = Touchpoint::query()
+            ->whereKey($touchpointId)
+            ->whereHas('hub.zone', fn (Builder $query) => $query->where('venue_id', $campaign->venue_id))
+            ->exists();
+
+        if (! $matches) {
+            throw ValidationException::withMessages(['touchpoint_id' => 'نقطه تماس انتخاب‌شده به مکان کمپین تعلق ندارد.']);
+        }
+    }
+
+    private function assertSameVenuePartner(Campaign $campaign, ?string $partnerId): void
+    {
+        if (! $partnerId) {
+            return;
+        }
+
+        if (! PartnerAccount::query()->whereKey($partnerId)->where('venue_id', $campaign->venue_id)->exists()) {
+            throw ValidationException::withMessages(['partner_account_id' => 'مالک پاداش باید به مکان همین کمپین تعلق داشته باشد.']);
+        }
+    }
+
+    private function assertSameCampaignMission(Campaign $campaign, ?string $missionId): void
+    {
+        if (! $missionId) {
+            return;
+        }
+
+        if (! MissionInstance::query()->whereKey($missionId)->where('campaign_id', $campaign->id)->exists()) {
+            throw ValidationException::withMessages(['mission_instance_id' => 'گنج فقط می‌تواند به مأموریت‌های همین کمپین وصل شود.']);
+        }
     }
 }

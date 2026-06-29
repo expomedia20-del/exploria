@@ -1,4 +1,4 @@
-import { Form, Head, Link } from '@inertiajs/react';
+import { Form, Head, Link, usePage } from '@inertiajs/react';
 import {
     BadgeCheck,
     BookOpenCheck,
@@ -11,6 +11,7 @@ import {
     XCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import InputError from '@/components/input-error';
 
 type SelectedCampaign = {
     id: string;
@@ -120,6 +121,46 @@ type Props = {
     treasures: TreasureItem[];
     selectedBlueprint: SelectedBlueprint | null;
     selectedCampaign: SelectedCampaign | null;
+    formOptions: FormOptions;
+};
+
+type SharedProps = {
+    flash?: {
+        success?: string;
+    };
+    auth: {
+        user: {
+            role?: string;
+        };
+    };
+};
+
+type FormEntity = {
+    id: string;
+    code: string;
+    name?: string;
+    title?: string;
+    label?: string;
+};
+
+type MissionTemplateOption = {
+    id: string;
+    code: string;
+    title: string;
+    missionType: string;
+    triggerType: string;
+    points: number;
+};
+
+type PartnerOption = FormEntity & {
+    partnerType: string;
+};
+
+type FormOptions = {
+    missionTemplates: MissionTemplateOption[];
+    hubs: FormEntity[];
+    touchpoints: (FormEntity & { hubId: string })[];
+    partners: PartnerOption[];
 };
 
 const statusLabels: Record<string, string> = {
@@ -192,7 +233,10 @@ export default function MissionRewardRegistryIndex({
     treasures,
     selectedBlueprint,
     selectedCampaign,
+    formOptions,
 }: Props) {
+    const { flash, auth } = usePage<SharedProps>().props;
+    const canMutate = auth.user.role === 'admin' || auth.user.role === 'operator';
 
     return (
         <>
@@ -302,6 +346,215 @@ export default function MissionRewardRegistryIndex({
                         </div>
                     </section>
                 ) : null}
+
+                {flash?.success ? (
+                    <section className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-100">
+                        {flash.success}
+                    </section>
+                ) : null}
+
+                {selectedCampaign && canMutate ? (
+                    <section className="exploria-panel">
+                        <div className="border-b border-border/70 px-4 py-3 dark:border-sidebar-border">
+                            <h2 className="font-semibold">ثبت اجزای مرحله ۳ برای همین کمپین</h2>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                                مأموریت از قالب‌های آماده انتخاب می‌شود؛ پاداش و گنج هم به همین کد کمپین وصل می‌شوند.
+                            </p>
+                        </div>
+                        <div className="grid gap-4 p-4 xl:grid-cols-3">
+                            <Form action="/admin/missions" method="post" options={{ preserveScroll: true }} className="grid gap-3 rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm">
+                                {({ processing, errors }) => (
+                                    <>
+                                        <input type="hidden" name="campaign_id" value={selectedCampaign.id} />
+                                        <div>
+                                            <h3 className="font-semibold">مأموریت</h3>
+                                            <p className="mt-1 text-xs text-muted-foreground">قالب مأموریت را انتخاب و نمونه اجرایی آن را بسازید.</p>
+                                        </div>
+                                        <div className="grid gap-1.5">
+                                            <label htmlFor="mission_template_id" className="text-xs font-medium">قالب مأموریت</label>
+                                            <select id="mission_template_id" name="mission_template_id" required className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                                {formOptions.missionTemplates.map((template) => (
+                                                    <option key={template.id} value={template.id}>
+                                                        {template.title} - {template.points.toLocaleString('fa-IR')} امتیاز
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <InputError message={errors.mission_template_id} />
+                                        </div>
+                                        <div className="grid gap-1.5">
+                                            <label htmlFor="mission_code" className="text-xs font-medium">کد مأموریت</label>
+                                            <input id="mission_code" name="code" required dir="ltr" placeholder="first-scan-mission" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                            <InputError message={errors.code} />
+                                        </div>
+                                        <div className="grid gap-1.5">
+                                            <label htmlFor="title_override" className="text-xs font-medium">عنوان نمایشی</label>
+                                            <input id="title_override" name="title_override" placeholder="مثلا اسکن ورودی خانواده" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                            <InputError message={errors.title_override} />
+                                        </div>
+                                        <div className="grid gap-2 sm:grid-cols-2">
+                                            <div className="grid gap-1.5">
+                                                <label htmlFor="mission_status" className="text-xs font-medium">وضعیت</label>
+                                                <select id="mission_status" name="status" defaultValue="draft" className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                                    <option value="draft">پیش‌نویس</option>
+                                                    <option value="active">فعال</option>
+                                                    <option value="inactive">غیرفعال</option>
+                                                </select>
+                                            </div>
+                                            <div className="grid gap-1.5">
+                                                <label htmlFor="unlock_min_points" className="text-xs font-medium">حداقل امتیاز باز شدن</label>
+                                                <input id="unlock_min_points" name="unlock_min_points" type="number" min="0" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                            </div>
+                                        </div>
+                                        <div className="grid gap-2 sm:grid-cols-2">
+                                            <div className="grid gap-1.5">
+                                                <label htmlFor="hub_id" className="text-xs font-medium">هاب</label>
+                                                <select id="hub_id" name="hub_id" className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                                    <option value="">بدون هاب</option>
+                                                    {formOptions.hubs.map((hub) => <option key={hub.id} value={hub.id}>{hub.name}</option>)}
+                                                </select>
+                                                <InputError message={errors.hub_id} />
+                                            </div>
+                                            <div className="grid gap-1.5">
+                                                <label htmlFor="touchpoint_id" className="text-xs font-medium">نقطه تماس</label>
+                                                <select id="touchpoint_id" name="touchpoint_id" className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                                    <option value="">بدون نقطه تماس</option>
+                                                    {formOptions.touchpoints.map((touchpoint) => <option key={touchpoint.id} value={touchpoint.id}>{touchpoint.label}</option>)}
+                                                </select>
+                                                <InputError message={errors.touchpoint_id} />
+                                            </div>
+                                        </div>
+                                        <Button disabled={processing}>
+                                            <Trophy className="size-4" />
+                                            ثبت مأموریت
+                                        </Button>
+                                    </>
+                                )}
+                            </Form>
+
+                            <Form action="/admin/rewards" method="post" options={{ preserveScroll: true }} className="grid gap-3 rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm">
+                                {({ processing, errors }) => (
+                                    <>
+                                        <input type="hidden" name="campaign_id" value={selectedCampaign.id} />
+                                        <div>
+                                            <h3 className="font-semibold">پاداش</h3>
+                                            <p className="mt-1 text-xs text-muted-foreground">پاداش قابل دریافت یا هزینه امتیازی را برای کمپین بسازید.</p>
+                                        </div>
+                                        <div className="grid gap-1.5">
+                                            <label htmlFor="reward_name" className="text-xs font-medium">نام پاداش</label>
+                                            <input id="reward_name" name="name" required placeholder="مثلا کوپن نوشیدنی" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                            <InputError message={errors.name} />
+                                        </div>
+                                        <div className="grid gap-2 sm:grid-cols-2">
+                                            <div className="grid gap-1.5">
+                                                <label htmlFor="reward_code" className="text-xs font-medium">کد</label>
+                                                <input id="reward_code" name="code" required dir="ltr" placeholder="drink-coupon" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                                <InputError message={errors.code} />
+                                            </div>
+                                            <div className="grid gap-1.5">
+                                                <label htmlFor="reward_type" className="text-xs font-medium">نوع</label>
+                                                <input id="reward_type" name="reward_type" required dir="ltr" defaultValue="partner_coupon" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                                <InputError message={errors.reward_type} />
+                                            </div>
+                                        </div>
+                                        <div className="grid gap-2 sm:grid-cols-2">
+                                            <div className="grid gap-1.5">
+                                                <label htmlFor="point_cost" className="text-xs font-medium">هزینه امتیازی</label>
+                                                <input id="point_cost" name="point_cost" type="number" min="0" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                            </div>
+                                            <div className="grid gap-1.5">
+                                                <label htmlFor="stock_quantity" className="text-xs font-medium">موجودی</label>
+                                                <input id="stock_quantity" name="stock_quantity" type="number" min="0" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                            </div>
+                                        </div>
+                                        <div className="grid gap-2 sm:grid-cols-2">
+                                            <div className="grid gap-1.5">
+                                                <label htmlFor="partner_account_id" className="text-xs font-medium">مالک پاداش</label>
+                                                <select id="partner_account_id" name="partner_account_id" className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                                    <option value="">پلتفرم / ادمین</option>
+                                                    {formOptions.partners.map((partner) => <option key={partner.id} value={partner.id}>{partner.name}</option>)}
+                                                </select>
+                                                <InputError message={errors.partner_account_id} />
+                                            </div>
+                                            <div className="grid gap-1.5">
+                                                <label htmlFor="reward_status" className="text-xs font-medium">وضعیت</label>
+                                                <select id="reward_status" name="status" defaultValue="draft" className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                                    <option value="draft">پیش‌نویس</option>
+                                                    <option value="active">فعال</option>
+                                                    <option value="inactive">غیرفعال</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <textarea name="description" placeholder="توضیح کوتاه پاداش" className="min-h-16 rounded-md border border-input bg-background px-3 py-2 text-sm" />
+                                        <textarea name="terms" placeholder="شرایط استفاده" className="min-h-16 rounded-md border border-input bg-background px-3 py-2 text-sm" />
+                                        <Button disabled={processing}>
+                                            <Gift className="size-4" />
+                                            ثبت پاداش
+                                        </Button>
+                                    </>
+                                )}
+                            </Form>
+
+                            <Form action="/admin/treasures" method="post" options={{ preserveScroll: true }} className="grid gap-3 rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm">
+                                {({ processing, errors }) => (
+                                    <>
+                                        <input type="hidden" name="campaign_id" value={selectedCampaign.id} />
+                                        <div>
+                                            <h3 className="font-semibold">گنج</h3>
+                                            <p className="mt-1 text-xs text-muted-foreground">گنج نهایی یا مرحله‌ای را به کمپین و در صورت نیاز به مأموریت وصل کنید.</p>
+                                        </div>
+                                        <div className="grid gap-1.5">
+                                            <label htmlFor="treasure_name" className="text-xs font-medium">نام گنج</label>
+                                            <input id="treasure_name" name="name" required placeholder="مثلا گنج مسیر خانوادگی" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                            <InputError message={errors.name} />
+                                        </div>
+                                        <div className="grid gap-2 sm:grid-cols-2">
+                                            <div className="grid gap-1.5">
+                                                <label htmlFor="treasure_code" className="text-xs font-medium">کد</label>
+                                                <input id="treasure_code" name="code" required dir="ltr" placeholder="family-route-treasure" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                                <InputError message={errors.code} />
+                                            </div>
+                                            <div className="grid gap-1.5">
+                                                <label htmlFor="treasure_type" className="text-xs font-medium">نوع</label>
+                                                <input id="treasure_type" name="treasure_type" required dir="ltr" defaultValue="final_treasure" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                                <InputError message={errors.treasure_type} />
+                                            </div>
+                                        </div>
+                                        <div className="grid gap-2 sm:grid-cols-2">
+                                            <div className="grid gap-1.5">
+                                                <label htmlFor="mission_instance_id" className="text-xs font-medium">اتصال به مأموریت</label>
+                                                <select id="mission_instance_id" name="mission_instance_id" className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                                    <option value="">بدون اتصال مستقیم</option>
+                                                    {missions.map((mission) => <option key={mission.id} value={mission.id}>{mission.title ?? mission.code}</option>)}
+                                                </select>
+                                                <InputError message={errors.mission_instance_id} />
+                                            </div>
+                                            <div className="grid gap-1.5">
+                                                <label htmlFor="required_completed_missions" className="text-xs font-medium">تعداد مأموریت لازم</label>
+                                                <input id="required_completed_missions" name="required_completed_missions" type="number" min="0" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                            </div>
+                                        </div>
+                                        <div className="grid gap-1.5">
+                                            <label htmlFor="treasure_status" className="text-xs font-medium">وضعیت</label>
+                                            <select id="treasure_status" name="status" defaultValue="draft" className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                                <option value="draft">پیش‌نویس</option>
+                                                <option value="active">فعال</option>
+                                                <option value="inactive">غیرفعال</option>
+                                            </select>
+                                        </div>
+                                        <Button disabled={processing}>
+                                            <MapPin className="size-4" />
+                                            ثبت گنج
+                                        </Button>
+                                    </>
+                                )}
+                            </Form>
+                        </div>
+                    </section>
+                ) : selectedCampaign ? null : (
+                    <section className="rounded-lg border border-dashed border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
+                        برای ثبت مأموریت، پاداش و گنج، ابتدا از کارگاه یا فهرست کمپین‌ها یک کمپین مشخص را انتخاب کنید.
+                    </section>
+                )}
 
                 <section className="rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border">
                     <div className="grid min-w-[980px] grid-cols-[1.3fr_0.9fr_0.9fr_0.9fr_0.75fr_1fr_0.8fr] gap-3 border-b border-sidebar-border/70 px-4 py-3 text-xs font-medium text-muted-foreground dark:border-sidebar-border">

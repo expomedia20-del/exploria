@@ -130,6 +130,15 @@ Route::get('/admin/mission-blueprints', [MissionRewardBlueprintController::class
 Route::get('/admin/missions', [MissionRewardRegistryController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
     ->name('admin.missions.page');
+Route::post('/admin/missions', [MissionRewardRegistryController::class, 'storeMission'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.missions.store');
+Route::post('/admin/rewards', [MissionRewardRegistryController::class, 'storeReward'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.rewards.store');
+Route::post('/admin/treasures', [MissionRewardRegistryController::class, 'storeTreasure'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.treasures.store');
 
 Route::get('/admin/ads', [AdvertisingController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
@@ -216,6 +225,15 @@ Route::get('/api/v1/admin/mission-blueprints', [MissionRewardBlueprintController
 Route::get('/api/v1/admin/missions', [MissionRewardRegistryController::class, 'index'])
     ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
     ->name('admin.missions.index');
+Route::post('/api/v1/admin/missions', [MissionRewardRegistryController::class, 'storeMission'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.missions.api.store');
+Route::post('/api/v1/admin/rewards', [MissionRewardRegistryController::class, 'storeReward'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.rewards.api.store');
+Route::post('/api/v1/admin/treasures', [MissionRewardRegistryController::class, 'storeTreasure'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.treasures.api.store');
 
 Route::get('/api/v1/admin/ads', [AdvertisingController::class, 'index'])
     ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])

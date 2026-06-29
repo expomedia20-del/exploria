@@ -5,8 +5,12 @@ namespace Tests\Feature\Campaign;
 use App\Enums\RecordStatus;
 use App\Enums\UserRole;
 use App\Models\Campaign;
+use App\Models\MissionInstance;
+use App\Models\MissionTemplate;
 use App\Models\QrCode;
+use App\Models\RewardDefinition;
 use App\Models\Touchpoint;
+use App\Models\Treasure;
 use App\Models\User;
 use App\Models\Venue;
 use Database\Seeders\PilotLocationSeeder;
@@ -84,7 +88,7 @@ class CampaignQrCoreTest extends TestCase
                 ->has('roleTracks', 4));
     }
 
-    public function test_viewer_cannot_create_campaign_or_qr(): void
+    public function test_viewer_cannot_create_campaign_qr_or_components(): void
     {
         $viewer = User::factory()->create(['role' => UserRole::Viewer]);
 
@@ -95,6 +99,90 @@ class CampaignQrCoreTest extends TestCase
         $this->actingAs($viewer)
             ->post(route('admin.qr-codes.store'), [])
             ->assertForbidden();
+
+        $this->actingAs($viewer)
+            ->post(route('admin.missions.store'), [])
+            ->assertForbidden();
+
+        $this->actingAs($viewer)
+            ->post(route('admin.rewards.store'), [])
+            ->assertForbidden();
+
+        $this->actingAs($viewer)
+            ->post(route('admin.treasures.store'), [])
+            ->assertForbidden();
+    }
+
+    public function test_operator_can_create_campaign_components(): void
+    {
+        $operator = User::factory()->create(['role' => UserRole::Operator]);
+        $campaign = Campaign::query()->where('code', 'ecopark-pilot-1405')->firstOrFail();
+        $template = MissionTemplate::query()->where('status', RecordStatus::Active)->firstOrFail();
+
+        $this->actingAs($operator)
+            ->from(route('admin.missions.page', ['campaign' => $campaign->code]))
+            ->post(route('admin.missions.store'), [
+                'campaign_id' => $campaign->id,
+                'mission_template_id' => $template->id,
+                'code' => 'builder-first-mission',
+                'title_override' => 'ماموریت تست کارگاه',
+                'status' => RecordStatus::Draft->value,
+                'unlock_min_points' => 100,
+            ])
+            ->assertRedirect(route('admin.missions.page', ['campaign' => $campaign->code]));
+
+        $mission = MissionInstance::query()
+            ->where('campaign_id', $campaign->id)
+            ->where('code', 'builder-first-mission')
+            ->firstOrFail();
+
+        $this->actingAs($operator)
+            ->from(route('admin.missions.page', ['campaign' => $campaign->code]))
+            ->post(route('admin.rewards.store'), [
+                'campaign_id' => $campaign->id,
+                'code' => 'builder-test-reward',
+                'name' => 'پاداش تست کارگاه',
+                'reward_type' => 'badge',
+                'point_cost' => 100,
+                'stock_quantity' => 50,
+                'status' => RecordStatus::Draft->value,
+                'description' => 'پاداش ساخته شده در مرحله سه',
+            ])
+            ->assertRedirect(route('admin.missions.page', ['campaign' => $campaign->code]));
+
+        $this->actingAs($operator)
+            ->from(route('admin.missions.page', ['campaign' => $campaign->code]))
+            ->post(route('admin.treasures.store'), [
+                'campaign_id' => $campaign->id,
+                'mission_instance_id' => $mission->id,
+                'code' => 'builder-test-treasure',
+                'name' => 'گنج تست کارگاه',
+                'treasure_type' => 'final_treasure',
+                'status' => RecordStatus::Draft->value,
+                'required_completed_missions' => 1,
+            ])
+            ->assertRedirect(route('admin.missions.page', ['campaign' => $campaign->code]));
+
+        $this->assertDatabaseHas('mission_instances', [
+            'campaign_id' => $campaign->id,
+            'code' => 'builder-first-mission',
+            'title_override' => 'ماموریت تست کارگاه',
+        ]);
+
+        $this->assertDatabaseHas('reward_definitions', [
+            'campaign_id' => $campaign->id,
+            'code' => 'builder-test-reward',
+            'name' => 'پاداش تست کارگاه',
+        ]);
+
+        $this->assertDatabaseHas('treasures', [
+            'campaign_id' => $campaign->id,
+            'mission_instance_id' => $mission->id,
+            'code' => 'builder-test-treasure',
+        ]);
+
+        $this->assertSame(1, RewardDefinition::query()->where('code', 'builder-test-reward')->count());
+        $this->assertSame(1, Treasure::query()->where('code', 'builder-test-treasure')->count());
     }
 
     public function test_operator_can_create_qr_for_matching_venue_campaign_and_touchpoint(): void

@@ -1,0 +1,35 @@
+<?php
+
+namespace App\Http\Requests\Admin;
+
+use App\Enums\RecordStatus;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+
+class StoreTreasureRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return $this->user() !== null;
+    }
+
+    /** @return array<string, mixed> */
+    public function rules(): array
+    {
+        return [
+            'campaign_id' => ['required', 'uuid', 'exists:campaigns,id'],
+            'mission_instance_id' => ['nullable', 'uuid', 'exists:mission_instances,id'],
+            'code' => [
+                'required',
+                'string',
+                'max:96',
+                'alpha_dash:ascii',
+                Rule::unique('treasures', 'code')->where('campaign_id', $this->string('campaign_id')->toString()),
+            ],
+            'name' => ['required', 'string', 'max:255'],
+            'treasure_type' => ['required', 'string', 'max:64', 'alpha_dash:ascii'],
+            'status' => ['required', Rule::enum(RecordStatus::class)],
+            'required_completed_missions' => ['nullable', 'integer', 'min:0', 'max:1000'],
+        ];
+    }
+}
