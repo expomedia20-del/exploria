@@ -273,8 +273,15 @@ class CampaignQrCoreTest extends TestCase
                 'code' => 'builder-test-treasure',
                 'name' => 'گنج تست کارگاه',
                 'treasure_type' => 'final_treasure',
+                'treasure_tier' => 'bronze',
+                'cycle_step_index' => 1,
+                'cycle_step_label' => 'builder cycle step',
+                'reveal_mode' => 'after_step_completion',
+                'reveal_description' => 'builder treasure reveal',
+                'discovery_hint' => 'follow the first mission',
                 'status' => RecordStatus::Draft->value,
                 'required_completed_missions' => 1,
+                'required_min_points' => 120,
             ])
             ->assertRedirect(route('admin.missions.page', ['campaign' => $campaign->code]));
 
@@ -306,6 +313,11 @@ class CampaignQrCoreTest extends TestCase
         $this->assertSame(1, RewardDefinition::query()->where('code', 'builder-test-reward')->count());
         $this->assertSame(1, RewardDefinition::query()->where('campaign_id', $campaign->id)->where('metadata->cycle_step_index', 1)->count());
         $this->assertSame(1, Treasure::query()->where('code', 'builder-test-treasure')->count());
+
+        $treasure = Treasure::query()->where('code', 'builder-test-treasure')->firstOrFail();
+        $this->assertSame('bronze', $treasure->metadata['treasure_tier']);
+        $this->assertSame(1, $treasure->metadata['cycle_step_index']);
+        $this->assertSame('after_step_completion', $treasure->reveal_rule['reveal_mode']);
     }
 
     public function test_blueprint_campaign_rejects_mismatched_stage_three_components(): void

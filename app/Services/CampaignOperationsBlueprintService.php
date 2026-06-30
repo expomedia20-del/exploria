@@ -282,6 +282,12 @@ class CampaignOperationsBlueprintService
                 'name' => $treasure->name,
                 'treasureType' => $treasure->treasure_type,
                 'status' => $treasure->status->value,
+                'cycleStep' => [
+                    'index' => $treasure->metadata['cycle_step_index'] ?? null,
+                    'label' => $treasure->metadata['cycle_step_label'] ?? null,
+                ],
+                'rewardTier' => $treasure->metadata['treasure_tier'] ?? null,
+                'rewardOption' => $treasure->metadata['reveal_description'] ?? null,
             ]);
     }
 

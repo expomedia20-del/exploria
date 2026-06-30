@@ -265,6 +265,7 @@ class MissionRewardRegistryService
     {
         $campaign = Campaign::query()->findOrFail($data['campaign_id']);
         $this->assertSameCampaignMission($campaign, $data['mission_instance_id'] ?? null);
+        $this->blueprintConsistency->assertTreasureInput($campaign, $data);
 
         return DB::transaction(fn (): Treasure => Treasure::query()->create([
             'campaign_id' => $campaign->id,
@@ -274,8 +275,20 @@ class MissionRewardRegistryService
             'name' => $data['name'],
             'treasure_type' => $data['treasure_type'],
             'status' => $data['status'],
-            'reveal_rule' => isset($data['required_completed_missions']) ? ['required_completed_missions' => (int) $data['required_completed_missions']] : null,
-            'metadata' => ['source' => 'admin_campaign_components'],
+            'reveal_rule' => [
+                'required_completed_missions' => isset($data['required_completed_missions']) ? (int) $data['required_completed_missions'] : null,
+                'required_min_points' => isset($data['required_min_points']) ? (int) $data['required_min_points'] : null,
+                'required_reward_tier' => $data['treasure_tier'] ?? null,
+                'reveal_mode' => $data['reveal_mode'] ?? null,
+            ],
+            'metadata' => [
+                'source' => 'admin_campaign_components',
+                'cycle_step_index' => $data['cycle_step_index'] ?? null,
+                'cycle_step_label' => $data['cycle_step_label'] ?? null,
+                'treasure_tier' => $data['treasure_tier'] ?? null,
+                'reveal_description' => $data['reveal_description'] ?? null,
+                'discovery_hint' => $data['discovery_hint'] ?? null,
+            ],
         ]));
     }
 
@@ -430,6 +443,14 @@ class MissionRewardRegistryService
             'treasureType' => $treasure->treasure_type,
             'status' => $treasure->status->value,
             'revealRule' => $treasure->reveal_rule,
+            'treasureTier' => $treasure->metadata['treasure_tier'] ?? null,
+            'revealMode' => $treasure->reveal_rule['reveal_mode'] ?? null,
+            'revealDescription' => $treasure->metadata['reveal_description'] ?? null,
+            'discoveryHint' => $treasure->metadata['discovery_hint'] ?? null,
+            'cycleStep' => [
+                'index' => $treasure->metadata['cycle_step_index'] ?? null,
+                'label' => $treasure->metadata['cycle_step_label'] ?? null,
+            ],
             'campaign' => $treasure->campaign ? ['id' => $treasure->campaign->id, 'code' => $treasure->campaign->code, 'name' => $treasure->campaign->name] : null,
             'venue' => $treasure->venue ? ['id' => $treasure->venue->id, 'code' => $treasure->venue->code, 'name' => $treasure->venue->name] : null,
             'missionCode' => $treasure->missionInstance?->code,

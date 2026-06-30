@@ -6,6 +6,7 @@ use App\Models\Campaign;
 use App\Models\MissionInstance;
 use App\Models\MissionTemplate;
 use App\Models\RewardDefinition;
+use App\Models\Treasure;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 
@@ -88,6 +89,45 @@ class CampaignBlueprintConsistencyService
         }
     }
 
+    /** @param array<string, mixed> $data */
+    public function assertTreasureInput(Campaign $campaign, array $data): void
+    {
+        $blueprint = $this->blueprintForCampaign($campaign);
+
+        if (! $blueprint) {
+            return;
+        }
+
+        $step = $this->stepFromData($blueprint, $data);
+        $tierKey = (string) ($data['treasure_tier'] ?? '');
+
+        if ($tierKey === '') {
+            throw ValidationException::withMessages([
+                'treasure_tier' => 'برای گنج کمپین، سطح گنج مرتبط با الگوی کمپین را انتخاب کنید.',
+            ]);
+        }
+
+        if (! collect($blueprint['rewardDesign']['tiers'] ?? [])->firstWhere('tierKey', $tierKey)) {
+            throw ValidationException::withMessages([
+                'treasure_tier' => 'این سطح گنج در الگوی مرجع کمپین وجود ندارد.',
+            ]);
+        }
+
+        $missionId = $data['mission_instance_id'] ?? null;
+        if (! $missionId) {
+            throw ValidationException::withMessages([
+                'mission_instance_id' => 'برای گنج کمپین، ابتدا مأموریت همان گام چرخه را ثبت و به گنج وصل کنید.',
+            ]);
+        }
+
+        $mission = MissionInstance::query()->find($missionId);
+        if ((int) ($mission?->metadata['cycle_step_index'] ?? 0) !== (int) $step['index']) {
+            throw ValidationException::withMessages([
+                'mission_instance_id' => 'گنج باید به مأموریت همان گام چرخه وصل شود.',
+            ]);
+        }
+    }
+
     /** @return array{status: string, issues: array<int, array<string, string>>, expectedSteps: int, completedSteps: int} */
     public function review(Campaign $campaign): array
     {
@@ -110,6 +150,7 @@ class CampaignBlueprintConsistencyService
         $steps = collect($blueprint['missionPlan'] ?? []);
         $missions = $this->missionsByStep($campaign);
         $rewards = $this->rewardsByStep($campaign);
+        $treasures = $this->treasuresByStep($campaign);
         $issues = [];
 
         foreach ($steps as $step) {
@@ -130,6 +171,11 @@ class CampaignBlueprintConsistencyService
             }
         }
 
+        $lastStep = $steps->last();
+        if ($lastStep && ! $treasures->has((int) $lastStep['index'])) {
+            $issues[] = $this->issue('error', 'final_treasure_missing', 'گنج نهایی چرخه هنوز ثبت نشده است.', 'در مرحله ۳، گنج نهایی یا گنج پنهان را به آخرین گام چرخه وصل کنید.');
+        }
+
         $completedSteps = $steps
             ->filter(fn (array $step): bool => $missions->has((int) $step['index']) && $rewards->has((int) $step['index']))
             ->count();
@@ -139,6 +185,7 @@ class CampaignBlueprintConsistencyService
             'issues' => $issues,
             'expectedSteps' => $steps->count(),
             'completedSteps' => $completedSteps,
+            'treasureSteps' => $treasures->keys()->filter(fn (int $index): bool => $index > 0)->values()->all(),
         ];
     }
 
@@ -199,6 +246,16 @@ class CampaignBlueprintConsistencyService
             ->where('metadata->source', 'admin_campaign_components')
             ->get()
             ->keyBy(fn (RewardDefinition $reward): int => (int) ($reward->metadata['cycle_step_index'] ?? 0));
+    }
+
+    /** @return Collection<int, Treasure> */
+    private function treasuresByStep(Campaign $campaign): Collection
+    {
+        return Treasure::query()
+            ->where('campaign_id', $campaign->id)
+            ->where('metadata->source', 'admin_campaign_components')
+            ->get()
+            ->keyBy(fn (Treasure $treasure): int => (int) ($treasure->metadata['cycle_step_index'] ?? 0));
     }
 
     /** @return array<string, string> */

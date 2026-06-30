@@ -136,6 +136,7 @@ type AlignmentReview = {
     status: 'ready' | 'needs_attention' | 'unchecked';
     expectedSteps: number;
     completedSteps: number;
+    treasureSteps?: number[];
     issues: {
         level: 'error' | 'warning';
         code: string;
@@ -151,6 +152,11 @@ type TreasureItem = {
     treasureType: string;
     status: string;
     revealRule: Record<string, unknown> | null;
+    treasureTier: string | null;
+    revealMode: string | null;
+    revealDescription: string | null;
+    discoveryHint: string | null;
+    cycleStep: { index: number | null; label: string | null };
     campaign: RegistryEntity | null;
     venue: RegistryEntity | null;
     missionCode: string | null;
@@ -337,6 +343,19 @@ function rewardCodeSuggestion(campaignCode: string, step: MissionPlanStep | null
     return existingCount > 0 ? `${base}-${existingCount + 1}`.slice(0, 96) : base;
 }
 
+function treasureCodeSuggestion(campaignCode: string, step: MissionPlanStep | null, tierKey: string, treasures: TreasureItem[]) {
+    const suffix = step ? `step-${step.index}-${tierKey}-treasure` : `${tierKey}-treasure`;
+    const base = `${campaignCode}-${suffix}`
+        .toLowerCase()
+        .replace(/[^a-z0-9-]+/g, '-')
+        .replace(/-{2,}/g, '-')
+        .replace(/^-|-$/g, '')
+        .slice(0, 86);
+    const existingCount = treasures.filter((treasure) => treasure.code === base || treasure.code.startsWith(`${base}-`)).length;
+
+    return existingCount > 0 ? `${base}-${existingCount + 1}`.slice(0, 96) : base;
+}
+
 export default function MissionRewardRegistryIndex({
     stats,
     missions,
@@ -366,8 +385,10 @@ export default function MissionRewardRegistryIndex({
     const rewardDesignTiers = selectedBlueprint?.rewardDesign?.tiers ?? [];
     const suggestedRewardTier = selectedMissionPlan?.rewardTier ?? rewardDesignTiers[0]?.tierKey ?? 'bronze';
     const [selectedRewardTier, setSelectedRewardTier] = useState(suggestedRewardTier);
+    const [selectedTreasureTier, setSelectedTreasureTier] = useState(suggestedRewardTier);
     const [selectedRewardOptionText, setSelectedRewardOptionText] = useState('');
     const selectedRewardDesignTier = rewardDesignTiers.find((tier) => tier.tierKey === selectedRewardTier) ?? rewardDesignTiers[0] ?? null;
+    const selectedTreasureDesignTier = rewardDesignTiers.find((tier) => tier.tierKey === selectedTreasureTier) ?? rewardDesignTiers[0] ?? null;
     const selectedRewardOption = selectedRewardOptionText || selectedRewardDesignTier?.options[0] || '';
     const suggestedMissionSuffix = selectedMissionPlan?.suggestedCodeSuffix ?? selectedMissionTemplate?.code ?? 'mission';
     const suggestedMissionCode = useMemo(
@@ -378,11 +399,19 @@ export default function MissionRewardRegistryIndex({
         () => rewardCodeSuggestion(selectedCampaign?.code ?? 'campaign', selectedMissionPlan, selectedRewardTier, rewards),
         [rewards, selectedCampaign?.code, selectedMissionPlan, selectedRewardTier],
     );
+    const suggestedTreasureCode = useMemo(
+        () => treasureCodeSuggestion(selectedCampaign?.code ?? 'campaign', selectedMissionPlan, selectedTreasureTier, treasures),
+        [treasures, selectedCampaign?.code, selectedMissionPlan, selectedTreasureTier],
+    );
+    const missionForSelectedStep = selectedMissionPlan
+        ? missions.find((mission) => mission.cycleStep.index === selectedMissionPlan.index) ?? null
+        : null;
     const alignmentErrors = alignment?.issues.filter((issue) => issue.level === 'error') ?? [];
 
     function selectMissionPlanStep(step: MissionPlanStep, index: number) {
         setSelectedMissionPlanIndex(index);
         setSelectedRewardTier(step.rewardTier);
+        setSelectedTreasureTier(step.rewardTier);
         setSelectedRewardOptionText('');
         setEditingMission(null);
         setEditingReward(null);
@@ -891,41 +920,92 @@ export default function MissionRewardRegistryIndex({
                                 {({ processing, errors }) => (
                                     <>
                                         <input type="hidden" name="campaign_id" value={selectedCampaign.id} />
+                                        {selectedMissionPlan ? (
+                                            <>
+                                                <input type="hidden" name="cycle_step_index" value={selectedMissionPlan.index} />
+                                                <input type="hidden" name="cycle_step_label" value={selectedMissionPlan.userStep} />
+                                            </>
+                                        ) : null}
+                                        {missionForSelectedStep ? <input type="hidden" name="mission_instance_id" value={missionForSelectedStep.id} /> : null}
                                         <div>
                                             <h3 className="font-semibold">گنج</h3>
-                                            <p className="mt-1 text-xs text-muted-foreground">گنج نهایی یا مرحله‌ای را به کمپین و در صورت نیاز به مأموریت وصل کنید.</p>
+                                            <p className="mt-1 text-xs text-muted-foreground">گنج مرحله‌ای، پنهان یا نهایی را به چرخه کاربر و لحظه کشف وصل کنید.</p>
                                         </div>
                                         <div className="grid gap-1.5">
                                             <label htmlFor="treasure_name" className="text-xs font-medium">نام گنج</label>
-                                            <input id="treasure_name" name="name" required autoComplete="off" placeholder="مثلا گنج مسیر خانوادگی" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                            <input key={`treasure-name-${selectedMissionPlan?.index ?? 'none'}-${selectedTreasureTier}`} id="treasure_name" name="name" required autoComplete="off" defaultValue={selectedMissionPlan ? `گنج ${selectedMissionPlan.userStep}` : ''} placeholder="مثلا گنج مسیر خانوادگی" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
                                             <InputError message={errors.name} />
                                         </div>
                                         <div className="grid gap-2 sm:grid-cols-2">
                                             <div className="grid gap-1.5">
                                                 <label htmlFor="treasure_code" className="text-xs font-medium">کد</label>
-                                                <input id="treasure_code" name="code" required dir="ltr" autoComplete="off" placeholder="family-route-treasure" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                                <input key={`treasure-code-${suggestedTreasureCode}`} id="treasure_code" name="code" required dir="ltr" autoComplete="off" defaultValue={suggestedTreasureCode} className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
                                                 <InputError message={errors.code} />
                                             </div>
                                             <div className="grid gap-1.5">
                                                 <label htmlFor="treasure_type" className="text-xs font-medium">نوع</label>
-                                                <input id="treasure_type" name="treasure_type" required dir="ltr" autoComplete="off" defaultValue="final_treasure" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                                <select id="treasure_type" name="treasure_type" defaultValue={selectedMissionPlan && selectedMissionPlan.index < missionPlan.length ? 'stage_treasure' : 'final_treasure'} className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                                    <option value="stage_treasure">گنج مرحله‌ای</option>
+                                                    <option value="hidden_treasure">گنج پنهان</option>
+                                                    <option value="final_treasure">گنج نهایی</option>
+                                                    <option value="sponsor_treasure">گنج اسپانسری</option>
+                                                    <option value="family_treasure">گنج خانوادگی</option>
+                                                </select>
                                                 <InputError message={errors.treasure_type} />
                                             </div>
                                         </div>
                                         <div className="grid gap-2 sm:grid-cols-2">
                                             <div className="grid gap-1.5">
-                                                <label htmlFor="mission_instance_id" className="text-xs font-medium">اتصال به مأموریت</label>
-                                                <select id="mission_instance_id" name="mission_instance_id" className="h-9 rounded-md border border-input bg-background px-3 text-sm">
-                                                    <option value="">بدون اتصال مستقیم</option>
-                                                    {missions.map((mission) => <option key={mission.id} value={mission.id}>{mission.title ?? mission.code}</option>)}
+                                                <label htmlFor="treasure_tier" className="text-xs font-medium">سطح گنج</label>
+                                                <select id="treasure_tier" name="treasure_tier" value={selectedTreasureTier} onChange={(event) => setSelectedTreasureTier(event.target.value)} className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                                    {(rewardDesignTiers.length > 0 ? rewardDesignTiers : rewardTierOptions).map((tier) => (
+                                                        <option key={'tierKey' in tier ? tier.tierKey : tier.value} value={'tierKey' in tier ? tier.tierKey : tier.value}>
+                                                            {'tierKey' in tier ? tier.level : tier.label}
+                                                        </option>
+                                                    ))}
                                                 </select>
-                                                <InputError message={errors.mission_instance_id} />
+                                                <InputError message={errors.treasure_tier} />
                                             </div>
                                             <div className="grid gap-1.5">
-                                                <label htmlFor="required_completed_missions" className="text-xs font-medium">تعداد مأموریت لازم</label>
-                                                <input id="required_completed_missions" name="required_completed_missions" type="number" min="0" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                                <label className="text-xs font-medium">اتصال به مأموریت همین گام</label>
+                                                <div className="flex h-9 items-center rounded-md border border-input bg-muted/30 px-3 text-sm text-muted-foreground">
+                                                    {missionForSelectedStep ? missionForSelectedStep.title ?? missionForSelectedStep.code : 'ابتدا مأموریت همین گام را ثبت کنید'}
+                                                </div>
+                                                <InputError message={errors.mission_instance_id} />
                                             </div>
                                         </div>
+                                        {selectedTreasureDesignTier ? (
+                                            <div className="rounded-md bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                                                <p className="font-medium text-foreground">ایده‌های سطح {selectedTreasureDesignTier.level}</p>
+                                                <div className="mt-2 flex flex-wrap gap-1.5">
+                                                    {selectedTreasureDesignTier.options.slice(0, 4).map((option) => (
+                                                        <span key={option} className="rounded-full bg-background px-2 py-1">{option}</span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ) : null}
+                                        <div className="grid gap-2 sm:grid-cols-2">
+                                            <div className="grid gap-1.5">
+                                                <label htmlFor="required_completed_missions" className="text-xs font-medium">تعداد مأموریت لازم</label>
+                                                <input id="required_completed_missions" name="required_completed_missions" type="number" min="0" defaultValue={selectedMissionPlan?.index ?? 1} className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                            </div>
+                                            <div className="grid gap-1.5">
+                                                <label htmlFor="required_min_points" className="text-xs font-medium">حداقل امتیاز کشف</label>
+                                                <input id="required_min_points" name="required_min_points" type="number" min="0" defaultValue={selectedMissionPlan?.suggestedUnlockMinPoints ?? 0} className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                            </div>
+                                        </div>
+                                        <div className="grid gap-1.5">
+                                            <label htmlFor="reveal_mode" className="text-xs font-medium">روش آشکار شدن</label>
+                                            <select id="reveal_mode" name="reveal_mode" defaultValue="after_step_completion" className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                                <option value="after_step_completion">بعد از تکمیل گام</option>
+                                                <option value="hidden_qr">کشف QR پنهان</option>
+                                                <option value="admin_release">آزادسازی توسط ادمین/مجری</option>
+                                                <option value="partner_confirmation">تایید فروشگاه/شریک</option>
+                                                <option value="random_draw">قرعه‌کشی</option>
+                                            </select>
+                                        </div>
+                                        <textarea name="reveal_description" autoComplete="off" placeholder="تجربه کشف برای کاربر؛ مثلا پیام، لحظه باز شدن گنج یا جایزه قابل مشاهده" className="min-h-16 rounded-md border border-input bg-background px-3 py-2 text-sm" />
+                                        <textarea name="discovery_hint" autoComplete="off" placeholder="راهنمای کشف؛ مثلا کجا باید دقت کند، بعد از کدام نشانه یا در کدام نقطه مسیر" className="min-h-16 rounded-md border border-input bg-background px-3 py-2 text-sm" />
                                         <div className="grid gap-1.5">
                                             <label htmlFor="treasure_status" className="text-xs font-medium">وضعیت</label>
                                             <select id="treasure_status" name="status" defaultValue="draft" className="h-9 rounded-md border border-input bg-background px-3 text-sm">
@@ -936,7 +1016,7 @@ export default function MissionRewardRegistryIndex({
                                         </div>
                                         <Button disabled={processing}>
                                             <MapPin className="size-4" />
-                                            ثبت گنج
+                                            ثبت گنج چرخه
                                         </Button>
                                     </>
                                 )}
@@ -1328,6 +1408,32 @@ export default function MissionRewardRegistryIndex({
                                             {treasure.missionCode ?? '-'}
                                         </span>
                                     </p>
+                                    <div className="grid gap-2 text-xs text-muted-foreground sm:grid-cols-3">
+                                        <p>
+                                            گام:{' '}
+                                            <span className="font-medium text-foreground">
+                                                {treasure.cycleStep.label ?? '-'}
+                                            </span>
+                                        </p>
+                                        <p>
+                                            سطح:{' '}
+                                            <span className="font-medium text-foreground">
+                                                {treasure.treasureTier ? rewardTierLabels[treasure.treasureTier] ?? treasure.treasureTier : '-'}
+                                            </span>
+                                        </p>
+                                        <p>
+                                            روش کشف:{' '}
+                                            <span className="font-medium text-foreground">
+                                                {treasure.revealMode ?? '-'}
+                                            </span>
+                                        </p>
+                                    </div>
+                                    {treasure.revealDescription || treasure.discoveryHint ? (
+                                        <div className="rounded-md bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                                            {treasure.revealDescription ? <p>{treasure.revealDescription}</p> : null}
+                                            {treasure.discoveryHint ? <p className="mt-1">راهنما: {treasure.discoveryHint}</p> : null}
+                                        </div>
+                                    ) : null}
                                 </article>
                             ))}
                         </div>

@@ -28,6 +28,13 @@ class StoreTreasureRequest extends FormRequest
             ],
             'name' => ['required', 'string', 'max:255'],
             'treasure_type' => ['required', 'string', 'max:64', 'alpha_dash:ascii'],
+            'treasure_tier' => ['nullable', 'string', 'max:64', 'alpha_dash:ascii'],
+            'cycle_step_index' => ['nullable', 'integer', 'min:1', 'max:50'],
+            'cycle_step_label' => ['nullable', 'string', 'max:255'],
+            'reveal_mode' => ['nullable', 'string', 'max:64', 'alpha_dash:ascii'],
+            'reveal_description' => ['nullable', 'string', 'max:1000'],
+            'discovery_hint' => ['nullable', 'string', 'max:500'],
+            'required_min_points' => ['nullable', 'integer', 'min:0', 'max:1000000'],
             'status' => ['required', Rule::enum(RecordStatus::class)],
             'required_completed_missions' => ['nullable', 'integer', 'min:0', 'max:1000'],
         ];
