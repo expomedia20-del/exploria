@@ -267,6 +267,8 @@ class MissionRewardRegistryService
     public function createTreasure(array $data): Treasure
     {
         $campaign = Campaign::query()->findOrFail($data['campaign_id']);
+        $data['mission_instance_id'] ??= $this->missionIdForCycleStep($campaign, $data['cycle_step_index'] ?? null);
+
         $this->assertSameCampaignMission($campaign, $data['mission_instance_id'] ?? null);
         $this->blueprintConsistency->assertTreasureInput($campaign, $data);
 
@@ -293,6 +295,19 @@ class MissionRewardRegistryService
                 'discovery_hint' => $data['discovery_hint'] ?? null,
             ],
         ]));
+    }
+
+    private function missionIdForCycleStep(Campaign $campaign, mixed $cycleStepIndex): ?string
+    {
+        if (! $cycleStepIndex) {
+            return null;
+        }
+
+        return MissionInstance::query()
+            ->where('campaign_id', $campaign->id)
+            ->where('metadata->cycle_step_index', (int) $cycleStepIndex)
+            ->latest()
+            ->value('id');
     }
 
     public function deleteMission(MissionInstance $mission): void

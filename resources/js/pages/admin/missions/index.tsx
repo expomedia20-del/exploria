@@ -407,7 +407,7 @@ export default function MissionRewardRegistryIndex({
         [treasures, selectedCampaign?.code, selectedMissionPlan, selectedTreasureTier],
     );
     const missionForSelectedStep = selectedMissionPlan
-        ? missions.find((mission) => mission.cycleStep.index === selectedMissionPlan.index) ?? null
+        ? missions.find((mission) => Number(mission.cycleStep.index) === selectedMissionPlan.index) ?? null
         : null;
     const alignmentErrors = alignment?.issues.filter((issue) => issue.level === 'error') ?? [];
 

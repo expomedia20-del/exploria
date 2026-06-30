@@ -269,7 +269,6 @@ class CampaignQrCoreTest extends TestCase
             ->from(route('admin.missions.page', ['campaign' => $campaign->code]))
             ->post(route('admin.treasures.store'), [
                 'campaign_id' => $campaign->id,
-                'mission_instance_id' => $mission->id,
                 'code' => 'builder-test-treasure',
                 'name' => 'گنج تست کارگاه',
                 'treasure_type' => 'final_treasure',
