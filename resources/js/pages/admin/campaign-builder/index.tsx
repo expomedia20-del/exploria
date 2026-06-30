@@ -90,15 +90,6 @@ type WorkflowAction = {
     tone: 'primary' | 'review' | 'neutral';
 };
 
-const stepIcons: Record<string, typeof Megaphone> = {
-    setup: Megaphone,
-    qr: QrCode,
-    components: Trophy,
-    partners: UsersRound,
-    route: Route,
-    review: ClipboardCheck,
-};
-
 function fa(value: number) {
     return value.toLocaleString('fa-IR');
 }
@@ -116,19 +107,6 @@ function builderUrl(code: string) {
     return `/admin/campaign-builder?campaign=${code}`;
 }
 
-function StepStatus({ complete }: { complete: boolean }) {
-    return complete ? (
-        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">
-            <CheckCircle2 className="size-3.5" />
-            تکمیل شده
-        </span>
-    ) : (
-        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-xs text-amber-800 dark:bg-amber-950 dark:text-amber-200">
-            <CircleAlert className="size-3.5" />
-            نیازمند اقدام
-        </span>
-    );
-}
 
 export default function CampaignBuilderIndex({
     campaigns,
@@ -345,41 +323,6 @@ export default function CampaignBuilderIndex({
                                     <Button asChild variant={isPrimary || isReview ? 'default' : 'outline'} size="sm" className="mt-4">
                                         <Link href={action.href}>
                                             رفتن به این اقدام
-                                            <ArrowLeft className="size-4" />
-                                        </Link>
-                                    </Button>
-                                </article>
-                            );
-                        })}
-                    </div>
-                </section>
-
-                <section className="exploria-panel">
-                    <div className="border-b border-border/70 px-4 py-3 dark:border-sidebar-border">
-                        <h2 className="font-semibold">مراحل تکمیل کمپین</h2>
-                    </div>
-                    <div className="grid gap-3 p-4 lg:grid-cols-2">
-                        {steps.map((step, index) => {
-                            const Icon = stepIcons[step.key] ?? ClipboardCheck;
-
-                            return (
-                                <article key={step.key} className="rounded-lg border border-border/80 bg-card/75 p-4 shadow-sm">
-                                    <div className="flex items-start justify-between gap-3">
-                                        <div className="flex items-start gap-3">
-                                            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                                                <Icon className="size-4" />
-                                            </span>
-                                            <div>
-                                                <p className="text-xs text-muted-foreground">مرحله {fa(index + 1)} · {step.owner}</p>
-                                                <h3 className="mt-1 font-semibold">{step.title}</h3>
-                                            </div>
-                                        </div>
-                                        <StepStatus complete={step.complete} />
-                                    </div>
-                                    <p className="mt-3 text-sm leading-6 text-muted-foreground">{step.description}</p>
-                                    <Button asChild variant={step.complete ? 'outline' : 'default'} size="sm" className="mt-4">
-                                        <Link href={step.href}>
-                                            {step.complete ? 'بازبینی مرحله' : 'ادامه تکمیل'}
                                             <ArrowLeft className="size-4" />
                                         </Link>
                                     </Button>

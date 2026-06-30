@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { Fragment, useMemo, useState } from 'react';
 import {
     BookOpenCheck,
+    ClipboardCheck,
     Compass,
     Gem,
     Gift,
@@ -232,16 +233,10 @@ export default function MissionBlueprintIndex({
                                 Treasure Game
                             </Link>
                         </Button>
-                        <Button asChild variant="outline">
-                            <Link href="/admin/campaign-operations">
-                                <Route className="size-4" />
-                                نقشه عملیات
-                            </Link>
-                        </Button>
                         <Button asChild>
-                            <Link href="/admin/missions">
-                                <Trophy className="size-4" />
-                                تعریف مأموریت واقعی
+                            <Link href="/admin/campaign-builder">
+                                <ClipboardCheck className="size-4" />
+                                رفتن به کارگاه ساخت
                             </Link>
                         </Button>
                     </div>
@@ -336,15 +331,12 @@ export default function MissionBlueprintIndex({
                                                 <div className="mt-3 flex flex-wrap gap-2">
                                                     {template.connectedSurfaces.slice(0, 5).map((surface) => <Chip key={surface}>{surface}</Chip>)}
                                                 </div>
-                                                <div className="mt-3 grid gap-2 rounded-md border border-dashed border-border/80 bg-background/70 p-2 text-xs sm:grid-cols-3">
+                                                <div className="mt-3 grid gap-2 rounded-md border border-dashed border-border/80 bg-background/70 p-2 text-xs sm:grid-cols-[1fr_auto]">
                                                     <Button asChild variant="outline" className="h-8 text-xs">
-                                                        <Link href={`/admin/campaigns?blueprint=${template.code}&blueprint_action=build`}>ساخت کمپین از الگو</Link>
+                                                        <Link href={`/admin/campaigns?blueprint=${template.code}&blueprint_action=build`}>شروع ساخت کمپین</Link>
                                                     </Button>
                                                     <Button asChild variant="outline" className="h-8 text-xs">
-                                                        <Link href={`/admin/missions?blueprint=${template.code}&blueprint_action=components`}>کمپین مرجع اجزا</Link>
-                                                    </Button>
-                                                    <Button asChild variant="outline" className="h-8 text-xs">
-                                                        <Link href={`/admin/campaign-operations?blueprint=${template.code}&blueprint_action=route`}>کمپین مرجع مسیر</Link>
+                                                        <Link href={`/admin/campaign-operations?blueprint=${template.code}&blueprint_action=route`}>مشاهده مسیر مرجع</Link>
                                                     </Button>
                                                 </div>
                                                 <div className="mt-3 rounded-md bg-muted/50 p-2">
