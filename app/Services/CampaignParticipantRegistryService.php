@@ -6,6 +6,7 @@ use App\Models\CampaignParticipant;
 use App\Models\Campaign;
 use App\Models\Hub;
 use App\Models\PartnerAccount;
+use App\Models\RewardDefinition;
 use App\Models\User;
 use App\Enums\RecordStatus;
 use Illuminate\Database\Eloquent\Builder;
@@ -43,12 +44,18 @@ class CampaignParticipantRegistryService
             ->toBase()
             ->map(fn (CampaignParticipant $participant): array => $this->serializeParticipant($participant));
 
+        $offerStats = $this->partnerOfferStats($campaignId);
+
         return [
             'stats' => [
                 'participants' => $participants->count(),
                 'activeParticipants' => $participants->where('status', 'active')->count(),
                 'invitedParticipants' => $participants->where('onboardingStatus', 'invited')->count(),
                 'readyParticipants' => $participants->where('onboardingStatus', 'ready')->count(),
+                'partnerRewardOffers' => $offerStats['total'],
+                'pendingRewardOffers' => $offerStats['pending'],
+                'approvedRewardOffers' => $offerStats['approved'],
+                'rejectedRewardOffers' => $offerStats['rejected'],
                 'hubs' => $participants->pluck('hub.id')->filter()->unique()->count(),
                 'campaigns' => $participants->pluck('campaign.id')->filter()->unique()->count(),
             ],
@@ -56,6 +63,22 @@ class CampaignParticipantRegistryService
             'campaignGroups' => $this->campaignGroups($participants),
             'hubGroups' => $this->hubGroups($participants),
             'formOptions' => $this->formOptions($campaignId),
+        ];
+    }
+
+    /** @return array{total: int, pending: int, approved: int, rejected: int} */
+    private function partnerOfferStats(?string $campaignId): array
+    {
+        $offers = RewardDefinition::query()
+            ->when($campaignId, fn (Builder $query) => $query->where('campaign_id', $campaignId))
+            ->where('metadata->source', 'partner_offer_submission')
+            ->get(['metadata']);
+
+        return [
+            'total' => $offers->count(),
+            'pending' => $offers->where('metadata.approval_status', 'pending_review')->count(),
+            'approved' => $offers->where('metadata.approval_status', 'approved')->count(),
+            'rejected' => $offers->where('metadata.approval_status', 'rejected')->count(),
         ];
     }
 
@@ -121,6 +144,14 @@ class CampaignParticipantRegistryService
                 return $participant->refresh();
             }
 
+            $participant = $this->matchingParticipant($attributes);
+            if ($participant) {
+                $metadata = array_merge($participant->metadata ?? [], $attributes['metadata']);
+                $participant->update(array_merge($attributes, ['metadata' => $metadata]));
+
+                return $participant->refresh();
+            }
+
             return CampaignParticipant::query()->create($attributes);
         });
     }
@@ -128,6 +159,27 @@ class CampaignParticipantRegistryService
     public function deleteParticipant(CampaignParticipant $participant): void
     {
         $participant->delete();
+    }
+
+    /** @param array<string, mixed> $attributes */
+    private function matchingParticipant(array $attributes): ?CampaignParticipant
+    {
+        $query = CampaignParticipant::query()->where('campaign_id', $attributes['campaign_id']);
+
+        if (! empty($attributes['partner_account_id'])) {
+            return $query
+                ->where('partner_account_id', $attributes['partner_account_id'])
+                ->latest()
+                ->first();
+        }
+
+        return $query
+            ->whereNull('partner_account_id')
+            ->where('hub_id', $attributes['hub_id'])
+            ->where('participant_type', $attributes['participant_type'])
+            ->where('participation_role', $attributes['participation_role'])
+            ->latest()
+            ->first();
     }
 
     /** @param Collection<int, array<string, mixed>> $participants */

@@ -3,6 +3,9 @@
 namespace Tests\Feature\Campaign;
 
 use App\Enums\UserRole;
+use App\Models\Campaign;
+use App\Models\CampaignParticipant;
+use App\Models\PartnerAccount;
 use App\Models\User;
 use Database\Seeders\PilotLocationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -55,6 +58,53 @@ class CampaignParticipantRegistryTest extends TestCase
                 ->has('participants', 1)
                 ->where('participants.0.partner.name', 'فروشگاه X')
                 ->where('participants.0.hub.code', 'ravaq-commercial-hub'));
+    }
+
+    public function test_registering_same_partner_for_campaign_updates_existing_participant(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $campaign = Campaign::query()->where('code', 'ecopark-pilot-1405')->firstOrFail();
+        $partner = PartnerAccount::query()->where('code', 'cafe-eco')->firstOrFail();
+
+        $this->actingAs($admin)
+            ->post(route('admin.campaign-participants.store'), [
+                'campaign_id' => $campaign->id,
+                'partner_account_id' => $partner->id,
+                'participant_type' => 'member_shop',
+                'participation_role' => 'reward_redemption',
+                'status' => 'draft',
+                'onboarding_status' => 'invited',
+                'connections_rewards' => 1,
+            ])
+            ->assertRedirect();
+
+        $this->actingAs($admin)
+            ->post(route('admin.campaign-participants.store'), [
+                'campaign_id' => $campaign->id,
+                'partner_account_id' => $partner->id,
+                'participant_type' => 'member_shop',
+                'participation_role' => 'commercial_activation',
+                'status' => 'active',
+                'onboarding_status' => 'ready',
+                'connections_rewards' => 2,
+                'connections_ads' => 1,
+            ])
+            ->assertRedirect();
+
+        $this->assertSame(1, CampaignParticipant::query()
+            ->where('campaign_id', $campaign->id)
+            ->where('partner_account_id', $partner->id)
+            ->count());
+
+        $participant = CampaignParticipant::query()
+            ->where('campaign_id', $campaign->id)
+            ->where('partner_account_id', $partner->id)
+            ->firstOrFail();
+
+        $this->assertSame('commercial_activation', $participant->participation_role);
+        $this->assertSame('ready', $participant->onboarding_status);
+        $this->assertSame(2, $participant->metadata['connections']['rewards']);
+        $this->assertSame(1, $participant->metadata['connections']['ads']);
     }
 
     public function test_guest_cannot_read_campaign_participants(): void

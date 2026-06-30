@@ -97,6 +97,10 @@ type Props = {
         activeParticipants: number;
         invitedParticipants: number;
         readyParticipants: number;
+        partnerRewardOffers: number;
+        pendingRewardOffers: number;
+        approvedRewardOffers: number;
+        rejectedRewardOffers: number;
         hubs: number;
         campaigns: number;
     };
@@ -192,13 +196,14 @@ export default function CampaignParticipantsIndex({
                         <p className="text-sm text-muted-foreground">رجیستری عملیاتی کمپین</p>
                         <h1 className="mt-1 text-2xl font-semibold">اعضای مشارکت کننده کمپین</h1>
                     </div>
-                    <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-5">
+                    <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-6">
                         {[
                             ['کل اعضا', stats.participants],
                             ['فعال', stats.activeParticipants],
                             ['آماده', stats.readyParticipants],
+                            ['پیشنهاد پاداش', stats.partnerRewardOffers],
+                            ['در انتظار بررسی', stats.pendingRewardOffers],
                             ['هاب', stats.hubs],
-                            ['کمپین', stats.campaigns],
                         ].map(([title, value]) => (
                             <div key={title} className="rounded-lg border border-border/80 bg-card/80 px-3 py-2 shadow-sm">
                                 <p className="text-muted-foreground">{title}</p>
@@ -220,6 +225,40 @@ export default function CampaignParticipantsIndex({
                                 <span className="rounded-full bg-background px-3 py-1 text-xs" dir="ltr">{selectedCampaign.code}</span>
                                 {selectedCampaign.blueprintCode ? <span className="rounded-full bg-background px-3 py-1 text-xs" dir="ltr">{selectedCampaign.blueprintCode}</span> : null}
                             </div>
+                        </div>
+                    </section>
+                ) : null}
+
+                {selectedCampaign ? (
+                    <section className="rounded-lg border border-border/80 bg-card/80 p-4 text-sm shadow-sm">
+                        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                            <div>
+                                <h2 className="font-semibold">کنترل مرحله ۴: عضو آماده + پیشنهاد پاداش</h2>
+                                <p className="mt-1 text-muted-foreground">برای عبور از این مرحله، حداقل یک عضو آماده و حداقل یک پیشنهاد پاداش از فروشگاه یا اسپانسر لازم است.</p>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                <Button asChild variant="outline" size="sm">
+                                    <Link href={`/admin/missions?campaign=${selectedCampaign.code}`}>بررسی پیشنهادهای پاداش</Link>
+                                </Button>
+                                <Button asChild variant="outline" size="sm">
+                                    <Link href={`/partner/dashboard?campaign=${selectedCampaign.code}`}>پنل فروشگاه/اسپانسر</Link>
+                                </Button>
+                            </div>
+                        </div>
+                        <div className="mt-4 grid gap-3 md:grid-cols-3">
+                            {[
+                                ['عضو آماده', stats.readyParticipants > 0 ? 'کامل' : 'نیازمند اقدام', stats.readyParticipants],
+                                ['پیشنهاد ثبت‌شده', stats.partnerRewardOffers > 0 ? 'کامل' : 'نیازمند اقدام', stats.partnerRewardOffers],
+                                ['در انتظار بررسی', stats.pendingRewardOffers > 0 ? 'نیازمند بررسی' : 'شفاف', stats.pendingRewardOffers],
+                            ].map(([title, state, value]) => (
+                                <div key={title} className="rounded-md bg-muted/40 px-3 py-2">
+                                    <div className="flex items-center justify-between gap-2">
+                                        <p className="font-medium">{title}</p>
+                                        <span className="text-xs text-muted-foreground">{state}</span>
+                                    </div>
+                                    <p className="mt-1 text-lg font-semibold">{formatNumber(Number(value))}</p>
+                                </div>
+                            ))}
                         </div>
                     </section>
                 ) : null}
