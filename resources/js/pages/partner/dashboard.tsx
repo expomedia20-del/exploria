@@ -186,6 +186,45 @@ export default function PartnerDashboard({
     proposalContext,
 }: Props) {
     const { flash } = usePage<SharedProps>().props;
+    const profileReady = Boolean(partner.contactName && partner.contactMobile && partner.category);
+    const pendingOffers = rewardDefinitions.filter((reward) => reward.approvalStatus === 'pending_review').length;
+    const approvedOffers = rewardDefinitions.filter((reward) => reward.approvalStatus === 'approved').length;
+    const actionSteps = [
+        {
+            title: 'تکمیل اطلاعات فروشگاه',
+            description: 'نام مسئول، موبایل، دسته‌بندی و توضیح عملیاتی را ثبت کنید تا ادمین بداند پاداش چگونه تحویل می‌شود.',
+            complete: profileReady,
+            href: '#partner-profile',
+            action: 'تکمیل اطلاعات',
+        },
+        {
+            title: 'ثبت پیشنهاد پاداش یا تخفیف',
+            description: proposalContext.campaign
+                ? `برای ${proposalContext.campaign.name} سطح پاداش، نوع پیشنهاد، ظرفیت و شرایط مصرف را وارد کنید.`
+                : 'فعلا کمپین در حال تنظیم برای این مکان پیدا نشده است.',
+            complete: rewardDefinitions.length > 0,
+            href: '#partner-offer-form',
+            action: 'ثبت پیشنهاد',
+        },
+        {
+            title: 'پیگیری تایید ادمین',
+            description: pendingOffers > 0
+                ? `${pendingOffers.toLocaleString('fa-IR')} پیشنهاد در انتظار بررسی ادمین است.`
+                : approvedOffers > 0
+                    ? 'پیشنهاد تایید شده دارید؛ موجودی و وضعیت فعال بودن را کنترل کنید.'
+                    : 'بعد از ثبت پیشنهاد، وضعیت بررسی همین‌جا نمایش داده می‌شود.',
+            complete: approvedOffers > 0,
+            href: '#partner-rewards',
+            action: 'دیدن وضعیت',
+        },
+        {
+            title: 'تحویل و تایید مصرف پاداش',
+            description: 'وقتی کاربر کد مصرف آورد، کد را در فرم تایید وارد کنید تا تحویل پاداش ثبت شود.',
+            complete: stats.confirmedRedemptions > 0,
+            href: '#reward-redemption-form',
+            action: 'تایید مصرف',
+        },
+    ];
 
     return (
         <>
@@ -244,13 +283,41 @@ export default function PartnerDashboard({
                         </a>
                     </Button>
                 </section>
+                <section className="rounded-lg border border-primary/25 bg-primary/5 p-4 shadow-sm">
+                    <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                        <div>
+                            <p className="text-xs text-muted-foreground">راهنمای مرحله ۴ برای فروشگاه و اسپانسر</p>
+                            <h2 className="mt-1 font-semibold">برای مشارکت در کمپین این کارها را انجام دهید</h2>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                                این صفحه برای ثبت پیشنهاد پاداش، پیگیری تایید ادمین، مدیریت موجودی و تایید مصرف پاداش کاربران است.
+                            </p>
+                        </div>
+                        {proposalContext.campaign ? (
+                            <span className="rounded-full bg-background px-3 py-1 text-xs" dir="ltr">{proposalContext.campaign.code}</span>
+                        ) : null}
+                    </div>
+                    <div className="mt-4 grid gap-3 lg:grid-cols-4">
+                        {actionSteps.map((step, index) => (
+                            <a key={step.title} href={step.href} className="rounded-md border border-border/70 bg-background/80 p-3 text-sm transition hover:border-primary/50">
+                                <div className="flex items-start justify-between gap-2">
+                                    <p className="font-medium">{index + 1}. {step.title}</p>
+                                    <span className={step.complete ? 'text-xs text-emerald-700 dark:text-emerald-300' : 'text-xs text-amber-700 dark:text-amber-300'}>
+                                        {step.complete ? 'انجام شده' : 'نیازمند اقدام'}
+                                    </span>
+                                </div>
+                                <p className="mt-2 min-h-12 text-xs text-muted-foreground">{step.description}</p>
+                                <p className="mt-3 text-xs font-medium text-primary">{step.action}</p>
+                            </a>
+                        ))}
+                    </div>
+                </section>
                 {flash?.success ? (
                     <Alert>
                         <AlertDescription>{flash.success}</AlertDescription>
                     </Alert>
                 ) : null}
 
-                <section className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
+                <section id="partner-profile" className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
                     <div className="mb-4 flex items-center gap-2">
                         <Store className="size-4 text-muted-foreground" />
                         <h2 className="font-semibold">اطلاعات فروشگاه</h2>
@@ -539,7 +606,7 @@ export default function PartnerDashboard({
                     </div>
 
                     <div
-                        id="partner-offer-form"
+                        id="reward-redemption-form"
                         className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border"
                     >
                         <div className="mb-4 flex items-center gap-2">
@@ -642,7 +709,7 @@ export default function PartnerDashboard({
                     </div>
                 </section>
                 <section className="grid gap-4 lg:grid-cols-2">
-                    <div className="rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border">
+                    <div id="partner-rewards" className="rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border">
                         <div className="border-b border-sidebar-border/70 px-4 py-3 dark:border-sidebar-border">
                             <h2 className="font-semibold">پاداش‌های فروشگاه</h2>
                         </div>
