@@ -284,6 +284,25 @@ class CampaignQrCoreTest extends TestCase
             ])
             ->assertRedirect(route('admin.missions.page', ['campaign' => $campaign->code]));
 
+        $this->actingAs($operator)
+            ->from(route('admin.missions.page', ['campaign' => $campaign->code]))
+            ->post(route('admin.treasures.store'), [
+                'campaign_id' => $campaign->id,
+                'code' => 'builder-test-treasure-replacement',
+                'name' => 'builder treasure replacement',
+                'treasure_type' => 'final_treasure',
+                'treasure_tier' => 'bronze',
+                'cycle_step_index' => 1,
+                'cycle_step_label' => 'builder cycle step',
+                'reveal_mode' => 'after_step_completion',
+                'reveal_description' => 'replacement treasure reveal',
+                'discovery_hint' => 'follow the updated first mission',
+                'status' => RecordStatus::Draft->value,
+                'required_completed_missions' => 1,
+                'required_min_points' => 120,
+            ])
+            ->assertRedirect(route('admin.missions.page', ['campaign' => $campaign->code]));
+
         $this->assertDatabaseHas('mission_instances', [
             'campaign_id' => $campaign->id,
             'code' => 'builder-first-mission',
@@ -299,7 +318,7 @@ class CampaignQrCoreTest extends TestCase
         $this->assertDatabaseHas('treasures', [
             'campaign_id' => $campaign->id,
             'mission_instance_id' => $mission->id,
-            'code' => 'builder-test-treasure',
+            'code' => 'builder-test-treasure-replacement',
         ]);
 
         $reward = RewardDefinition::query()->where('code', 'builder-test-reward')->firstOrFail();
@@ -311,9 +330,11 @@ class CampaignQrCoreTest extends TestCase
         $this->assertSame('same day', $reward->metadata['fulfillment_window']);
         $this->assertSame(1, RewardDefinition::query()->where('code', 'builder-test-reward')->count());
         $this->assertSame(1, RewardDefinition::query()->where('campaign_id', $campaign->id)->where('metadata->cycle_step_index', 1)->count());
-        $this->assertSame(1, Treasure::query()->where('code', 'builder-test-treasure')->count());
+        $this->assertSame(0, Treasure::query()->where('code', 'builder-test-treasure')->count());
+        $this->assertSame(1, Treasure::query()->where('code', 'builder-test-treasure-replacement')->count());
+        $this->assertSame(1, Treasure::query()->where('campaign_id', $campaign->id)->where('metadata->cycle_step_index', 1)->count());
 
-        $treasure = Treasure::query()->where('code', 'builder-test-treasure')->firstOrFail();
+        $treasure = Treasure::query()->where('code', 'builder-test-treasure-replacement')->firstOrFail();
         $this->assertSame('bronze', $treasure->metadata['treasure_tier']);
         $this->assertSame(1, $treasure->metadata['cycle_step_index']);
         $this->assertSame('after_step_completion', $treasure->reveal_rule['reveal_mode']);

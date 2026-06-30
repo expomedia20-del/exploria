@@ -272,7 +272,7 @@ class MissionRewardRegistryService
         $this->assertSameCampaignMission($campaign, $data['mission_instance_id'] ?? null);
         $this->blueprintConsistency->assertTreasureInput($campaign, $data);
 
-        return DB::transaction(fn (): Treasure => Treasure::query()->create([
+        $attributes = [
             'campaign_id' => $campaign->id,
             'venue_id' => $campaign->venue_id,
             'mission_instance_id' => $data['mission_instance_id'] ?? null,
@@ -294,7 +294,9 @@ class MissionRewardRegistryService
                 'reveal_description' => $data['reveal_description'] ?? null,
                 'discovery_hint' => $data['discovery_hint'] ?? null,
             ],
-        ]));
+        ];
+
+        return DB::transaction(fn (): Treasure => $this->replaceTreasureCycleStep($campaign, $data['cycle_step_index'] ?? null, $attributes));
     }
 
     private function missionIdForCycleStep(Campaign $campaign, mixed $cycleStepIndex): ?string
@@ -337,7 +339,6 @@ class MissionRewardRegistryService
 
         $previousMissions = MissionInstance::query()
             ->where('campaign_id', $campaign->id)
-            ->where('metadata->source', 'admin_campaign_components')
             ->where('metadata->cycle_step_index', (int) $cycleStepIndex)
             ->withCount('progressRecords')
             ->latest()
@@ -367,7 +368,6 @@ class MissionRewardRegistryService
 
         $previousRewards = RewardDefinition::query()
             ->where('campaign_id', $campaign->id)
-            ->where('metadata->source', 'admin_campaign_components')
             ->where('metadata->cycle_step_index', (int) $cycleStepIndex)
             ->withCount('userRewards')
             ->latest()
@@ -386,6 +386,34 @@ class MissionRewardRegistryService
         }
 
         return RewardDefinition::query()->create($attributes);
+    }
+
+    /** @param array<string, mixed> $attributes */
+    private function replaceTreasureCycleStep(Campaign $campaign, mixed $cycleStepIndex, array $attributes): Treasure
+    {
+        if (! $cycleStepIndex) {
+            return Treasure::query()->create($attributes);
+        }
+
+        $previousTreasures = Treasure::query()
+            ->where('campaign_id', $campaign->id)
+            ->where('metadata->cycle_step_index', (int) $cycleStepIndex)
+            ->latest()
+            ->get();
+
+        $treasureToKeep = $previousTreasures->first();
+
+        $previousTreasures
+            ->reject(fn (Treasure $treasure): bool => $treasureToKeep?->is($treasure) ?? false)
+            ->each(fn (Treasure $treasure): ?bool => $treasure->delete());
+
+        if ($treasureToKeep) {
+            $treasureToKeep->update($attributes);
+
+            return $treasureToKeep->refresh();
+        }
+
+        return Treasure::query()->create($attributes);
     }
 
     /** @return array<string, mixed> */
