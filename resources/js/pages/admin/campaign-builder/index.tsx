@@ -6,6 +6,7 @@ import {
     CheckCircle2,
     CircleAlert,
     ClipboardCheck,
+    Gift,
     Megaphone,
     QrCode,
     Route,
@@ -81,6 +82,14 @@ type SharedProps = {
 
 type MetricItem = [string, number, typeof Megaphone];
 
+type WorkflowAction = {
+    title: string;
+    description: string;
+    href: string;
+    icon: typeof Megaphone;
+    tone: 'primary' | 'review' | 'neutral';
+};
+
 const stepIcons: Record<string, typeof Megaphone> = {
     setup: Megaphone,
     qr: QrCode,
@@ -133,12 +142,68 @@ export default function CampaignBuilderIndex({
     const completedSteps = steps.filter((step) => step.complete).length;
     const progress = steps.length > 0 ? Math.round((completedSteps / steps.length) * 100) : 0;
     const selectedCode = selectedCampaign?.code ?? '';
+    const contextHref = (path: string, action?: string) => {
+        const params = new URLSearchParams();
+
+        if (selectedCampaign?.code) params.set('campaign', selectedCampaign.code);
+        if (selectedCampaign?.blueprintCode) params.set('blueprint', selectedCampaign.blueprintCode);
+        if (action) params.set('blueprint_action', action);
+
+        const query = params.toString();
+
+        return `${path}${query ? `?${query}` : ''}`;
+    };
     const metrics: MetricItem[] = [
         ['QR', counts.qrCodes, QrCode],
         ['مأموریت', counts.missions, Trophy],
         ['پاداش تاییدشده', counts.approvedRewards, BadgeCheck],
         ['پیشنهاد معلق', counts.pendingRewards, CircleAlert],
         ['عضو و شریک', counts.participants, Store],
+    ];
+
+    const workflowActions: WorkflowAction[] = [
+        {
+            title: 'ثبت QR ورود',
+            description: 'نقطه شروع کاربر را به همین کمپین وصل کنید.',
+            href: contextHref('/admin/qr-codes'),
+            icon: QrCode,
+            tone: counts.qrCodes > 0 ? 'neutral' : 'primary',
+        },
+        {
+            title: 'تعریف ماموریت و پاداش',
+            description: 'مرحله ۳ را برای ماموریت، گنج و پاداش تکمیل کنید.',
+            href: contextHref('/admin/missions', 'components'),
+            icon: Trophy,
+            tone: counts.missions > 0 && (counts.approvedRewards > 0 || counts.treasures > 0) ? 'neutral' : 'primary',
+        },
+        {
+            title: 'ارسال فرم پیشنهاد فروشگاه',
+            description: 'فروشگاه یا اسپانسر برای سطوح پاداش همین کمپین پیشنهاد ثبت کند.',
+            href: selectedCampaign ? `/partner/dashboard?campaign=${selectedCampaign.code}` : '/partner/dashboard',
+            icon: Store,
+            tone: counts.partnerRewardOffers > 0 ? 'neutral' : 'primary',
+        },
+        {
+            title: 'بررسی پاداش‌های معلق',
+            description: 'پیشنهادهای فروشگاه را تایید، رد یا برای اصلاح برگردانید.',
+            href: contextHref('/admin/missions', 'reward_review'),
+            icon: Gift,
+            tone: counts.pendingRewards > 0 ? 'review' : 'neutral',
+        },
+        {
+            title: 'آماده‌سازی اعضا و شرکا',
+            description: 'فروشگاه‌ها، اسپانسرها و نقش‌های اجرایی را آماده کنید.',
+            href: contextHref('/admin/campaign-participants', 'participants'),
+            icon: UsersRound,
+            tone: counts.readyParticipants > 0 ? 'neutral' : 'primary',
+        },
+        {
+            title: 'تایید نقشه عملیات',
+            description: 'ارتباط QR، ماموریت، مکان، فروشگاه و تبلیغات را نهایی کنید.',
+            href: contextHref('/admin/campaign-operations', 'route'),
+            icon: Route,
+            tone: readiness.routeReviewedAt ? 'neutral' : 'primary',
+        },
     ];
 
     const canMutate = auth.user.role === 'admin' || auth.user.role === 'operator';
@@ -245,6 +310,48 @@ export default function CampaignBuilderIndex({
                             </div>
                         );
                     })}
+                </section>
+
+                <section className="exploria-panel">
+                    <div className="flex flex-col gap-1 border-b border-border/70 px-4 py-3 dark:border-sidebar-border">
+                        <h2 className="font-semibold">اقدام‌های قابل انجام همین کمپین</h2>
+                        <p className="text-sm text-muted-foreground">برای تکمیل هر مرحله، از همینجا مستقیم به صفحه عملیاتی مرتبط بروید.</p>
+                    </div>
+                    <div className="grid gap-3 p-4 md:grid-cols-2 xl:grid-cols-3">
+                        {workflowActions.map((action) => {
+                            const ActionIcon = action.icon;
+                            const isPrimary = action.tone === 'primary';
+                            const isReview = action.tone === 'review';
+
+                            return (
+                                <article
+                                    key={action.title}
+                                    className={[
+                                        'rounded-lg border p-4 shadow-sm',
+                                        isPrimary ? 'border-primary/35 bg-primary/5' : '',
+                                        isReview ? 'border-amber-300 bg-amber-50 dark:border-amber-900/60 dark:bg-amber-950/30' : '',
+                                        !isPrimary && !isReview ? 'border-border/80 bg-card/75' : '',
+                                    ].join(' ')}
+                                >
+                                    <div className="flex items-start gap-3">
+                                        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-background text-primary shadow-sm">
+                                            <ActionIcon className="size-4" />
+                                        </span>
+                                        <div className="min-w-0">
+                                            <h3 className="font-semibold">{action.title}</h3>
+                                            <p className="mt-1 text-sm leading-6 text-muted-foreground">{action.description}</p>
+                                        </div>
+                                    </div>
+                                    <Button asChild variant={isPrimary || isReview ? 'default' : 'outline'} size="sm" className="mt-4">
+                                        <Link href={action.href}>
+                                            رفتن به این اقدام
+                                            <ArrowLeft className="size-4" />
+                                        </Link>
+                                    </Button>
+                                </article>
+                            );
+                        })}
+                    </div>
                 </section>
 
                 <section className="exploria-panel">
