@@ -15,12 +15,12 @@ class PartnerDashboardController extends Controller
 {
     public function page(Request $request, PartnerDashboardService $service): Response
     {
-        return Inertia::render('partner/dashboard', $service->overview($request->user()));
+        return Inertia::render('partner/dashboard', $service->overview($request->user(), $request->query('campaign')));
     }
 
     public function index(Request $request, PartnerDashboardService $service): JsonResponse
     {
-        return response()->json(['status' => 'success', 'data' => $service->overview($request->user())]);
+        return response()->json(['status' => 'success', 'data' => $service->overview($request->user(), $request->query('campaign'))]);
     }
 
     public function update(UpdatePartnerProfileRequest $request, PartnerDashboardService $service): JsonResponse|RedirectResponse
@@ -42,6 +42,6 @@ class PartnerDashboardController extends Controller
             ]);
         }
 
-        return back()->with('success', 'Partner profile updated.');
+        return back()->with('success', 'اطلاعات فروشگاه ذخیره شد.');
     }
 }

@@ -105,6 +105,7 @@ type Props = {
             id: string;
             code: string;
             name: string;
+            status: string;
         } | null;
         rewardTiers: RewardDesignTier[];
     };
@@ -381,6 +382,9 @@ export default function PartnerDashboard({
                         >
                             {({ processing, errors }) => (
                                 <>
+                                    {proposalContext.campaign ? (
+                                        <input type="hidden" name="campaign_id" value={proposalContext.campaign.id} />
+                                    ) : null}
                                     <div className="grid gap-2">
                                         <Label htmlFor="offer_name">
                                             عنوان پیشنهاد

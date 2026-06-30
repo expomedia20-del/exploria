@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\RecordStatus;
 use App\Models\AdRequest;
 use App\Models\Campaign;
 use App\Models\CampaignParticipant;
@@ -94,6 +95,22 @@ class CampaignBuilderService
             'qrCodes' => QrCode::query()->where('campaign_id', $campaign->id)->count(),
             'missions' => MissionInstance::query()->where('campaign_id', $campaign->id)->count(),
             'rewards' => RewardDefinition::query()->where('campaign_id', $campaign->id)->count(),
+            'approvedRewards' => RewardDefinition::query()
+                ->where('campaign_id', $campaign->id)
+                ->where('status', RecordStatus::Active)
+                ->where(function (Builder $query): void {
+                    $query->where('metadata->approval_status', 'approved')
+                        ->orWhereNull('metadata->approval_status');
+                })
+                ->count(),
+            'pendingRewards' => RewardDefinition::query()
+                ->where('campaign_id', $campaign->id)
+                ->where('metadata->approval_status', 'pending_review')
+                ->count(),
+            'partnerRewardOffers' => RewardDefinition::query()
+                ->where('campaign_id', $campaign->id)
+                ->where('metadata->source', 'partner_offer_submission')
+                ->count(),
             'treasures' => Treasure::query()->where('campaign_id', $campaign->id)->count(),
             'participants' => CampaignParticipant::query()->where('campaign_id', $campaign->id)->count(),
             'readyParticipants' => CampaignParticipant::query()->where('campaign_id', $campaign->id)->where('onboarding_status', 'ready')->count(),
@@ -109,6 +126,9 @@ class CampaignBuilderService
             'qrCodes' => 0,
             'missions' => 0,
             'rewards' => 0,
+            'approvedRewards' => 0,
+            'pendingRewards' => 0,
+            'partnerRewardOffers' => 0,
             'treasures' => 0,
             'participants' => 0,
             'readyParticipants' => 0,
@@ -147,9 +167,9 @@ class CampaignBuilderService
         return [
             $this->step('setup', 'اطلاعات پایه کمپین', 'ادمین / اپراتور', $campaign !== null, 'نام، مکان، بازه زمانی، وضعیت و الگوی مرجع کمپین را کنترل کنید.', '/admin/campaigns'.($campaignCode ? '?campaign='.$campaignCode : '')),
             $this->step('qr', 'نقاط ورود و QR', 'ادمین / اپراتور / مدیر مکان', $counts['qrCodes'] > 0, 'حداقل یک QR معتبر برای شروع مسیر کاربر تعریف شود.', '/admin/qr-codes'.($campaignCode ? '?campaign='.$campaignCode : '')),
-            $this->step('components', 'مأموریت، امتیاز، پاداش و گنج', 'ادمین / اپراتور / فروشگاه', $counts['missions'] > 0 && ($counts['rewards'] > 0 || $counts['treasures'] > 0), 'مأموریت‌ها، مشوق‌ها، هزینه امتیازی و شرایط تحویل تکمیل شوند.', $this->contextUrl('/admin/missions', $campaignCode, $blueprintCode, 'components')),
-            $this->step('partners', 'اعضا، فروشگاه‌ها و اسپانسرها', 'فروشگاه / شریک / ادمین', $counts['participants'] > 0, 'مالک پاداش، نقش فروشگاه‌ها، اسپانسرها و وضعیت آماده‌سازی مشخص شود.', $this->contextUrl('/admin/campaign-participants', $campaignCode, $blueprintCode, 'participants')),
-            $this->step('route', 'مسیر عملیاتی کمپین', 'ادمین / مدیر مکان / مدیر هاب', $counts['qrCodes'] > 0 && $counts['missions'] > 0 && $counts['participants'] > 0 && (bool) ($campaign?->metadata['route_reviewed_at'] ?? false), 'ارتباط QR، مأموریت، مکان، فروشگاه، نمایشگر و تبلیغات در یک مسیر قابل اجرا بررسی و تایید شود.', $this->contextUrl('/admin/campaign-operations', $campaignCode, $blueprintCode, 'route')),
+            $this->step('components', 'مأموریت، امتیاز، پاداش و گنج', 'ادمین / اپراتور / فروشگاه', $counts['missions'] > 0 && ($counts['approvedRewards'] > 0 || $counts['treasures'] > 0), 'مأموریت‌ها، مشوق‌ها، هزینه امتیازی و شرایط تحویل تکمیل شوند و پاداش‌های پیشنهادی بازبینی شوند.', $this->contextUrl('/admin/missions', $campaignCode, $blueprintCode, 'components')),
+            $this->step('partners', 'اعضا، فروشگاه‌ها و اسپانسرها', 'فروشگاه / شریک / ادمین', $counts['readyParticipants'] > 0 && $counts['partnerRewardOffers'] > 0, 'مالک پاداش، نقش فروشگاه‌ها، اسپانسرها، وضعیت آماده‌سازی و پیشنهاد پاداش مشخص شود.', $this->contextUrl('/admin/campaign-participants', $campaignCode, $blueprintCode, 'participants')),
+            $this->step('route', 'مسیر عملیاتی کمپین', 'ادمین / مدیر مکان / مدیر هاب', $counts['qrCodes'] > 0 && $counts['missions'] > 0 && $counts['readyParticipants'] > 0 && (bool) ($campaign?->metadata['route_reviewed_at'] ?? false), 'ارتباط QR، مأموریت، مکان، فروشگاه، نمایشگر و تبلیغات در یک مسیر قابل اجرا بررسی و تایید شود.', $this->contextUrl('/admin/campaign-operations', $campaignCode, $blueprintCode, 'route')),
             $this->step('review', 'بررسی نهایی و آماده اجرا', 'ادمین', $campaign?->status->value === 'active' && $this->readiness($campaign, $counts)['canActivate'], 'قبل از فعال‌سازی عمومی، نقص‌ها و مسئولیت‌های باقی‌مانده را مرور کنید و کمپین را فعال کنید.', $this->contextUrl('/admin/campaign-builder', $campaignCode, $blueprintCode, 'review')),
         ];
     }
@@ -219,8 +239,9 @@ class CampaignBuilderService
             ['key' => 'campaign', 'label' => 'اطلاعات پایه کمپین ثبت شده باشد.', 'complete' => $campaign !== null],
             ['key' => 'qr', 'label' => 'حداقل یک QR ورودی به کمپین وصل باشد.', 'complete' => $counts['qrCodes'] > 0],
             ['key' => 'missions', 'label' => 'حداقل یک مأموریت برای کمپین ثبت شده باشد.', 'complete' => $counts['missions'] > 0],
-            ['key' => 'incentives', 'label' => 'حداقل یک پاداش یا گنج برای کمپین ثبت شده باشد.', 'complete' => $counts['rewards'] > 0 || $counts['treasures'] > 0],
-            ['key' => 'participants', 'label' => 'حداقل یک عضو، فروشگاه یا شریک مسئول ثبت شده باشد.', 'complete' => $counts['participants'] > 0],
+            ['key' => 'incentives', 'label' => 'حداقل یک پاداش تاییدشده و فعال یا یک گنج برای کمپین ثبت شده باشد.', 'complete' => $counts['approvedRewards'] > 0 || $counts['treasures'] > 0],
+            ['key' => 'reward_review', 'label' => 'پیشنهاد پاداش در انتظار بررسی باقی نمانده باشد.', 'complete' => $counts['pendingRewards'] === 0],
+            ['key' => 'participants', 'label' => 'حداقل یک عضو، فروشگاه یا شریک آماده ثبت شده باشد.', 'complete' => $counts['readyParticipants'] > 0],
             ['key' => 'route', 'label' => 'مسیر عملیاتی کمپین در نقشه عملیات تایید شده باشد.', 'complete' => (bool) ($campaign?->metadata['route_reviewed_at'] ?? false)],
         ];
 

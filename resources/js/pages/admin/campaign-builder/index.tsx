@@ -31,6 +31,9 @@ type Counts = {
     qrCodes: number;
     missions: number;
     rewards: number;
+    approvedRewards: number;
+    pendingRewards: number;
+    partnerRewardOffers: number;
     treasures: number;
     participants: number;
     readyParticipants: number;
@@ -133,7 +136,8 @@ export default function CampaignBuilderIndex({
     const metrics: MetricItem[] = [
         ['QR', counts.qrCodes, QrCode],
         ['مأموریت', counts.missions, Trophy],
-        ['پاداش و گنج', counts.rewards + counts.treasures, BadgeCheck],
+        ['پاداش تاییدشده', counts.approvedRewards, BadgeCheck],
+        ['پیشنهاد معلق', counts.pendingRewards, CircleAlert],
         ['عضو و شریک', counts.participants, Store],
     ];
 
@@ -229,7 +233,7 @@ export default function CampaignBuilderIndex({
                     </div>
                 </section>
 
-                <section className="grid gap-3 text-sm md:grid-cols-4">
+                <section className="grid gap-3 text-sm md:grid-cols-3 xl:grid-cols-5">
                     {metrics.map(([label, value, MetricIcon]) => {
                         return (
                             <div key={String(label)} className="rounded-lg border border-border/80 bg-card/80 px-3 py-2 shadow-sm">

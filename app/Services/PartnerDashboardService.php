@@ -65,16 +65,12 @@ class PartnerDashboardService
     }
 
     /** @return array<string, mixed> */
-    public function overview(User $user): array
+    public function overview(User $user, mixed $campaignCode = null): array
     {
         $partner = $this->partnerForUser($user);
         $partner->load(['venue:id,code,name']);
-        $activeCampaign = Campaign::query()
-            ->where('venue_id', $partner->venue_id)
-            ->where('status', RecordStatus::Active)
-            ->latest('created_at')
-            ->first();
-        $blueprintCode = $activeCampaign?->metadata['blueprint_code'] ?? null;
+        $proposalCampaign = $this->proposalCampaignForPartner($partner, is_string($campaignCode) ? $campaignCode : null);
+        $blueprintCode = $proposalCampaign?->metadata['blueprint_code'] ?? null;
         $blueprint = $this->blueprints->handoff(is_string($blueprintCode) ? $blueprintCode : null);
         $rewardTiers = $blueprint['rewardDesign']['tiers'] ?? [];
         $rewardDefinitions = $partner->rewardDefinitions()
@@ -152,10 +148,11 @@ class PartnerDashboardService
                 'scheduledAds' => $adRequests->where('placementStatus', 'scheduled')->count(),
             ],
             'proposalContext' => [
-                'campaign' => $activeCampaign ? [
-                    'id' => $activeCampaign->id,
-                    'code' => $activeCampaign->code,
-                    'name' => $activeCampaign->name,
+                'campaign' => $proposalCampaign ? [
+                    'id' => $proposalCampaign->id,
+                    'code' => $proposalCampaign->code,
+                    'name' => $proposalCampaign->name,
+                    'status' => $proposalCampaign->status->value,
                 ] : null,
                 'rewardTiers' => $rewardTiers,
             ],
@@ -192,7 +189,13 @@ class PartnerDashboardService
     public function createOffer(User $partnerUser, array $data): RewardDefinition
     {
         $partner = $this->partnerForUser($partnerUser);
-        $campaign = $this->activeCampaignForPartner($partner);
+        $campaign = $this->proposalCampaignForPartner($partner, null, $data['campaign_id'] ?? null);
+
+        if (! $campaign) {
+            throw ValidationException::withMessages([
+                'campaign_id' => 'برای مکان این فروشگاه هنوز کمپین قابل پیشنهاد ثبت نشده است.',
+            ]);
+        }
 
         return DB::transaction(fn (): RewardDefinition => RewardDefinition::query()->create([
             'campaign_id' => $campaign->id,
@@ -357,21 +360,28 @@ class PartnerDashboardService
         return $code;
     }
 
-    private function activeCampaignForPartner(PartnerAccount $partner): Campaign
+    private function proposalCampaignForPartner(PartnerAccount $partner, ?string $campaignCode = null, mixed $campaignId = null): ?Campaign
     {
-        $campaign = Campaign::query()
+        if (is_string($campaignId) && $campaignId !== '') {
+            return Campaign::query()
+                ->where('venue_id', $partner->venue_id)
+                ->whereKey($campaignId)
+                ->first();
+        }
+
+        if ($campaignCode) {
+            return Campaign::query()
+                ->where('venue_id', $partner->venue_id)
+                ->where('code', Str::lower($campaignCode))
+                ->first();
+        }
+
+        return Campaign::query()
             ->where('venue_id', $partner->venue_id)
-            ->where('status', RecordStatus::Active)
+            ->whereIn('status', [RecordStatus::Draft->value, RecordStatus::Active->value])
             ->latest('created_at')
             ->first();
 
-        if (! $campaign) {
-            throw ValidationException::withMessages([
-                'campaign' => 'برای مکان این فروشگاه کمپین فعال ثبت نشده است.',
-            ]);
-        }
-
-        return $campaign;
     }
 
     private function uniqueOfferCode(string $campaignId, string $partnerCode): string

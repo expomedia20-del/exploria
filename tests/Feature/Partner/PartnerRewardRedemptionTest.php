@@ -185,9 +185,11 @@ class PartnerRewardRedemptionTest extends TestCase
     public function test_partner_can_submit_offer_for_admin_review(): void
     {
         $partnerUser = User::query()->where('email', 'cafe.eco@example.test')->firstOrFail();
+        $campaign = QrCode::query()->firstOrFail()->campaign;
 
         $this->actingAs($partnerUser)
             ->postJson(route('partner.offers.api.store'), [
+                'campaign_id' => $campaign?->id,
                 'name' => 'Ã˜ÂªÃ˜Â®Ã™ÂÃ›Å’Ã™Â Ã™â€ Ã™Ë†Ã˜Â´Ã›Å’Ã˜Â¯Ã™â€ Ã›Å’ Ã˜Â®Ã˜Â§Ã™â€ Ã™Ë†Ã˜Â§Ã˜Â¯ÃšÂ¯Ã›Å’',
                 'reward_type' => 'discount',
                 'reward_tier' => 'silver',
@@ -207,10 +209,50 @@ class PartnerRewardRedemptionTest extends TestCase
 
         $this->assertSame('cafe-eco', $offer->partnerAccount->code);
         $this->assertSame('draft', $offer->status->value);
+        $this->assertSame($campaign?->id, $offer->campaign_id);
         $this->assertSame('pending_review', $offer->metadata['approval_status']);
         $this->assertSame('partner_offer_submission', $offer->metadata['source']);
         $this->assertSame('silver', $offer->metadata['reward_tier']);
         $this->assertSame('family drink bundle', $offer->metadata['reward_option']);
+    }
+
+    public function test_partner_dashboard_uses_campaign_query_for_draft_reward_proposals(): void
+    {
+        $partnerUser = User::query()->where('email', 'cafe.eco@example.test')->firstOrFail();
+        $seedCampaign = QrCode::query()->firstOrFail()->campaign;
+        $draftCampaign = $seedCampaign?->replicate(['id', 'created_at', 'updated_at']);
+
+        $this->assertNotNull($draftCampaign);
+
+        $draftCampaign->forceFill([
+            'code' => 'draft-partner-proposal',
+            'name' => 'Draft partner proposal',
+            'status' => \App\Enums\RecordStatus::Draft,
+        ])->save();
+
+        $this->actingAs($partnerUser)
+            ->get(route('partner.dashboard', ['campaign' => 'draft-partner-proposal']))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('proposalContext.campaign.code', 'draft-partner-proposal')
+                ->where('proposalContext.campaign.status', 'draft'));
+
+        $this->actingAs($partnerUser)
+            ->postJson(route('partner.offers.api.store'), [
+                'campaign_id' => $draftCampaign->id,
+                'name' => 'Draft campaign partner offer',
+                'reward_type' => 'discount',
+                'reward_tier' => 'gold',
+                'reward_option' => 'launch day bundle',
+                'point_cost' => 300,
+                'stock_quantity' => 15,
+            ])
+            ->assertCreated();
+
+        $this->assertDatabaseHas('reward_definitions', [
+            'campaign_id' => $draftCampaign->id,
+            'name' => 'Draft campaign partner offer',
+        ]);
     }
 
     public function test_partner_can_update_own_store_profile(): void

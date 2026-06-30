@@ -16,6 +16,7 @@ class StorePartnerOfferRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'campaign_id' => ['nullable', 'uuid', 'exists:campaigns,id'],
             'name' => ['required', 'string', 'max:160'],
             'reward_type' => ['required', 'string', Rule::in(['partner_coupon', 'discount', 'gift', 'service_credit', 'sponsor_reward'])],
             'reward_tier' => ['nullable', 'string', 'max:64', 'alpha_dash:ascii'],

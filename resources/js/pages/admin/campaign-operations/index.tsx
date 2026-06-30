@@ -68,6 +68,11 @@ type JourneyItem = {
     points?: number;
     cycleStep?: { index: number | null; label: string | null };
     rewardType?: string;
+    approvalStatus?: string;
+    availabilityStatus?: string;
+    source?: string | null;
+    rewardTier?: string | null;
+    rewardOption?: string | null;
     treasureType?: string;
     adType?: string;
     deviceType?: string;
@@ -92,6 +97,8 @@ type CampaignBlueprint = {
         externalSponsors: number;
         missions: number;
         rewards: number;
+        approvedRewards: number;
+        pendingRewards: number;
         treasures: number;
         qrCodes: number;
         adRequests: number;
