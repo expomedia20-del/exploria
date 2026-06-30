@@ -194,12 +194,16 @@ class MissionRewardBlueprintService
             return 'scan-entry-qr';
         }
 
-        if (str_contains($text, 'محتوا') || str_contains($text, 'مشاهده') || str_contains($text, 'پرسش') || str_contains($text, 'پاسخ') || str_contains($text, 'نمایشگر')) {
+        if (str_contains($text, 'رأی') || str_contains($text, 'رای') || str_contains($text, 'نظر') || str_contains($text, 'پیشنهاد') || str_contains($text, 'تجربه') || str_contains($text, 'پرسش') || str_contains($text, 'پاسخ') || str_contains($text, 'محتوا') || str_contains($text, 'مشاهده') || str_contains($text, 'نمایشگر')) {
             return 'watch-place-story';
         }
 
-        if (str_contains($text, 'عکس') || str_contains($text, 'چالش') || str_contains($text, 'تأیید') || str_contains($text, 'تایید') || str_contains($text, 'ثبت نتیجه')) {
+        if (str_contains($text, 'گنج') || str_contains($text, 'جایزه') || str_contains($text, 'خاطره') || str_contains($text, 'عکس') || str_contains($text, 'چالش') || str_contains($text, 'تایید') || str_contains($text, 'تأیید') || str_contains($text, 'ثبت')) {
             return 'photo-memory-challenge';
+        }
+
+        if (str_contains($text, 'غرفه') || str_contains($text, 'کافه') || str_contains($text, 'فروشگاه') || str_contains($text, 'مقصد') || str_contains($text, 'حرکت') || str_contains($text, 'رفتن') || str_contains($text, 'نقطه')) {
+            return 'discover-route-guide';
         }
 
         return 'discover-route-guide';
