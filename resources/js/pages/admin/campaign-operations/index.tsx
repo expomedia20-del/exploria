@@ -94,6 +94,24 @@ type AlignmentReview = {
     }[];
 };
 
+type OperationalReview = {
+    status: 'ready' | 'needs_attention';
+    checks: {
+        key: string;
+        title: string;
+        description: string;
+        complete: boolean;
+        count: number;
+        severity: 'error' | 'warning';
+    }[];
+    issues: {
+        level: 'error' | 'warning';
+        code: string;
+        title: string;
+        action: string;
+    }[];
+};
+
 type CampaignBlueprint = {
     id: string;
     code: string;
@@ -103,9 +121,11 @@ type CampaignBlueprint = {
     routeReviewedAt: string | null;
     routeReviewNotes: string | null;
     alignment: AlignmentReview;
+    operationalReview: OperationalReview;
     venue: Entity | null;
     stats: {
         participants: number;
+        readyParticipants: number;
         internalSponsors: number;
         externalSponsors: number;
         missions: number;
@@ -597,6 +617,8 @@ export default function CampaignOperationsIndex({ stats, campaigns, selectedBlue
     const canMutate = auth.user.role === 'admin' || auth.user.role === 'operator';
     const activeCampaign = selectedCampaign ? campaigns.find((campaign) => campaign.id === selectedCampaign.id) : null;
     const activeAlignmentErrors = activeCampaign?.alignment.issues.filter((issue) => issue.level === 'error') ?? [];
+    const activeOperationalErrors = activeCampaign?.operationalReview.issues.filter((issue) => issue.level === 'error') ?? [];
+    const routeBlockers = activeAlignmentErrors.length + activeOperationalErrors.length;
 
     return (
         <>
@@ -695,7 +717,7 @@ export default function CampaignOperationsIndex({ stats, campaigns, selectedBlue
                                     ['QR', activeCampaign.stats.qrCodes],
                                     ['مأموریت', activeCampaign.stats.missions],
                                     ['مشوق', activeCampaign.stats.rewards + activeCampaign.stats.treasures],
-                                    ['عضو', activeCampaign.stats.participants],
+                                    ['عضو آماده', activeCampaign.stats.readyParticipants],
                                     ['نمایش/تبلیغ', activeCampaign.stats.adRequests + activeCampaign.stats.displayDevices],
                                 ].map(([labelText, value]) => (
                                     <div key={String(labelText)} className="rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm">
@@ -707,16 +729,29 @@ export default function CampaignOperationsIndex({ stats, campaigns, selectedBlue
                             <div className="rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm">
                                 <p className="text-sm font-semibold">{activeCampaign.routeReviewedAt ? 'مسیر تایید شده است' : 'مسیر هنوز تایید نشده است'}</p>
                                 <p className="mt-1 text-xs text-muted-foreground">
-                                    کنترل سازگاری: {activeCampaign.alignment.status === 'ready' ? 'همخوان با الگوی کمپین' : `${activeAlignmentErrors.length.toLocaleString('fa-IR')} نقص اصلی قبل از تایید`}
+                                    کنترل مسیر: {activeCampaign.operationalReview.status === 'ready' ? 'آماده تایید عملیاتی' : `${routeBlockers.toLocaleString('fa-IR')} مانع اصلی قبل از تایید`}
                                 </p>
                                 {activeCampaign.routeReviewedAt ? (
                                     <p className="mt-1 text-xs text-muted-foreground">
                                         زمان تایید: {new Intl.DateTimeFormat('fa-IR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(activeCampaign.routeReviewedAt))}
                                     </p>
                                 ) : null}
-                                {activeCampaign.alignment.issues.length > 0 ? (
+                                <div className="mt-3 grid gap-2">
+                                    {activeCampaign.operationalReview.checks.map((check) => (
+                                        <div key={check.key} className="flex items-start justify-between gap-3 rounded-md bg-muted/40 px-2 py-1.5 text-xs">
+                                            <div>
+                                                <p className="font-medium">{check.title}</p>
+                                                <p className="mt-1 text-muted-foreground">{check.description}</p>
+                                            </div>
+                                            <span className={check.complete ? 'text-emerald-700 dark:text-emerald-300' : check.severity === 'warning' ? 'text-amber-700 dark:text-amber-300' : 'text-destructive'}>
+                                                {check.complete ? 'کامل' : check.severity === 'warning' ? 'هشدار' : 'ناقص'} · {fa(check.count)}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                                {activeCampaign.operationalReview.issues.length > 0 ? (
                                     <div className="mt-3 grid gap-2 rounded-md bg-muted/40 p-2 text-xs">
-                                        {activeCampaign.alignment.issues.slice(0, 4).map((issue) => (
+                                        {activeCampaign.operationalReview.issues.slice(0, 5).map((issue) => (
                                             <div key={`${issue.code}-${issue.title}`} className="rounded-md bg-background px-2 py-1.5">
                                                 <p className="font-medium">{issue.title}</p>
                                                 <p className="mt-1 text-muted-foreground">{issue.action}</p>
@@ -735,7 +770,7 @@ export default function CampaignOperationsIndex({ stats, campaigns, selectedBlue
                                                     placeholder="یادداشت کوتاه بازبینی مسیر"
                                                     className="min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm"
                                                 />
-                                                <Button disabled={processing || activeAlignmentErrors.length > 0}>
+                                                <Button disabled={processing || routeBlockers > 0}>
                                                     <Route className="size-4" />
                                                     {activeCampaign.routeReviewedAt ? 'ذخیره ویرایش بازبینی مسیر' : 'تایید مسیر عملیاتی'}
                                                 </Button>

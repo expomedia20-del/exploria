@@ -59,10 +59,12 @@ class CampaignOperationsBlueprintService
         return DB::transaction(function () use ($user, $data): Campaign {
             $campaign = Campaign::query()->findOrFail($data['campaign_id']);
             $review = $this->blueprintConsistency->review($campaign);
+            $stats = $this->routeStats($campaign, $this->scope($user));
+            $operationalReview = $this->operationalReview($stats, $review);
 
-            if (collect($review['issues'])->where('level', 'error')->isNotEmpty()) {
+            if (collect($operationalReview['issues'])->where('level', 'error')->isNotEmpty()) {
                 throw ValidationException::withMessages([
-                    'campaign_id' => 'قبل از تایید مسیر عملیاتی، ناسازگاری‌های چرخه، مأموریت و پاداش همین کمپین را رفع کنید.',
+                    'campaign_id' => 'قبل از تایید مسیر عملیاتی، نقص‌های QR، مأموریت، مشوق، عضو آماده یا پیشنهادهای معلق همین کمپین را رفع کنید.',
                 ]);
             }
 
@@ -95,6 +97,79 @@ class CampaignOperationsBlueprintService
         });
     }
 
+    /** @param array<string, mixed> $scope @return array<string, int> */
+    private function routeStats(Campaign $campaign, array $scope): array
+    {
+        $participants = $this->participants($campaign, $scope);
+        $rewards = $this->rewards($campaign, $scope);
+
+        return [
+            'participants' => $participants->count(),
+            'readyParticipants' => $participants->where('onboardingStatus', 'ready')->count(),
+            'internalSponsors' => $participants->filter(fn (array $participant): bool => $participant['participantType'] === 'sponsor' && $participant['hub'] !== null)->count(),
+            'externalSponsors' => $participants->filter(fn (array $participant): bool => $participant['participantType'] === 'sponsor' && $participant['hub'] === null)->count(),
+            'missions' => $this->missions($campaign, $scope)->count(),
+            'rewards' => $rewards->count(),
+            'approvedRewards' => $rewards->where('approvalStatus', 'approved')->count(),
+            'pendingRewards' => $rewards->where('approvalStatus', 'pending_review')->count(),
+            'treasures' => $this->treasures($campaign, $scope)->count(),
+            'qrCodes' => $this->qrCodes($campaign, $scope)->count(),
+            'adRequests' => $this->adRequests($campaign, $scope)->count(),
+            'displayDevices' => $this->displayDevices($campaign, $scope)->count(),
+        ];
+    }
+
+    /**
+     * @param array<string, int> $stats
+     * @param array<string, mixed> $alignment
+     * @return array{status: string, checks: array<int, array<string, mixed>>, issues: array<int, array<string, string>>}
+     */
+    private function operationalReview(array $stats, array $alignment): array
+    {
+        $checks = [
+            $this->operationCheck('qr', 'QR ورودی', 'حداقل یک QR معتبر برای شروع مسیر ثبت شده باشد.', $stats['qrCodes'] > 0, $stats['qrCodes']),
+            $this->operationCheck('missions', 'ماموریت', 'حداقل یک ماموریت به چرخه کاربر وصل شده باشد.', $stats['missions'] > 0, $stats['missions']),
+            $this->operationCheck('incentives', 'مشوق و گنج', 'حداقل یک پاداش تاییدشده یا یک گنج برای کمپین ثبت شده باشد.', $stats['approvedRewards'] > 0 || $stats['treasures'] > 0, $stats['approvedRewards'] + $stats['treasures']),
+            $this->operationCheck('participants', 'عضو آماده', 'حداقل یک فروشگاه، شریک یا اسپانسر آماده اجرا باشد.', $stats['readyParticipants'] > 0, $stats['readyParticipants']),
+            $this->operationCheck('pending_rewards', 'پیشنهاد معلق', 'پیشنهاد پاداش در انتظار بررسی باقی نمانده باشد.', $stats['pendingRewards'] === 0, $stats['pendingRewards']),
+            $this->operationCheck('alignment', 'همخوانی الگو', 'چرخه، ماموریت، پاداش و گنج با الگوی مرجع همخوان باشند.', collect($alignment['issues'] ?? [])->where('level', 'error')->isEmpty(), (int) ($alignment['completedSteps'] ?? 0)),
+        ];
+
+        if (($stats['adRequests'] + $stats['displayDevices']) === 0) {
+            $checks[] = $this->operationCheck('media', 'رسانه و نمایشگر', 'برای اجرای میدانی بهتر، نمایشگر یا درخواست تبلیغاتی مرتبط مشخص شود.', false, 0, 'warning');
+        }
+
+        $issues = collect($checks)
+            ->filter(fn (array $check): bool => ! $check['complete'])
+            ->map(fn (array $check): array => [
+                'level' => $check['severity'],
+                'code' => $check['key'],
+                'title' => $check['title'].' آماده نیست.',
+                'action' => $check['description'],
+            ])
+            ->values()
+            ->all();
+
+        return [
+            'status' => collect($issues)->where('level', 'error')->isEmpty() ? 'ready' : 'needs_attention',
+            'checks' => $checks,
+            'issues' => $issues,
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function operationCheck(string $key, string $title, string $description, bool $complete, int $count, string $severity = 'error'): array
+    {
+        return [
+            'key' => $key,
+            'title' => $title,
+            'description' => $description,
+            'complete' => $complete,
+            'count' => $count,
+            'severity' => $severity,
+        ];
+    }
+
     /** @return array{isGlobal: bool, venueIds: Collection<int, string>, assignedVenueIds: Collection<int, string>, hubIds: Collection<int, string>, partnerIds: Collection<int, string>} */
     private function scope(?User $user): array
     {
@@ -120,6 +195,22 @@ class CampaignOperationsBlueprintService
 
         $internalSponsors = $participants->filter(fn (array $participant): bool => $participant['participantType'] === 'sponsor' && $participant['hub'] !== null);
         $externalSponsors = $participants->filter(fn (array $participant): bool => $participant['participantType'] === 'sponsor' && $participant['hub'] === null);
+        $readyParticipants = $participants->where('onboardingStatus', 'ready')->count();
+        $alignment = $this->blueprintConsistency->review($campaign);
+        $stats = [
+            'participants' => $participants->count(),
+            'readyParticipants' => $readyParticipants,
+            'internalSponsors' => $internalSponsors->count(),
+            'externalSponsors' => $externalSponsors->count(),
+            'missions' => $missions->count(),
+            'rewards' => $rewards->count(),
+            'approvedRewards' => $rewards->where('approvalStatus', 'approved')->count(),
+            'pendingRewards' => $rewards->where('approvalStatus', 'pending_review')->count(),
+            'treasures' => $treasures->count(),
+            'qrCodes' => $qrCodes->count(),
+            'adRequests' => $adRequests->count(),
+            'displayDevices' => $displayDevices->count(),
+        ];
 
         return [
             'id' => $campaign->id,
@@ -129,24 +220,13 @@ class CampaignOperationsBlueprintService
             'blueprintCode' => $campaign->metadata['blueprint_code'] ?? null,
             'routeReviewedAt' => $campaign->metadata['route_reviewed_at'] ?? null,
             'routeReviewNotes' => $campaign->metadata['route_review_notes'] ?? null,
-            'alignment' => $this->blueprintConsistency->review($campaign),
+            'alignment' => $alignment,
+            'operationalReview' => $this->operationalReview($stats, $alignment),
             'status' => $campaign->status->value,
             'startAt' => $campaign->start_at?->toIso8601String(),
             'endAt' => $campaign->end_at?->toIso8601String(),
             'venue' => $campaign->venue ? ['id' => $campaign->venue->id, 'code' => $campaign->venue->code, 'name' => $campaign->venue->name] : null,
-            'stats' => [
-                'participants' => $participants->count(),
-                'internalSponsors' => $internalSponsors->count(),
-                'externalSponsors' => $externalSponsors->count(),
-                'missions' => $missions->count(),
-                'rewards' => $rewards->count(),
-                'approvedRewards' => $rewards->where('approvalStatus', 'approved')->count(),
-                'pendingRewards' => $rewards->where('approvalStatus', 'pending_review')->count(),
-                'treasures' => $treasures->count(),
-                'qrCodes' => $qrCodes->count(),
-                'adRequests' => $adRequests->count(),
-                'displayDevices' => $displayDevices->count(),
-            ],
+            'stats' => $stats,
             'participantsByHub' => $this->participantsByHub($participants),
             'sponsors' => [
                 'internal' => $internalSponsors->values(),

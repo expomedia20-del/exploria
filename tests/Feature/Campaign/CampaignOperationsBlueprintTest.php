@@ -31,7 +31,10 @@ class CampaignOperationsBlueprintTest extends TestCase
             ->assertJsonPath('data.stats.internalSponsors', 1)
             ->assertJsonPath('data.stats.externalSponsors', 0)
             ->assertJsonPath('data.stats.entryPoints', 1)
-            ->assertJsonPath('data.campaigns.0.stats.missions', 4);
+            ->assertJsonPath('data.campaigns.0.stats.missions', 4)
+            ->assertJsonPath('data.campaigns.0.stats.readyParticipants', 2)
+            ->assertJsonPath('data.campaigns.0.operationalReview.status', 'needs_attention')
+            ->assertJsonPath('data.campaigns.0.operationalReview.checks.0.key', 'qr');
     }
 
     public function test_hub_manager_reads_only_scoped_campaign_operations(): void
@@ -54,5 +57,27 @@ class CampaignOperationsBlueprintTest extends TestCase
     public function test_guest_cannot_read_campaign_operations(): void
     {
         $this->getJson(route('admin.campaign-operations.index'))->assertUnauthorized();
+    }
+
+    public function test_admin_cannot_confirm_operational_route_while_checks_need_attention(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+        $campaignId = \App\Models\Campaign::query()
+            ->where('code', 'ecopark-pilot-1405')
+            ->valueOrFail('id');
+
+        $this->actingAs($admin)
+            ->post(route('admin.campaign-operations.review'), [
+                'campaign_id' => $campaignId,
+                'route_notes' => 'route checked',
+            ])
+            ->assertSessionHasErrors('campaign_id');
+
+        $this->assertDatabaseHas('campaigns', [
+            'id' => $campaignId,
+        ]);
+
+        $this->assertNull(\App\Models\Campaign::query()->findOrFail($campaignId)->metadata['route_reviewed_at'] ?? null);
     }
 }
