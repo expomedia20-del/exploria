@@ -269,20 +269,6 @@ export default function PartnerDashboard({
                     </div>
                 </header>
 
-                <section className="flex flex-wrap gap-2 rounded-lg border border-sidebar-border/70 bg-background p-3 dark:border-sidebar-border">
-                    <Button asChild size="sm">
-                        <Link href="/partner/ads">
-                            <Megaphone className="size-4" />
-                            ثبت تبلیغ جدید
-                        </Link>
-                    </Button>
-                    <Button asChild size="sm" variant="outline">
-                        <a href="#partner-offer-form">
-                            <Gift className="size-4" />
-                            ثبت پیشنهاد/تخفیف
-                        </a>
-                    </Button>
-                </section>
                 <section className="rounded-lg border border-primary/25 bg-primary/5 p-4 shadow-sm">
                     <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                         <div>
@@ -295,6 +281,26 @@ export default function PartnerDashboard({
                         {proposalContext.campaign ? (
                             <span className="rounded-full bg-background px-3 py-1 text-xs" dir="ltr">{proposalContext.campaign.code}</span>
                         ) : null}
+                    </div>
+                    <div className="mt-4 flex flex-col gap-2 rounded-lg border border-primary/20 bg-background/80 p-3 md:flex-row md:items-center md:justify-between">
+                        <div>
+                            <p className="text-sm font-medium">اقدام اصلی این مرحله: پیشنهاد پاداش یا تخفیف</p>
+                            <p className="mt-1 text-xs text-muted-foreground">ثبت تبلیغ اقدام جداگانه است و بعد از مشخص شدن نقش پاداش می‌تواند انجام شود.</p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                            <Button asChild size="sm">
+                                <a href="#partner-offer-form">
+                                    <Gift className="size-4" />
+                                    ثبت پیشنهاد/تخفیف
+                                </a>
+                            </Button>
+                            <Button asChild size="sm" variant="outline">
+                                <Link href="/partner/ads">
+                                    <Megaphone className="size-4" />
+                                    تبلیغات جداگانه
+                                </Link>
+                            </Button>
+                        </div>
                     </div>
                     <div className="mt-4 grid gap-3 lg:grid-cols-4">
                         {actionSteps.map((step, index) => (
