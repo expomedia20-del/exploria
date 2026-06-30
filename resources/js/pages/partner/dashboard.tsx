@@ -366,11 +366,11 @@ export default function PartnerDashboard({
                         <div className="mb-4 rounded-md bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
                             {proposalContext.campaign ? (
                                 <>
-                                    <p className="font-medium text-foreground">کمپین فعال: {proposalContext.campaign.name}</p>
+                                    <p className="font-medium text-foreground">کمپین در حال تنظیم: {proposalContext.campaign.name}</p>
                                     <p className="mt-1">سطح و گزینه پیشنهادی برای بررسی ادمین ثبت می‌شود و اجرای نهایی در مرحله مأموریت و پاداش انجام می‌شود.</p>
                                 </>
                             ) : (
-                                <p>برای ثبت پیشنهاد پاداش، ابتدا باید یک کمپین فعال برای مکان این فروشگاه وجود داشته باشد.</p>
+                                <p>برای ثبت پیشنهاد پاداش، ابتدا باید یک کمپین در حال تنظیم برای مکان این فروشگاه وجود داشته باشد.</p>
                             )}
                         </div>
                         <Form
