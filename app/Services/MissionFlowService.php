@@ -189,7 +189,14 @@ class MissionFlowService
             'id' => $mission->id,
             'code' => $mission->code,
             'title' => $mission->title_override ?? $mission->missionTemplate->title,
-            'description' => $mission->missionTemplate->description,
+            'description' => $mission->metadata['visitor_instruction'] ?? $mission->missionTemplate->description,
+            'templateDescription' => $mission->missionTemplate->description,
+            'completionEvidence' => $mission->metadata['completion_evidence'] ?? $this->evidenceLabel($mission),
+            'successMessage' => $mission->metadata['success_message'] ?? null,
+            'cycleStep' => [
+                'index' => $mission->metadata['cycle_step_index'] ?? null,
+                'label' => $mission->metadata['cycle_step_label'] ?? null,
+            ],
             'status' => $status,
             'isLocked' => $locked,
             'canStart' => ! $locked && $progress === null,
@@ -205,6 +212,17 @@ class MissionFlowService
             'startedAt' => $progress?->started_at?->toIso8601String(),
             'completedAt' => $progress?->completed_at?->toIso8601String(),
         ];
+    }
+
+    private function evidenceLabel(MissionInstance $mission): string
+    {
+        return match ($mission->missionTemplate->trigger_type) {
+            'qr_scan' => 'اسکن QR معتبر',
+            'location_hint' => 'حضور در نقطه راهنما یا مشاهده نشانه مسیر',
+            'content_view' => 'مشاهده محتوا یا پاسخ کوتاه',
+            'admin_approval' => 'تأیید مجری یا ادمین',
+            default => 'ثبت انجام مأموریت',
+        };
     }
 
     private function isMissionActive(MissionInstance $mission): bool

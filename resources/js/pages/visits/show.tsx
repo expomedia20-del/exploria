@@ -37,6 +37,10 @@ type MissionItem = {
     code: string;
     title: string;
     description: string | null;
+    templateDescription: string | null;
+    completionEvidence: string;
+    successMessage: string | null;
+    cycleStep: { index: number | null; label: string | null };
     status: 'available' | 'started' | 'completed' | 'locked';
     isLocked: boolean;
     canStart: boolean;
@@ -224,6 +228,30 @@ export default function VisitShow({ visit, missionFlow }: Props) {
                                     <p className="mt-2 text-sm leading-7 text-slate-600 dark:text-slate-300">
                                         {mission.description}
                                     </p>
+                                    {mission.templateDescription && mission.templateDescription !== mission.description ? (
+                                        <p className="mt-1 text-xs leading-6 text-slate-500 dark:text-slate-400">
+                                            {mission.templateDescription}
+                                        </p>
+                                    ) : null}
+                                    <div className="mt-3 grid gap-2 rounded-lg bg-slate-50 p-3 text-xs text-slate-600 sm:grid-cols-2 dark:bg-slate-950/60 dark:text-slate-300">
+                                        <p>
+                                            گام:{' '}
+                                            <span className="font-medium text-slate-900 dark:text-slate-100">
+                                                {mission.cycleStep.label ?? 'مسیر اصلی'}
+                                            </span>
+                                        </p>
+                                        <p>
+                                            مدرک انجام:{' '}
+                                            <span className="font-medium text-slate-900 dark:text-slate-100">
+                                                {mission.completionEvidence}
+                                            </span>
+                                        </p>
+                                        {mission.status === 'completed' && mission.successMessage ? (
+                                            <p className="sm:col-span-2">
+                                                {mission.successMessage}
+                                            </p>
+                                        ) : null}
+                                    </div>
                                     <div className="mt-3 flex flex-wrap gap-2 text-xs">
                                         <span className="rounded-full bg-amber-100 px-2.5 py-1 text-amber-900">
                                             {mission.points.toLocaleString(

@@ -52,7 +52,10 @@ class VisitMissionFlowTest extends TestCase
                 ->where('missionFlow.stats.totalPoints', 0)
                 ->where('missionFlow.stats.rewards', 0)
                 ->has('missionFlow.missions', 4)
-                ->where('missionFlow.missions.0.code', 'scan-entry-qr'));
+                ->where('missionFlow.missions.0.code', 'scan-entry-qr')
+                ->where('missionFlow.missions.0.completionEvidence', "\u{0627}\u{0633}\u{06A9}\u{0646} QR \u{0647}\u{0645}\u{06CC}\u{0646} \u{0646}\u{0642}\u{0637}\u{0647}")
+                ->where('missionFlow.missions.0.successMessage', "\u{0645}\u{0623}\u{0645}\u{0648}\u{0631}\u{06CC}\u{062A} \u{06A9}\u{0627}\u{0645}\u{0644} \u{0634}\u{062F} \u{0648} \u{0645}\u{0631}\u{062D}\u{0644}\u{0647} \u{0628}\u{0639}\u{062F}\u{06CC} \u{0645}\u{0633}\u{06CC}\u{0631} \u{0628}\u{0631}\u{0627}\u{06CC} \u{0634}\u{0645}\u{0627} \u{0628}\u{0627}\u{0632} \u{0645}\u{06CC}\u{200C}\u{0634}\u{0648}\u{062F}.")
+                ->has('missionFlow.missions.0.cycleStep'));
     }
 
     public function test_user_can_start_and_complete_a_visit_mission_and_receive_reward(): void

@@ -218,6 +218,9 @@ class MissionRewardRegistryService
                 'source' => 'admin_campaign_components',
                 'cycle_step_index' => $data['cycle_step_index'] ?? null,
                 'cycle_step_label' => $data['cycle_step_label'] ?? null,
+                'visitor_instruction' => $data['visitor_instruction'] ?? null,
+                'completion_evidence' => $data['completion_evidence'] ?? null,
+                'success_message' => $data['success_message'] ?? null,
             ],
         ];
 
@@ -385,6 +388,9 @@ class MissionRewardRegistryService
             'startsAt' => $mission->starts_at?->toIso8601String(),
             'endsAt' => $mission->ends_at?->toIso8601String(),
             'unlockRule' => $mission->unlock_rule,
+            'visitorInstruction' => $mission->metadata['visitor_instruction'] ?? null,
+            'completionEvidence' => $mission->metadata['completion_evidence'] ?? null,
+            'successMessage' => $mission->metadata['success_message'] ?? null,
             'cycleStep' => [
                 'index' => $mission->metadata['cycle_step_index'] ?? null,
                 'label' => $mission->metadata['cycle_step_label'] ?? null,

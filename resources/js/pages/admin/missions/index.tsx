@@ -45,6 +45,9 @@ type MissionItem = {
     startsAt: string | null;
     endsAt: string | null;
     unlockRule: Record<string, unknown> | null;
+    visitorInstruction: string | null;
+    completionEvidence: string | null;
+    successMessage: string | null;
     cycleStep: { index: number | null; label: string | null };
     progressCount: number;
     campaign: RegistryEntity | null;
@@ -729,6 +732,23 @@ export default function MissionRewardRegistryIndex({
                                             <input key={`mission-title-${editingMission?.id ?? selectedMissionPlan?.title ?? 'title'}`} id="title_override" name="title_override" autoComplete="off" defaultValue={editingMission?.title ?? selectedMissionPlan?.title ?? ''} placeholder="مثلا اسکن ورودی خانواده" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
                                             <InputError message={errors.title_override} />
                                         </div>
+                                        <div className="grid gap-1.5">
+                                            <label htmlFor="visitor_instruction" className="text-xs font-medium">راهنمای نمایش به کاربر</label>
+                                            <textarea key={`mission-instruction-${editingMission?.id ?? selectedMissionPlan?.index ?? 'new'}`} id="visitor_instruction" name="visitor_instruction" autoComplete="off" defaultValue={editingMission?.visitorInstruction ?? (selectedMissionPlan ? `${selectedMissionPlan.userStep} را انجام دهید و راهنمای مسیر را دنبال کنید.` : '')} placeholder="متنی که کاربر برای انجام این مأموریت می‌بیند" className="min-h-16 rounded-md border border-input bg-background px-3 py-2 text-sm" />
+                                            <InputError message={errors.visitor_instruction} />
+                                        </div>
+                                        <div className="grid gap-2 sm:grid-cols-2">
+                                            <div className="grid gap-1.5">
+                                                <label htmlFor="completion_evidence" className="text-xs font-medium">مدرک انجام</label>
+                                                <input key={`mission-evidence-${editingMission?.id ?? missionPlanTemplate?.triggerType ?? 'new'}`} id="completion_evidence" name="completion_evidence" autoComplete="off" defaultValue={editingMission?.completionEvidence ?? missionPlanTemplate?.triggerType ?? ''} placeholder="مثلا اسکن QR، عکس، پاسخ کوتاه، تایید فروشگاه" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                                <InputError message={errors.completion_evidence} />
+                                            </div>
+                                            <div className="grid gap-1.5">
+                                                <label htmlFor="success_message" className="text-xs font-medium">پیام موفقیت/قدم بعدی</label>
+                                                <input key={`mission-success-${editingMission?.id ?? selectedMissionPlan?.index ?? 'new'}`} id="success_message" name="success_message" autoComplete="off" defaultValue={editingMission?.successMessage ?? (selectedMissionPlan ? `گام ${selectedMissionPlan.index.toLocaleString('fa-IR')} کامل شد؛ به مرحله بعد بروید.` : '')} placeholder="بعد از تکمیل مأموریت چه پیامی دیده شود؟" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                                <InputError message={errors.success_message} />
+                                            </div>
+                                        </div>
                                         <div className="grid gap-2 sm:grid-cols-2">
                                             <div className="grid gap-1.5">
                                                 <label htmlFor="mission_status" className="text-xs font-medium">وضعیت</label>
@@ -1079,6 +1099,16 @@ export default function MissionRewardRegistryIndex({
                                         {mission.cycleStep?.label ? (
                                             <p className="mt-1 truncate text-xs text-muted-foreground">
                                                 گام چرخه: {mission.cycleStep.index?.toLocaleString('fa-IR') ?? '-'} · {mission.cycleStep.label}
+                                            </p>
+                                        ) : null}
+                                        {mission.visitorInstruction ? (
+                                            <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                                                راهنمای کاربر: {mission.visitorInstruction}
+                                            </p>
+                                        ) : null}
+                                        {mission.completionEvidence ? (
+                                            <p className="mt-1 text-xs text-muted-foreground">
+                                                مدرک انجام: {mission.completionEvidence}
                                             </p>
                                         ) : null}
                                         {canMutate ? (
