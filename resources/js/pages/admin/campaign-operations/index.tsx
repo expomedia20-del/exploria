@@ -82,6 +82,18 @@ type JourneyItem = {
 
 type JourneySection = { title: string; items: JourneyItem[] | Participant[] };
 
+type AlignmentReview = {
+    status: 'ready' | 'needs_attention' | 'unchecked';
+    expectedSteps: number;
+    completedSteps: number;
+    issues: {
+        level: 'error' | 'warning';
+        code: string;
+        title: string;
+        action: string;
+    }[];
+};
+
 type CampaignBlueprint = {
     id: string;
     code: string;
@@ -90,6 +102,7 @@ type CampaignBlueprint = {
     status: string;
     routeReviewedAt: string | null;
     routeReviewNotes: string | null;
+    alignment: AlignmentReview;
     venue: Entity | null;
     stats: {
         participants: number;
@@ -583,6 +596,7 @@ export default function CampaignOperationsIndex({ stats, campaigns, selectedBlue
     const { flash, auth } = usePage<SharedProps>().props;
     const canMutate = auth.user.role === 'admin' || auth.user.role === 'operator';
     const activeCampaign = selectedCampaign ? campaigns.find((campaign) => campaign.id === selectedCampaign.id) : null;
+    const activeAlignmentErrors = activeCampaign?.alignment.issues.filter((issue) => issue.level === 'error') ?? [];
 
     return (
         <>
@@ -692,10 +706,23 @@ export default function CampaignOperationsIndex({ stats, campaigns, selectedBlue
                             </div>
                             <div className="rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm">
                                 <p className="text-sm font-semibold">{activeCampaign.routeReviewedAt ? 'مسیر تایید شده است' : 'مسیر هنوز تایید نشده است'}</p>
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                    کنترل سازگاری: {activeCampaign.alignment.status === 'ready' ? 'همخوان با الگوی کمپین' : `${activeAlignmentErrors.length.toLocaleString('fa-IR')} نقص اصلی قبل از تایید`}
+                                </p>
                                 {activeCampaign.routeReviewedAt ? (
                                     <p className="mt-1 text-xs text-muted-foreground">
                                         زمان تایید: {new Intl.DateTimeFormat('fa-IR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(activeCampaign.routeReviewedAt))}
                                     </p>
+                                ) : null}
+                                {activeCampaign.alignment.issues.length > 0 ? (
+                                    <div className="mt-3 grid gap-2 rounded-md bg-muted/40 p-2 text-xs">
+                                        {activeCampaign.alignment.issues.slice(0, 4).map((issue) => (
+                                            <div key={`${issue.code}-${issue.title}`} className="rounded-md bg-background px-2 py-1.5">
+                                                <p className="font-medium">{issue.title}</p>
+                                                <p className="mt-1 text-muted-foreground">{issue.action}</p>
+                                            </div>
+                                        ))}
+                                    </div>
                                 ) : null}
                                 {canMutate ? (
                                     <Form action="/admin/campaign-operations/review" method="post" options={{ preserveScroll: true }} className="mt-3 grid gap-3">
@@ -708,7 +735,7 @@ export default function CampaignOperationsIndex({ stats, campaigns, selectedBlue
                                                     placeholder="یادداشت کوتاه بازبینی مسیر"
                                                     className="min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm"
                                                 />
-                                                <Button disabled={processing}>
+                                                <Button disabled={processing || activeAlignmentErrors.length > 0}>
                                                     <Route className="size-4" />
                                                     {activeCampaign.routeReviewedAt ? 'ذخیره ویرایش بازبینی مسیر' : 'تایید مسیر عملیاتی'}
                                                 </Button>

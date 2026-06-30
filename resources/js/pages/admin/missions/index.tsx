@@ -132,6 +132,18 @@ type SelectedBlueprint = {
     nextBuildAction: string;
 };
 
+type AlignmentReview = {
+    status: 'ready' | 'needs_attention' | 'unchecked';
+    expectedSteps: number;
+    completedSteps: number;
+    issues: {
+        level: 'error' | 'warning';
+        code: string;
+        title: string;
+        action: string;
+    }[];
+};
+
 type TreasureItem = {
     id: string;
     code: string;
@@ -158,6 +170,7 @@ type Props = {
     missions: MissionItem[];
     rewards: RewardItem[];
     treasures: TreasureItem[];
+    alignment: AlignmentReview | null;
     selectedBlueprint: SelectedBlueprint | null;
     selectedCampaign: SelectedCampaign | null;
     formOptions: FormOptions;
@@ -329,6 +342,7 @@ export default function MissionRewardRegistryIndex({
     missions,
     rewards,
     treasures,
+    alignment,
     selectedBlueprint,
     selectedCampaign,
     formOptions,
@@ -364,6 +378,7 @@ export default function MissionRewardRegistryIndex({
         () => rewardCodeSuggestion(selectedCampaign?.code ?? 'campaign', selectedMissionPlan, selectedRewardTier, rewards),
         [rewards, selectedCampaign?.code, selectedMissionPlan, selectedRewardTier],
     );
+    const alignmentErrors = alignment?.issues.filter((issue) => issue.level === 'error') ?? [];
 
     function selectMissionPlanStep(step: MissionPlanStep, index: number) {
         setSelectedMissionPlanIndex(index);
@@ -542,6 +557,35 @@ export default function MissionRewardRegistryIndex({
                                 <Link href="/admin/mission-blueprints">بازگشت به گنجینه</Link>
                             </Button>
                         </div>
+                    </section>
+                ) : null}
+
+                {alignment ? (
+                    <section className={`rounded-lg border p-4 text-sm shadow-sm ${alignment.status === 'ready' ? 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-100' : 'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100'}`}>
+                        <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                            <div>
+                                <p className="text-xs opacity-80">کنترل سازگاری الگو و مرحله ۳</p>
+                                <h2 className="mt-1 font-semibold">
+                                    {alignment.status === 'ready' ? 'چرخه، مأموریت و پاداش با الگوی کمپین همخوان است.' : 'چند مورد برای همخوانی چرخه، مأموریت و پاداش باقی مانده است.'}
+                                </h2>
+                                <p className="mt-1 text-xs opacity-80">
+                                    {alignment.completedSteps.toLocaleString('fa-IR')} از {alignment.expectedSteps.toLocaleString('fa-IR')} گام چرخه مأموریت و پاداش ثبت‌شده دارد.
+                                </p>
+                            </div>
+                            <span className="rounded-full bg-background/80 px-3 py-1 text-xs text-foreground">
+                                {alignment.status === 'ready' ? 'آماده نقشه عملیات' : `${alignmentErrors.length.toLocaleString('fa-IR')} نقص اصلی`}
+                            </span>
+                        </div>
+                        {alignment.issues.length > 0 ? (
+                            <div className="mt-3 grid gap-2 md:grid-cols-2">
+                                {alignment.issues.map((issue) => (
+                                    <div key={`${issue.code}-${issue.title}`} className="rounded-md bg-background/80 px-3 py-2 text-foreground">
+                                        <p className="font-medium">{issue.title}</p>
+                                        <p className="mt-1 text-xs text-muted-foreground">{issue.action}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : null}
                     </section>
                 ) : null}
 

@@ -18,11 +18,15 @@ use Illuminate\Validation\ValidationException;
 
 class MissionRewardRegistryService
 {
-    public function __construct(private readonly UserAccessScopeService $accessScopes) {}
+    public function __construct(
+        private readonly UserAccessScopeService $accessScopes,
+        private readonly CampaignBlueprintConsistencyService $blueprintConsistency,
+    ) {}
 
     /** @return array<string, mixed> */
     public function overview(?User $user = null, ?string $campaignId = null): array
     {
+        $campaign = $campaignId ? Campaign::query()->find($campaignId) : null;
         $venueIds = $user ? $this->accessScopes->assignedVenueIds($user) : collect();
         $hubIds = $user ? $this->accessScopes->hubIds($user) : collect();
         $partnerIds = $user ? $this->accessScopes->partnerIds($user) : collect();
@@ -84,6 +88,7 @@ class MissionRewardRegistryService
             'missions' => $missions,
             'rewards' => $rewards,
             'treasures' => $treasures,
+            'alignment' => $campaign ? $this->blueprintConsistency->review($campaign) : null,
             'formOptions' => $this->formOptions($campaignId),
         ];
     }
@@ -195,6 +200,7 @@ class MissionRewardRegistryService
 
         $this->assertSameVenueHub($campaign, $data['hub_id'] ?? null);
         $this->assertSameVenueTouchpoint($campaign, $data['touchpoint_id'] ?? null);
+        $this->blueprintConsistency->assertMissionInput($campaign, $data);
 
         $attributes = [
             'mission_template_id' => $data['mission_template_id'],
@@ -223,6 +229,7 @@ class MissionRewardRegistryService
     {
         $campaign = Campaign::query()->findOrFail($data['campaign_id']);
         $this->assertSameVenuePartner($campaign, $data['partner_account_id'] ?? null);
+        $this->blueprintConsistency->assertRewardInput($campaign, $data);
 
         $attributes = [
             'campaign_id' => $campaign->id,

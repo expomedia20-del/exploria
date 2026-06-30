@@ -14,10 +14,14 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class CampaignOperationsBlueprintService
 {
-    public function __construct(private readonly UserAccessScopeService $accessScopes) {}
+    public function __construct(
+        private readonly UserAccessScopeService $accessScopes,
+        private readonly CampaignBlueprintConsistencyService $blueprintConsistency,
+    ) {}
 
     /** @return array<string, mixed> */
     public function overview(?User $user = null, ?string $campaignId = null): array
@@ -54,6 +58,14 @@ class CampaignOperationsBlueprintService
     {
         return DB::transaction(function () use ($user, $data): Campaign {
             $campaign = Campaign::query()->findOrFail($data['campaign_id']);
+            $review = $this->blueprintConsistency->review($campaign);
+
+            if (collect($review['issues'])->where('level', 'error')->isNotEmpty()) {
+                throw ValidationException::withMessages([
+                    'campaign_id' => 'قبل از تایید مسیر عملیاتی، ناسازگاری‌های چرخه، مأموریت و پاداش همین کمپین را رفع کنید.',
+                ]);
+            }
+
             $metadata = is_array($campaign->metadata) ? $campaign->metadata : [];
 
             $campaign->update([
@@ -117,6 +129,7 @@ class CampaignOperationsBlueprintService
             'blueprintCode' => $campaign->metadata['blueprint_code'] ?? null,
             'routeReviewedAt' => $campaign->metadata['route_reviewed_at'] ?? null,
             'routeReviewNotes' => $campaign->metadata['route_review_notes'] ?? null,
+            'alignment' => $this->blueprintConsistency->review($campaign),
             'status' => $campaign->status->value,
             'startAt' => $campaign->start_at?->toIso8601String(),
             'endAt' => $campaign->end_at?->toIso8601String(),

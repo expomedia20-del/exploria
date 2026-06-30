@@ -21,6 +21,7 @@ class PartnerDashboardService
     public function __construct(
         private readonly UserAccessScopeService $accessScopes,
         private readonly MissionRewardBlueprintService $blueprints,
+        private readonly CampaignBlueprintConsistencyService $blueprintConsistency,
     ) {}
 
     public function partnerForUser(User $user): PartnerAccount
@@ -196,6 +197,8 @@ class PartnerDashboardService
                 'campaign_id' => 'برای مکان این فروشگاه هنوز کمپین قابل پیشنهاد ثبت نشده است.',
             ]);
         }
+
+        $this->blueprintConsistency->assertPartnerOfferInput($campaign, $data);
 
         return DB::transaction(fn (): RewardDefinition => RewardDefinition::query()->create([
             'campaign_id' => $campaign->id,

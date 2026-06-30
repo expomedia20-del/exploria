@@ -230,8 +230,8 @@ class CampaignQrCoreTest extends TestCase
                 'code' => 'builder-test-reward',
                 'name' => 'پاداش تست کارگاه',
                 'reward_type' => 'badge',
-                'reward_tier' => 'silver',
-                'reward_option' => 'silver bundle',
+                'reward_tier' => 'bronze',
+                'reward_option' => 'نشان شروع مسیر',
                 'cycle_step_index' => 1,
                 'cycle_step_label' => 'builder cycle step',
                 'point_cost' => 100,
@@ -251,8 +251,8 @@ class CampaignQrCoreTest extends TestCase
                 'code' => 'builder-test-reward',
                 'name' => 'builder reward replacement',
                 'reward_type' => 'badge',
-                'reward_tier' => 'gold',
-                'reward_option' => 'gold bundle',
+                'reward_tier' => 'bronze',
+                'reward_option' => 'نشان شروع مسیر',
                 'cycle_step_index' => 1,
                 'cycle_step_label' => 'builder cycle step',
                 'point_cost' => 120,
@@ -298,14 +298,63 @@ class CampaignQrCoreTest extends TestCase
 
         $reward = RewardDefinition::query()->where('code', 'builder-test-reward')->firstOrFail();
 
-        $this->assertSame('gold', $reward->metadata['reward_tier']);
-        $this->assertSame('gold bundle', $reward->metadata['reward_option']);
+        $this->assertSame('bronze', $reward->metadata['reward_tier']);
+        $this->assertSame('نشان شروع مسیر', $reward->metadata['reward_option']);
         $this->assertSame(1, $reward->metadata['cycle_step_index']);
         $this->assertSame('2026-07-02 09:00:00', $reward->metadata['available_from']);
         $this->assertSame('same day', $reward->metadata['fulfillment_window']);
         $this->assertSame(1, RewardDefinition::query()->where('code', 'builder-test-reward')->count());
         $this->assertSame(1, RewardDefinition::query()->where('campaign_id', $campaign->id)->where('metadata->cycle_step_index', 1)->count());
         $this->assertSame(1, Treasure::query()->where('code', 'builder-test-treasure')->count());
+    }
+
+    public function test_blueprint_campaign_rejects_mismatched_stage_three_components(): void
+    {
+        $operator = User::factory()->create(['role' => UserRole::Operator]);
+        $campaign = Campaign::query()->where('code', 'ecopark-pilot-1405')->firstOrFail();
+        $wrongTemplate = MissionTemplate::query()->where('code', 'discover-route-guide')->firstOrFail();
+        $rightTemplate = MissionTemplate::query()->where('code', 'scan-entry-qr')->firstOrFail();
+
+        $this->actingAs($operator)
+            ->from(route('admin.missions.page', ['campaign' => $campaign->code]))
+            ->post(route('admin.missions.store'), [
+                'campaign_id' => $campaign->id,
+                'mission_template_id' => $wrongTemplate->id,
+                'code' => 'bad-template-step-one',
+                'cycle_step_index' => 1,
+                'cycle_step_label' => 'گام اول',
+                'status' => RecordStatus::Draft->value,
+            ])
+            ->assertSessionHasErrors('mission_template_id');
+
+        $this->actingAs($operator)
+            ->post(route('admin.missions.store'), [
+                'campaign_id' => $campaign->id,
+                'mission_template_id' => $rightTemplate->id,
+                'code' => 'valid-template-step-one',
+                'cycle_step_index' => 1,
+                'cycle_step_label' => 'گام اول',
+                'status' => RecordStatus::Draft->value,
+            ])
+            ->assertRedirect();
+
+        $this->actingAs($operator)
+            ->from(route('admin.missions.page', ['campaign' => $campaign->code]))
+            ->post(route('admin.rewards.store'), [
+                'campaign_id' => $campaign->id,
+                'code' => 'bad-tier-step-one',
+                'name' => 'پاداش ناسازگار',
+                'reward_type' => 'badge',
+                'reward_tier' => 'gold',
+                'reward_option' => 'سبد ترکیبی رواق + غذا + تجربه',
+                'cycle_step_index' => 1,
+                'cycle_step_label' => 'گام اول',
+                'status' => RecordStatus::Draft->value,
+            ])
+            ->assertSessionHasErrors('reward_tier');
+
+        $this->assertDatabaseMissing('mission_instances', ['code' => 'bad-template-step-one']);
+        $this->assertDatabaseMissing('reward_definitions', ['code' => 'bad-tier-step-one']);
     }
 
     public function test_operator_can_delete_draft_campaign_components(): void
