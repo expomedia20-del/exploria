@@ -128,7 +128,7 @@ function lines(items: string[]) {
 
 function facilityRows(items: LocationFacility[]) {
     const rows = [...items];
-    const targetRows = Math.min(40, Math.max(8, rows.length + 5));
+    const targetRows = Math.min(250, Math.max(8, rows.length + 5));
 
     while (rows.length < targetRows) {
         rows.push({
@@ -140,7 +140,7 @@ function facilityRows(items: LocationFacility[]) {
         });
     }
 
-    return rows.slice(0, 40);
+    return rows.slice(0, 250);
 }
 
 function Stat({
@@ -451,6 +451,19 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                                             این لیست با ردیف‌های دسته‌بندی ادغام می‌شود و موارد تکراری دوباره ذخیره نمی‌شوند.
                                                         </span>
                                                         {errors.facilities_text ? <span className="text-xs text-destructive">{errors.facilities_text}</span> : null}
+                                                    </label>
+                                                    <label className="grid gap-1 rounded-md border border-dashed border-sidebar-border/70 bg-muted/20 p-3">
+                                                        <span className="text-xs font-medium">آپلود لیست اکسل امکانات</span>
+                                                        <input
+                                                            type="file"
+                                                            name="facilities_file"
+                                                            accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain"
+                                                            className="rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                                        />
+                                                        <span className="text-xs leading-6 text-muted-foreground">
+                                                            فایل اکسل را با فرمت CSV یا TSV خروجی بگیرید. ستون‌های قابل شناسایی: name/نام، function/کارکرد، campaign_uses/کاربرد کمپینی، priority/اولویت، parent/زیرمجموعه، notes/یادداشت.
+                                                        </span>
+                                                        {errors.facilities_file ? <span className="text-xs text-destructive">{errors.facilities_file}</span> : null}
                                                     </label>
                                                     <label className="grid gap-1">
                                                         <span className="text-xs font-medium">محدودیت‌ها و ملاحظات</span>

@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Venue;
 use App\Models\Zone;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 
@@ -196,6 +197,7 @@ class VenueRegistryService
 
         return $structured
             ->merge($textItems)
+            ->merge($this->fileItems($data['facilities_file'] ?? null))
             ->unique(fn (array $item): string => mb_strtolower($item['name']))
             ->values()
             ->all();
@@ -243,6 +245,153 @@ class VenueRegistryService
             ->filter()
             ->values()
             ->all();
+    }
+
+    /** @return Collection<int, array<string, mixed>> */
+    private function fileItems(mixed $file): Collection
+    {
+        if (! $file instanceof UploadedFile || ! $file->isValid()) {
+            return collect();
+        }
+
+        $content = file_get_contents($file->getRealPath());
+
+        if ($content === false || trim($content) === '') {
+            return collect();
+        }
+
+        $content = preg_replace('/^\xEF\xBB\xBF/', '', $content) ?? $content;
+        $rows = collect(preg_split('/\R/u', $content) ?: [])
+            ->map(fn (string $line): string => trim($line))
+            ->filter()
+            ->map(fn (string $line): array => str_getcsv($line, $this->csvDelimiter($line)))
+            ->filter(fn (array $row): bool => collect($row)->filter(fn (mixed $cell): bool => filled(trim((string) $cell)))->isNotEmpty())
+            ->values();
+
+        if ($rows->isEmpty()) {
+            return collect();
+        }
+
+        $headerMap = $this->facilityImportHeaderMap($rows->first());
+
+        return $rows
+            ->when($headerMap !== [], fn (Collection $collection): Collection => $collection->skip(1))
+            ->map(fn (array $row): array => $this->facilityImportRow($row, $headerMap))
+            ->filter(fn (array $item): bool => filled($item['name']))
+            ->values();
+    }
+
+    private function csvDelimiter(string $line): string
+    {
+        $delimiters = [',', "\t", ';'];
+
+        return collect($delimiters)
+            ->mapWithKeys(fn (string $delimiter): array => [$delimiter => substr_count($line, $delimiter)])
+            ->sortDesc()
+            ->keys()
+            ->first() ?? ',';
+    }
+
+    /** @param array<int, mixed> $row @return array<string, int> */
+    private function facilityImportHeaderMap(array $row): array
+    {
+        $aliases = [
+            'name' => ['name', 'title', 'facility', 'attraction', 'نام', 'عنوان', 'نام امکان', 'نام جاذبه', 'امکان', 'جاذبه'],
+            'function' => ['function', 'type', 'category', 'کارکرد', 'نوع', 'دسته', 'دسته بندی'],
+            'campaign_uses' => ['campaign_uses', 'campaign uses', 'uses', 'use', 'کاربرد', 'کارکرد کمپینی', 'کاربرد کمپینی'],
+            'priority' => ['priority', 'importance', 'اولویت', 'اهمیت'],
+            'parent' => ['parent', 'area', 'zone', 'hub', 'بخش', 'زیرمجموعه', 'والد', 'هاب', 'زون'],
+            'notes' => ['notes', 'note', 'description', 'توضیح', 'توضیحات', 'یادداشت'],
+        ];
+
+        return collect($row)
+            ->map(fn (mixed $cell): string => mb_strtolower(trim((string) $cell)))
+            ->flatMap(function (string $cell, int $index) use ($aliases): array {
+                foreach ($aliases as $field => $labels) {
+                    if (in_array($cell, $labels, true)) {
+                        return [$field => $index];
+                    }
+                }
+
+                return [];
+            })
+            ->all();
+    }
+
+    /** @param array<int, mixed> $row @param array<string, int> $headerMap @return array<string, mixed> */
+    private function facilityImportRow(array $row, array $headerMap): array
+    {
+        $value = fn (string $field, int $fallbackIndex): string => trim((string) ($row[$headerMap[$field] ?? $fallbackIndex] ?? ''));
+        $parent = $value('parent', 5);
+        $notes = $value('notes', 4);
+
+        if (filled($parent)) {
+            $notes = filled($notes) ? "{$notes} | زیرمجموعه: {$parent}" : "زیرمجموعه: {$parent}";
+        }
+
+        return [
+            'name' => $value('name', 0),
+            'function' => $this->normalizeFacilityFunction($value('function', 1)),
+            'campaignUses' => $this->normalizeCampaignUses($value('campaign_uses', 2)),
+            'priority' => $this->normalizeFacilityPriority($value('priority', 3)),
+            'notes' => blank($notes) ? null : $notes,
+        ];
+    }
+
+    private function normalizeFacilityFunction(string $value): ?string
+    {
+        $normalized = mb_strtolower(trim($value));
+
+        return match ($normalized) {
+            'education', 'آموزشی' => 'education',
+            'entertainment', 'تفریحی', 'سرگرمی' => 'entertainment',
+            'retail', 'shop', 'store', 'فروشگاهی', 'تجاری', 'خرید' => 'retail',
+            'rest', 'استراحت', 'رفاهی' => 'rest',
+            'route', 'مسیر', 'جهت یابی', 'جهت‌یابی' => 'route',
+            'media', 'تبلیغاتی', 'رسانه' => 'media',
+            'reward', 'پاداش', 'تحویل پاداش' => 'reward',
+            'discovery', 'کشف', 'گنج' => 'discovery',
+            default => blank($normalized) ? null : $value,
+        };
+    }
+
+    /** @return array<int, string> */
+    private function normalizeCampaignUses(string $value): array
+    {
+        $aliases = [
+            'qr' => ['qr', 'کیوآر', 'کیو آر'],
+            'mission' => ['mission', 'ماموریت', 'مأموریت'],
+            'treasure' => ['treasure', 'گنج'],
+            'reward' => ['reward', 'پاداش'],
+            'sponsor' => ['sponsor', 'اسپانسر', 'حامی'],
+            'ad' => ['ad', 'advertising', 'تبلیغ', 'تبلیغات'],
+            'display' => ['display', 'نمایشگر'],
+        ];
+
+        return collect(preg_split('/[،,;|]+/u', $value) ?: [])
+            ->map(fn (string $item): string => mb_strtolower(trim($item)))
+            ->filter()
+            ->map(function (string $item) use ($aliases): string {
+                foreach ($aliases as $key => $values) {
+                    if (in_array($item, $values, true)) {
+                        return $key;
+                    }
+                }
+
+                return $item;
+            })
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    private function normalizeFacilityPriority(string $value): string
+    {
+        return match (mb_strtolower(trim($value))) {
+            'primary', 'اصلی', 'زیاد', 'بالا' => 'primary',
+            'low', 'کم', 'کم اهمیت', 'کم‌اهمیت' => 'low',
+            default => 'secondary',
+        };
     }
 
     /** @return array<int, string> */
