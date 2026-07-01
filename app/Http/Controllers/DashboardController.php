@@ -7,6 +7,7 @@ use App\Models\ConsentLog;
 use App\Models\MissionInstance;
 use App\Models\OtpRequest;
 use App\Models\QrCode;
+use App\Models\RewardRedemption;
 use App\Models\UserMissionProgress;
 use App\Models\UserReward;
 use App\Models\Venue;
@@ -47,6 +48,14 @@ class DashboardController extends Controller
                 $visitsCount = (int) $campaign->getAttribute('visits_count');
                 $missionInstancesCount = (int) $campaign->getAttribute('mission_instances_count');
                 $expectedMissionRuns = $visitsCount * max($missionInstancesCount, 1);
+                $pendingRedemptions = RewardRedemption::query()
+                    ->where('status', 'pending')
+                    ->whereHas('userReward', fn ($query) => $query->where('campaign_id', $campaign->id))
+                    ->count();
+                $confirmedRedemptions = RewardRedemption::query()
+                    ->where('status', 'confirmed')
+                    ->whereHas('userReward', fn ($query) => $query->where('campaign_id', $campaign->id))
+                    ->count();
 
                 return [
                     'id' => $campaign->id,
@@ -58,6 +67,8 @@ class DashboardController extends Controller
                     'missions' => $missionInstancesCount,
                     'completedMissions' => $completedMissions,
                     'rewards' => (int) $campaign->getAttribute('user_rewards_count'),
+                    'pendingRedemptions' => $pendingRedemptions,
+                    'confirmedRedemptions' => $confirmedRedemptions,
                     'progressPercent' => $expectedMissionRuns > 0 ? min(100, (int) round(($completedMissions / $expectedMissionRuns) * 100)) : 0,
                 ];
             })
@@ -73,6 +84,8 @@ class DashboardController extends Controller
                 'activeCampaigns' => Campaign::query()->where('status', 'active')->count(),
                 'missionCompletions' => UserMissionProgress::query()->where('status', 'completed')->count(),
                 'issuedRewards' => UserReward::query()->count(),
+                'pendingRedemptions' => RewardRedemption::query()->where('status', 'pending')->count(),
+                'confirmedRedemptions' => RewardRedemption::query()->where('status', 'confirmed')->count(),
                 'activeMissions' => MissionInstance::query()->where('status', 'active')->count(),
             ],
             'latestVisits' => $latestVisits,

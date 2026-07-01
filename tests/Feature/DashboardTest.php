@@ -45,10 +45,15 @@ class DashboardTest extends TestCase
             'sourceQrCode' => PilotLocationSeeder::DEMO_QR_CODE,
         ])->assertCreated();
         $visit = Visit::query()->where('user_id', $user->id)->firstOrFail();
-        $mission = MissionInstance::query()->where('code', 'scan-entry-qr')->firstOrFail();
+        $entryMission = MissionInstance::query()->where('code', 'scan-entry-qr')->firstOrFail();
+        $partnerRewardMission = MissionInstance::query()->where('code', 'discover-route-guide')->firstOrFail();
 
         $this->actingAs($user)
-            ->post(route('visits.missions.complete', [$visit, $mission]))
+            ->post(route('visits.missions.complete', [$visit, $entryMission]))
+            ->assertRedirect();
+
+        $this->actingAs($user)
+            ->post(route('visits.missions.complete', [$visit, $partnerRewardMission]))
             ->assertRedirect();
 
         $this->actingAs($user)
@@ -62,13 +67,17 @@ class DashboardTest extends TestCase
                 ->where('stats.visits', 1)
                 ->where('stats.activeCampaigns', 1)
                 ->where('stats.activeMissions', 4)
-                ->where('stats.missionCompletions', 1)
-                ->where('stats.issuedRewards', 1)
+                ->where('stats.missionCompletions', 2)
+                ->where('stats.issuedRewards', 2)
+                ->where('stats.pendingRedemptions', 1)
+                ->where('stats.confirmedRedemptions', 0)
                 ->has('latestVisits', 1)
                 ->has('campaignPerformance', 1)
                 ->where('campaignPerformance.0.visits', 1)
-                ->where('campaignPerformance.0.completedMissions', 1)
-                ->where('campaignPerformance.0.rewards', 1)
-                ->where('campaignPerformance.0.progressPercent', 25));
+                ->where('campaignPerformance.0.completedMissions', 2)
+                ->where('campaignPerformance.0.rewards', 2)
+                ->where('campaignPerformance.0.pendingRedemptions', 1)
+                ->where('campaignPerformance.0.confirmedRedemptions', 0)
+                ->where('campaignPerformance.0.progressPercent', 50));
     }
 }

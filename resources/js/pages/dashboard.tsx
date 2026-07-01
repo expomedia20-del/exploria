@@ -10,6 +10,8 @@ type Stats = {
     activeCampaigns: number;
     missionCompletions: number;
     issuedRewards: number;
+    pendingRedemptions: number;
+    confirmedRedemptions: number;
     activeMissions: number;
 };
 
@@ -39,6 +41,8 @@ type CampaignPerformance = {
     missions: number;
     completedMissions: number;
     rewards: number;
+    pendingRedemptions: number;
+    confirmedRedemptions: number;
     progressPercent: number;
 };
 
@@ -52,6 +56,8 @@ const statLabels: Array<[keyof Stats, string, string]> = [
     ['activeMissions', 'مأموریت فعال', 'مأموریت‌های قابل اجرا برای کاربران'],
     ['missionCompletions', 'تکمیل مأموریت', 'کل مأموریت‌های انجام‌شده توسط کاربران'],
     ['issuedRewards', 'پاداش صادرشده', 'پاداش‌هایی که در کیف کاربران ثبت شده‌اند'],
+    ['pendingRedemptions', 'در انتظار تحویل', 'پاداش‌هایی که فروشگاه یا اسپانسر باید تحویل دهد'],
+    ['confirmedRedemptions', 'تحویل‌شده', 'پاداش‌هایی که شریک تحویل آن‌ها را تایید کرده است'],
 ];
 
 function formatDate(value: string) {
@@ -120,13 +126,15 @@ export default function Dashboard({ stats, latestVisits, campaignPerformance }: 
                                         </span>
                                     </div>
 
-                                    <div className="mt-4 grid grid-cols-2 gap-2 text-sm md:grid-cols-5">
+                                    <div className="mt-4 grid grid-cols-2 gap-2 text-sm md:grid-cols-4 xl:grid-cols-7">
                                         {[
                                             ['بازدید', campaign.visits],
                                             ['QR', campaign.qrCodes],
                                             ['مأموریت', campaign.missions],
                                             ['تکمیل', campaign.completedMissions],
                                             ['پاداش', campaign.rewards],
+                                            ['در انتظار تحویل', campaign.pendingRedemptions],
+                                            ['تحویل‌شده', campaign.confirmedRedemptions],
                                         ].map(([label, value]) => (
                                             <div key={String(label)} className="rounded-md bg-muted/45 p-2">
                                                 <p className="text-xs text-muted-foreground">{label}</p>
