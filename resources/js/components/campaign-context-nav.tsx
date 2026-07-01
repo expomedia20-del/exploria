@@ -53,7 +53,7 @@ export function CampaignContextNav({ campaign, className = '' }: CampaignContext
                     <Button asChild size="sm">
                         <Link href={campaignHref('/admin/campaign-builder', campaign)}>
                             <ArrowRight className="size-4" />
-                            کارگاه همین کمپین
+                            ساخت همین کمپین
                         </Link>
                     </Button>
                     <Button asChild variant="outline" size="sm">
@@ -71,25 +71,25 @@ export function CampaignContextNav({ campaign, className = '' }: CampaignContext
                     <Button asChild variant="outline" size="sm">
                         <Link href={campaignHref('/admin/missions', campaign, 'components')}>
                             <Trophy className="size-4" />
-                            ماموریت و پاداش
+                            مأموریت‌ها و پاداش‌ها
                         </Link>
                     </Button>
                     <Button asChild variant="outline" size="sm">
                         <Link href={campaignHref('/admin/campaign-participants', campaign, 'participants')}>
                             <UsersRound className="size-4" />
-                            اعضا و مشارکت‌کنندگان
+                            اعضا و شرکای کمپین
                         </Link>
                     </Button>
                     <Button asChild variant="outline" size="sm">
                         <Link href={campaignHref('/admin/campaign-operations', campaign, 'route')}>
                             <Route className="size-4" />
-                            نقشه عملیات
+                            نقشه عملیات کمپین
                         </Link>
                     </Button>
                     <Button asChild variant="ghost" size="sm">
                         <Link href="/admin/mission-blueprints">
                             <BookOpenCheck className="size-4" />
-                            گنجینه
+                            گنجینه الگوها
                         </Link>
                     </Button>
                 </div>

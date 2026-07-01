@@ -70,7 +70,7 @@ const productLayers = [
         icon: Route,
     },
     {
-        title: 'ماموریت و پاداش',
+        title: 'مأموریت‌ها و پاداش‌ها',
         body: 'نمایش زنده امتیاز، پاداش، سطح کاربر و باز شدن لایه‌های بعدی.',
         href: '/demo/missions',
         icon: Gift,

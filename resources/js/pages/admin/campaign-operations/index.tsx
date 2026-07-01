@@ -414,7 +414,7 @@ function itemOperationalGuide(item: JourneyItem | Participant, campaign: Campaig
         return {
             steps: [
                 `نقش ${label(roleLabels, item.participationRole)} را برای ${item.partner?.name ?? 'عضو کمپین'} فعال کنید.`,
-                'تعهدات، پاداش ها، کدهای QR و تبلیغات مرتبط با این عضو را در صفحه اعضای کمپین کنترل کنید.',
+                'تعهدات، پاداش ها، کدهای QR و تبلیغات مرتبط با این عضو را در صفحه اعضا و شرکای کمپین کنترل کنید.',
                 'وضعیت آماده سازی را تا زمان تحویل تجربه به کاربر نهایی پیگیری کنید.',
             ],
             navigation: [
@@ -1201,10 +1201,10 @@ export default function CampaignOperationsIndex({ stats, campaigns, selectedBlue
 }
 
 CampaignOperationsIndex.layout = {
-    title: 'نقشه عملیات',
+    title: 'نقشه عملیات کمپین',
     breadcrumbs: [
         {
-            title: 'نقشه عملیات',
+            title: 'نقشه عملیات کمپین',
             href: '/admin/campaign-operations',
         },
     ],

@@ -42,7 +42,7 @@ const liveLinks = [
         tone: 'bg-emerald-50 text-emerald-900 border-emerald-200',
     },
     {
-        title: 'ماموریت و پاداش',
+        title: 'مأموریت‌ها و پاداش‌ها',
         description: 'تکمیل ماموریت، امتیاز، پاداش، سطح و لایه های بعدی',
         href: '/demo/missions',
         icon: Medal,

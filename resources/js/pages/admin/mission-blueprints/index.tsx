@@ -296,16 +296,16 @@ function BlueprintSystemGuide() {
                 </article>
                 <article className="rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm">
                     <h3 className="text-sm font-semibold">۲. ثبت مأموریت واقعی</h3>
-                    <p className="mt-2 text-xs leading-6 text-muted-foreground">در صفحه مأموریت و پاداش، مراحل، امتیاز، مدرک انجام، سطح پاداش و قوانین مصرف ثبت می‌شود.</p>
+                    <p className="mt-2 text-xs leading-6 text-muted-foreground">در صفحه مأموریت‌ها و پاداش‌ها، مراحل، امتیاز، مدرک انجام، سطح پاداش و قوانین مصرف ثبت می‌شود.</p>
                     <Button asChild variant="outline" className="mt-3 h-8 text-xs">
-                        <Link href="/admin/missions">رفتن به مأموریت و پاداش</Link>
+                        <Link href="/admin/missions">رفتن به مأموریت‌ها و پاداش‌ها</Link>
                     </Button>
                 </article>
                 <article className="rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm">
                     <h3 className="text-sm font-semibold">۳. تعیین مالک پاداش</h3>
                     <p className="mt-2 text-xs leading-6 text-muted-foreground">فروشگاه، مدیر هاب، اسپانسر داخلی/خارجی یا ادمین کمپین باید به پاداش وصل شود.</p>
                     <Button asChild variant="outline" className="mt-3 h-8 text-xs">
-                        <Link href="/admin/campaign-participants">اعضای کمپین</Link>
+                        <Link href="/admin/campaign-participants">اعضا و شرکای کمپین</Link>
                     </Button>
                 </article>
                 <article className="rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm">
@@ -423,7 +423,7 @@ export default function MissionBlueprintIndex({
                         <Button asChild>
                             <Link href="/admin/campaign-builder">
                                 <ClipboardCheck className="size-4" />
-                                رفتن به کارگاه ساخت
+                                رفتن به ساخت کمپین
                             </Link>
                         </Button>
                     </div>

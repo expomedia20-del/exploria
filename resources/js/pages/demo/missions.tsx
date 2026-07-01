@@ -123,7 +123,7 @@ export default function MissionsDemo() {
 
     return (
         <>
-            <Head title="دموی ماموریت و پاداش" />
+            <Head title="دموی مأموریت‌ها و پاداش‌ها" />
             <main dir="rtl" className="min-h-screen bg-slate-950 text-white">
                 <section className="border-b border-white/10">
                     <div className="mx-auto max-w-7xl px-5 py-5 sm:px-8 lg:px-10">

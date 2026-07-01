@@ -190,12 +190,12 @@ export default function CampaignParticipantsIndex({
 
     return (
         <>
-            <Head title="اعضای کمپین" />
+            <Head title="اعضا و شرکای کمپین" />
             <div dir="rtl" className="flex h-full flex-1 flex-col gap-5 overflow-x-auto p-4">
                 <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                     <div>
                         <p className="text-sm text-muted-foreground">رجیستری عملیاتی کمپین</p>
-                        <h1 className="mt-1 text-2xl font-semibold">اعضای مشارکت کننده کمپین</h1>
+                        <h1 className="mt-1 text-2xl font-semibold">اعضا و شرکای کمپین</h1>
                     </div>
                     <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-6">
                         {[
@@ -285,7 +285,7 @@ export default function CampaignParticipantsIndex({
                         <div className="mt-4 flex flex-wrap gap-2">
                             <Button asChild variant="outline" size="sm">
                                 {selectedCampaign ? (
-                                    <Link href={`/admin/campaign-builder?campaign=${selectedCampaign.code}`}>بازگشت به کارگاه همین کمپین</Link>
+                                    <Link href={`/admin/campaign-builder?campaign=${selectedCampaign.code}`}>بازگشت به ساخت همین کمپین</Link>
                                 ) : (
                                     <Link href={blueprintFlowUrl('/admin/campaigns', selectedBlueprint.code, 'build')}>ساخت کمپین مرجع</Link>
                                 )}
@@ -542,10 +542,10 @@ export default function CampaignParticipantsIndex({
 }
 
 CampaignParticipantsIndex.layout = {
-    title: 'اعضای کمپین',
+    title: 'اعضا و شرکای کمپین',
     breadcrumbs: [
         {
-            title: 'اعضای کمپین',
+            title: 'اعضا و شرکای کمپین',
             href: '/admin/campaign-participants',
         },
     ],

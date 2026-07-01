@@ -163,8 +163,8 @@ export default function CampaignBuilderIndex({
             tone: counts.qrCodes > 0 ? 'neutral' : 'primary',
         },
         {
-            title: 'تعریف ماموریت و پاداش',
-            description: 'مرحله ۳ را برای ماموریت، گنج و پاداش تکمیل کنید.',
+            title: 'تعریف مأموریت‌ها و پاداش‌ها',
+            description: 'مرحله ۳ را برای مأموریت، گنج و پاداش تکمیل کنید.',
             href: contextHref('/admin/missions', 'components'),
             icon: Trophy,
             tone: counts.missions > 0 && (counts.approvedRewards > 0 || counts.treasures > 0) ? 'neutral' : 'primary',
@@ -191,8 +191,8 @@ export default function CampaignBuilderIndex({
             tone: counts.readyParticipants > 0 ? 'neutral' : 'primary',
         },
         {
-            title: 'تایید نقشه عملیات',
-            description: 'ارتباط QR، ماموریت، مکان، فروشگاه و تبلیغات را نهایی کنید.',
+            title: 'تایید نقشه عملیات کمپین',
+            description: 'ارتباط QR، مأموریت، مکان، فروشگاه و تبلیغات را نهایی کنید.',
             href: contextHref('/admin/campaign-operations', 'route'),
             icon: Route,
             tone: readiness.routeReviewedAt ? 'neutral' : 'primary',
@@ -215,16 +215,16 @@ export default function CampaignBuilderIndex({
 
     return (
         <>
-            <Head title="کارگاه ساخت کمپین" />
+            <Head title="ساخت کمپین" />
             <div dir="rtl" className="flex h-full flex-1 flex-col gap-5 overflow-x-auto p-4">
                 <header className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                     <div>
                         <p className="text-sm text-muted-foreground">مرکز واحد تکمیل کمپین بدون حذف منوهای تخصصی</p>
-                        <h1 className="mt-1 text-2xl font-semibold">کارگاه ساخت کمپین</h1>
+                        <h1 className="mt-1 text-2xl font-semibold">ساخت کمپین</h1>
                     </div>
                     <div className="flex flex-wrap gap-2">
                         <Button asChild variant="outline">
-                            <Link href="/admin/campaigns">مدیریت کمپین‌ها</Link>
+                            <Link href="/admin/campaigns">کمپین‌ها</Link>
                         </Button>
                         {selectedCampaign ? (
                             <Button asChild>
@@ -280,7 +280,7 @@ export default function CampaignBuilderIndex({
                                 </div>
                             ) : (
                                 <div className="mt-4 rounded-md bg-muted/45 p-4 text-sm text-muted-foreground">
-                                    ابتدا از گنجینه یا صفحه مدیریت کمپین‌ها یک کمپین بسازید.
+                                    ابتدا از گنجینه الگوها یا صفحه کمپین‌ها یک کمپین بسازید.
                                 </div>
                             )}
                         </div>
@@ -403,7 +403,7 @@ export default function CampaignBuilderIndex({
                                 حذف یا آرشیو کمپین در این نسخه عمداً خودکار نشده است؛ چون عملیات پرریسک است و باید با تأیید رسمی و قواعد حفظ داده انجام شود.
                             </div>
                             <div className="rounded-lg bg-muted/45 p-3 text-muted-foreground">
-                                منوهای مستقل مثل مکان‌ها، شرکا، QR و پنل فروشگاه حفظ شده‌اند. کارگاه فقط آنها را برای کمپین انتخاب‌شده کنار هم می‌آورد.
+                                منوهای مستقل مثل مکان‌ها، شرکا، QR و پنل فروشگاه حفظ شده‌اند. ساخت کمپین فقط آنها را برای کمپین انتخاب‌شده کنار هم می‌آورد.
                             </div>
                         </div>
                     </div>
@@ -508,10 +508,10 @@ export default function CampaignBuilderIndex({
 }
 
 CampaignBuilderIndex.layout = {
-    title: 'کارگاه ساخت کمپین',
+    title: 'ساخت کمپین',
     breadcrumbs: [
         {
-            title: 'کارگاه ساخت کمپین',
+            title: 'ساخت کمپین',
             href: '/admin/campaign-builder',
         },
     ],

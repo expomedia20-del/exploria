@@ -137,7 +137,7 @@ class CampaignBlueprintConsistencyService
                     'level' => 'warning',
                     'code' => 'blueprint_missing',
                     'title' => 'برای این کمپین الگوی مرجع ثبت نشده است.',
-                    'action' => 'کمپین را از گنجینه مأموریت‌ها یا کارگاه ساخت به یک الگوی مرجع وصل کنید.',
+                    'action' => 'کمپین را از گنجینه الگوها یا ساخت کمپین به یک الگوی مرجع وصل کنید.',
                 ]],
                 'expectedSteps' => 0,
                 'completedSteps' => 0,

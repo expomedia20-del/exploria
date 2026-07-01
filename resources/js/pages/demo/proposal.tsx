@@ -41,7 +41,7 @@ const proposalSignals = [
         slide: '۱۲',
         title: 'کمپین کشف گنج های اکوپارک',
         proposal:
-            'سرنخ، مسیر، صندوق گنج، ماموریت و پاداش در نقاط مختلف اکوپارک',
+            'سرنخ، مسیر، صندوق گنج، مأموریت‌ها و پاداش‌ها در نقاط مختلف اکوپارک',
         demo: 'ماموریت ها، امتیاز، پاداش و باز شدن چالش قفل شده',
         href: '/demo/missions',
         status: 'پوشش زنده',
@@ -141,7 +141,7 @@ export default function ProposalCoverageDemo() {
                                 className="inline-flex h-9 items-center gap-2 rounded-md bg-white px-3 text-sm font-medium text-slate-950"
                             >
                                 <Sparkles className="size-4" />
-                                مشاهده ماموریت و پاداش
+                                مشاهده مأموریت‌ها و پاداش‌ها
                             </Link>
                         </div>
 

@@ -504,7 +504,7 @@ export default function MissionRewardRegistryIndex({
 
     return (
         <>
-            <Head title="ماموریت و پاداش" />
+            <Head title="مأموریت‌ها و پاداش‌ها" />
             <div
                 dir="rtl"
                 className="flex h-full flex-1 flex-col gap-5 overflow-x-auto p-4"
@@ -515,13 +515,13 @@ export default function MissionRewardRegistryIndex({
                             اسکلت واقعی Sprint 1.4
                         </p>
                         <h1 className="mt-1 text-2xl font-semibold">
-                            ماموریت، گنج، امتیاز و پاداش
+                            مأموریت‌ها، گنج، امتیاز و پاداش
                         </h1>
                     </div>
                     <Button asChild variant="outline">
                         <Link href="/admin/mission-blueprints">
                             <BookOpenCheck className="size-4" />
-                            گنجینه ماموریت‌ها
+                            گنجینه الگوها
                         </Link>
                     </Button>
                     <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3 xl:grid-cols-6">
@@ -578,12 +578,12 @@ export default function MissionRewardRegistryIndex({
                             <div>
                                 <p className="font-semibold">کمپین مشخصی برای ادامه کار انتخاب نشده است.</p>
                                 <p className="mt-1 text-xs opacity-85">
-                                    برای دیدن نوار «ادامه کار همین کمپین»، از کارگاه ساخت یا لیست کمپین‌ها وارد همین صفحه شوید.
+                                    برای دیدن نوار «ادامه کار همین کمپین»، از ساخت کمپین یا لیست کمپین‌ها وارد همین صفحه شوید.
                                 </p>
                             </div>
                             <div className="flex flex-wrap gap-2">
                                 <Button asChild size="sm">
-                                    <Link href="/admin/campaign-builder">رفتن به کارگاه ساخت</Link>
+                                    <Link href="/admin/campaign-builder">رفتن به ساخت کمپین</Link>
                                 </Button>
                                 <Button asChild variant="outline" size="sm">
                                     <Link href="/admin/campaigns">انتخاب کمپین</Link>
@@ -591,7 +591,7 @@ export default function MissionRewardRegistryIndex({
                                 <Button asChild variant="ghost" size="sm">
                                     <Link href="/admin/mission-blueprints">
                                         <BookOpenCheck className="size-4" />
-                                        گنجینه ماموریت‌ها
+                                        گنجینه الگوها
                                     </Link>
                                 </Button>
                             </div>
@@ -667,10 +667,10 @@ export default function MissionRewardRegistryIndex({
                             <div>
                                 <p className="text-xs opacity-80">کنترل سازگاری الگو و مرحله ۳</p>
                                 <h2 className="mt-1 font-semibold">
-                                    {alignment.status === 'ready' ? 'چرخه، مأموریت و پاداش با الگوی کمپین همخوان است.' : 'چند مورد برای همخوانی چرخه، مأموریت و پاداش باقی مانده است.'}
+                                    {alignment.status === 'ready' ? 'چرخه، مأموریت‌ها و پاداش‌ها با الگوی کمپین همخوان است.' : 'چند مورد برای همخوانی چرخه، مأموریت‌ها و پاداش‌ها باقی مانده است.'}
                                 </h2>
                                 <p className="mt-1 text-xs opacity-80">
-                                    {alignment.completedSteps.toLocaleString('fa-IR')} از {alignment.expectedSteps.toLocaleString('fa-IR')} گام چرخه مأموریت و پاداش ثبت‌شده دارد.
+                                    {alignment.completedSteps.toLocaleString('fa-IR')} از {alignment.expectedSteps.toLocaleString('fa-IR')} گام چرخه مأموریت‌ها و پاداش‌ها ثبت‌شده دارد.
                                 </p>
                             </div>
                             <span className="rounded-full bg-background/80 px-3 py-1 text-xs text-foreground">
@@ -1122,7 +1122,7 @@ export default function MissionRewardRegistryIndex({
                     </section>
                 ) : selectedCampaign ? null : (
                     <section className="rounded-lg border border-dashed border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
-                        برای ثبت مأموریت، پاداش و گنج، ابتدا از کارگاه یا فهرست کمپین‌ها یک کمپین مشخص را انتخاب کنید.
+                        برای ثبت مأموریت، پاداش و گنج، ابتدا از ساخت کمپین یا فهرست کمپین‌ها یک کمپین مشخص را انتخاب کنید.
                     </section>
                 )}
 
@@ -1732,7 +1732,7 @@ export default function MissionRewardRegistryIndex({
 MissionRewardRegistryIndex.layout = {
     breadcrumbs: [
         {
-            title: 'ماموریت و پاداش',
+    title: 'مأموریت‌ها و پاداش‌ها',
             href: '/admin/missions',
         },
     ],

@@ -483,9 +483,9 @@ export default function CampaignRegistryIndex({
                                             {[
                                                 ['ادامه تکمیل', `/admin/campaign-builder?campaign=${campaign.code}`],
                                                 ['QR', campaignContextUrl('/admin/qr-codes', campaign)],
-                                                ['مأموریت و پاداش', campaignContextUrl('/admin/missions', campaign, 'components')],
-                                                ['اعضای کمپین', campaignContextUrl('/admin/campaign-participants', campaign, 'participants')],
-                                                ['نقشه عملیات', campaignContextUrl('/admin/campaign-operations', campaign, 'route')],
+                                                ['مأموریت‌ها و پاداش‌ها', campaignContextUrl('/admin/missions', campaign, 'components')],
+                                                ['اعضا و شرکای کمپین', campaignContextUrl('/admin/campaign-participants', campaign, 'participants')],
+                                                ['نقشه عملیات کمپین', campaignContextUrl('/admin/campaign-operations', campaign, 'route')],
                                             ].map(([label, href]) => (
                                                 <Link
                                                     key={href}

@@ -223,10 +223,10 @@ export default function Dashboard({ stats, latestVisits, latestRedemptions, oper
 
                                     <div className="mt-4 flex flex-wrap gap-2">
                                         <Link className="inline-flex h-9 items-center rounded-md border border-input bg-background px-3 text-sm font-medium hover:bg-accent hover:text-accent-foreground" href={`/admin/campaign-builder?campaign=${campaign.code}`}>
-                                            کارگاه ساخت
+                                            ساخت کمپین
                                         </Link>
                                         <Link className="inline-flex h-9 items-center rounded-md border border-input bg-background px-3 text-sm font-medium hover:bg-accent hover:text-accent-foreground" href={`/admin/campaign-operations?campaign=${campaign.code}`}>
-                                            نقشه عملیات
+                                            نقشه عملیات کمپین
                                         </Link>
                                     </div>
                                 </article>
@@ -269,7 +269,7 @@ export default function Dashboard({ stats, latestVisits, latestRedemptions, oper
                                         <p>{formatDate(redemption.redeemedAt ?? redemption.createdAt ?? new Date().toISOString())}</p>
                                         {redemption.campaignCode ? (
                                             <Link className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-xs font-medium hover:bg-accent hover:text-accent-foreground" href={`/admin/campaign-operations?campaign=${redemption.campaignCode}`}>
-                                                نقشه عملیات
+                                                نقشه عملیات کمپین
                                             </Link>
                                         ) : null}
                                     </div>
