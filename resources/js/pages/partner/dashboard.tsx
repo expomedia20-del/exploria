@@ -1,5 +1,5 @@
 import { Form, Head, Link, usePage } from '@inertiajs/react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
     CheckCircle2,
     Gift,
@@ -211,6 +211,17 @@ export default function PartnerDashboard({
         () => proposalContext.rewardTiers.find((tier) => tier.tierKey === selectedStep?.rewardTier) ?? null,
         [proposalContext.rewardTiers, selectedStep?.rewardTier],
     );
+    const [selectedRewardOption, setSelectedRewardOption] = useState<string>('');
+    const selectedRewardOptionLabel = selectedRewardOption || selectedTier?.options[0] || '';
+    const offerTitlePlaceholder = selectedRewardOptionLabel
+        ? `${selectedRewardOptionLabel} - پیشنهاد ${partner.name}`
+        : 'عنوان محصول، خدمت یا تخفیف پیشنهادی شما';
+    const offerDescriptionPlaceholder = selectedRewardOptionLabel
+        ? `توضیح دهید برای «${selectedRewardOptionLabel}» چه کالا، خدمت، تخفیف یا ظرفیت واقعی ارائه می‌کنید.`
+        : 'توضیح دهید این پیشنهاد برای کدام مخاطب، در چه شرایطی و چگونه قابل استفاده است.';
+    useEffect(() => {
+        setSelectedRewardOption(selectedTier?.options[0] ?? '');
+    }, [selectedTier]);
     const tierForStep = (step: MissionPlanStep) =>
         proposalContext.rewardTiers.find((tier) => tier.tierKey === step.rewardTier) ?? null;
     const actionSteps = [
@@ -501,9 +512,6 @@ export default function PartnerDashboard({
                                                         <span className="font-medium text-foreground">
                                                             گام {step.index.toLocaleString('fa-IR')}: {step.userStep}
                                                         </span>
-                                                        <span className="mt-1 block text-muted-foreground">
-                                                            {step.routeIntent}
-                                                        </span>
                                                     </span>
                                                     <span>
                                                         <span className="block text-muted-foreground">سطح پاداش</span>
@@ -589,7 +597,8 @@ export default function PartnerDashboard({
                                             name="reward_option"
                                             className="h-9 rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                                             key={selectedStep?.rewardTier ?? 'no-tier'}
-                                            defaultValue={selectedTier?.options[0] ?? ''}
+                                            value={selectedRewardOption}
+                                            onChange={(event) => setSelectedRewardOption(event.target.value)}
                                         >
                                             <option value="">انتخاب آزاد توسط ادمین</option>
                                             {(selectedTier?.options ?? []).map((option) => (
@@ -612,10 +621,10 @@ export default function PartnerDashboard({
                                             name="name"
                                             required
                                             autoComplete="off"
-                                            placeholder="مثلا ۲۰٪ تخفیف نوشیدنی خانواده"
+                                            placeholder={offerTitlePlaceholder}
                                         />
                                         <p className="text-xs text-muted-foreground">
-                                            عنوان باید محصول، خدمت یا تخفیف واقعی شما را برای همین گام توضیح دهد.
+                                            عنوان را براساس گزینه/ترکیب انتخاب‌شده بنویسید؛ ادمین همین عنوان را برای بررسی پیشنهاد می‌بیند.
                                         </p>
                                         <InputError message={errors.name} />
                                     </div>
@@ -692,7 +701,7 @@ export default function PartnerDashboard({
                                             name="description"
                                             autoComplete="off"
                                             className="min-h-20 rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                                            placeholder="این پیشنهاد کجا و برای چه مخاطبی قابل استفاده است؟"
+                                            placeholder={offerDescriptionPlaceholder}
                                         />
                                         <InputError
                                             message={errors.description}
