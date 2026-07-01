@@ -50,7 +50,7 @@ class VenueRegistryService
             'primary_audience' => $data['primary_audience'] ?? null,
             'official_website_url' => $data['official_website_url'] ?? null,
             'manual_research_notes' => $data['manual_research_notes'] ?? null,
-            'facilities' => $this->linesToItems($data['facilities_text'] ?? ''),
+            'facilities' => $this->facilityItems($data),
             'constraints' => $this->linesToItems($data['constraints_text'] ?? ''),
             'updated_at' => now()->toIso8601String(),
         ];
@@ -115,7 +115,7 @@ class VenueRegistryService
     private function locationProfile(Venue $venue): array
     {
         $profile = Arr::get(is_array($venue->metadata) ? $venue->metadata : [], 'location_profile', []);
-        $facilities = collect(Arr::get($profile, 'facilities', []))->filter()->values();
+        $facilities = $this->normalizeFacilities(Arr::get($profile, 'facilities', []));
         $constraints = collect(Arr::get($profile, 'constraints', []))->filter()->values();
 
         return [
@@ -141,6 +141,60 @@ class VenueRegistryService
         $score += min(25, $facilitiesCount * 5);
 
         return min(100, $score);
+    }
+
+    /** @param array<string, mixed> $data @return array<int, array<string, mixed>> */
+    private function facilityItems(array $data): array
+    {
+        $structured = $this->normalizeFacilities($data['facilities'] ?? []);
+
+        if ($structured->isNotEmpty()) {
+            return $structured->all();
+        }
+
+        return collect($this->linesToItems($data['facilities_text'] ?? ''))
+            ->map(fn (string $name): array => [
+                'name' => $name,
+                'function' => null,
+                'campaignUses' => [],
+                'priority' => 'secondary',
+                'notes' => null,
+            ])
+            ->all();
+    }
+
+    /** @param mixed $items @return Collection<int, array<string, mixed>> */
+    private function normalizeFacilities(mixed $items): Collection
+    {
+        return collect(is_array($items) ? $items : [])
+            ->map(function (mixed $item): array {
+                if (is_string($item)) {
+                    return [
+                        'name' => trim($item),
+                        'function' => null,
+                        'campaignUses' => [],
+                        'priority' => 'secondary',
+                        'notes' => null,
+                    ];
+                }
+
+                $item = is_array($item) ? $item : [];
+
+                return [
+                    'name' => trim((string) ($item['name'] ?? '')),
+                    'function' => blank($item['function'] ?? null) ? null : trim((string) $item['function']),
+                    'campaignUses' => collect($item['campaignUses'] ?? $item['campaign_uses'] ?? [])
+                        ->filter()
+                        ->map(fn (mixed $value): string => (string) $value)
+                        ->unique()
+                        ->values()
+                        ->all(),
+                    'priority' => in_array($item['priority'] ?? null, ['primary', 'secondary', 'low'], true) ? $item['priority'] : 'secondary',
+                    'notes' => blank($item['notes'] ?? null) ? null : trim((string) $item['notes']),
+                ];
+            })
+            ->filter(fn (array $item): bool => filled($item['name']))
+            ->values();
     }
 
     /** @return array<int, string> */

@@ -47,12 +47,20 @@ type VenueRegistryItem = {
         primaryAudience: string | null;
         officialWebsiteUrl: string | null;
         manualResearchNotes: string | null;
-        facilities: string[];
+        facilities: LocationFacility[];
         constraints: string[];
         updatedAt: string | null;
         readinessScore: number;
     };
     zones: ZoneItem[];
+};
+
+type LocationFacility = {
+    name: string;
+    function: string | null;
+    campaignUses: string[];
+    priority: 'primary' | 'secondary' | 'low';
+    notes: string | null;
 };
 
 type Props = {
@@ -82,12 +90,59 @@ const venueTypeLabels: Record<string, string> = {
     mixed: 'چندکارکردی',
 };
 
+const facilityFunctionLabels: Record<string, string> = {
+    education: 'آموزشی',
+    entertainment: 'تفریحی',
+    retail: 'فروشگاهی',
+    rest: 'استراحت',
+    route: 'مسیر و جهت‌یابی',
+    media: 'تبلیغات و رسانه',
+    reward: 'تحویل پاداش',
+    discovery: 'کشف و گنج',
+};
+
+const campaignUseLabels: Record<string, string> = {
+    qr: 'QR',
+    mission: 'مأموریت',
+    treasure: 'گنج',
+    reward: 'پاداش',
+    sponsor: 'اسپانسر',
+    ad: 'تبلیغ',
+    display: 'نمایشگر',
+};
+
+const priorityLabels: Record<LocationFacility['priority'], string> = {
+    primary: 'اصلی',
+    secondary: 'فرعی',
+    low: 'کم‌اهمیت',
+};
+
 function statusLabel(value: string) {
     return statusLabels[value] ?? value;
 }
 
 function lines(items: string[]) {
     return items.join('\n');
+}
+
+function facilityNames(items: LocationFacility[]) {
+    return items.map((item) => item.name).join('\n');
+}
+
+function facilityRows(items: LocationFacility[]) {
+    const rows = [...items];
+
+    while (rows.length < 5) {
+        rows.push({
+            name: '',
+            function: null,
+            campaignUses: [],
+            priority: 'secondary',
+            notes: null,
+        });
+    }
+
+    return rows.slice(0, 12);
 }
 
 function Stat({
@@ -277,8 +332,8 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                         {venue.locationProfile.facilities.length > 0 ? (
                                             <div className="mt-3 flex flex-wrap gap-2">
                                                 {venue.locationProfile.facilities.slice(0, 8).map((facility) => (
-                                                    <span key={facility} className="rounded-full bg-background px-2.5 py-1 text-xs">
-                                                        {facility}
+                                                    <span key={facility.name} className="rounded-full bg-background px-2.5 py-1 text-xs">
+                                                        {facility.name}
                                                     </span>
                                                 ))}
                                             </div>
@@ -297,6 +352,60 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                     >
                                         {({ processing, errors }) => (
                                             <>
+                                                <div className="grid gap-2">
+                                                    <span className="text-xs font-medium">امکانات و جاذبه‌ها با کارکرد کمپینی</span>
+                                                    <div className="grid gap-2">
+                                                        {facilityRows(venue.locationProfile.facilities).map((facility, index) => (
+                                                            <div key={`${venue.id}-facility-${index}`} className="grid gap-2 rounded-md bg-muted/30 p-2 md:grid-cols-[1fr_0.85fr_1.15fr_0.7fr_1fr]">
+                                                                <input
+                                                                    name={`facilities[${index}][name]`}
+                                                                    defaultValue={facility.name}
+                                                                    placeholder="نام امکان/جاذبه"
+                                                                    className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                                                />
+                                                                <select
+                                                                    name={`facilities[${index}][function]`}
+                                                                    defaultValue={facility.function ?? ''}
+                                                                    className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                                                >
+                                                                    <option value="">کارکرد</option>
+                                                                    {Object.entries(facilityFunctionLabels).map(([value, label]) => (
+                                                                        <option key={value} value={value}>{label}</option>
+                                                                    ))}
+                                                                </select>
+                                                                <div className="grid grid-cols-2 gap-1 rounded-md border border-input bg-background px-2 py-1 text-xs">
+                                                                    {Object.entries(campaignUseLabels).map(([value, label]) => (
+                                                                        <label key={value} className="inline-flex items-center gap-1">
+                                                                            <input
+                                                                                type="checkbox"
+                                                                                name={`facilities[${index}][campaign_uses][]`}
+                                                                                value={value}
+                                                                                defaultChecked={facility.campaignUses.includes(value)}
+                                                                            />
+                                                                            <span>{label}</span>
+                                                                        </label>
+                                                                    ))}
+                                                                </div>
+                                                                <select
+                                                                    name={`facilities[${index}][priority]`}
+                                                                    defaultValue={facility.priority}
+                                                                    className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                                                >
+                                                                    {Object.entries(priorityLabels).map(([value, label]) => (
+                                                                        <option key={value} value={value}>{label}</option>
+                                                                    ))}
+                                                                </select>
+                                                                <input
+                                                                    name={`facilities[${index}][notes]`}
+                                                                    defaultValue={facility.notes ?? ''}
+                                                                    placeholder="یادداشت کوتاه"
+                                                                    className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                                                />
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                    {errors.facilities ? <span className="text-xs text-destructive">{errors.facilities}</span> : null}
+                                                </div>
                                                 <div className="grid gap-3 md:grid-cols-2">
                                                     <label className="grid gap-1">
                                                         <span className="text-xs font-medium">نوع مکان</span>
@@ -340,7 +449,7 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                                         <span className="text-xs font-medium">امکانات و جاذبه‌ها</span>
                                                         <textarea
                                                             name="facilities_text"
-                                                            defaultValue={lines(venue.locationProfile.facilities)}
+                                                            defaultValue={facilityNames(venue.locationProfile.facilities)}
                                                             placeholder="هر مورد در یک خط: دریاچه، مسیر پیاده‌روی، رستوران..."
                                                             className="min-h-24 rounded-md border border-input bg-background px-3 py-2 text-sm"
                                                         />

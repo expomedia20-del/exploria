@@ -20,6 +20,13 @@ class UpdateVenueProfileRequest extends FormRequest
             'official_website_url' => ['nullable', 'url', 'max:500'],
             'manual_research_notes' => ['nullable', 'string', 'max:4000'],
             'facilities_text' => ['nullable', 'string', 'max:6000'],
+            'facilities' => ['nullable', 'array', 'max:12'],
+            'facilities.*.name' => ['nullable', 'string', 'max:120'],
+            'facilities.*.function' => ['nullable', 'string', 'max:120'],
+            'facilities.*.campaign_uses' => ['nullable', 'array', 'max:8'],
+            'facilities.*.campaign_uses.*' => ['string', 'max:64'],
+            'facilities.*.priority' => ['nullable', 'string', 'in:primary,secondary,low'],
+            'facilities.*.notes' => ['nullable', 'string', 'max:500'],
             'constraints_text' => ['nullable', 'string', 'max:3000'],
         ];
     }

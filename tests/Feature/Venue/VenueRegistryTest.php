@@ -52,7 +52,22 @@ class VenueRegistryTest extends TestCase
                 'primary_audience' => 'خانواده، کودک، گردشگر',
                 'official_website_url' => 'https://example.com/ecopark',
                 'manual_research_notes' => 'فضای مناسب برای مسیر آموزشی، مأموریت محیطی و پاداش فروشگاهی.',
-                'facilities_text' => "دریاچه\nمسیر پیاده‌روی\nکافه و فروشگاه",
+                'facilities' => [
+                    [
+                        'name' => 'دریاچه',
+                        'function' => 'entertainment',
+                        'campaign_uses' => ['mission', 'treasure'],
+                        'priority' => 'primary',
+                        'notes' => 'نقطه جذاب برای کشف مسیر.',
+                    ],
+                    [
+                        'name' => 'مسیر پیاده‌روی',
+                        'function' => 'route',
+                        'campaign_uses' => ['qr', 'mission'],
+                        'priority' => 'secondary',
+                        'notes' => null,
+                    ],
+                ],
                 'constraints_text' => "ازدحام آخر هفته\nنیاز به جانمایی امن QR",
             ])
             ->assertOk()
@@ -61,14 +76,16 @@ class VenueRegistryTest extends TestCase
         $venue->refresh();
 
         $this->assertSame('ecopark', $venue->metadata['location_profile']['venue_type']);
-        $this->assertSame(['دریاچه', 'مسیر پیاده‌روی', 'کافه و فروشگاه'], $venue->metadata['location_profile']['facilities']);
+        $this->assertSame('دریاچه', $venue->metadata['location_profile']['facilities'][0]['name']);
+        $this->assertSame(['mission', 'treasure'], $venue->metadata['location_profile']['facilities'][0]['campaignUses']);
 
         $this->actingAs($admin)
             ->getJson(route('admin.venues.index'))
             ->assertOk()
             ->assertJsonPath('data.0.locationProfile.venueType', 'ecopark')
-            ->assertJsonPath('data.0.locationProfile.readinessScore', 90)
-            ->assertJsonPath('data.0.locationProfile.facilities.1', 'مسیر پیاده‌روی');
+            ->assertJsonPath('data.0.locationProfile.readinessScore', 85)
+            ->assertJsonPath('data.0.locationProfile.facilities.0.name', 'دریاچه')
+            ->assertJsonPath('data.0.locationProfile.facilities.0.campaignUses.1', 'treasure');
     }
 
     public function test_hub_manager_can_open_venue_registry_page(): void
