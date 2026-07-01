@@ -10,6 +10,7 @@
         "format:check": "prettier --check resources/",
         "lint": "eslint . --fix",
         "lint:check": "eslint .",
+        "local": "powershell -ExecutionPolicy Bypass -File scripts/start-local.ps1",
         "types:check": "tsc --noEmit"
     },
     "devDependencies": {
