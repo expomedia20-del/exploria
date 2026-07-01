@@ -135,7 +135,7 @@ class VenueRegistryTest extends TestCase
 
         $content = $response->streamedContent();
 
-        $this->assertStringContainsString('name,function,campaign_uses,priority,parent,notes', $content);
+        $this->assertStringContainsString('name;function;campaign_uses;priority;parent;notes', $content);
         $this->assertStringContainsString('کافه رواق', $content);
         $this->assertStringContainsString('پروژه رواق', $content);
     }

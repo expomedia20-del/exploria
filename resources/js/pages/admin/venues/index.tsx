@@ -471,7 +471,7 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                                             className="rounded-md border border-input bg-background px-3 py-2 text-sm"
                                                         />
                                                         <span className="text-xs leading-6 text-muted-foreground">
-                                                            فایل اکسل را با فرمت CSV یا TSV خروجی بگیرید. ستون‌های قابل شناسایی: name/نام، function/کارکرد، campaign_uses/کاربرد کمپینی، priority/اولویت، parent/زیرمجموعه، notes/یادداشت.
+                                                            فایل نمونه با جداکننده ; ساخته می‌شود تا در Excel هر آیتم در ستون و سلول جدا باز شود. ستون‌های قابل شناسایی: name/نام، function/کارکرد، campaign_uses/کاربرد کمپینی، priority/اولویت، parent/زیرمجموعه، notes/یادداشت.
                                                         </span>
                                                         {errors.facilities_file ? <span className="text-xs text-destructive">{errors.facilities_file}</span> : null}
                                                     </label>

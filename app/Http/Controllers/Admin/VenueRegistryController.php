@@ -46,7 +46,7 @@ class VenueRegistryController extends Controller
             }
 
             foreach ($rows as $row) {
-                fputcsv($output, $row);
+                fputcsv($output, $row, ';');
             }
 
             fclose($output);
