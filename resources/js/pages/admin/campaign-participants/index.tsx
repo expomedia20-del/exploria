@@ -1,6 +1,7 @@
 import { Form, Head, Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import { Building2, Link2, Megaphone, Network, Pencil, Store, Trash2 } from 'lucide-react';
+import { CampaignContextNav } from '@/components/campaign-context-nav';
 import { Button } from '@/components/ui/button';
 import InputError from '@/components/input-error';
 
@@ -228,6 +229,8 @@ export default function CampaignParticipantsIndex({
                         </div>
                     </section>
                 ) : null}
+
+                {selectedCampaign ? <CampaignContextNav campaign={selectedCampaign} /> : null}
 
                 {selectedCampaign ? (
                     <section className="rounded-lg border border-border/80 bg-card/80 p-4 text-sm shadow-sm">

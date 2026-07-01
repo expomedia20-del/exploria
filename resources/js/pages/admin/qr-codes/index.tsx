@@ -11,6 +11,7 @@ import {
     Trash2,
 } from 'lucide-react';
 import { DateTimePickerField } from '@/components/date-time-picker-field';
+import { CampaignContextNav } from '@/components/campaign-context-nav';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -189,6 +190,8 @@ export default function QrRegistryIndex({ qrCodes, formOptions, selectedCampaign
                         </div>
                     </section>
                 ) : null}
+
+                {selectedCampaign ? <CampaignContextNav campaign={selectedCampaign} /> : null}
 
                 {canMutate(auth.user.role) ? (
                     <section id="qr-form" className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">

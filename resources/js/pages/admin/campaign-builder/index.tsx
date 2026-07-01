@@ -14,6 +14,7 @@ import {
     Trophy,
     UsersRound,
 } from 'lucide-react';
+import { CampaignContextNav } from '@/components/campaign-context-nav';
 import { Button } from '@/components/ui/button';
 
 type CampaignSummary = {
@@ -275,6 +276,8 @@ export default function CampaignBuilderIndex({
                         </div>
                     </div>
                 </section>
+
+                {selectedCampaign ? <CampaignContextNav campaign={selectedCampaign} /> : null}
 
                 <section className="grid gap-3 text-sm md:grid-cols-3 xl:grid-cols-5">
                     {metrics.map(([label, value, MetricIcon]) => {

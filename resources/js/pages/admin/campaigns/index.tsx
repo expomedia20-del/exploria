@@ -10,6 +10,7 @@ import {
     Trash2,
 } from 'lucide-react';
 import { DateTimePickerField } from '@/components/date-time-picker-field';
+import { CampaignContextNav } from '@/components/campaign-context-nav';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -270,6 +271,7 @@ export default function CampaignRegistryIndex({
                                 <Link href={selectedCampaign.blueprintCode ? blueprintFlowUrl('/admin/campaign-operations', selectedCampaign.blueprintCode, 'route', selectedCampaign.code) : `/admin/campaign-operations?campaign=${selectedCampaign.code}`}>طراحی مسیر</Link>
                             </Button>
                         </div>
+                        <CampaignContextNav campaign={selectedCampaign} className="mt-4" />
                     </section>
                 ) : null}
 

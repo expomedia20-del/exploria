@@ -14,6 +14,7 @@ import {
     Store,
     Trophy,
 } from 'lucide-react';
+import { CampaignContextNav } from '@/components/campaign-context-nav';
 import { Button } from '@/components/ui/button';
 import {
     Sheet,
@@ -661,6 +662,8 @@ export default function CampaignOperationsIndex({ stats, campaigns, selectedBlue
                         </div>
                     </section>
                 ) : null}
+
+                {selectedCampaign ? <CampaignContextNav campaign={selectedCampaign} /> : null}
 
                 {selectedBlueprint ? (
                     <section className="rounded-lg border border-primary/25 bg-primary/5 p-4 text-sm shadow-sm">
