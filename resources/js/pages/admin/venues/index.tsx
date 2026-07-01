@@ -376,20 +376,29 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                                         {errors.primary_audience ? <span className="text-xs text-destructive">{errors.primary_audience}</span> : null}
                                                     </label>
                                                 </div>
-                                                <label className="grid gap-1">
+                                                <div className="grid gap-1">
                                                     <span className="text-xs font-medium">لینک سایت رسمی یا منبع بررسی</span>
-                                                    <input
-                                                        name="official_website_url"
-                                                        defaultValue={venue.locationProfile.officialWebsiteUrl ?? ''}
-                                                        dir="ltr"
-                                                        placeholder="https://..."
-                                                        className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                                                    />
+                                                    <div className="grid gap-2 md:grid-cols-[1fr_auto]">
+                                                        <input
+                                                            name="official_website_url"
+                                                            defaultValue={venue.locationProfile.officialWebsiteUrl ?? ''}
+                                                            dir="ltr"
+                                                            placeholder="https://..."
+                                                            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                                        />
+                                                        <button
+                                                            type="submit"
+                                                            disabled={processing}
+                                                            className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                                                        >
+                                                            ثبت لینک و فعال‌سازی بررسی
+                                                        </button>
+                                                    </div>
                                                     <span className="text-xs text-muted-foreground">
-                                                        ابتدا لینک منبع را ثبت کنید؛ سپس فهرست استخراج‌شده از سایت یا بررسی میدانی را در بخش افزودن سریع وارد و موارد مهم را در ردیف‌های پایین دسته‌بندی کنید.
+                                                        این دکمه لینک منبع را در شناخت‌نامه ثبت می‌کند؛ سپس فهرست استخراج‌شده از سایت یا بررسی میدانی را در بخش افزودن سریع وارد و موارد مهم را در ردیف‌های پایین دسته‌بندی کنید.
                                                     </span>
                                                     {errors.official_website_url ? <span className="text-xs text-destructive">{errors.official_website_url}</span> : null}
-                                                </label>
+                                                </div>
                                                 <div className="grid gap-3 md:grid-cols-2">
                                                     <label className="grid gap-1">
                                                         <span className="text-xs font-medium">افزودن سریع امکانات و جاذبه‌های جدید</span>
