@@ -29,7 +29,17 @@ type Props = {
     stats: Stats;
     latestVisits: LatestVisit[];
     latestRedemptions: LatestRedemption[];
+    operationalAlerts: OperationalAlert[];
     campaignPerformance: CampaignPerformance[];
+};
+
+type OperationalAlert = {
+    key: string;
+    severity: 'attention' | 'warning';
+    title: string;
+    message: string;
+    actionLabel: string;
+    actionHref: string;
 };
 
 type LatestRedemption = {
@@ -88,7 +98,7 @@ function formatDate(value: string) {
     }).format(new Date(value));
 }
 
-export default function Dashboard({ stats, latestVisits, latestRedemptions, campaignPerformance }: Props) {
+export default function Dashboard({ stats, latestVisits, latestRedemptions, operationalAlerts, campaignPerformance }: Props) {
     return (
         <>
             <Head title="داشبورد پایلوت" />
@@ -120,6 +130,43 @@ export default function Dashboard({ stats, latestVisits, latestRedemptions, camp
                         </section>
                     ))}
                 </div>
+
+                <section className="exploria-panel">
+                    <div className="border-b border-border/70 p-4 dark:border-sidebar-border">
+                        <h2 className="text-lg font-semibold">هشدارهای عملیاتی</h2>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                            مواردی که ممکن است اجرای کمپین را کند کند یا نیازمند پیگیری سریع ادمین باشد.
+                        </p>
+                    </div>
+
+                    {operationalAlerts.length === 0 ? (
+                        <div className="p-8 text-center text-sm text-muted-foreground">
+                            فعلا هشدار عملیاتی فعالی وجود ندارد.
+                        </div>
+                    ) : (
+                        <div className="grid gap-3 p-4 lg:grid-cols-2">
+                            {operationalAlerts.map((alert) => (
+                                <article
+                                    key={alert.key}
+                                    className={alert.severity === 'attention' ? 'rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-900/60 dark:bg-amber-950/30' : 'rounded-lg border border-sky-200 bg-sky-50 p-4 dark:border-sky-900/60 dark:bg-sky-950/30'}
+                                >
+                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                        <div>
+                                            <h3 className="font-semibold">{alert.title}</h3>
+                                            <p className="mt-1 text-sm leading-6 text-muted-foreground">{alert.message}</p>
+                                        </div>
+                                        <Link
+                                            className="inline-flex h-9 shrink-0 items-center justify-center rounded-md border border-input bg-background px-3 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+                                            href={alert.actionHref}
+                                        >
+                                            {alert.actionLabel}
+                                        </Link>
+                                    </div>
+                                </article>
+                            ))}
+                        </div>
+                    )}
+                </section>
 
                 <section className="exploria-panel">
                     <div className="border-b border-border/70 p-4 dark:border-sidebar-border">

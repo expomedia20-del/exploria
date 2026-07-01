@@ -90,6 +90,47 @@ class DashboardController extends Controller
                 ];
             })
             ->values();
+        $operationalAlerts = $campaignPerformance
+            ->flatMap(function (array $campaign): array {
+                $alerts = [];
+
+                if ($campaign['visits'] === 0) {
+                    $alerts[] = [
+                        'key' => 'no_visits_'.$campaign['id'],
+                        'severity' => 'warning',
+                        'title' => 'کمپین فعال هنوز بازدید ندارد',
+                        'message' => 'QR و مسیر ورود کمپین '.$campaign['name'].' را بررسی کنید.',
+                        'actionLabel' => 'بررسی QR و نقشه عملیات',
+                        'actionHref' => '/admin/campaign-operations?campaign='.$campaign['code'],
+                    ];
+                }
+
+                if ($campaign['pendingRedemptions'] > 0) {
+                    $alerts[] = [
+                        'key' => 'pending_redemptions_'.$campaign['id'],
+                        'severity' => 'attention',
+                        'title' => 'پاداش در انتظار تحویل',
+                        'message' => $campaign['pendingRedemptions'].' پاداش در کمپین '.$campaign['name'].' منتظر تایید فروشگاه یا اسپانسر است.',
+                        'actionLabel' => 'مشاهده پنل شریک',
+                        'actionHref' => '/partner/dashboard?campaign='.$campaign['code'],
+                    ];
+                }
+
+                if ($campaign['visits'] > 0 && $campaign['progressPercent'] < 25) {
+                    $alerts[] = [
+                        'key' => 'low_progress_'.$campaign['id'],
+                        'severity' => 'warning',
+                        'title' => 'پیشرفت مأموریت‌ها پایین است',
+                        'message' => 'کاربران وارد کمپین '.$campaign['name'].' شده‌اند اما تکمیل مأموریت‌ها هنوز پایین است.',
+                        'actionLabel' => 'بازبینی مأموریت‌ها',
+                        'actionHref' => '/admin/missions?campaign='.$campaign['code'],
+                    ];
+                }
+
+                return $alerts;
+            })
+            ->take(8)
+            ->values();
 
         return Inertia::render('dashboard', [
             'stats' => [
@@ -107,6 +148,7 @@ class DashboardController extends Controller
             ],
             'latestVisits' => $latestVisits,
             'latestRedemptions' => $latestRedemptions,
+            'operationalAlerts' => $operationalAlerts,
             'campaignPerformance' => $campaignPerformance,
         ]);
     }
