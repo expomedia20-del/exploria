@@ -75,6 +75,8 @@ class CampaignRegistryService
             'name' => $campaign->name,
             'campaignType' => $campaign->campaign_type,
             'blueprintCode' => $campaign->metadata['blueprint_code'] ?? null,
+            'designSource' => $campaign->metadata['design_source'] ?? null,
+            'designVenueCode' => $campaign->metadata['design_venue_code'] ?? null,
             'status' => $campaign->status->value,
             'venue' => $campaign->venue ? [
                 'id' => $campaign->venue->id,
@@ -178,6 +180,8 @@ class CampaignRegistryService
             'name' => $campaign->name,
             'campaignType' => $campaign->campaign_type,
             'blueprintCode' => $campaign->metadata['blueprint_code'] ?? null,
+            'designSource' => $campaign->metadata['design_source'] ?? null,
+            'designVenueCode' => $campaign->metadata['design_venue_code'] ?? null,
             'status' => $campaign->status->value,
             'startAt' => $campaign->start_at?->toIso8601String(),
             'endAt' => $campaign->end_at?->toIso8601String(),

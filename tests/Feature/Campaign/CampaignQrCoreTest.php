@@ -66,6 +66,7 @@ class CampaignQrCoreTest extends TestCase
 
     public function test_operator_can_create_campaign(): void
     {
+        $this->withoutVite();
         $operator = User::factory()->create(['role' => UserRole::Operator]);
         $venue = Venue::query()->where('code', 'ecopark-abbasabad')->firstOrFail();
 
@@ -99,6 +100,14 @@ class CampaignQrCoreTest extends TestCase
         $this->assertSame('venue_blueprint_recommendation', $campaign->metadata['design_source']);
         $this->assertSame($venue->id, $campaign->metadata['design_venue_id']);
         $this->assertSame('ecopark-abbasabad', $campaign->metadata['design_venue_code']);
+
+        $this->actingAs($operator)
+            ->get(route('admin.campaigns.page', ['campaign' => 'family-route-1405']))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('selectedCampaign.blueprintCode', 'family-route')
+                ->where('selectedCampaign.designSource', 'venue_blueprint_recommendation')
+                ->where('selectedCampaign.designVenueCode', 'ecopark-abbasabad'));
     }
 
     public function test_operator_can_update_and_delete_empty_campaign(): void

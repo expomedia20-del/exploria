@@ -50,6 +50,8 @@ type CampaignItem = {
     name: string;
     campaignType: string;
     blueprintCode: string | null;
+    designSource: string | null;
+    designVenueCode: string | null;
     status: string;
     startAt: string | null;
     endAt: string | null;
@@ -64,6 +66,8 @@ type SelectedCampaign = {
     name: string;
     campaignType: string;
     blueprintCode: string | null;
+    designSource: string | null;
+    designVenueCode: string | null;
     status: string;
     venue: RegistryEntity | null;
 };
@@ -269,6 +273,12 @@ export default function CampaignRegistryIndex({
                             <div className="flex flex-wrap gap-2">
                                 <span className="rounded-full bg-muted px-3 py-1 text-xs" dir="ltr">{selectedCampaign.code}</span>
                                 {selectedCampaign.blueprintCode ? <span className="rounded-full bg-primary/10 px-3 py-1 text-xs text-primary" dir="ltr">{selectedCampaign.blueprintCode}</span> : null}
+                                {selectedCampaign.designSource === 'venue_blueprint_recommendation' ? (
+                                    <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs text-emerald-800 dark:bg-emerald-950 dark:text-emerald-100">
+                                        از ارزیابی مکان
+                                        {selectedCampaign.designVenueCode ? <span dir="ltr"> {selectedCampaign.designVenueCode}</span> : null}
+                                    </span>
+                                ) : null}
                             </div>
                         </div>
                         <div className="mt-4 grid gap-2 md:grid-cols-5">
@@ -476,6 +486,11 @@ export default function CampaignRegistryIndex({
                                             {campaign.blueprintCode ? (
                                                 <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary" dir="ltr">
                                                     {campaign.blueprintCode}
+                                                </span>
+                                            ) : null}
+                                            {campaign.designSource === 'venue_blueprint_recommendation' ? (
+                                                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800 dark:bg-emerald-950 dark:text-emerald-100">
+                                                    از ارزیابی مکان
                                                 </span>
                                             ) : null}
                                         </div>

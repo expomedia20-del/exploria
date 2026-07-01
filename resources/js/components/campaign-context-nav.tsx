@@ -6,6 +6,8 @@ type CampaignContext = {
     code: string;
     name?: string | null;
     blueprintCode?: string | null;
+    designSource?: string | null;
+    designVenueCode?: string | null;
 };
 
 type CampaignContextNavProps = {
@@ -45,6 +47,12 @@ export function CampaignContextNav({ campaign, className = '' }: CampaignContext
                         {campaign.blueprintCode ? (
                             <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[11px] text-primary" dir="ltr">
                                 {campaign.blueprintCode}
+                            </span>
+                        ) : null}
+                        {campaign.designSource === 'venue_blueprint_recommendation' ? (
+                            <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] text-emerald-800 dark:bg-emerald-950 dark:text-emerald-100">
+                                از ارزیابی مکان
+                                {campaign.designVenueCode ? <span dir="ltr"> {campaign.designVenueCode}</span> : null}
                             </span>
                         ) : null}
                     </div>
