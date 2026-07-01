@@ -46,6 +46,40 @@ type BlueprintTemplate = {
 type MatrixRow = { level: string; range: string; rule: string };
 type RewardVaultItem = { type: string; use: string };
 type GlobalPattern = { name: string; pattern: string };
+type VenueDesignFacility = {
+    name: string;
+    function: string | null;
+    campaignUses: string[];
+    priority: 'primary' | 'secondary' | 'low';
+    notes: string | null;
+};
+type VenueDesignContext = {
+    totals: {
+        venues: number;
+        facilities: number;
+        campaignUsableFacilities: number;
+    };
+    campaignUseLabels: Record<string, string>;
+    venues: Array<{
+        id: string;
+        code: string;
+        name: string;
+        city: string;
+        status: string;
+        profileStatus: string;
+        locationProfile: {
+            venueType: string | null;
+            primaryAudience: string | null;
+            readinessScore: number;
+            facilitiesCount: number;
+            campaignUsableFacilitiesCount: number;
+            constraintsCount: number;
+            updatedAt: string | null;
+        };
+        designAssets: Record<string, VenueDesignFacility[]>;
+        topFacilities: VenueDesignFacility[];
+    }>;
+};
 
 type Props = {
     stats: {
@@ -58,6 +92,7 @@ type Props = {
     principles: Principle[];
     designFlow: FlowStep[];
     templates: BlueprintTemplate[];
+    venueDesignContext: VenueDesignContext;
     scoringMatrix: MatrixRow[];
     rewardVault: RewardVaultItem[];
     globalPatterns: GlobalPattern[];
@@ -81,6 +116,107 @@ function Stat({ label, value, icon: Icon }: { label: string; value: number; icon
 
 function Chip({ children }: { children: ReactNode }) {
     return <span className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">{children}</span>;
+}
+
+function VenueDesignContextPanel({ context }: { context: VenueDesignContext }) {
+    const connectedVenues = context.venues.filter((venue) => venue.locationProfile.facilitiesCount > 0);
+
+    return (
+        <section className="exploria-panel">
+            <div className="flex flex-col gap-3 border-b border-border/70 px-4 py-3 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                    <h2 className="font-semibold">شناخت‌نامه مکان متصل به الگوها</h2>
+                    <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                        امکانات و جاذبه‌های ثبت‌شده اینجا به عنوان زمینه مشترک طراحی در اختیار الگوی کمپین، مأموریت، گنج، پاداش، QR، اسپانسر و تبلیغ قرار می‌گیرد.
+                    </p>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                    <div className="rounded-md border border-border/70 bg-background px-3 py-2">
+                        <p className="text-muted-foreground">مکان</p>
+                        <p className="mt-1 font-semibold">{fa(context.totals.venues)}</p>
+                    </div>
+                    <div className="rounded-md border border-border/70 bg-background px-3 py-2">
+                        <p className="text-muted-foreground">امکان/جاذبه</p>
+                        <p className="mt-1 font-semibold">{fa(context.totals.facilities)}</p>
+                    </div>
+                    <div className="rounded-md border border-border/70 bg-background px-3 py-2">
+                        <p className="text-muted-foreground">قابل استفاده</p>
+                        <p className="mt-1 font-semibold">{fa(context.totals.campaignUsableFacilities)}</p>
+                    </div>
+                </div>
+            </div>
+            {connectedVenues.length > 0 ? (
+                <div className="grid gap-3 p-4 xl:grid-cols-2">
+                    {connectedVenues.map((venue) => (
+                        <article key={venue.id} className="rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm">
+                            <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <MapPinned className="size-4 text-muted-foreground" />
+                                        <h3 className="text-sm font-semibold">{venue.name}</h3>
+                                    </div>
+                                    <p className="mt-1 text-xs text-muted-foreground" dir="ltr">{venue.code}</p>
+                                </div>
+                                <Chip>آمادگی {fa(venue.locationProfile.readinessScore)}٪</Chip>
+                            </div>
+
+                            <div className="mt-3 grid gap-2 text-xs sm:grid-cols-3">
+                                <div className="rounded-md bg-muted/45 p-2">
+                                    <p className="text-muted-foreground">مخاطب غالب</p>
+                                    <p className="mt-1 leading-5">{venue.locationProfile.primaryAudience ?? 'ثبت نشده'}</p>
+                                </div>
+                                <div className="rounded-md bg-muted/45 p-2">
+                                    <p className="text-muted-foreground">امکانات ثبت‌شده</p>
+                                    <p className="mt-1 font-semibold">{fa(venue.locationProfile.facilitiesCount)}</p>
+                                </div>
+                                <div className="rounded-md bg-muted/45 p-2">
+                                    <p className="text-muted-foreground">محدودیت‌ها</p>
+                                    <p className="mt-1 font-semibold">{fa(venue.locationProfile.constraintsCount)}</p>
+                                </div>
+                            </div>
+
+                            <div className="mt-3 grid gap-2 md:grid-cols-2">
+                                {Object.entries(context.campaignUseLabels).map(([use, label]) => {
+                                    const assets = venue.designAssets[use] ?? [];
+
+                                    return (
+                                        <div key={use} className="rounded-md border border-border/70 bg-background/70 p-2">
+                                            <div className="mb-2 flex items-center justify-between gap-2">
+                                                <p className="text-xs font-medium">{label}</p>
+                                                <span className="text-[11px] text-muted-foreground">{fa(assets.length)} مورد</span>
+                                            </div>
+                                            {assets.length > 0 ? (
+                                                <div className="flex flex-wrap gap-1.5">
+                                                    {assets.slice(0, 4).map((facility) => <Chip key={`${use}-${facility.name}`}>{facility.name}</Chip>)}
+                                                </div>
+                                            ) : (
+                                                <p className="text-xs text-muted-foreground">هنوز موردی برای این کارکرد انتخاب نشده است.</p>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            <div className="mt-3 flex flex-wrap gap-2">
+                                <Button asChild variant="outline" className="h-8 text-xs">
+                                    <Link href="/admin/venues">تکمیل شناخت‌نامه مکان</Link>
+                                </Button>
+                                <Button asChild variant="outline" className="h-8 text-xs">
+                                    <Link href="/admin/campaigns">رفتن به کمپین‌ها</Link>
+                                </Button>
+                            </div>
+                        </article>
+                    ))}
+                </div>
+            ) : (
+                <div className="p-4">
+                    <div className="rounded-lg border border-dashed border-border/80 bg-background/70 p-4 text-sm text-muted-foreground">
+                        هنوز برای مکان‌ها امکانات و جاذبه قابل استفاده در کمپین ثبت نشده است. ابتدا شناخت‌نامه مکان را تکمیل کنید تا الگوها بتوانند از داده واقعی مکان استفاده کنند.
+                    </div>
+                </div>
+            )}
+        </section>
+    );
 }
 
 function rewardRule(template: BlueprintTemplate, tierIndex: number) {
@@ -201,6 +337,7 @@ export default function MissionBlueprintIndex({
     principles,
     designFlow,
     templates,
+    venueDesignContext,
     scoringMatrix,
     rewardVault,
     globalPatterns,
@@ -252,6 +389,8 @@ export default function MissionBlueprintIndex({
                 <CampaignFlowInfographic />
 
                 <BlueprintSystemGuide />
+
+                <VenueDesignContextPanel context={venueDesignContext} />
 
                 <section className="exploria-panel">
                     <div className="border-b border-border/70 px-4 py-3 dark:border-sidebar-border">

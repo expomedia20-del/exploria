@@ -4,6 +4,8 @@ namespace App\Services;
 
 class MissionRewardBlueprintService
 {
+    public function __construct(private readonly VenueDesignContextService $venueDesignContext) {}
+
     /** @return array<string, mixed>|null */
     public function handoff(?string $code): ?array
     {
@@ -32,6 +34,7 @@ class MissionRewardBlueprintService
             'principles' => $this->principles(),
             'designFlow' => $this->designFlow(),
             'templates' => $templates->values(),
+            'venueDesignContext' => $this->venueDesignContext->overview(),
             'scoringMatrix' => $this->scoringMatrix(),
             'rewardVault' => $this->rewardVault(),
             'globalPatterns' => $this->globalPatterns(),
