@@ -432,6 +432,7 @@ export default function MissionRewardRegistryIndex({
     const pendingPartnerOffers = partnerRewardOffers.filter((reward) => reward.approvalStatus === 'pending_review');
     const approvedPartnerOffers = partnerRewardOffers.filter((reward) => reward.approvalStatus === 'approved');
     const revisionPartnerOffers = partnerRewardOffers.filter((reward) => reward.approvalStatus === 'revision_requested');
+    const directRewardDefinitions = rewards.filter((reward) => reward.source !== 'partner_offer_submission');
 
     function selectMissionPlanStep(step: MissionPlanStep, index: number) {
         setSelectedMissionPlanIndex(index);
@@ -1382,10 +1383,17 @@ export default function MissionRewardRegistryIndex({
                 <section className="grid gap-4 lg:grid-cols-2">
                     <div className="rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border">
                         <div className="border-b border-sidebar-border/70 px-4 py-3 dark:border-sidebar-border">
-                            <h2 className="font-semibold">تعریف پاداش‌ها</h2>
+                            <h2 className="font-semibold">پاداش‌های داخلی و نهایی کمپین</h2>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                                پیشنهادهای فروشگاه/اسپانسر در میز بازبینی مرحله ۴ مدیریت می‌شوند؛ این بخش برای پاداش‌هایی است که ادمین مستقیم تعریف یا نهایی می‌کند.
+                            </p>
                         </div>
                         <div className="divide-y divide-sidebar-border/70 dark:divide-sidebar-border">
-                            {rewards.map((reward) => (
+                            {directRewardDefinitions.length === 0 ? (
+                                <div className="p-6 text-sm text-muted-foreground">
+                                    هنوز پاداش داخلی یا نهایی جدا از پیشنهادهای مشارکت ثبت نشده است.
+                                </div>
+                            ) : directRewardDefinitions.map((reward) => (
                                 <article
                                     key={reward.id}
                                     className="grid gap-2 px-4 py-3 text-sm"
@@ -1405,11 +1413,6 @@ export default function MissionRewardRegistryIndex({
                                             {reward.rewardTier ? (
                                                 <span className="mt-2 inline-flex rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
                                                     سطح {rewardTierLabels[reward.rewardTier] ?? reward.rewardTier}
-                                                </span>
-                                            ) : null}
-                                            {reward.source === 'partner_offer_submission' ? (
-                                                <span className="mt-2 mr-2 inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800 dark:bg-amber-950 dark:text-amber-200">
-                                                    پیشنهاد فروشگاه/اسپانسر
                                                 </span>
                                             ) : null}
                                             {reward.cycleStep?.label ? (
@@ -1598,9 +1601,16 @@ export default function MissionRewardRegistryIndex({
                     <div className="rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border">
                         <div className="border-b border-sidebar-border/70 px-4 py-3 dark:border-sidebar-border">
                             <h2 className="font-semibold">گنج‌ها</h2>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                                گنج با پاداش فرق دارد: گنج لحظه کشف، پیام، قفل‌گشایی یا جایزه پنهان مسیر است و باید به ماموریت و گام چرخه وصل بماند.
+                            </p>
                         </div>
                         <div className="divide-y divide-sidebar-border/70 dark:divide-sidebar-border">
-                            {treasures.map((treasure) => (
+                            {treasures.length === 0 ? (
+                                <div className="p-6 text-sm text-muted-foreground">
+                                    هنوز گنجی برای چرخه این کمپین ثبت نشده است. از فرم گنج مرحله ۳، گنج را به ماموریت همان گام وصل کنید.
+                                </div>
+                            ) : treasures.map((treasure) => (
                                 <article
                                     key={treasure.id}
                                     className="grid gap-2 px-4 py-3 text-sm"
