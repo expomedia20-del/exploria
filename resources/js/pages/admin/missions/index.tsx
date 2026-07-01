@@ -1,16 +1,21 @@
 import { Form, Head, Link, usePage } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import {
+    ArrowRight,
     BadgeCheck,
     BookOpenCheck,
     CalendarClock,
     CheckCircle2,
+    ClipboardList,
     Gift,
     MapPin,
     Pencil,
+    QrCode,
+    Route,
     Sparkles,
     Trash2,
     Trophy,
+    UsersRound,
     XCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -412,6 +417,7 @@ export default function MissionRewardRegistryIndex({
         ? missions.find((mission) => Number(mission.cycleStep.index) === selectedMissionPlan.index) ?? null
         : null;
     const alignmentErrors = alignment?.issues.filter((issue) => issue.level === 'error') ?? [];
+    const selectedCampaignCode = selectedCampaign?.code ?? '';
 
     function selectMissionPlanStep(step: MissionPlanStep, index: number) {
         setSelectedMissionPlanIndex(index);
@@ -528,6 +534,44 @@ export default function MissionRewardRegistryIndex({
                                 <span className="rounded-full bg-background px-3 py-1 text-xs" dir="ltr">{selectedCampaign.code}</span>
                                 {selectedCampaign.blueprintCode ? <span className="rounded-full bg-background px-3 py-1 text-xs" dir="ltr">{selectedCampaign.blueprintCode}</span> : null}
                             </div>
+                        </div>
+                        <div className="mt-4 flex flex-wrap gap-2">
+                            <Button asChild size="sm">
+                                <Link href={`/admin/campaign-builder?campaign=${selectedCampaignCode}`}>
+                                    <ArrowRight className="size-4" />
+                                    بازگشت به کارگاه همین کمپین
+                                </Link>
+                            </Button>
+                            <Button asChild variant="outline" size="sm">
+                                <Link href={`/admin/campaigns?campaign=${selectedCampaignCode}`}>
+                                    <ClipboardList className="size-4" />
+                                    کمپین‌ها
+                                </Link>
+                            </Button>
+                            <Button asChild variant="outline" size="sm">
+                                <Link href={`/admin/qr-codes?campaign=${selectedCampaignCode}`}>
+                                    <QrCode className="size-4" />
+                                    مدیریت QR
+                                </Link>
+                            </Button>
+                            <Button asChild variant="outline" size="sm">
+                                <Link href={`/admin/campaign-operations?campaign=${selectedCampaignCode}`}>
+                                    <Route className="size-4" />
+                                    نقشه عملیات
+                                </Link>
+                            </Button>
+                            <Button asChild variant="outline" size="sm">
+                                <Link href={`/admin/campaign-participants?campaign=${selectedCampaignCode}`}>
+                                    <UsersRound className="size-4" />
+                                    اعضا و مشارکت‌کنندگان
+                                </Link>
+                            </Button>
+                            <Button asChild variant="ghost" size="sm">
+                                <Link href="/admin/mission-blueprints">
+                                    <BookOpenCheck className="size-4" />
+                                    گنجینه ماموریت‌ها
+                                </Link>
+                            </Button>
                         </div>
                     </section>
                 ) : null}
