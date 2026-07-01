@@ -5,6 +5,7 @@ namespace Tests\Feature\Mission;
 use App\Enums\UserRole;
 use App\Models\MissionInstance;
 use App\Models\QrCode;
+use App\Models\RewardRedemption;
 use App\Models\User;
 use App\Models\Visit;
 use Database\Seeders\PilotLocationSeeder;
@@ -127,10 +128,16 @@ class VisitMissionFlowTest extends TestCase
             ->assertJsonPath('data.stats.completedMissions', 4)
             ->assertJsonPath('data.stats.rewards', 4);
 
+        $redemption = RewardRedemption::query()->firstOrFail();
+
         $this->actingAs($this->visitor)
             ->getJson(route('rewards.wallet'))
             ->assertOk()
-            ->assertJsonCount(4, 'data');
+            ->assertJsonCount(4, 'data')
+            ->assertJsonFragment([
+                'redemptionCode' => $redemption->redemption_code,
+                'status' => 'pending',
+            ]);
     }
 
     public function test_other_user_cannot_mutate_visit_missions(): void

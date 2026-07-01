@@ -103,7 +103,10 @@ class MissionFlowService
     public function walletForUser(User $user, ?string $campaignId = null): array
     {
         return UserReward::query()
-            ->with(['rewardDefinition.partnerAccount:id,code,name,partner_type'])
+            ->with([
+                'rewardDefinition.partnerAccount:id,code,name,partner_type',
+                'redemptions.partnerAccount:id,code,name,partner_type',
+            ])
             ->where('user_id', $user->id)
             ->when($campaignId, fn ($query) => $query->where('campaign_id', $campaignId))
             ->latest('awarded_at')
@@ -113,6 +116,13 @@ class MissionFlowService
                 'status' => $reward->status,
                 'awardedAt' => $reward->awarded_at?->toIso8601String(),
                 'expiresAt' => $reward->expires_at?->toIso8601String(),
+                'redemption' => $reward->redemptions->first() ? [
+                    'id' => $reward->redemptions->first()->id,
+                    'redemptionCode' => $reward->redemptions->first()->redemption_code,
+                    'status' => $reward->redemptions->first()->status,
+                    'redeemedAt' => $reward->redemptions->first()->redeemed_at?->toIso8601String(),
+                    'partnerName' => $reward->redemptions->first()->partnerAccount?->name,
+                ] : null,
                 'reward' => $reward->rewardDefinition ? [
                     'id' => $reward->rewardDefinition->id,
                     'code' => $reward->rewardDefinition->code,

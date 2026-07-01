@@ -61,6 +61,13 @@ type UserRewardItem = {
     status: string;
     awardedAt: string | null;
     expiresAt: string | null;
+    redemption: {
+        id: string;
+        redemptionCode: string;
+        status: string;
+        redeemedAt: string | null;
+        partnerName: string | null;
+    } | null;
     reward: {
         id: string;
         code: string;
@@ -94,6 +101,13 @@ const rewardStatusLabels: Record<string, string> = {
     awarded: 'صادر شده',
     reserved: 'رزرو شده',
     redeemed: 'تحویل شده',
+    expired: 'منقضی شده',
+};
+
+const redemptionStatusLabels: Record<string, string> = {
+    pending: 'در انتظار تحویل',
+    confirmed: 'تحویل شده',
+    redeemed: 'مصرف شده',
     expired: 'منقضی شده',
 };
 
@@ -392,9 +406,20 @@ export default function VisitShow({ visit, missionFlow }: Props) {
                                     </p>
                                     <p className="mt-3 text-xs text-slate-500">
                                         شریک:{' '}
-                                        {reward.reward?.partnerName ?? 'پلتفرم'}{' '}
+                                        {reward.redemption?.partnerName ?? reward.reward?.partnerName ?? 'پلتفرم'}{' '}
                                         · وضعیت: {rewardStatusLabels[reward.status] ?? reward.status}
                                     </p>
+                                    {reward.redemption ? (
+                                        <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-950 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+                                            <p className="font-medium">کد تحویل به فروشگاه</p>
+                                            <p className="mt-2 font-mono text-lg font-semibold tracking-wider" dir="ltr">
+                                                {reward.redemption.redemptionCode}
+                                            </p>
+                                            <p className="mt-2">
+                                                وضعیت تحویل: {redemptionStatusLabels[reward.redemption.status] ?? reward.redemption.status}
+                                            </p>
+                                        </div>
+                                    ) : null}
                                 </article>
                             ))}
                         </div>
