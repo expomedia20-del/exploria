@@ -413,6 +413,25 @@ export default function MissionRewardRegistryIndex({
         ? missions.find((mission) => Number(mission.cycleStep.index) === selectedMissionPlan.index) ?? null
         : null;
     const alignmentErrors = alignment?.issues.filter((issue) => issue.level === 'error') ?? [];
+    const partnerRewardOffers = useMemo(
+        () =>
+            [...rewards]
+                .filter((reward) => reward.source === 'partner_offer_submission')
+                .sort((a, b) => {
+                    const stepA = Number(a.cycleStep.index ?? 999);
+                    const stepB = Number(b.cycleStep.index ?? 999);
+
+                    if (stepA !== stepB) {
+                        return stepA - stepB;
+                    }
+
+                    return (a.rewardTier ?? '').localeCompare(b.rewardTier ?? '');
+                }),
+        [rewards],
+    );
+    const pendingPartnerOffers = partnerRewardOffers.filter((reward) => reward.approvalStatus === 'pending_review');
+    const approvedPartnerOffers = partnerRewardOffers.filter((reward) => reward.approvalStatus === 'approved');
+    const revisionPartnerOffers = partnerRewardOffers.filter((reward) => reward.approvalStatus === 'revision_requested');
 
     function selectMissionPlanStep(step: MissionPlanStep, index: number) {
         setSelectedMissionPlanIndex(index);
@@ -1239,6 +1258,121 @@ export default function MissionRewardRegistryIndex({
                                                 '-'}
                                         </p>
                                     </div>
+                                </article>
+                            ))}
+                        </div>
+                    )}
+                </section>
+
+                <section className="rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border">
+                    <div className="flex flex-col gap-3 border-b border-sidebar-border/70 px-4 py-3 dark:border-sidebar-border lg:flex-row lg:items-center lg:justify-between">
+                        <div>
+                            <p className="text-xs text-muted-foreground">مرحله ۴: مشارکت فروشگاه و اسپانسر</p>
+                            <h2 className="mt-1 font-semibold">میز بازبینی پیشنهادهای مشارکت</h2>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                                هر پیشنهاد بر اساس گام چرخه، سطح پاداش و گزینه پیشنهادی بررسی می‌شود تا ادمین بداند کدام جایزه برای کدام بخش کمپین قابل اجراست.
+                            </p>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 text-xs sm:min-w-[360px]">
+                            <div className="rounded-md bg-muted/45 px-3 py-2">
+                                <p className="text-muted-foreground">در انتظار</p>
+                                <p className="mt-1 font-semibold">{pendingPartnerOffers.length.toLocaleString('fa-IR')}</p>
+                            </div>
+                            <div className="rounded-md bg-muted/45 px-3 py-2">
+                                <p className="text-muted-foreground">تایید شده</p>
+                                <p className="mt-1 font-semibold">{approvedPartnerOffers.length.toLocaleString('fa-IR')}</p>
+                            </div>
+                            <div className="rounded-md bg-muted/45 px-3 py-2">
+                                <p className="text-muted-foreground">نیازمند اصلاح</p>
+                                <p className="mt-1 font-semibold">{revisionPartnerOffers.length.toLocaleString('fa-IR')}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {partnerRewardOffers.length === 0 ? (
+                        <div className="p-6 text-sm text-muted-foreground">
+                            هنوز پیشنهادی از فروشگاه یا اسپانسر برای این کمپین ثبت نشده است. از نوار همین کمپین وارد بخش «اعضا و مشارکت‌کنندگان» یا پنل فروشگاه/اسپانسر شوید و پیشنهاد مرحله ۴ را ثبت کنید.
+                        </div>
+                    ) : (
+                        <div className="grid gap-3 p-4 xl:grid-cols-2">
+                            {partnerRewardOffers.map((reward) => (
+                                <article key={`partner-review-${reward.id}`} className="rounded-lg border border-border/80 bg-card/75 p-4 text-sm shadow-sm">
+                                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                                        <div className="min-w-0">
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <span className="font-semibold">{reward.name}</span>
+                                                <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusClasses[reward.approvalStatus] ?? statusClasses[reward.status] ?? statusClasses.inactive}`}>
+                                                    {statusLabels[reward.approvalStatus] ?? statusLabels[reward.status] ?? reward.status}
+                                                </span>
+                                            </div>
+                                            <p className="mt-1 text-xs text-muted-foreground" dir="ltr">{reward.code}</p>
+                                        </div>
+                                        <div className="flex flex-wrap gap-2 text-xs">
+                                            <span className="rounded-full bg-muted px-2.5 py-1">
+                                                گام {reward.cycleStep.index?.toLocaleString('fa-IR') ?? '-'}: {reward.cycleStep.label ?? 'بدون گام'}
+                                            </span>
+                                            <span className="rounded-full bg-primary/10 px-2.5 py-1 text-primary">
+                                                سطح {reward.rewardTier ? rewardTierLabels[reward.rewardTier] ?? reward.rewardTier : 'نامشخص'}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-3 grid gap-2 rounded-md bg-muted/35 p-3 text-xs text-muted-foreground md:grid-cols-2">
+                                        <p><span className="font-medium text-foreground">فروشگاه/اسپانسر: </span>{reward.partner?.name ?? 'نامشخص'}</p>
+                                        <p><span className="font-medium text-foreground">گزینه/ترکیب: </span>{reward.rewardOption ?? 'ثبت نشده'}</p>
+                                        <p><span className="font-medium text-foreground">موجودی: </span>{reward.stockQuantity?.toLocaleString('fa-IR') ?? 'نامحدود'}</p>
+                                        <p><span className="font-medium text-foreground">اعتبار: </span>{formatDate(reward.availableFrom)} تا {formatDate(reward.availableUntil)}</p>
+                                    </div>
+
+                                    {reward.description ? (
+                                        <p className="mt-3 text-sm leading-6 text-muted-foreground">{reward.description}</p>
+                                    ) : null}
+                                    {reward.terms ? (
+                                        <p className="mt-2 rounded-md bg-muted/30 px-3 py-2 text-xs text-muted-foreground">شرایط اجرا: {reward.terms}</p>
+                                    ) : null}
+                                    {reward.reviewNotes ? (
+                                        <p className="mt-2 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:bg-amber-950/30 dark:text-amber-100">یادداشت بازبینی: {reward.reviewNotes}</p>
+                                    ) : null}
+
+                                    {canMutate && reward.approvalStatus === 'pending_review' ? (
+                                        <div className="mt-4 grid gap-3">
+                                            <Form action={`/admin/rewards/${reward.id}/approve`} method="post" options={{ preserveScroll: true }} className="grid gap-2 md:grid-cols-[1fr_auto]">
+                                                {({ processing }) => (
+                                                    <>
+                                                        <textarea name="notes" className="min-h-14 rounded-md border border-input bg-background px-3 py-2 text-sm" placeholder="یادداشت تایید برای اجرای این پیشنهاد" />
+                                                        <Button size="sm" disabled={processing} className="self-end">
+                                                            <CheckCircle2 className="size-4" />
+                                                            تایید برای اجرا
+                                                        </Button>
+                                                    </>
+                                                )}
+                                            </Form>
+                                            <div className="grid gap-3 md:grid-cols-2">
+                                                <Form action={`/admin/rewards/${reward.id}/revision`} method="post" options={{ preserveScroll: true }} className="grid gap-2">
+                                                    {({ processing }) => (
+                                                        <>
+                                                            <textarea name="notes" className="min-h-14 rounded-md border border-input bg-background px-3 py-2 text-sm" placeholder="چه چیزی باید توسط فروشگاه/اسپانسر اصلاح شود؟" />
+                                                            <Button size="sm" variant="outline" disabled={processing}>
+                                                                <Pencil className="size-4" />
+                                                                درخواست اصلاح
+                                                            </Button>
+                                                        </>
+                                                    )}
+                                                </Form>
+                                                <Form action={`/admin/rewards/${reward.id}/reject`} method="post" options={{ preserveScroll: true }} className="grid gap-2">
+                                                    {({ processing }) => (
+                                                        <>
+                                                            <textarea name="notes" className="min-h-14 rounded-md border border-input bg-background px-3 py-2 text-sm" placeholder="دلیل رد پیشنهاد" />
+                                                            <Button size="sm" variant="outline" disabled={processing}>
+                                                                <XCircle className="size-4" />
+                                                                رد پیشنهاد
+                                                            </Button>
+                                                        </>
+                                                    )}
+                                                </Form>
+                                            </div>
+                                        </div>
+                                    ) : null}
                                 </article>
                             ))}
                         </div>
