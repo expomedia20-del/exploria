@@ -1,5 +1,5 @@
 import { Form, Head, Link, usePage } from '@inertiajs/react';
-import { CheckCircle2, Gift, Lock, Play, Sparkles, Trophy } from 'lucide-react';
+import { CheckCircle2, Gift, Lock, MapPin, Play, Sparkles, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 type Visit = {
@@ -90,11 +90,29 @@ const missionStatusLabels: Record<MissionItem['status'], string> = {
     locked: 'قفل',
 };
 
+const rewardStatusLabels: Record<string, string> = {
+    awarded: 'صادر شده',
+    reserved: 'رزرو شده',
+    redeemed: 'تحویل شده',
+    expired: 'منقضی شده',
+};
+
 export default function VisitShow({ visit, missionFlow }: Props) {
     const { flash } = usePage<SharedProps>().props;
+    const totalMissions = missionFlow.missions.length;
+    const progress =
+        totalMissions > 0
+            ? Math.round((missionFlow.stats.completedMissions / totalMissions) * 100)
+            : 0;
+    const nextMission =
+        missionFlow.missions.find((mission) => mission.status === 'started') ??
+        missionFlow.missions.find((mission) => mission.status === 'available') ??
+        missionFlow.missions.find((mission) => mission.status === 'locked') ??
+        null;
+    const allDone = totalMissions > 0 && missionFlow.stats.completedMissions === totalMissions;
 
     return (
-        <main className="min-h-screen bg-slate-50 px-4 py-10 text-slate-950 dark:bg-slate-950 dark:text-slate-50">
+        <main dir="rtl" className="min-h-screen bg-slate-50 px-4 py-10 text-slate-950 dark:bg-slate-950 dark:text-slate-50">
             <Head title={`بازدید ${visit.venueName ?? 'پایلوت'}`} />
 
             <section className="mx-auto w-full max-w-5xl rounded-lg border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900">
@@ -187,9 +205,34 @@ export default function VisitShow({ visit, missionFlow }: Props) {
                             </div>
                         ) : null}
 
-                        <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-5 text-sm leading-7 text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200">
-                            این بخش حالا به دیتابیس واقعی ماموریت، پیشرفت کاربر
-                            و کیف پاداش وصل است.
+                        <div className="mt-4 rounded-lg border border-sky-200 bg-sky-50 p-5 text-sm leading-7 text-sky-950 dark:border-sky-900 dark:bg-sky-950/40 dark:text-sky-100">
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                <div>
+                                    <p className="font-semibold">
+                                        {allDone ? 'مسیر این بازدید کامل شد' : nextMission ? 'قدم بعدی شما' : 'مسیر آماده‌سازی نشده است'}
+                                    </p>
+                                    <p className="mt-1 text-xs leading-6 text-sky-900/80 dark:text-sky-100/80">
+                                        {allDone
+                                            ? 'همه مأموریت‌های این کمپین را تکمیل کرده‌اید؛ کیف پاداش را بررسی کنید.'
+                                            : nextMission
+                                              ? nextMission.isLocked
+                                                  ? 'برای باز شدن مأموریت بعدی، امتیاز یا شرط مرحله‌های قبل را کامل کنید.'
+                                                  : `${nextMission.title} را انجام دهید و امتیاز آن را دریافت کنید.`
+                                              : 'برای این بازدید هنوز مأموریتی ثبت نشده است.'}
+                                    </p>
+                                </div>
+                                {nextMission ? (
+                                    <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-sky-800 shadow-xs dark:bg-slate-900 dark:text-sky-100">
+                                        {missionStatusLabels[nextMission.status]}
+                                    </span>
+                                ) : null}
+                            </div>
+                            <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/80 dark:bg-slate-900">
+                                <div className="h-full rounded-full bg-sky-600" style={{ width: `${progress}%` }} />
+                            </div>
+                            <p className="mt-2 text-xs text-sky-900/80 dark:text-sky-100/80">
+                                {missionFlow.stats.completedMissions.toLocaleString('fa-IR')} از {totalMissions.toLocaleString('fa-IR')} مأموریت تکمیل شده است.
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -201,8 +244,13 @@ export default function VisitShow({ visit, missionFlow }: Props) {
                             ماموریت‌های این بازدید
                         </h2>
                     </div>
-                    <div className="mt-4 grid gap-3">
-                        {missionFlow.missions.map((mission) => (
+                    {missionFlow.missions.length === 0 ? (
+                        <div className="mt-4 rounded-lg border border-dashed border-slate-300 p-5 text-sm leading-7 text-slate-600 dark:border-slate-700 dark:text-slate-300">
+                            برای این بازدید هنوز مأموریتی تعریف نشده است. بعد از تکمیل تنظیمات کمپین، مأموریت‌ها در همین بخش نمایش داده می‌شوند.
+                        </div>
+                    ) : (
+                        <div className="mt-4 grid gap-3">
+                            {missionFlow.missions.map((mission) => (
                             <article
                                 key={mission.id}
                                 className="grid gap-4 rounded-lg border border-slate-200 p-4 md:grid-cols-[1fr_auto] md:items-center dark:border-slate-800"
@@ -263,6 +311,12 @@ export default function VisitShow({ visit, missionFlow }: Props) {
                                             {mission.hubName ??
                                                 mission.touchpointLabel}
                                         </span>
+                                        {mission.hubName || mission.touchpointLabel ? (
+                                            <span className="inline-flex items-center gap-1 rounded-full bg-sky-100 px-2.5 py-1 text-sky-900 dark:bg-sky-950 dark:text-sky-100">
+                                                <MapPin className="size-3" />
+                                                مسیر همین بازدید
+                                            </span>
+                                        ) : null}
                                         {mission.treasureName ? (
                                             <span className="rounded-full bg-rose-100 px-2.5 py-1 text-rose-900">
                                                 گنج: {mission.treasureName}
@@ -306,8 +360,9 @@ export default function VisitShow({ visit, missionFlow }: Props) {
                                     </Form>
                                 </div>
                             </article>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    )}
                 </section>
 
                 <section className="mt-8">
@@ -338,7 +393,7 @@ export default function VisitShow({ visit, missionFlow }: Props) {
                                     <p className="mt-3 text-xs text-slate-500">
                                         شریک:{' '}
                                         {reward.reward?.partnerName ?? 'پلتفرم'}{' '}
-                                        · وضعیت: {reward.status}
+                                        · وضعیت: {rewardStatusLabels[reward.status] ?? reward.status}
                                     </p>
                                 </article>
                             ))}
