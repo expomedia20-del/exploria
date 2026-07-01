@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { dashboard } from '@/routes';
 
 type Stats = {
@@ -7,6 +7,10 @@ type Stats = {
     otpRequests: number;
     consents: number;
     visits: number;
+    activeCampaigns: number;
+    missionCompletions: number;
+    issuedRewards: number;
+    activeMissions: number;
 };
 
 type LatestVisit = {
@@ -22,6 +26,20 @@ type LatestVisit = {
 type Props = {
     stats: Stats;
     latestVisits: LatestVisit[];
+    campaignPerformance: CampaignPerformance[];
+};
+
+type CampaignPerformance = {
+    id: string;
+    code: string;
+    name: string;
+    venueName: string | null;
+    visits: number;
+    qrCodes: number;
+    missions: number;
+    completedMissions: number;
+    rewards: number;
+    progressPercent: number;
 };
 
 const statLabels: Array<[keyof Stats, string, string]> = [
@@ -30,6 +48,10 @@ const statLabels: Array<[keyof Stats, string, string]> = [
     ['otpRequests', 'درخواست OTP', 'تعداد تلاش‌های ورود سریع'],
     ['consents', 'رضایت ثبت‌شده', 'پذیرش‌های معتبر رضایت‌نامه'],
     ['visits', 'بازدید ثبت‌شده', 'رخدادهای تاییدشده پس از رضایت'],
+    ['activeCampaigns', 'کمپین فعال', 'کمپین‌هایی که وارد مرحله اجرا شده‌اند'],
+    ['activeMissions', 'مأموریت فعال', 'مأموریت‌های قابل اجرا برای کاربران'],
+    ['missionCompletions', 'تکمیل مأموریت', 'کل مأموریت‌های انجام‌شده توسط کاربران'],
+    ['issuedRewards', 'پاداش صادرشده', 'پاداش‌هایی که در کیف کاربران ثبت شده‌اند'],
 ];
 
 function formatDate(value: string) {
@@ -39,7 +61,7 @@ function formatDate(value: string) {
     }).format(new Date(value));
 }
 
-export default function Dashboard({ stats, latestVisits }: Props) {
+export default function Dashboard({ stats, latestVisits, campaignPerformance }: Props) {
     return (
         <>
             <Head title="داشبورد پایلوت" />
@@ -53,7 +75,7 @@ export default function Dashboard({ stats, latestVisits }: Props) {
                     </h1>
                 </header>
 
-                <div className="grid auto-rows-min gap-4 md:grid-cols-5">
+                <div className="grid auto-rows-min gap-4 md:grid-cols-3 xl:grid-cols-5">
                     {statLabels.map(([key, label, description]) => (
                         <section
                             key={key}
@@ -71,6 +93,71 @@ export default function Dashboard({ stats, latestVisits }: Props) {
                         </section>
                     ))}
                 </div>
+
+                <section className="exploria-panel">
+                    <div className="border-b border-border/70 p-4 dark:border-sidebar-border">
+                        <h2 className="text-lg font-semibold">پایش اجرای کمپین‌ها</h2>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                            این بخش نشان می‌دهد کمپین فعال بعد از QR و ورود کاربر چقدر به مأموریت، پاداش و پیشرفت واقعی رسیده است.
+                        </p>
+                    </div>
+
+                    {campaignPerformance.length === 0 ? (
+                        <div className="p-8 text-center text-sm text-muted-foreground">
+                            هنوز کمپین فعالی برای پایش اجرا وجود ندارد.
+                        </div>
+                    ) : (
+                        <div className="grid gap-3 p-4 lg:grid-cols-2">
+                            {campaignPerformance.map((campaign) => (
+                                <article key={campaign.id} className="rounded-lg border border-border/80 bg-card/75 p-4 shadow-sm">
+                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                        <div>
+                                            <h3 className="font-semibold">{campaign.name}</h3>
+                                            <p className="mt-1 text-sm text-muted-foreground">{campaign.venueName ?? 'مکان ثبت نشده'}</p>
+                                        </div>
+                                        <span className="w-fit rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">
+                                            فعال
+                                        </span>
+                                    </div>
+
+                                    <div className="mt-4 grid grid-cols-2 gap-2 text-sm md:grid-cols-5">
+                                        {[
+                                            ['بازدید', campaign.visits],
+                                            ['QR', campaign.qrCodes],
+                                            ['مأموریت', campaign.missions],
+                                            ['تکمیل', campaign.completedMissions],
+                                            ['پاداش', campaign.rewards],
+                                        ].map(([label, value]) => (
+                                            <div key={String(label)} className="rounded-md bg-muted/45 p-2">
+                                                <p className="text-xs text-muted-foreground">{label}</p>
+                                                <p className="mt-1 font-semibold">{Number(value).toLocaleString('fa-IR')}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="mt-4">
+                                        <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                                            <span>پیشرفت اجرای مأموریت‌ها</span>
+                                            <span>{campaign.progressPercent.toLocaleString('fa-IR')}٪</span>
+                                        </div>
+                                        <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
+                                            <div className="h-full rounded-full bg-primary" style={{ width: `${campaign.progressPercent}%` }} />
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-4 flex flex-wrap gap-2">
+                                        <Link className="inline-flex h-9 items-center rounded-md border border-input bg-background px-3 text-sm font-medium hover:bg-accent hover:text-accent-foreground" href={`/admin/campaign-builder?campaign=${campaign.code}`}>
+                                            کارگاه ساخت
+                                        </Link>
+                                        <Link className="inline-flex h-9 items-center rounded-md border border-input bg-background px-3 text-sm font-medium hover:bg-accent hover:text-accent-foreground" href={`/admin/campaign-operations?campaign=${campaign.code}`}>
+                                            نقشه عملیات
+                                        </Link>
+                                    </div>
+                                </article>
+                            ))}
+                        </div>
+                    )}
+                </section>
 
                 <section className="exploria-panel">
                     <div className="border-b border-border/70 p-4 dark:border-sidebar-border">

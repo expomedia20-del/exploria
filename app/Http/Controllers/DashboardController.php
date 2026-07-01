@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Campaign;
 use App\Models\ConsentLog;
+use App\Models\MissionInstance;
 use App\Models\OtpRequest;
 use App\Models\QrCode;
+use App\Models\UserMissionProgress;
+use App\Models\UserReward;
 use App\Models\Venue;
 use App\Models\Visit;
 use Inertia\Inertia;
@@ -28,6 +32,36 @@ class DashboardController extends Controller
                 'status' => $visit->status,
                 'occurredAt' => $visit->occurred_at->toIso8601String(),
             ]);
+        $campaignPerformance = Campaign::query()
+            ->with('venue:id,name')
+            ->withCount(['visits', 'qrCodes', 'missionInstances', 'userRewards'])
+            ->where('status', 'active')
+            ->latest('updated_at')
+            ->limit(6)
+            ->get()
+            ->map(function (Campaign $campaign): array {
+                $completedMissions = UserMissionProgress::query()
+                    ->where('status', 'completed')
+                    ->whereHas('missionInstance', fn ($query) => $query->where('campaign_id', $campaign->id))
+                    ->count();
+                $visitsCount = (int) $campaign->getAttribute('visits_count');
+                $missionInstancesCount = (int) $campaign->getAttribute('mission_instances_count');
+                $expectedMissionRuns = $visitsCount * max($missionInstancesCount, 1);
+
+                return [
+                    'id' => $campaign->id,
+                    'code' => $campaign->code,
+                    'name' => $campaign->name,
+                    'venueName' => $campaign->venue?->name,
+                    'visits' => $visitsCount,
+                    'qrCodes' => (int) $campaign->getAttribute('qr_codes_count'),
+                    'missions' => $missionInstancesCount,
+                    'completedMissions' => $completedMissions,
+                    'rewards' => (int) $campaign->getAttribute('user_rewards_count'),
+                    'progressPercent' => $expectedMissionRuns > 0 ? min(100, (int) round(($completedMissions / $expectedMissionRuns) * 100)) : 0,
+                ];
+            })
+            ->values();
 
         return Inertia::render('dashboard', [
             'stats' => [
@@ -36,8 +70,13 @@ class DashboardController extends Controller
                 'otpRequests' => OtpRequest::query()->count(),
                 'consents' => ConsentLog::query()->count(),
                 'visits' => Visit::query()->count(),
+                'activeCampaigns' => Campaign::query()->where('status', 'active')->count(),
+                'missionCompletions' => UserMissionProgress::query()->where('status', 'completed')->count(),
+                'issuedRewards' => UserReward::query()->count(),
+                'activeMissions' => MissionInstance::query()->where('status', 'active')->count(),
             ],
             'latestVisits' => $latestVisits,
+            'campaignPerformance' => $campaignPerformance,
         ]);
     }
 }
