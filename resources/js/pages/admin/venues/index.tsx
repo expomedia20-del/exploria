@@ -349,6 +349,72 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                     >
                                         {({ processing, errors }) => (
                                             <>
+                                                <div className="grid gap-3 md:grid-cols-2">
+                                                    <label className="grid gap-1">
+                                                        <span className="text-xs font-medium">نوع مکان</span>
+                                                        <select
+                                                            name="venue_type"
+                                                            defaultValue={venue.locationProfile.venueType ?? 'mixed'}
+                                                            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                                        >
+                                                            {Object.entries(venueTypeLabels).map(([value, label]) => (
+                                                                <option key={value} value={value}>
+                                                                    {label}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                        {errors.venue_type ? <span className="text-xs text-destructive">{errors.venue_type}</span> : null}
+                                                    </label>
+                                                    <label className="grid gap-1">
+                                                        <span className="text-xs font-medium">مخاطب غالب</span>
+                                                        <input
+                                                            name="primary_audience"
+                                                            defaultValue={venue.locationProfile.primaryAudience ?? ''}
+                                                            placeholder="مثلا خانواده، کودک، گردشگر، نوجوان"
+                                                            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                                        />
+                                                        {errors.primary_audience ? <span className="text-xs text-destructive">{errors.primary_audience}</span> : null}
+                                                    </label>
+                                                </div>
+                                                <label className="grid gap-1">
+                                                    <span className="text-xs font-medium">لینک سایت رسمی یا منبع بررسی</span>
+                                                    <input
+                                                        name="official_website_url"
+                                                        defaultValue={venue.locationProfile.officialWebsiteUrl ?? ''}
+                                                        dir="ltr"
+                                                        placeholder="https://..."
+                                                        className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                                    />
+                                                    <span className="text-xs text-muted-foreground">
+                                                        ابتدا لینک منبع را ثبت کنید؛ سپس فهرست استخراج‌شده از سایت یا بررسی میدانی را در بخش افزودن سریع وارد و موارد مهم را در ردیف‌های پایین دسته‌بندی کنید.
+                                                    </span>
+                                                    {errors.official_website_url ? <span className="text-xs text-destructive">{errors.official_website_url}</span> : null}
+                                                </label>
+                                                <div className="grid gap-3 md:grid-cols-2">
+                                                    <label className="grid gap-1">
+                                                        <span className="text-xs font-medium">افزودن سریع امکانات و جاذبه‌های جدید</span>
+                                                        <textarea
+                                                            name="facilities_text"
+                                                            defaultValue=""
+                                                            placeholder="هر مورد در یک خط: پل طبیعت، باغ کتاب، گنبد مینا..."
+                                                            className="min-h-24 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                                        />
+                                                        <span className="text-xs text-muted-foreground">
+                                                            این لیست با ردیف‌های دسته‌بندی ادغام می‌شود و موارد تکراری دوباره ذخیره نمی‌شوند.
+                                                        </span>
+                                                        {errors.facilities_text ? <span className="text-xs text-destructive">{errors.facilities_text}</span> : null}
+                                                    </label>
+                                                    <label className="grid gap-1">
+                                                        <span className="text-xs font-medium">محدودیت‌ها و ملاحظات</span>
+                                                        <textarea
+                                                            name="constraints_text"
+                                                            defaultValue={lines(venue.locationProfile.constraints)}
+                                                            placeholder="هر مورد در یک خط: ازدحام، ساعت کاری، نیاز به مجوز..."
+                                                            className="min-h-24 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                                        />
+                                                        {errors.constraints_text ? <span className="text-xs text-destructive">{errors.constraints_text}</span> : null}
+                                                    </label>
+                                                </div>
                                                 <div className="grid gap-2">
                                                     <span className="text-xs font-medium">امکانات و جاذبه‌ها با کارکرد کمپینی</span>
                                                     <div className="grid gap-2">
@@ -428,72 +494,6 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                                             <p className="text-muted-foreground">هنوز امکان یا جاذبه‌ای برای این مکان ثبت نشده است.</p>
                                                         )}
                                                     </div>
-                                                </div>
-                                                <div className="grid gap-3 md:grid-cols-2">
-                                                    <label className="grid gap-1">
-                                                        <span className="text-xs font-medium">نوع مکان</span>
-                                                        <select
-                                                            name="venue_type"
-                                                            defaultValue={venue.locationProfile.venueType ?? 'mixed'}
-                                                            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                                                        >
-                                                            {Object.entries(venueTypeLabels).map(([value, label]) => (
-                                                                <option key={value} value={value}>
-                                                                    {label}
-                                                                </option>
-                                                            ))}
-                                                        </select>
-                                                        {errors.venue_type ? <span className="text-xs text-destructive">{errors.venue_type}</span> : null}
-                                                    </label>
-                                                    <label className="grid gap-1">
-                                                        <span className="text-xs font-medium">مخاطب غالب</span>
-                                                        <input
-                                                            name="primary_audience"
-                                                            defaultValue={venue.locationProfile.primaryAudience ?? ''}
-                                                            placeholder="مثلا خانواده، کودک، گردشگر، نوجوان"
-                                                            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                                                        />
-                                                        {errors.primary_audience ? <span className="text-xs text-destructive">{errors.primary_audience}</span> : null}
-                                                    </label>
-                                                </div>
-                                                <label className="grid gap-1">
-                                                    <span className="text-xs font-medium">لینک سایت رسمی یا منبع بررسی</span>
-                                                    <input
-                                                        name="official_website_url"
-                                                        defaultValue={venue.locationProfile.officialWebsiteUrl ?? ''}
-                                                        dir="ltr"
-                                                        placeholder="https://..."
-                                                        className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                                                    />
-                                                    <span className="text-xs text-muted-foreground">
-                                                        ابتدا لینک منبع را ثبت کنید؛ سپس فهرست استخراج‌شده از سایت یا بررسی میدانی را در بخش افزودن سریع وارد و موارد مهم را در ردیف‌های بالا دسته‌بندی کنید.
-                                                    </span>
-                                                    {errors.official_website_url ? <span className="text-xs text-destructive">{errors.official_website_url}</span> : null}
-                                                </label>
-                                                <div className="grid gap-3 md:grid-cols-2">
-                                                    <label className="grid gap-1">
-                                                        <span className="text-xs font-medium">افزودن سریع امکانات و جاذبه‌های جدید</span>
-                                                        <textarea
-                                                            name="facilities_text"
-                                                            defaultValue=""
-                                                            placeholder="هر مورد در یک خط: پل طبیعت، باغ کتاب، گنبد مینا..."
-                                                            className="min-h-24 rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                                        />
-                                                        <span className="text-xs text-muted-foreground">
-                                                            این لیست با ردیف‌های بالا ادغام می‌شود و موارد تکراری دوباره ذخیره نمی‌شوند.
-                                                        </span>
-                                                        {errors.facilities_text ? <span className="text-xs text-destructive">{errors.facilities_text}</span> : null}
-                                                    </label>
-                                                    <label className="grid gap-1">
-                                                        <span className="text-xs font-medium">محدودیت‌ها و ملاحظات</span>
-                                                        <textarea
-                                                            name="constraints_text"
-                                                            defaultValue={lines(venue.locationProfile.constraints)}
-                                                            placeholder="هر مورد در یک خط: ازدحام، ساعت کاری، نیاز به مجوز..."
-                                                            className="min-h-24 rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                                        />
-                                                        {errors.constraints_text ? <span className="text-xs text-destructive">{errors.constraints_text}</span> : null}
-                                                    </label>
                                                 </div>
                                                 <label className="grid gap-1">
                                                     <span className="text-xs font-medium">یادداشت بررسی دستی</span>
