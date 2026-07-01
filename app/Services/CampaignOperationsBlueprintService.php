@@ -239,7 +239,67 @@ class CampaignOperationsBlueprintService
                 'commercial' => ['title' => 'فعال سازی تجاری', 'items' => $participants->values()],
                 'media' => ['title' => 'تبلیغات و نمایشگرها', 'items' => $adRequests->merge($displayDevices)->values()],
             ],
+            'operationTimeline' => $this->operationTimeline($qrCodes, $missions, $rewards, $treasures, $participants),
         ];
+    }
+
+    /**
+     * @param Collection<int, array<string, mixed>> $qrCodes
+     * @param Collection<int, array<string, mixed>> $missions
+     * @param Collection<int, array<string, mixed>> $rewards
+     * @param Collection<int, array<string, mixed>> $treasures
+     * @param Collection<int, array<string, mixed>> $participants
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function operationTimeline(Collection $qrCodes, Collection $missions, Collection $rewards, Collection $treasures, Collection $participants): Collection
+    {
+        $stepIndexes = $missions
+            ->merge($rewards)
+            ->merge($treasures)
+            ->pluck('cycleStep.index')
+            ->filter(fn (mixed $index): bool => is_numeric($index) && (int) $index > 0)
+            ->map(fn (mixed $index): int => (int) $index)
+            ->unique()
+            ->sort()
+            ->values();
+
+        if ($stepIndexes->isEmpty()) {
+            $stepIndexes = collect([1]);
+        }
+
+        $readyParticipants = $participants->where('onboardingStatus', 'ready')->values();
+
+        return $stepIndexes->map(function (int $stepIndex) use ($qrCodes, $missions, $rewards, $treasures, $readyParticipants): array {
+            $stepMissions = $missions->filter(fn (array $item): bool => (int) ($item['cycleStep']['index'] ?? 0) === $stepIndex)->values();
+            $stepRewards = $rewards->filter(fn (array $item): bool => (int) ($item['cycleStep']['index'] ?? 0) === $stepIndex)->values();
+            $stepTreasures = $treasures->filter(fn (array $item): bool => (int) ($item['cycleStep']['index'] ?? 0) === $stepIndex)->values();
+            $approvedRewards = $stepRewards->where('approvalStatus', 'approved')->count();
+            $pendingRewards = $stepRewards->where('approvalStatus', 'pending_review')->count();
+
+            $checks = [
+                ['key' => 'entry', 'title' => 'QR ورود', 'complete' => $stepIndex !== 1 || $qrCodes->isNotEmpty(), 'count' => $stepIndex === 1 ? $qrCodes->count() : 0, 'action' => $stepIndex === 1 ? 'برای شروع مسیر حداقل یک QR معتبر ثبت کنید.' : 'ورود مسیر از گام اول کنترل می‌شود.'],
+                ['key' => 'mission', 'title' => 'ماموریت گام', 'complete' => $stepMissions->isNotEmpty(), 'count' => $stepMissions->count(), 'action' => 'برای این گام حداقل یک ماموریت مرتبط با چرخه ثبت کنید.'],
+                ['key' => 'incentive', 'title' => 'پاداش یا گنج', 'complete' => $approvedRewards > 0 || $stepTreasures->isNotEmpty(), 'count' => $approvedRewards + $stepTreasures->count(), 'action' => 'برای این گام یک پاداش تاییدشده یا گنج قابل کشف تعریف کنید.'],
+                ['key' => 'participant', 'title' => 'عضو آماده اجرا', 'complete' => $readyParticipants->isNotEmpty(), 'count' => $readyParticipants->count(), 'action' => 'حداقل یک فروشگاه، شریک یا اسپانسر آماده اجرا لازم است.'],
+            ];
+
+            $label = (string) ($stepMissions->first()['cycleStep']['label']
+                ?? $stepRewards->first()['cycleStep']['label']
+                ?? $stepTreasures->first()['cycleStep']['label']
+                ?? ('گام '.$stepIndex));
+
+            return [
+                'index' => $stepIndex,
+                'label' => $label,
+                'status' => collect($checks)->every(fn (array $check): bool => (bool) $check['complete']) && $pendingRewards === 0 ? 'ready' : 'needs_attention',
+                'entryItems' => $stepIndex === 1 ? $qrCodes->values() : collect(),
+                'missions' => $stepMissions,
+                'incentives' => $stepRewards->merge($stepTreasures)->values(),
+                'participants' => $readyParticipants->take(4)->values(),
+                'pendingRewards' => $pendingRewards,
+                'checks' => $checks,
+            ];
+        })->values();
     }
 
     /** @param array<string, mixed> $scope @return Collection<int, array<string, mixed>> */
@@ -341,6 +401,10 @@ class CampaignOperationsBlueprintService
                 'source' => $reward->metadata['source'] ?? null,
                 'rewardTier' => $reward->metadata['reward_tier'] ?? null,
                 'rewardOption' => $reward->metadata['reward_option'] ?? null,
+                'cycleStep' => [
+                    'index' => $reward->metadata['cycle_step_index'] ?? null,
+                    'label' => $reward->metadata['cycle_step_label'] ?? null,
+                ],
                 'pointCost' => $reward->point_cost,
                 'partner' => $reward->partnerAccount ? ['id' => $reward->partnerAccount->id, 'code' => $reward->partnerAccount->code, 'name' => $reward->partnerAccount->name, 'partnerType' => $reward->partnerAccount->partner_type] : null,
             ]);

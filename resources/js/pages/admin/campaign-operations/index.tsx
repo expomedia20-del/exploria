@@ -83,6 +83,24 @@ type JourneyItem = {
 
 type JourneySection = { title: string; items: JourneyItem[] | Participant[] };
 
+type OperationTimelineStep = {
+    index: number;
+    label: string;
+    status: 'ready' | 'needs_attention';
+    entryItems: JourneyItem[];
+    missions: JourneyItem[];
+    incentives: JourneyItem[];
+    participants: Participant[];
+    pendingRewards: number;
+    checks: {
+        key: string;
+        title: string;
+        complete: boolean;
+        count: number;
+        action: string;
+    }[];
+};
+
 type AlignmentReview = {
     status: 'ready' | 'needs_attention' | 'unchecked';
     expectedSteps: number;
@@ -147,6 +165,7 @@ type CampaignBlueprint = {
         commercial: JourneySection;
         media: JourneySection;
     };
+    operationTimeline: OperationTimelineStep[];
 };
 
 
@@ -839,6 +858,103 @@ export default function CampaignOperationsIndex({ stats, campaigns, selectedBlue
                                             <p className="mt-1 font-semibold">{fa(Number(value))}</p>
                                         </div>
                                     ))}
+                                </div>
+                            </div>
+
+                            <div className="border-b border-border/70 p-4 dark:border-sidebar-border">
+                                <div className="mb-3 flex flex-col gap-1">
+                                    <h3 className="font-semibold">خط زمان عملیاتی گام‌های چرخه</h3>
+                                    <p className="text-sm text-muted-foreground">
+                                        این نما نشان می‌دهد هر گام چرخه با کدام QR، مأموریت، پاداش/گنج و عضو آماده اجرا پشتیبانی می‌شود.
+                                    </p>
+                                </div>
+                                <div className="grid gap-3 xl:grid-cols-2">
+                                    {campaign.operationTimeline.map((step) => {
+                                        const stepItems = [...step.entryItems, ...step.missions, ...step.incentives];
+
+                                        return (
+                                            <article key={step.index} className="rounded-lg border border-border/80 bg-card/75 p-4 text-sm shadow-sm">
+                                                <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                                                    <div>
+                                                        <p className="text-xs text-muted-foreground">گام {fa(step.index)}</p>
+                                                        <h4 className="mt-1 font-semibold">{step.label}</h4>
+                                                    </div>
+                                                    <span className={step.status === 'ready' ? 'rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200' : 'rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800 dark:bg-amber-950 dark:text-amber-200'}>
+                                                        {step.status === 'ready' ? 'آماده اجرا' : 'نیازمند تکمیل'}
+                                                    </span>
+                                                </div>
+
+                                                <div className="mt-3 grid gap-2 text-xs sm:grid-cols-4">
+                                                    {step.checks.map((check) => (
+                                                        <div key={`${step.index}-${check.key}`} className="rounded-md bg-muted/45 px-2.5 py-2">
+                                                            <div className="flex items-center justify-between gap-2">
+                                                                <span className="font-medium">{check.title}</span>
+                                                                <span className={check.complete ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300'}>
+                                                                    {check.complete ? 'کامل' : 'ناقص'}
+                                                                </span>
+                                                            </div>
+                                                            <p className="mt-1 text-muted-foreground">{fa(check.count)}</p>
+                                                        </div>
+                                                    ))}
+                                                </div>
+
+                                                <div className="mt-3 grid gap-2 text-xs text-muted-foreground md:grid-cols-2">
+                                                    <div className="rounded-md bg-background px-3 py-2">
+                                                        <p className="font-medium text-foreground">اقلام مسیر</p>
+                                                        <div className="mt-2 space-y-1">
+                                                            {stepItems.length > 0 ? stepItems.slice(0, 5).map((item) => (
+                                                                <button
+                                                                    key={`${step.index}-${item.type}-${item.id}`}
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        setSelectedOperation({
+                                                                            item,
+                                                                            sectionTitle: step.label,
+                                                                            href: itemHref(item),
+                                                                            guide: itemOperationalGuide(item, campaign),
+                                                                            campaign,
+                                                                        })
+                                                                    }
+                                                                    className="block w-full truncate rounded-sm text-right hover:text-foreground"
+                                                                >
+                                                                    {itemKind(item)}: {itemTitle(item)}
+                                                                </button>
+                                                            )) : <p>هنوز آیتمی برای این گام وصل نشده است.</p>}
+                                                        </div>
+                                                    </div>
+                                                    <div className="rounded-md bg-background px-3 py-2">
+                                                        <p className="font-medium text-foreground">اعضای آماده اجرا</p>
+                                                        <div className="mt-2 space-y-1">
+                                                            {step.participants.length > 0 ? step.participants.map((participant) => (
+                                                                <button
+                                                                    key={`${step.index}-participant-${participant.id}`}
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        setSelectedOperation({
+                                                                            item: participant,
+                                                                            sectionTitle: step.label,
+                                                                            href: '/admin/campaign-participants',
+                                                                            guide: itemOperationalGuide(participant, campaign),
+                                                                            campaign,
+                                                                        })
+                                                                    }
+                                                                    className="block w-full truncate rounded-sm text-right hover:text-foreground"
+                                                                >
+                                                                    {participant.partner?.name ?? 'عضو بدون شریک'} · {label(roleLabels, participant.participationRole)}
+                                                                </button>
+                                                            )) : <p>عضو آماده اجرا ثبت نشده است.</p>}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {step.pendingRewards > 0 ? (
+                                                    <p className="mt-3 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+                                                        {fa(step.pendingRewards)} پیشنهاد پاداش این گام هنوز در انتظار بازبینی است.
+                                                    </p>
+                                                ) : null}
+                                            </article>
+                                        );
+                                    })}
                                 </div>
                             </div>
 

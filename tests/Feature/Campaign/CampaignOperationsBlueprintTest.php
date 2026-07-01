@@ -34,7 +34,9 @@ class CampaignOperationsBlueprintTest extends TestCase
             ->assertJsonPath('data.campaigns.0.stats.missions', 4)
             ->assertJsonPath('data.campaigns.0.stats.readyParticipants', 2)
             ->assertJsonPath('data.campaigns.0.operationalReview.status', 'needs_attention')
-            ->assertJsonPath('data.campaigns.0.operationalReview.checks.0.key', 'qr');
+            ->assertJsonPath('data.campaigns.0.operationalReview.checks.0.key', 'qr')
+            ->assertJsonPath('data.campaigns.0.operationTimeline.0.index', 1)
+            ->assertJsonPath('data.campaigns.0.operationTimeline.0.checks.0.key', 'entry');
     }
 
     public function test_hub_manager_reads_only_scoped_campaign_operations(): void
