@@ -12,6 +12,7 @@ import {
     Route,
     Sparkles,
     Store,
+    TicketCheck,
     Trophy,
 } from 'lucide-react';
 import { CampaignContextNav } from '@/components/campaign-context-nav';
@@ -131,6 +132,25 @@ type OperationalReview = {
     }[];
 };
 
+type RedemptionOverview = {
+    stats: {
+        total: number;
+        pending: number;
+        confirmed: number;
+    };
+    latest: {
+        id: string;
+        redemptionCode: string;
+        status: string;
+        rewardName: string | null;
+        rewardType: string | null;
+        partnerName: string | null;
+        visitorName: string | null;
+        redeemedAt: string | null;
+        createdAt: string | null;
+    }[];
+};
+
 type CampaignBlueprint = {
     id: string;
     code: string;
@@ -157,6 +177,7 @@ type CampaignBlueprint = {
         displayDevices: number;
     };
     participantsByHub: HubGroup[];
+    redemptionOverview: RedemptionOverview;
     sponsors: { internal: Participant[]; external: Participant[] };
     journey: {
         entry: JourneySection;
@@ -259,6 +280,17 @@ const sectionIcons = {
 
 function fa(value: number) {
     return value.toLocaleString('fa-IR');
+}
+
+function formatDate(value: string | null) {
+    if (!value) {
+        return '-';
+    }
+
+    return new Intl.DateTimeFormat('fa-IR', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+    }).format(new Date(value));
 }
 
 function label(map: Record<string, string>, value?: string) {
@@ -1065,6 +1097,54 @@ export default function CampaignOperationsIndex({ stats, campaigns, selectedBlue
                                                     </p>
                                                 </button>
                                             ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm">
+                                        <div className="mb-3 flex items-center gap-2">
+                                            <TicketCheck className="size-4 text-muted-foreground" />
+                                            <h3 className="text-sm font-semibold">مصرف پاداش‌ها</h3>
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-2 text-xs">
+                                            <div className="rounded-md bg-muted/50 px-2 py-2">
+                                                <p className="text-muted-foreground">کل کدها</p>
+                                                <p className="mt-1 font-semibold">{fa(campaign.redemptionOverview.stats.total)}</p>
+                                            </div>
+                                            <div className="rounded-md bg-amber-50 px-2 py-2 text-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+                                                <p>منتظر فروشگاه</p>
+                                                <p className="mt-1 font-semibold">{fa(campaign.redemptionOverview.stats.pending)}</p>
+                                            </div>
+                                            <div className="rounded-md bg-emerald-50 px-2 py-2 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-100">
+                                                <p>تایید شده</p>
+                                                <p className="mt-1 font-semibold">{fa(campaign.redemptionOverview.stats.confirmed)}</p>
+                                            </div>
+                                        </div>
+                                        <div className="mt-3 space-y-2">
+                                            {campaign.redemptionOverview.latest.length > 0 ? (
+                                                campaign.redemptionOverview.latest.map((redemption) => (
+                                                    <div key={redemption.id} className="rounded-md bg-background px-2.5 py-2 text-xs">
+                                                        <div className="flex items-start justify-between gap-2">
+                                                            <div className="min-w-0">
+                                                                <p className="truncate font-medium">{redemption.rewardName ?? 'پاداش ثبت نشده'}</p>
+                                                                <p className="mt-1 truncate text-muted-foreground">
+                                                                    {redemption.partnerName ?? 'شریک ثبت نشده'} · {redemption.visitorName ?? 'کاربر ثبت نشده'}
+                                                                </p>
+                                                            </div>
+                                                            <span className={redemption.status === 'confirmed' ? 'shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200' : 'shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-amber-900 dark:bg-amber-950 dark:text-amber-100'}>
+                                                                {redemption.status === 'confirmed' ? 'تایید شده' : 'در انتظار'}
+                                                            </span>
+                                                        </div>
+                                                        <div className="mt-2 flex items-center justify-between gap-2 text-muted-foreground">
+                                                            <span dir="ltr">{redemption.redemptionCode}</span>
+                                                            <span>{formatDate(redemption.redeemedAt ?? redemption.createdAt)}</span>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <p className="rounded-md bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                                                    هنوز کد مصرفی برای پاداش‌های این کمپین صادر نشده است.
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
 

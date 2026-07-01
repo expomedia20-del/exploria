@@ -9,6 +9,7 @@ use App\Models\DisplayDevice;
 use App\Models\MissionInstance;
 use App\Models\QrCode;
 use App\Models\RewardDefinition;
+use App\Models\RewardRedemption;
 use App\Models\Treasure;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
@@ -228,6 +229,7 @@ class CampaignOperationsBlueprintService
             'venue' => $campaign->venue ? ['id' => $campaign->venue->id, 'code' => $campaign->venue->code, 'name' => $campaign->venue->name] : null,
             'stats' => $stats,
             'participantsByHub' => $this->participantsByHub($participants),
+            'redemptionOverview' => $this->redemptionOverview($campaign),
             'sponsors' => [
                 'internal' => $internalSponsors->values(),
                 'external' => $externalSponsors->values(),
@@ -346,6 +348,42 @@ class CampaignOperationsBlueprintService
                 'participants' => $items->values(),
             ])
             ->values();
+    }
+
+    /** @return array<string, mixed> */
+    private function redemptionOverview(Campaign $campaign): array
+    {
+        $redemptions = RewardRedemption::query()
+            ->whereHas('userReward', fn (Builder $query) => $query->where('campaign_id', $campaign->id))
+            ->with([
+                'partnerAccount:id,code,name,partner_type',
+                'user:id,name',
+                'userReward.rewardDefinition:id,code,name,reward_type',
+            ])
+            ->latest()
+            ->get();
+
+        return [
+            'stats' => [
+                'total' => $redemptions->count(),
+                'pending' => $redemptions->where('status', 'pending')->count(),
+                'confirmed' => $redemptions->where('status', 'confirmed')->count(),
+            ],
+            'latest' => $redemptions
+                ->take(6)
+                ->map(fn (RewardRedemption $redemption): array => [
+                    'id' => $redemption->id,
+                    'redemptionCode' => $redemption->redemption_code,
+                    'status' => $redemption->status,
+                    'rewardName' => $redemption->userReward?->rewardDefinition?->name,
+                    'rewardType' => $redemption->userReward?->rewardDefinition?->reward_type,
+                    'partnerName' => $redemption->partnerAccount?->name,
+                    'visitorName' => $redemption->user?->name,
+                    'redeemedAt' => $redemption->redeemed_at?->toIso8601String(),
+                    'createdAt' => $redemption->created_at?->toIso8601String(),
+                ])
+                ->values(),
+        ];
     }
 
     /** @param array<string, mixed> $scope @return Collection<int, array<string, mixed>> */
