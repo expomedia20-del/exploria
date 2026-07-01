@@ -59,6 +59,11 @@ class PilotLocationQrTest extends TestCase
                 ->component('scan/landing')
                 ->where('qr.venueName', 'اکوپارک عباس‌آباد')
                 ->where('qr.isDemo', true)
+                ->has('missionPreview', 4)
+                ->where('missionPreview.0.title', 'ورود از QR در دروازه اصلی')
+                ->where('missionPreview.0.points', 120)
+                ->where('missionPreview.0.displayStep', 1)
+                ->has('missionPreview.0.evidence')
                 ->has('rewardOptions'));
     }
 
