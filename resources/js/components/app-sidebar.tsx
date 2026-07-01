@@ -62,7 +62,7 @@ const mainNavItems: RoleAwareNavItem[] = [
         group: 'نمای کلی',
     },
     {
-        title: 'شناخت‌نامه مکان',
+        title: 'ارزیابی مکان',
         href: '/admin/venues',
         icon: MapPinned,
         group: '۱. طراحی و شروع کمپین',
