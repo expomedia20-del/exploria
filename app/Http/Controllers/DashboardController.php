@@ -33,6 +33,23 @@ class DashboardController extends Controller
                 'status' => $visit->status,
                 'occurredAt' => $visit->occurred_at->toIso8601String(),
             ]);
+        $latestRedemptions = RewardRedemption::query()
+            ->with(['partnerAccount:id,name', 'user:id,name', 'userReward.rewardDefinition:id,name,campaign_id', 'userReward.campaign:id,code,name'])
+            ->latest()
+            ->limit(8)
+            ->get()
+            ->map(fn (RewardRedemption $redemption): array => [
+                'id' => $redemption->id,
+                'redemptionCode' => $redemption->redemption_code,
+                'status' => $redemption->status,
+                'rewardName' => $redemption->userReward?->rewardDefinition?->name,
+                'campaignName' => $redemption->userReward?->campaign?->name,
+                'campaignCode' => $redemption->userReward?->campaign?->code,
+                'partnerName' => $redemption->partnerAccount?->name,
+                'visitorName' => $redemption->user?->name,
+                'redeemedAt' => $redemption->redeemed_at?->toIso8601String(),
+                'createdAt' => $redemption->created_at?->toIso8601String(),
+            ]);
         $campaignPerformance = Campaign::query()
             ->with('venue:id,name')
             ->withCount(['visits', 'qrCodes', 'missionInstances', 'userRewards'])
@@ -89,6 +106,7 @@ class DashboardController extends Controller
                 'activeMissions' => MissionInstance::query()->where('status', 'active')->count(),
             ],
             'latestVisits' => $latestVisits,
+            'latestRedemptions' => $latestRedemptions,
             'campaignPerformance' => $campaignPerformance,
         ]);
     }

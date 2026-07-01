@@ -28,7 +28,21 @@ type LatestVisit = {
 type Props = {
     stats: Stats;
     latestVisits: LatestVisit[];
+    latestRedemptions: LatestRedemption[];
     campaignPerformance: CampaignPerformance[];
+};
+
+type LatestRedemption = {
+    id: string;
+    redemptionCode: string;
+    status: string;
+    rewardName: string | null;
+    campaignName: string | null;
+    campaignCode: string | null;
+    partnerName: string | null;
+    visitorName: string | null;
+    redeemedAt: string | null;
+    createdAt: string | null;
 };
 
 type CampaignPerformance = {
@@ -60,6 +74,13 @@ const statLabels: Array<[keyof Stats, string, string]> = [
     ['confirmedRedemptions', 'تحویل‌شده', 'پاداش‌هایی که شریک تحویل آن‌ها را تایید کرده است'],
 ];
 
+const redemptionStatusLabels: Record<string, string> = {
+    pending: 'در انتظار تحویل',
+    confirmed: 'تحویل‌شده',
+    redeemed: 'مصرف شده',
+    expired: 'منقضی شده',
+};
+
 function formatDate(value: string) {
     return new Intl.DateTimeFormat('fa-IR', {
         dateStyle: 'medium',
@@ -67,7 +88,7 @@ function formatDate(value: string) {
     }).format(new Date(value));
 }
 
-export default function Dashboard({ stats, latestVisits, campaignPerformance }: Props) {
+export default function Dashboard({ stats, latestVisits, latestRedemptions, campaignPerformance }: Props) {
     return (
         <>
             <Head title="داشبورد پایلوت" />
@@ -160,6 +181,50 @@ export default function Dashboard({ stats, latestVisits, campaignPerformance }: 
                                         <Link className="inline-flex h-9 items-center rounded-md border border-input bg-background px-3 text-sm font-medium hover:bg-accent hover:text-accent-foreground" href={`/admin/campaign-operations?campaign=${campaign.code}`}>
                                             نقشه عملیات
                                         </Link>
+                                    </div>
+                                </article>
+                            ))}
+                        </div>
+                    )}
+                </section>
+
+                <section className="exploria-panel">
+                    <div className="border-b border-border/70 p-4 dark:border-sidebar-border">
+                        <h2 className="text-lg font-semibold">آخرین وضعیت تحویل پاداش</h2>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                            این لیست برای پیگیری سریع کدهای تحویل، فروشگاه مسئول و وضعیت مصرف پاداش است.
+                        </p>
+                    </div>
+
+                    {latestRedemptions.length === 0 ? (
+                        <div className="p-8 text-center text-sm text-muted-foreground">
+                            هنوز پاداشی برای تحویل به فروشگاه یا اسپانسر نرسیده است.
+                        </div>
+                    ) : (
+                        <div className="divide-y divide-border/70">
+                            {latestRedemptions.map((redemption) => (
+                                <article key={redemption.id} className="grid gap-3 p-4 lg:grid-cols-[1fr_auto]">
+                                    <div>
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <p className="font-medium">{redemption.rewardName ?? 'پاداش ثبت نشده'}</p>
+                                            <span className={redemption.status === 'confirmed' ? 'rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200' : 'rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-900 dark:bg-amber-950 dark:text-amber-100'}>
+                                                {redemptionStatusLabels[redemption.status] ?? redemption.status}
+                                            </span>
+                                        </div>
+                                        <p className="mt-1 text-sm text-muted-foreground">
+                                            {redemption.partnerName ?? 'شریک ثبت نشده'} · {redemption.visitorName ?? 'کاربر ثبت نشده'} · {redemption.campaignName ?? 'کمپین ثبت نشده'}
+                                        </p>
+                                        <p className="mt-2 font-mono text-xs text-muted-foreground" dir="ltr">
+                                            {redemption.redemptionCode}
+                                        </p>
+                                    </div>
+                                    <div className="flex flex-col gap-2 text-sm text-muted-foreground lg:items-end">
+                                        <p>{formatDate(redemption.redeemedAt ?? redemption.createdAt ?? new Date().toISOString())}</p>
+                                        {redemption.campaignCode ? (
+                                            <Link className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-xs font-medium hover:bg-accent hover:text-accent-foreground" href={`/admin/campaign-operations?campaign=${redemption.campaignCode}`}>
+                                                نقشه عملیات
+                                            </Link>
+                                        ) : null}
                                     </div>
                                 </article>
                             ))}
