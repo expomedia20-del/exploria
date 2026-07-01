@@ -356,7 +356,7 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                                     <span className="text-xs font-medium">امکانات و جاذبه‌ها با کارکرد کمپینی</span>
                                                     <div className="grid gap-2">
                                                         {facilityRows(venue.locationProfile.facilities).map((facility, index) => (
-                                                            <div key={`${venue.id}-facility-${index}`} className="grid gap-2 rounded-md bg-muted/30 p-2 md:grid-cols-[1fr_0.85fr_1.15fr_0.7fr_1fr]">
+                                                            <div key={`${venue.id}-facility-${index}`} className="grid gap-2 rounded-md bg-muted/30 p-2 xl:grid-cols-[minmax(160px,1fr)_minmax(150px,0.9fr)_minmax(260px,1.35fr)_minmax(120px,0.65fr)_minmax(180px,1fr)]">
                                                                 <input
                                                                     name={`facilities[${index}][name]`}
                                                                     defaultValue={facility.name}
@@ -373,16 +373,17 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                                                         <option key={value} value={value}>{label}</option>
                                                                     ))}
                                                                 </select>
-                                                                <div className="grid grid-cols-2 gap-1 rounded-md border border-input bg-background px-2 py-1 text-xs">
+                                                                <div className="grid gap-1 rounded-md border border-input bg-background p-2 text-xs sm:grid-cols-2">
                                                                     {Object.entries(campaignUseLabels).map(([value, label]) => (
-                                                                        <label key={value} className="inline-flex items-center gap-1">
+                                                                        <label key={value} className="flex min-h-7 items-center gap-2 rounded-sm px-1 leading-5">
                                                                             <input
                                                                                 type="checkbox"
                                                                                 name={`facilities[${index}][campaign_uses][]`}
                                                                                 value={value}
                                                                                 defaultChecked={facility.campaignUses.includes(value)}
+                                                                                className="shrink-0"
                                                                             />
-                                                                            <span>{label}</span>
+                                                                            <span className="whitespace-normal">{label}</span>
                                                                         </label>
                                                                     ))}
                                                                 </div>
@@ -405,6 +406,31 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                                         ))}
                                                     </div>
                                                     {errors.facilities ? <span className="text-xs text-destructive">{errors.facilities}</span> : null}
+                                                    <div className="rounded-md border border-sidebar-border/70 bg-background p-3 text-xs dark:border-sidebar-border">
+                                                        <div className="mb-2 flex items-center justify-between gap-2">
+                                                            <span className="font-medium">لیست کامل امکانات ثبت‌شده</span>
+                                                            <span className="text-muted-foreground">{venue.locationProfile.facilities.length.toLocaleString('fa-IR')} مورد</span>
+                                                        </div>
+                                                        {venue.locationProfile.facilities.length > 0 ? (
+                                                            <div className="grid gap-2">
+                                                                {venue.locationProfile.facilities.map((facility) => (
+                                                                    <div key={`${venue.id}-registered-${facility.name}`} className="grid gap-2 rounded-md bg-muted/35 p-2 md:grid-cols-[1fr_0.8fr_1.2fr_0.6fr]">
+                                                                        <span className="font-medium">{facility.name}</span>
+                                                                        <span className="text-muted-foreground">{facility.function ? facilityFunctionLabels[facility.function] ?? facility.function : 'کارکرد ثبت نشده'}</span>
+                                                                        <span className="text-muted-foreground">
+                                                                            {facility.campaignUses.length > 0
+                                                                                ? facility.campaignUses.map((use) => campaignUseLabels[use] ?? use).join('، ')
+                                                                                : 'قابلیت کمپینی ثبت نشده'}
+                                                                        </span>
+                                                                        <span className="text-muted-foreground">{priorityLabels[facility.priority] ?? facility.priority}</span>
+                                                                        {facility.notes ? <span className="text-muted-foreground md:col-span-4">{facility.notes}</span> : null}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        ) : (
+                                                            <p className="text-muted-foreground">هنوز امکان یا جاذبه‌ای برای این مکان ثبت نشده است.</p>
+                                                        )}
+                                                    </div>
                                                 </div>
                                                 <div className="grid gap-3 md:grid-cols-2">
                                                     <label className="grid gap-1">
