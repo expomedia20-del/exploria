@@ -167,6 +167,40 @@ function formatDateTimeLocal(value: string | null) {
     return date.toISOString().slice(0, 16);
 }
 
+function describeRewardOption(option: string, step: MissionPlanStep | null) {
+    if (!option) {
+        return 'اگر گزینه آزاد را انتخاب کنید، ادمین بعداً نوع دقیق جایزه یا ترکیب قابل اجرا را با شما نهایی می‌کند.';
+    }
+
+    const parts: string[] = [];
+    if (option.includes('ارجاع') || option.includes('همراه')) {
+        parts.push('یعنی پاداش وقتی معنی دارد که کاربر یک نفر دیگر را همراه کند یا دعوت کند');
+    }
+    if (option.includes('رأی') || option.includes('رای') || option.includes('نظر') || option.includes('پاسخ')) {
+        parts.push('و کاربر در همان گام رأی، نظر یا پاسخ خود را ثبت کرده باشد');
+    }
+    if (option.includes('کوپن') || option.includes('تخفیف')) {
+        parts.push('پس پیشنهاد شما می‌تواند کوپن، تخفیف یا مزیت خرید قابل مصرف باشد');
+    }
+    if (option.includes('امتیاز')) {
+        parts.push('پس پیشنهاد می‌تواند ارزش افزوده‌ای باشد که بعد از انجام گام به امتیاز یا مزیت کاربر اضافه می‌شود');
+    }
+    if (option.includes('نشان')) {
+        parts.push('پس پیشنهاد بیشتر نقش یادگاری، افتخار یا مزیت نمادین برای کاربر دارد');
+    }
+    if (option.includes('گنج')) {
+        parts.push('پس پیشنهاد باید حس کشف یا جایزه پنهان داشته باشد و بعد از تکمیل شرط گام فعال شود');
+    }
+
+    if (parts.length > 0) {
+        return parts.join('؛ ') + '.';
+    }
+
+    return step
+        ? `یعنی پیشنهاد شما باید به اجرای گام «${step.userStep}» کمک کند و برای همین بخش از مسیر کاربر قابل استفاده باشد.`
+        : 'یعنی پیشنهاد شما باید با همین گزینه پاداش و شرایط اجرایی کمپین همخوان باشد.';
+}
+
 function Stat({
     icon: Icon,
     label,
@@ -609,6 +643,8 @@ export default function PartnerDashboard({
                                         </select>
                                         <p className="text-xs text-muted-foreground">
                                             این گزینه‌ها مربوط به {selectedStep ? `گام ${selectedStep.index.toLocaleString('fa-IR')}` : 'گام انتخاب‌شده'} و سطح {selectedTier?.level ?? '-'} هستند.
+                                            {' '}
+                                            {describeRewardOption(selectedRewardOptionLabel, selectedStep)}
                                         </p>
                                         <InputError message={errors.reward_option} />
                                     </div>
