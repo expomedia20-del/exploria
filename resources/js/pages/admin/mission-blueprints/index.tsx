@@ -78,6 +78,16 @@ type VenueDesignContext = {
         };
         designAssets: Record<string, VenueDesignFacility[]>;
         topFacilities: VenueDesignFacility[];
+        templateRecommendations: Array<{
+            code: string;
+            title: string;
+            family: string;
+            launchPhase: string;
+            matchScore: number;
+            matchedUses: string[];
+            reason: string;
+            buildUrl: string;
+        }>;
     }>;
 };
 
@@ -195,6 +205,46 @@ function VenueDesignContextPanel({ context }: { context: VenueDesignContext }) {
                                         </div>
                                     );
                                 })}
+                            </div>
+
+                            <div className="mt-3 rounded-md border border-dashed border-primary/30 bg-primary/5 p-3">
+                                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                                    <div>
+                                        <p className="text-xs font-semibold text-primary">پیشنهاد الگو از شناخت‌نامه این مکان</p>
+                                        <p className="mt-1 text-xs leading-5 text-muted-foreground">سیستم بر اساس کارکرد امکانات و جاذبه‌ها، الگوهای آماده مناسب را رتبه‌بندی می‌کند.</p>
+                                    </div>
+                                    <Sparkles className="size-4 text-primary" />
+                                </div>
+                                {venue.templateRecommendations.length > 0 ? (
+                                    <div className="mt-3 grid gap-2">
+                                        {venue.templateRecommendations.map((recommendation) => (
+                                            <article key={recommendation.code} className="rounded-md border border-border/70 bg-background/80 p-2">
+                                                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                                    <div>
+                                                        <h4 className="text-xs font-semibold leading-5">{recommendation.title}</h4>
+                                                        <p className="mt-1 text-[11px] text-muted-foreground" dir="ltr">{recommendation.code}</p>
+                                                    </div>
+                                                    <Chip>امتیاز تطبیق {fa(recommendation.matchScore)}</Chip>
+                                                </div>
+                                                <p className="mt-2 text-xs leading-5 text-muted-foreground">{recommendation.reason}</p>
+                                                <div className="mt-2 flex flex-wrap gap-1.5">
+                                                    {recommendation.matchedUses.map((use) => (
+                                                        <Chip key={`${recommendation.code}-${use}`}>{context.campaignUseLabels[use] ?? use}</Chip>
+                                                    ))}
+                                                </div>
+                                                <div className="mt-2">
+                                                    <Button asChild variant="outline" className="h-8 text-xs">
+                                                        <Link href={recommendation.buildUrl}>شروع ساخت کمپین با این الگو</Link>
+                                                    </Button>
+                                                </div>
+                                            </article>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="mt-3 rounded-md bg-background/80 p-2 text-xs text-muted-foreground">
+                                        برای پیشنهاد خودکار الگو، حداقل چند امکان/جاذبه را با کارکرد کمپینی مشخص کنید.
+                                    </p>
+                                )}
                             </div>
 
                             <div className="mt-3 flex flex-wrap gap-2">

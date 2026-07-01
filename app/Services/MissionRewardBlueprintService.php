@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Collection;
+
 class MissionRewardBlueprintService
 {
     public function __construct(private readonly VenueDesignContextService $venueDesignContext) {}
@@ -22,6 +24,7 @@ class MissionRewardBlueprintService
     public function overview(): array
     {
         $templates = collect($this->templates())->map(fn (array $template) => $this->enrichTemplate($template));
+        $venueDesignContext = $this->withTemplateRecommendations($this->venueDesignContext->overview(), $templates);
 
         return [
             'stats' => [
@@ -34,11 +37,114 @@ class MissionRewardBlueprintService
             'principles' => $this->principles(),
             'designFlow' => $this->designFlow(),
             'templates' => $templates->values(),
-            'venueDesignContext' => $this->venueDesignContext->overview(),
+            'venueDesignContext' => $venueDesignContext,
             'scoringMatrix' => $this->scoringMatrix(),
             'rewardVault' => $this->rewardVault(),
             'globalPatterns' => $this->globalPatterns(),
         ];
+    }
+
+    /** @param array<string, mixed> $context @param \Illuminate\Support\Collection<int, array<string, mixed>> $templates @return array<string, mixed> */
+    private function withTemplateRecommendations(array $context, Collection $templates): array
+    {
+        $context['venues'] = collect($context['venues'] ?? [])
+            ->map(function (array $venue) use ($templates): array {
+                $venue['templateRecommendations'] = $this->templateRecommendationsForVenue($venue, $templates);
+
+                return $venue;
+            })
+            ->all();
+
+        return $context;
+    }
+
+    /** @param array<string, mixed> $venue @param \Illuminate\Support\Collection<int, array<string, mixed>> $templates @return array<int, array<string, mixed>> */
+    private function templateRecommendationsForVenue(array $venue, Collection $templates): array
+    {
+        $assets = collect($venue['designAssets'] ?? []);
+        $useCounts = $assets
+            ->map(fn (mixed $items): int => is_array($items) ? count($items) : 0)
+            ->filter(fn (int $count): bool => $count > 0);
+
+        if ($useCounts->isEmpty()) {
+            return [];
+        }
+
+        $topUses = $useCounts->sortDesc()->keys()->take(5)->values()->all();
+
+        return $templates
+            ->map(function (array $template) use ($topUses, $venue): array {
+                $score = $this->templateVenueScore($template, $topUses, $venue);
+
+                return [
+                    'code' => $template['code'],
+                    'title' => $template['title'],
+                    'family' => $template['family'],
+                    'launchPhase' => $template['launchPhase'],
+                    'matchScore' => $score,
+                    'matchedUses' => $topUses,
+                    'reason' => $this->recommendationReason($topUses),
+                    'buildUrl' => '/admin/campaigns?blueprint='.$template['code'].'&blueprint_action=build',
+                ];
+            })
+            ->filter(fn (array $recommendation): bool => $recommendation['matchScore'] > 0)
+            ->sortByDesc('matchScore')
+            ->take(3)
+            ->values()
+            ->all();
+    }
+
+    /** @param array<string, mixed> $template @param array<int, string> $topUses @param array<string, mixed> $venue */
+    private function templateVenueScore(array $template, array $topUses, array $venue): int
+    {
+        $code = strtolower((string) $template['code']);
+        $score = max(0, 120 - ((int) ($template['mvpPriority'] ?? 99) * 4));
+        $facilities = collect($venue['topFacilities'] ?? [])
+            ->map(fn (array $facility): string => strtolower((string) ($facility['function'] ?? '').' '.implode(' ', $facility['campaignUses'] ?? [])))
+            ->implode(' ');
+
+        foreach ($topUses as $use) {
+            $score += match ($use) {
+                'qr' => str_contains($code, 'qr') || str_contains($code, 'route') || str_contains($code, 'treasure') ? 24 : 8,
+                'mission' => str_contains($code, 'quest') || str_contains($code, 'route') || str_contains($code, 'challenge') ? 28 : 10,
+                'treasure' => str_contains($code, 'treasure') || str_contains($code, 'clue') ? 34 : 8,
+                'reward' => str_contains($code, 'foodcourt') || str_contains($code, 'taste') || str_contains($code, 'boost') ? 34 : 10,
+                'sponsor' => str_contains($code, 'sponsored') || str_contains($code, 'brand') || str_contains($code, 'foodcourt') ? 30 : 8,
+                'ad', 'display' => str_contains($code, 'hologram') || str_contains($code, 'online') || str_contains($code, 'brand') ? 24 : 6,
+                default => 4,
+            };
+        }
+
+        if (str_contains($facilities, 'retail') && (str_contains($code, 'foodcourt') || str_contains($code, 'boost'))) {
+            $score += 22;
+        }
+
+        if (str_contains($facilities, 'discovery') && (str_contains($code, 'treasure') || str_contains($code, 'route') || str_contains($code, 'clue'))) {
+            $score += 22;
+        }
+
+        return $score;
+    }
+
+    /** @param array<int, string> $uses */
+    private function recommendationReason(array $uses): string
+    {
+        $labels = [
+            'qr' => 'QR',
+            'mission' => 'مأموریت',
+            'treasure' => 'گنج',
+            'reward' => 'پاداش',
+            'sponsor' => 'اسپانسر',
+            'ad' => 'تبلیغ',
+            'display' => 'نمایشگر',
+        ];
+
+        $text = collect($uses)
+            ->map(fn (string $use): string => $labels[$use] ?? $use)
+            ->take(3)
+            ->implode('، ');
+
+        return 'بر اساس کارکردهای ثبت‌شده در شناخت‌نامه مکان: '.$text;
     }
 
     /** @return array<int, array<string, mixed>> */
