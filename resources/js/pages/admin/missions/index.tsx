@@ -533,7 +533,34 @@ export default function MissionRewardRegistryIndex({
                     </section>
                 ) : null}
 
-                {selectedCampaign ? <CampaignContextNav campaign={selectedCampaign} /> : null}
+                {selectedCampaign ? (
+                    <CampaignContextNav campaign={selectedCampaign} className="border-primary/35 bg-primary/5" />
+                ) : (
+                    <section className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 shadow-sm dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
+                        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                            <div>
+                                <p className="font-semibold">کمپین مشخصی برای ادامه کار انتخاب نشده است.</p>
+                                <p className="mt-1 text-xs opacity-85">
+                                    برای دیدن نوار «ادامه کار همین کمپین»، از کارگاه ساخت یا لیست کمپین‌ها وارد همین صفحه شوید.
+                                </p>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                <Button asChild size="sm">
+                                    <Link href="/admin/campaign-builder">رفتن به کارگاه ساخت</Link>
+                                </Button>
+                                <Button asChild variant="outline" size="sm">
+                                    <Link href="/admin/campaigns">انتخاب کمپین</Link>
+                                </Button>
+                                <Button asChild variant="ghost" size="sm">
+                                    <Link href="/admin/mission-blueprints">
+                                        <BookOpenCheck className="size-4" />
+                                        گنجینه ماموریت‌ها
+                                    </Link>
+                                </Button>
+                            </div>
+                        </div>
+                    </section>
+                )}
 
                 {selectedBlueprint ? (
                     <section className="rounded-lg border border-primary/25 bg-primary/5 p-4 text-sm shadow-sm">
