@@ -69,10 +69,24 @@ type Props = {
     roleTracks: RoleTrack[];
 };
 
+type ReadinessCheck = {
+    key: string;
+    label: string;
+    detail: string;
+    complete: boolean;
+    severity: 'blocker' | 'warning';
+    actionHref: string;
+    actionLabel: string;
+};
+
 type Readiness = {
-    checks: { key: string; label: string; complete: boolean }[];
+    checks: ReadinessCheck[];
     canActivate: boolean;
     routeReviewedAt: string | null;
+    status: 'ready' | 'ready_with_warnings' | 'needs_action';
+    blockersCount: number;
+    warningsCount: number;
+    summary: string;
 };
 
 type SharedProps = {
@@ -186,6 +200,18 @@ export default function CampaignBuilderIndex({
     ];
 
     const canMutate = auth.user.role === 'admin' || auth.user.role === 'operator';
+    const readinessStatusLabel =
+        readiness.status === 'ready'
+            ? 'آماده فعال‌سازی'
+            : readiness.status === 'ready_with_warnings'
+              ? 'آماده با هشدار'
+              : 'نیازمند تکمیل';
+    const readinessStatusClass =
+        readiness.status === 'ready'
+            ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-100'
+            : readiness.status === 'ready_with_warnings'
+              ? 'border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100'
+              : 'border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-100';
 
     return (
         <>
@@ -395,25 +421,73 @@ export default function CampaignBuilderIndex({
                 ) : null}
 
                 <section className="rounded-lg border border-sidebar-border/70 bg-background p-4 text-sm dark:border-sidebar-border">
-                    <div className="flex items-center gap-2">
-                        <Building2 className="size-4 text-muted-foreground" />
-                        <h2 className="font-semibold">چک نهایی و فعال‌سازی مرحله ۶</h2>
+                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                        <div className="flex items-center gap-2">
+                            <Building2 className="size-4 text-muted-foreground" />
+                            <div>
+                                <h2 className="font-semibold">چک نهایی و فعال‌سازی مرحله ۶</h2>
+                                <p className="mt-1 text-xs text-muted-foreground">{readiness.summary}</p>
+                            </div>
+                        </div>
+                        <span className={`w-fit rounded-full border px-3 py-1 text-xs font-medium ${readinessStatusClass}`}>
+                            {readinessStatusLabel}
+                        </span>
                     </div>
-                    <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_auto]">
-                        <div className="grid gap-2">
-                            {readiness.checks.map((check) => (
-                                <div key={check.key} className="flex items-center gap-2 rounded-md bg-muted/45 px-3 py-2">
-                                    {check.complete ? <CheckCircle2 className="size-4 text-emerald-600" /> : <CircleAlert className="size-4 text-amber-600" />}
-                                    <span className={check.complete ? 'text-foreground' : 'text-muted-foreground'}>{check.label}</span>
-                                </div>
-                            ))}
+                    <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_260px]">
+                        <div className="grid gap-3 md:grid-cols-2">
+                            {readiness.checks.map((check) => {
+                                const needsAction = !check.complete;
+                                const isWarning = check.severity === 'warning';
+
+                                return (
+                                    <article
+                                        key={check.key}
+                                        className={[
+                                            'rounded-lg border p-3 shadow-sm',
+                                            check.complete ? 'border-emerald-200 bg-emerald-50/70 dark:border-emerald-900/60 dark:bg-emerald-950/20' : '',
+                                            needsAction && isWarning ? 'border-amber-300 bg-amber-50 dark:border-amber-900/60 dark:bg-amber-950/30' : '',
+                                            needsAction && !isWarning ? 'border-rose-200 bg-rose-50 dark:border-rose-900/60 dark:bg-rose-950/30' : '',
+                                        ].join(' ')}
+                                    >
+                                        <div className="flex items-start gap-2">
+                                            {check.complete ? (
+                                                <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" />
+                                            ) : (
+                                                <CircleAlert className={isWarning ? 'mt-0.5 size-4 shrink-0 text-amber-600' : 'mt-0.5 size-4 shrink-0 text-rose-600'} />
+                                            )}
+                                            <div className="min-w-0">
+                                                <h3 className="font-medium">{check.label}</h3>
+                                                <p className="mt-1 text-xs leading-5 text-muted-foreground">{check.detail}</p>
+                                                {!check.complete ? (
+                                                    <Button asChild variant={isWarning ? 'outline' : 'default'} size="sm" className="mt-3">
+                                                        <Link href={check.actionHref}>
+                                                            {check.actionLabel}
+                                                            <ArrowLeft className="size-4" />
+                                                        </Link>
+                                                    </Button>
+                                                ) : null}
+                                            </div>
+                                        </div>
+                                    </article>
+                                );
+                            })}
                         </div>
                         <div className="flex min-w-[220px] flex-col justify-between gap-3 rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm">
                             <div>
-                                <p className="text-sm font-semibold">{readiness.canActivate ? 'آماده فعال‌سازی' : 'هنوز ناقص است'}</p>
+                                <p className="text-sm font-semibold">{readinessStatusLabel}</p>
                                 <p className="mt-1 text-xs text-muted-foreground">
                                     وضعیت فعلی: {selectedCampaign?.status === 'active' ? 'فعال' : 'پیش از اجرا'}
                                 </p>
+                                <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                                    <div className="rounded-md bg-muted/50 p-2">
+                                        <p className="text-muted-foreground">موارد ضروری</p>
+                                        <p className="mt-1 font-semibold">{fa(readiness.blockersCount)} باقی‌مانده</p>
+                                    </div>
+                                    <div className="rounded-md bg-muted/50 p-2">
+                                        <p className="text-muted-foreground">هشدارها</p>
+                                        <p className="mt-1 font-semibold">{fa(readiness.warningsCount)} باقی‌مانده</p>
+                                    </div>
+                                </div>
                             </div>
                             {selectedCampaign && canMutate ? (
                                 <Form action={`/admin/campaign-builder/${selectedCampaign.code}/activate`} method="post" options={{ preserveScroll: true }}>

@@ -124,7 +124,18 @@ class CampaignQrCoreTest extends TestCase
                 ->component('admin/campaign-builder/index')
                 ->where('selectedCampaign.code', 'ecopark-pilot-1405')
                 ->has('steps', 6)
-                ->has('roleTracks', 4));
+                ->has('roleTracks', 4)
+                ->where('readiness.status', 'needs_action')
+                ->where('readiness.canActivate', false)
+                ->has('readiness.checks', 8)
+                ->where('readiness.checks.0.actionLabel', 'تکمیل اطلاعات پایه')
+                ->where('readiness.checks.6.key', 'route')
+                ->where('readiness.checks.6.severity', 'blocker')
+                ->where('readiness.checks.7.key', 'media_display')
+                ->where('readiness.checks.7.severity', 'warning')
+                ->has('readiness.summary')
+                ->has('readiness.blockersCount')
+                ->has('readiness.warningsCount'));
     }
 
     public function test_viewer_cannot_create_campaign_qr_or_components(): void
