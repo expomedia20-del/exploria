@@ -4,6 +4,7 @@ $projectRoot = Split-Path -Parent $PSScriptRoot
 $hostName = '127.0.0.1'
 $port = 8004
 $url = "http://$hostName`:$port"
+$hotFile = Join-Path $projectRoot 'public\hot'
 $localPhp = Join-Path $projectRoot '.codex-runtime\exploria-toolchain-local\php\php.exe'
 $fallbackPhp = 'E:\exploria-toolchain-local\php\php.exe'
 
@@ -13,6 +14,11 @@ if (Test-Path $localPhp) {
     $php = $fallbackPhp
 } else {
     throw 'PHP executable was not found. Expected .codex-runtime\exploria-toolchain-local\php\php.exe.'
+}
+
+$viteIsRunning = Get-NetTCPConnection -LocalAddress $hostName -LocalPort 5173 -State Listen -ErrorAction SilentlyContinue
+if ((Test-Path $hotFile) -and -not $viteIsRunning) {
+    Remove-Item -LiteralPath $hotFile -Force
 }
 
 $listener = Get-NetTCPConnection -LocalAddress $hostName -LocalPort $port -State Listen -ErrorAction SilentlyContinue
