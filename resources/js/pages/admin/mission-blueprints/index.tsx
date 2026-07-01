@@ -406,12 +406,12 @@ export default function MissionBlueprintIndex({
 
     return (
         <>
-            <Head title="گنجینه مأموریت‌ها و پاداش‌ها" />
+            <Head title="گنجینه الگوها" />
             <div dir="rtl" className="flex h-full flex-1 flex-col gap-5 overflow-x-auto p-4">
                 <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                     <div>
                         <p className="text-sm text-muted-foreground">موتور طراحی بازی، گنج، امتیاز و مشوق</p>
-                        <h1 className="mt-1 text-2xl font-semibold">گنجینه مأموریت‌ها و پاداش‌ها</h1>
+                        <h1 className="mt-1 text-2xl font-semibold">گنجینه الگوها</h1>
                     </div>
                     <div className="flex flex-wrap gap-2">
                         <Button asChild variant="outline">
@@ -758,10 +758,10 @@ export default function MissionBlueprintIndex({
 }
 
 MissionBlueprintIndex.layout = {
-    title: 'گنجینه مأموریت‌ها و پاداش‌ها',
+    title: 'گنجینه الگوها',
     breadcrumbs: [
         {
-            title: 'گنجینه مأموریت‌ها و پاداش‌ها',
+            title: 'گنجینه الگوها',
             href: '/admin/mission-blueprints',
         },
     ],
