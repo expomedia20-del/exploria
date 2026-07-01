@@ -228,6 +228,9 @@ Route::post('/admin/display-operations/placements/{adPlacement}/cancel', [Displa
 Route::get('/admin/venues', [VenueRegistryController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
     ->name('admin.venues.page');
+Route::get('/admin/venues/facilities-template', [VenueRegistryController::class, 'facilitiesTemplate'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.venues.facilities-template');
 Route::patch('/admin/venues/{venue}/profile', [VenueRegistryController::class, 'updateProfile'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.venues.profile.update');

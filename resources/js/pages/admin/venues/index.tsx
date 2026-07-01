@@ -2,6 +2,7 @@ import { Form, Head } from '@inertiajs/react';
 import {
     Building2,
     CircleDot,
+    Download,
     Layers3,
     MapPinned,
     RadioTower,
@@ -453,7 +454,16 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                                         {errors.facilities_text ? <span className="text-xs text-destructive">{errors.facilities_text}</span> : null}
                                                     </label>
                                                     <label className="grid gap-1 rounded-md border border-dashed border-sidebar-border/70 bg-muted/20 p-3">
-                                                        <span className="text-xs font-medium">آپلود لیست اکسل امکانات</span>
+                                                        <div className="flex flex-wrap items-center justify-between gap-2">
+                                                            <span className="text-xs font-medium">آپلود لیست اکسل امکانات</span>
+                                                            <a
+                                                                href="/admin/venues/facilities-template"
+                                                                className="inline-flex h-8 items-center gap-1 rounded-md border border-input bg-background px-3 text-xs font-medium hover:bg-muted"
+                                                            >
+                                                                <Download className="size-3.5" />
+                                                                دانلود فایل نمونه
+                                                            </a>
+                                                        </div>
                                                         <input
                                                             type="file"
                                                             name="facilities_file"

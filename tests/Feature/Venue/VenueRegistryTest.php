@@ -124,6 +124,22 @@ class VenueRegistryTest extends TestCase
         $this->assertStringContainsString('زیرمجموعه: پروژه رواق', $venue->metadata['location_profile']['facilities'][1]['notes']);
     }
 
+    public function test_admin_can_download_venue_facilities_template(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+        $response = $this->actingAs($admin)
+            ->get(route('admin.venues.facilities-template'))
+            ->assertOk()
+            ->assertDownload('exploria-venue-facilities-template.csv');
+
+        $content = $response->streamedContent();
+
+        $this->assertStringContainsString('name,function,campaign_uses,priority,parent,notes', $content);
+        $this->assertStringContainsString('کافه رواق', $content);
+        $this->assertStringContainsString('پروژه رواق', $content);
+    }
+
     public function test_hub_manager_can_open_venue_registry_page(): void
     {
         $this->withoutVite();
