@@ -92,6 +92,13 @@ class CampaignQrCoreTest extends TestCase
             'campaign_type' => 'family_route',
             'status' => 'draft',
         ]);
+
+        $campaign = Campaign::query()->where('code', 'family-route-1405')->firstOrFail();
+
+        $this->assertSame('family-route', $campaign->metadata['blueprint_code']);
+        $this->assertSame('venue_blueprint_recommendation', $campaign->metadata['design_source']);
+        $this->assertSame($venue->id, $campaign->metadata['design_venue_id']);
+        $this->assertSame('ecopark-abbasabad', $campaign->metadata['design_venue_code']);
     }
 
     public function test_operator_can_update_and_delete_empty_campaign(): void

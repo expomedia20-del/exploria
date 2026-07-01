@@ -113,6 +113,8 @@ class CampaignRegistryService
     /** @param array<string, mixed> $data */
     public function create(array $data): Campaign
     {
+        $venue = Venue::query()->findOrFail($data['venue_id']);
+
         $attributes = [
             'venue_id' => $data['venue_id'],
             'code' => Str::lower((string) $data['code']),
@@ -121,10 +123,7 @@ class CampaignRegistryService
             'status' => $data['status'],
             'start_at' => ($data['start_at'] ?? null) ?: null,
             'end_at' => ($data['end_at'] ?? null) ?: null,
-            'metadata' => array_filter([
-                'created_from' => 'admin_campaign_registry',
-                'blueprint_code' => $data['blueprint_code'] ?? null,
-            ]),
+            'metadata' => $this->campaignMetadata($venue, $data),
         ];
 
         return DB::transaction(function () use ($data, $attributes): Campaign {
@@ -138,6 +137,20 @@ class CampaignRegistryService
 
             return Campaign::query()->create($attributes);
         });
+    }
+
+    /** @param array<string, mixed> $data @return array<string, mixed> */
+    private function campaignMetadata(Venue $venue, array $data): array
+    {
+        $blueprintCode = $data['blueprint_code'] ?? null;
+
+        return array_filter([
+            'created_from' => 'admin_campaign_registry',
+            'blueprint_code' => $blueprintCode,
+            'design_source' => filled($blueprintCode) ? 'venue_blueprint_recommendation' : null,
+            'design_venue_id' => filled($blueprintCode) ? $venue->id : null,
+            'design_venue_code' => filled($blueprintCode) ? $venue->code : null,
+        ]);
     }
 
     public function delete(Campaign $campaign): void
