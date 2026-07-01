@@ -8,6 +8,7 @@ use App\Http\Requests\Admin\StoreRewardDefinitionRequest;
 use App\Http\Requests\Admin\StoreTreasureRequest;
 use App\Models\MissionInstance;
 use App\Models\RewardDefinition;
+use App\Models\Treasure;
 use App\Services\CampaignRegistryService;
 use App\Services\MissionRewardRegistryService;
 use App\Services\MissionRewardBlueprintService;
@@ -92,5 +93,16 @@ class MissionRewardRegistryController extends Controller
         }
 
         return back()->with('success', 'پاداش کمپین حذف شد.');
+    }
+
+    public function destroyTreasure(Request $request, Treasure $treasure, MissionRewardRegistryService $service): JsonResponse|RedirectResponse
+    {
+        $service->deleteTreasure($treasure);
+
+        if ($request->expectsJson()) {
+            return response()->json(['status' => 'success']);
+        }
+
+        return back()->with('success', 'گنج کمپین حذف شد.');
     }
 }

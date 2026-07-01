@@ -338,6 +338,15 @@ class CampaignQrCoreTest extends TestCase
         $this->assertSame('bronze', $treasure->metadata['treasure_tier']);
         $this->assertSame(1, $treasure->metadata['cycle_step_index']);
         $this->assertSame('after_step_completion', $treasure->reveal_rule['reveal_mode']);
+
+        $this->actingAs($operator)
+            ->from(route('admin.missions.page', ['campaign' => $campaign->code]))
+            ->delete(route('admin.treasures.destroy', $treasure))
+            ->assertRedirect(route('admin.missions.page', ['campaign' => $campaign->code]));
+
+        $this->assertDatabaseMissing('treasures', [
+            'id' => $treasure->id,
+        ]);
     }
 
     public function test_blueprint_campaign_rejects_mismatched_stage_three_components(): void

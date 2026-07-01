@@ -1627,6 +1627,26 @@ export default function MissionRewardRegistryIndex({
                                                 {treasure.code} ·{' '}
                                                 {treasure.treasureType}
                                             </p>
+                                            {canMutate ? (
+                                                <div className="mt-2 flex items-center gap-1.5">
+                                                    <Form
+                                                        action={`/admin/treasures/${treasure.id}`}
+                                                        method="delete"
+                                                        options={{ preserveScroll: true }}
+                                                        onSubmit={(event) => {
+                                                            if (!window.confirm('این گنج از لیست مرحله ۳ حذف شود؟')) {
+                                                                event.preventDefault();
+                                                            }
+                                                        }}
+                                                    >
+                                                        {({ processing }) => (
+                                                            <Button type="submit" variant="ghost" size="sm" className="h-8 px-2 text-destructive hover:text-destructive" disabled={processing} title="حذف گنج">
+                                                                <Trash2 className="size-4" />
+                                                            </Button>
+                                                        )}
+                                                    </Form>
+                                                </div>
+                                            ) : null}
                                         </div>
                                         <span
                                             className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${

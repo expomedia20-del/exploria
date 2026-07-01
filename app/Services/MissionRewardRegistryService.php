@@ -330,6 +330,11 @@ class MissionRewardRegistryService
         $reward->delete();
     }
 
+    public function deleteTreasure(Treasure $treasure): void
+    {
+        $treasure->delete();
+    }
+
     /** @param array<string, mixed> $attributes */
     private function replaceMissionCycleStep(Campaign $campaign, mixed $cycleStepIndex, array $attributes): MissionInstance
     {

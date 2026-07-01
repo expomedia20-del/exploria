@@ -163,6 +163,9 @@ Route::delete('/admin/rewards/{reward}', [MissionRewardRegistryController::class
 Route::post('/admin/treasures', [MissionRewardRegistryController::class, 'storeTreasure'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.treasures.store');
+Route::delete('/admin/treasures/{treasure}', [MissionRewardRegistryController::class, 'destroyTreasure'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.treasures.destroy');
 
 Route::get('/admin/ads', [AdvertisingController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
@@ -271,6 +274,9 @@ Route::post('/api/v1/admin/rewards', [MissionRewardRegistryController::class, 's
 Route::post('/api/v1/admin/treasures', [MissionRewardRegistryController::class, 'storeTreasure'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.treasures.api.store');
+Route::delete('/api/v1/admin/treasures/{treasure}', [MissionRewardRegistryController::class, 'destroyTreasure'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.treasures.api.destroy');
 
 Route::get('/api/v1/admin/ads', [AdvertisingController::class, 'index'])
     ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
