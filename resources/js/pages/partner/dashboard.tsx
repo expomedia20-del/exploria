@@ -1064,6 +1064,35 @@ export default function PartnerDashboard({
                                                 ] ?? redemption.status}
                                             </span>
                                         </div>
+                                        {redemption.status === 'pending' ? (
+                                            <Form
+                                                action="/partner/redemptions/confirm"
+                                                method="post"
+                                                options={{
+                                                    preserveScroll: true,
+                                                }}
+                                                className="flex justify-end"
+                                            >
+                                                {({ processing }) => (
+                                                    <>
+                                                        <input
+                                                            type="hidden"
+                                                            name="redemption_code"
+                                                            value={
+                                                                redemption.redemptionCode
+                                                            }
+                                                        />
+                                                        <Button
+                                                            size="sm"
+                                                            disabled={processing}
+                                                        >
+                                                            <CheckCircle2 className="size-4" />
+                                                            تایید همین کد
+                                                        </Button>
+                                                    </>
+                                                )}
+                                            </Form>
+                                        ) : null}
                                         <p className="text-xs text-muted-foreground">
                                             مشتری:{' '}
                                             {redemption.visitorName ?? '-'} ·{' '}
