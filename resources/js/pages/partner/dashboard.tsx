@@ -211,6 +211,8 @@ export default function PartnerDashboard({
         () => proposalContext.rewardTiers.find((tier) => tier.tierKey === selectedStep?.rewardTier) ?? null,
         [proposalContext.rewardTiers, selectedStep?.rewardTier],
     );
+    const tierForStep = (step: MissionPlanStep) =>
+        proposalContext.rewardTiers.find((tier) => tier.tierKey === step.rewardTier) ?? null;
     const actionSteps = [
         {
             title: 'تکمیل اطلاعات فروشگاه',
@@ -468,6 +470,58 @@ export default function PartnerDashboard({
                                 <p>برای ثبت پیشنهاد پاداش، ابتدا باید یک کمپین در حال تنظیم برای مکان این فروشگاه وجود داشته باشد.</p>
                             )}
                         </div>
+                        {proposalContext.campaign ? (
+                            <div className="mb-4 rounded-md border border-sidebar-border/70 dark:border-sidebar-border">
+                                <div className="border-b border-sidebar-border/70 px-3 py-2 dark:border-sidebar-border">
+                                    <p className="text-sm font-medium">خلاصه چرخه و سطح‌های پاداش کمپین</p>
+                                    <p className="mt-1 text-xs text-muted-foreground">
+                                        هر ردیف یک گام از مسیر کاربر است. برای ثبت پیشنهاد، روی گام مناسب کلیک کنید یا همان گام را در فرم انتخاب کنید.
+                                    </p>
+                                </div>
+                                <div className="divide-y divide-sidebar-border/70 dark:divide-sidebar-border">
+                                    {proposalContext.missionPlan.length === 0 ? (
+                                        <p className="px-3 py-3 text-xs text-muted-foreground">
+                                            چرخه مأموریت برای این کمپین هنوز آماده نشده است.
+                                        </p>
+                                    ) : (
+                                        proposalContext.missionPlan.map((step) => {
+                                            const tier = tierForStep(step);
+                                            const isSelected = String(step.index) === selectedStepIndex;
+
+                                            return (
+                                                <button
+                                                    key={step.index}
+                                                    type="button"
+                                                    onClick={() => setSelectedStepIndex(String(step.index))}
+                                                    className={`grid w-full gap-2 px-3 py-3 text-right text-xs transition hover:bg-muted/40 md:grid-cols-[1.1fr_0.8fr_1.2fr] ${
+                                                        isSelected ? 'bg-primary/10' : ''
+                                                    }`}
+                                                >
+                                                    <span>
+                                                        <span className="font-medium text-foreground">
+                                                            گام {step.index.toLocaleString('fa-IR')}: {step.userStep}
+                                                        </span>
+                                                        <span className="mt-1 block text-muted-foreground">
+                                                            {step.routeIntent}
+                                                        </span>
+                                                    </span>
+                                                    <span>
+                                                        <span className="block text-muted-foreground">سطح پاداش</span>
+                                                        <span className="font-medium text-foreground">{tier?.level ?? step.rewardTier}</span>
+                                                    </span>
+                                                    <span>
+                                                        <span className="block text-muted-foreground">گزینه‌های همین سطح</span>
+                                                        <span className="line-clamp-2 text-foreground">
+                                                            {(tier?.options ?? []).slice(0, 3).join('، ') || 'در انتظار تنظیم ادمین'}
+                                                        </span>
+                                                    </span>
+                                                </button>
+                                            );
+                                        })
+                                    )}
+                                </div>
+                            </div>
+                        ) : null}
                         <Form
                             action="/partner/offers"
                             method="post"
@@ -482,48 +536,6 @@ export default function PartnerDashboard({
                                     ) : null}
                                     <input type="hidden" name="cycle_step_label" value={selectedStep?.userStep ?? ''} />
                                     <input type="hidden" name="reward_tier" value={selectedStep?.rewardTier ?? ''} />
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="offer_name">
-                                            عنوان پیشنهاد
-                                        </Label>
-                                        <Input
-                                            id="offer_name"
-                                            name="name"
-                                            required
-                                            autoComplete="off"
-                                            placeholder="مثلا ۲۰٪ تخفیف نوشیدنی خانواده"
-                                        />
-                                        <InputError message={errors.name} />
-                                    </div>
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="reward_type">
-                                            نوع پیشنهاد
-                                        </Label>
-                                        <select
-                                            id="reward_type"
-                                            name="reward_type"
-                                            required
-                                            className="h-9 rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                                            defaultValue="discount"
-                                        >
-                                            <option value="discount">
-                                                تخفیف
-                                            </option>
-                                            <option value="partner_coupon">
-                                                کوپن فروشگاهی
-                                            </option>
-                                            <option value="gift">هدیه</option>
-                                            <option value="service_credit">
-                                                اعتبار خدمات
-                                            </option>
-                                            <option value="sponsor_reward">
-                                                پاداش اسپانسری
-                                            </option>
-                                        </select>
-                                        <InputError
-                                            message={errors.reward_type}
-                                        />
-                                    </div>
                                     <div className="grid gap-2">
                                         <Label htmlFor="cycle_step_index">
                                             گام چرخه کمپین
@@ -586,7 +598,58 @@ export default function PartnerDashboard({
                                                 </option>
                                             ))}
                                         </select>
+                                        <p className="text-xs text-muted-foreground">
+                                            این گزینه‌ها مربوط به {selectedStep ? `گام ${selectedStep.index.toLocaleString('fa-IR')}` : 'گام انتخاب‌شده'} و سطح {selectedTier?.level ?? '-'} هستند.
+                                        </p>
                                         <InputError message={errors.reward_option} />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="offer_name">
+                                            عنوان پیشنهادی که ارائه می‌کنید
+                                        </Label>
+                                        <Input
+                                            id="offer_name"
+                                            name="name"
+                                            required
+                                            autoComplete="off"
+                                            placeholder="مثلا ۲۰٪ تخفیف نوشیدنی خانواده"
+                                        />
+                                        <p className="text-xs text-muted-foreground">
+                                            عنوان باید محصول، خدمت یا تخفیف واقعی شما را برای همین گام توضیح دهد.
+                                        </p>
+                                        <InputError message={errors.name} />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="reward_type">
+                                            نوع پیشنهاد شما
+                                        </Label>
+                                        <select
+                                            id="reward_type"
+                                            name="reward_type"
+                                            required
+                                            className="h-9 rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                            defaultValue="discount"
+                                        >
+                                            <option value="discount">
+                                                تخفیف
+                                            </option>
+                                            <option value="partner_coupon">
+                                                کوپن فروشگاهی
+                                            </option>
+                                            <option value="gift">هدیه</option>
+                                            <option value="service_credit">
+                                                اعتبار خدمات
+                                            </option>
+                                            <option value="sponsor_reward">
+                                                پاداش اسپانسری
+                                            </option>
+                                        </select>
+                                        <p className="text-xs text-muted-foreground">
+                                            این گزینه فقط جنس پیشنهاد را مشخص می‌کند؛ گام و سطح پاداش از بالا تعیین شده است.
+                                        </p>
+                                        <InputError
+                                            message={errors.reward_type}
+                                        />
                                     </div>
                                     <div className="grid gap-2">
                                         <Label htmlFor="point_cost">
