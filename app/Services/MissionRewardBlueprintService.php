@@ -144,7 +144,7 @@ class MissionRewardBlueprintService
             ->take(3)
             ->implode('، ');
 
-        return 'بر اساس کارکردهای ثبت‌شده در شناخت‌نامه مکان: '.$text;
+        return 'بر اساس کارکردهای ثبت‌شده در ارزیابی مکان: '.$text;
     }
 
     /** @return array<int, array<string, mixed>> */

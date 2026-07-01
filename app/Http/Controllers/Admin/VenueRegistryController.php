@@ -151,6 +151,6 @@ XML);
             return response()->json(['status' => 'success']);
         }
 
-        return back()->with('success', 'شناخت‌نامه مکان ذخیره شد.');
+        return back()->with('success', 'ارزیابی مکان ذخیره شد.');
     }
 }

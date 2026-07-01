@@ -232,7 +232,7 @@ export default function CampaignRegistryIndex({
                                 <h2 className="mt-1 text-lg font-semibold">{selectedBlueprint.title}</h2>
                                 {selectedVenue ? (
                                     <p className="mt-2 rounded-md bg-background/75 px-3 py-2 text-xs text-muted-foreground">
-                                        این ساخت کمپین از پیشنهاد شناخت‌نامه مکان شروع شده است: <span className="font-medium text-foreground">{selectedVenue.name}</span>
+                                        این ساخت کمپین از پیشنهاد ارزیابی مکان شروع شده است: <span className="font-medium text-foreground">{selectedVenue.name}</span>
                                     </p>
                                 ) : null}
                                 <p className="mt-1 text-muted-foreground">این الگو باید اول به کمپین تبدیل شود؛ بعد از ثبت کمپین، QR، اعضا، مأموریت، پاداش و نقشه عملیات باید تابع همین کمپین باشند.</p>

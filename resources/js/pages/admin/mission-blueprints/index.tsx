@@ -135,7 +135,7 @@ function VenueDesignContextPanel({ context }: { context: VenueDesignContext }) {
         <section className="exploria-panel">
             <div className="flex flex-col gap-3 border-b border-border/70 px-4 py-3 lg:flex-row lg:items-end lg:justify-between">
                 <div>
-                    <h2 className="font-semibold">شناخت‌نامه مکان متصل به الگوها</h2>
+                    <h2 className="font-semibold">ارزیابی مکان متصل به الگوها</h2>
                     <p className="mt-1 text-sm leading-6 text-muted-foreground">
                         امکانات و جاذبه‌های ثبت‌شده اینجا به عنوان زمینه مشترک طراحی در اختیار الگوی کمپین، مأموریت، گنج، پاداش، QR، اسپانسر و تبلیغ قرار می‌گیرد.
                     </p>
@@ -249,7 +249,7 @@ function VenueDesignContextPanel({ context }: { context: VenueDesignContext }) {
 
                             <div className="mt-3 flex flex-wrap gap-2">
                                 <Button asChild variant="outline" className="h-8 text-xs">
-                                    <Link href="/admin/venues">تکمیل شناخت‌نامه مکان</Link>
+                                    <Link href="/admin/venues">تکمیل ارزیابی مکان</Link>
                                 </Button>
                                 <Button asChild variant="outline" className="h-8 text-xs">
                                     <Link href="/admin/campaigns">رفتن به کمپین‌ها</Link>
@@ -261,7 +261,7 @@ function VenueDesignContextPanel({ context }: { context: VenueDesignContext }) {
             ) : (
                 <div className="p-4">
                     <div className="rounded-lg border border-dashed border-border/80 bg-background/70 p-4 text-sm text-muted-foreground">
-                        هنوز برای مکان‌ها امکانات و جاذبه قابل استفاده در کمپین ثبت نشده است. ابتدا شناخت‌نامه مکان را تکمیل کنید تا الگوها بتوانند از داده واقعی مکان استفاده کنند.
+                        هنوز برای مکان‌ها امکانات و جاذبه قابل استفاده در کمپین ثبت نشده است. ابتدا ارزیابی مکان را تکمیل کنید تا الگوها بتوانند از داده واقعی مکان استفاده کنند.
                     </div>
                 </div>
             )}

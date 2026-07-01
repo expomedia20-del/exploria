@@ -291,7 +291,7 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                     <div className="rounded-lg bg-muted/35 p-3 text-sm">
                                         <div className="flex items-center justify-between gap-3">
                                             <div>
-                                                <h3 className="font-semibold">شناخت‌نامه مکان</h3>
+                                                <h3 className="font-semibold">ارزیابی مکان</h3>
                                                 <p className="mt-1 text-xs text-muted-foreground">
                                                     مبنای طراحی الگوی کمپین، مأموریت، گنج، پاداش و مسیر برای این مکان.
                                                 </p>
@@ -582,7 +582,7 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                                         disabled={processing}
                                                         className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
                                                     >
-                                                        ذخیره شناخت‌نامه مکان
+                                                        ذخیره ارزیابی مکان
                                                     </button>
                                                 </div>
                                             </>
