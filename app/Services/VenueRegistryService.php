@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use ZipArchive;
 
 class VenueRegistryService
 {
@@ -254,6 +255,10 @@ class VenueRegistryService
             return collect();
         }
 
+        if (mb_strtolower($file->getClientOriginalExtension()) === 'xlsx') {
+            return $this->xlsxItems($file);
+        }
+
         $content = file_get_contents($file->getRealPath());
 
         if ($content === false || trim($content) === '') {
@@ -279,6 +284,131 @@ class VenueRegistryService
             ->map(fn (array $row): array => $this->facilityImportRow($row, $headerMap))
             ->filter(fn (array $item): bool => filled($item['name']))
             ->values();
+    }
+
+    /** @return Collection<int, array<string, mixed>> */
+    private function xlsxItems(UploadedFile $file): Collection
+    {
+        if (! class_exists(ZipArchive::class)) {
+            return collect();
+        }
+
+        $zip = new ZipArchive;
+
+        if ($zip->open($file->getRealPath()) !== true) {
+            return collect();
+        }
+
+        $sharedStrings = $this->xlsxSharedStrings($zip);
+        $sheetXml = $zip->getFromName('xl/worksheets/sheet1.xml');
+        $zip->close();
+
+        if ($sheetXml === false) {
+            return collect();
+        }
+
+        $sheet = simplexml_load_string($sheetXml);
+
+        if ($sheet === false) {
+            return collect();
+        }
+
+        $sheet->registerXPathNamespace('main', 'http://schemas.openxmlformats.org/spreadsheetml/2006/main');
+        $rows = collect($sheet->xpath('//main:sheetData/main:row') ?: [])
+            ->map(function (\SimpleXMLElement $row) use ($sharedStrings): array {
+                $cells = [];
+
+                foreach ($row->children('http://schemas.openxmlformats.org/spreadsheetml/2006/main')->c as $cell) {
+                    $attributes = $cell->attributes();
+                    $reference = (string) ($attributes['r'] ?? '');
+                    $column = $this->xlsxColumnIndex($reference);
+                    $cells[$column] = $this->xlsxCellValue($cell, $sharedStrings);
+                }
+
+                if ($cells === []) {
+                    return [];
+                }
+
+                ksort($cells);
+
+                return collect(range(0, max(array_keys($cells))))
+                    ->map(fn (int $index): string => $cells[$index] ?? '')
+                    ->all();
+            })
+            ->filter(fn (array $row): bool => collect($row)->filter(fn (mixed $cell): bool => filled(trim((string) $cell)))->isNotEmpty())
+            ->values();
+
+        if ($rows->isEmpty()) {
+            return collect();
+        }
+
+        $headerMap = $this->facilityImportHeaderMap($rows->first());
+
+        return $rows
+            ->when($headerMap !== [], fn (Collection $collection): Collection => $collection->skip(1))
+            ->map(fn (array $row): array => $this->facilityImportRow($row, $headerMap))
+            ->filter(fn (array $item): bool => filled($item['name']))
+            ->values();
+    }
+
+    /** @return array<int, string> */
+    private function xlsxSharedStrings(ZipArchive $zip): array
+    {
+        $xml = $zip->getFromName('xl/sharedStrings.xml');
+
+        if ($xml === false) {
+            return [];
+        }
+
+        $shared = simplexml_load_string($xml);
+
+        if ($shared === false) {
+            return [];
+        }
+
+        $shared->registerXPathNamespace('main', 'http://schemas.openxmlformats.org/spreadsheetml/2006/main');
+
+        return collect($shared->xpath('//main:si') ?: [])
+            ->map(function (\SimpleXMLElement $item): string {
+                $item->registerXPathNamespace('main', 'http://schemas.openxmlformats.org/spreadsheetml/2006/main');
+
+                return collect($item->xpath('.//main:t') ?: [])
+                    ->map(fn (\SimpleXMLElement $text): string => (string) $text)
+                    ->implode('');
+            })
+            ->all();
+    }
+
+    /** @param array<int, string> $sharedStrings */
+    private function xlsxCellValue(\SimpleXMLElement $cell, array $sharedStrings): string
+    {
+        $attributes = $cell->attributes();
+        $type = (string) ($attributes['t'] ?? '');
+        $children = $cell->children('http://schemas.openxmlformats.org/spreadsheetml/2006/main');
+
+        if ($type === 's') {
+            $index = (int) ($children->v ?? -1);
+
+            return $sharedStrings[$index] ?? '';
+        }
+
+        if ($type === 'inlineStr') {
+            return (string) ($children->is->t ?? '');
+        }
+
+        return trim((string) ($children->v ?? ''));
+    }
+
+    private function xlsxColumnIndex(string $reference): int
+    {
+        $letters = preg_replace('/[^A-Z]/', '', strtoupper($reference)) ?: 'A';
+        $index = 0;
+
+        foreach (str_split($letters) as $letter) {
+            $index = ($index * 26) + (ord($letter) - 64);
+        }
+
+        return max(0, $index - 1);
     }
 
     private function csvDelimiter(string $line): string

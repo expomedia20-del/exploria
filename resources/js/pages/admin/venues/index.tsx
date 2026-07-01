@@ -467,11 +467,11 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                                         <input
                                                             type="file"
                                                             name="facilities_file"
-                                                            accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain"
+                                                            accept=".xlsx,.csv,.tsv,.txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,text/tab-separated-values,text/plain"
                                                             className="rounded-md border border-input bg-background px-3 py-2 text-sm"
                                                         />
                                                         <span className="text-xs leading-6 text-muted-foreground">
-                                                            فایل نمونه با جداکننده ; ساخته می‌شود تا در Excel هر آیتم در ستون و سلول جدا باز شود. ستون‌های قابل شناسایی: name/نام، function/کارکرد، campaign_uses/کاربرد کمپینی، priority/اولویت، parent/زیرمجموعه، notes/یادداشت.
+                                                            فایل نمونه XLSX را دانلود و در همان ستون‌ها تکمیل کنید. هر ردیف یک امکان/جاذبه است و ستون‌ها جداگانه در فرم سایت خوانده می‌شوند.
                                                         </span>
                                                         {errors.facilities_file ? <span className="text-xs text-destructive">{errors.facilities_file}</span> : null}
                                                     </label>

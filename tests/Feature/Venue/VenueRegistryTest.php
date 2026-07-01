@@ -10,6 +10,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
+use ZipArchive;
 
 class VenueRegistryTest extends TestCase
 {
@@ -128,16 +129,41 @@ class VenueRegistryTest extends TestCase
     {
         $admin = User::factory()->create(['role' => UserRole::Admin]);
 
-        $response = $this->actingAs($admin)
+        $this->actingAs($admin)
             ->get(route('admin.venues.facilities-template'))
             ->assertOk()
-            ->assertDownload('exploria-venue-facilities-template.csv');
+            ->assertDownload('exploria-venue-facilities-template.xlsx');
+    }
 
-        $content = $response->streamedContent();
+    public function test_admin_can_import_venue_facilities_from_xlsx_template(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $venue = Venue::query()->where('code', 'ecopark-abbasabad')->firstOrFail();
+        $file = $this->makeVenueFacilitiesXlsx([
+            ['نام', 'کارکرد', 'کاربرد کمپینی', 'اولویت', 'زیرمجموعه', 'یادداشت'],
+            ['کافه کودک رواق', 'retail', 'reward,sponsor', 'primary', 'پروژه رواق', 'پیشنهاد خانواده'],
+            ['مسیر کشف رواق', 'discovery', 'qr,mission,treasure', 'secondary', 'پروژه رواق', 'نقطه مأموریت'],
+        ]);
 
-        $this->assertStringContainsString('name;function;campaign_uses;priority;parent;notes', $content);
-        $this->assertStringContainsString('کافه رواق', $content);
-        $this->assertStringContainsString('پروژه رواق', $content);
+        $this->actingAs($admin)
+            ->patch(route('admin.venues.profile.update', $venue), [
+                'venue_type' => 'ecopark',
+                'primary_audience' => 'خانواده',
+                'official_website_url' => 'https://example.com/ecopark',
+                'manual_research_notes' => 'ورود XLSX واحدهای رواق',
+                'facilities_file' => $file,
+                'constraints_text' => '',
+            ])
+            ->assertRedirect();
+
+        $venue->refresh();
+
+        $this->assertSame('کافه کودک رواق', $venue->metadata['location_profile']['facilities'][0]['name']);
+        $this->assertSame('retail', $venue->metadata['location_profile']['facilities'][0]['function']);
+        $this->assertSame(['reward', 'sponsor'], $venue->metadata['location_profile']['facilities'][0]['campaignUses']);
+        $this->assertSame('مسیر کشف رواق', $venue->metadata['location_profile']['facilities'][1]['name']);
+        $this->assertSame(['qr', 'mission', 'treasure'], $venue->metadata['location_profile']['facilities'][1]['campaignUses']);
+        $this->assertStringContainsString('زیرمجموعه: پروژه رواق', $venue->metadata['location_profile']['facilities'][1]['notes']);
     }
 
     public function test_hub_manager_can_open_venue_registry_page(): void
@@ -155,5 +181,41 @@ class VenueRegistryTest extends TestCase
                 ->where('venues.0.code', 'ecopark-abbasabad')
                 ->where('venues.0.hubsCount', 1)
                 ->has('venues.0.zones.0.hubs', 1));
+    }
+
+    /** @param array<int, array<int, string>> $rows */
+    private function makeVenueFacilitiesXlsx(array $rows): UploadedFile
+    {
+        $path = tempnam(sys_get_temp_dir(), 'venue-facilities-test-');
+        $zip = new ZipArchive;
+        $zip->open($path, ZipArchive::OVERWRITE);
+        $zip->addFromString('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>');
+        $zip->addFromString('_rels/.rels', '<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>');
+        $zip->addFromString('xl/workbook.xml', '<?xml version="1.0" encoding="UTF-8"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="امکانات مکان" sheetId="1" r:id="rId1"/></sheets></workbook>');
+        $zip->addFromString('xl/_rels/workbook.xml.rels', '<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>');
+        $zip->addFromString('xl/worksheets/sheet1.xml', $this->xlsxSheet($rows));
+        $zip->close();
+
+        return new UploadedFile($path, 'venue-facilities.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', null, true);
+    }
+
+    /** @param array<int, array<int, string>> $rows */
+    private function xlsxSheet(array $rows): string
+    {
+        $xml = '<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>';
+
+        foreach ($rows as $rowIndex => $row) {
+            $excelRow = $rowIndex + 1;
+            $xml .= '<row r="'.$excelRow.'">';
+
+            foreach ($row as $columnIndex => $value) {
+                $cell = chr(65 + $columnIndex).$excelRow;
+                $xml .= '<c r="'.$cell.'" t="inlineStr"><is><t>'.e($value).'</t></is></c>';
+            }
+
+            $xml .= '</row>';
+        }
+
+        return $xml.'</sheetData></worksheet>';
     }
 }
