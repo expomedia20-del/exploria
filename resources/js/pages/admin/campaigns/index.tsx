@@ -72,6 +72,7 @@ type Props = {
     campaigns: CampaignItem[];
     venueOptions: RegistryEntity[];
     selectedCampaign: SelectedCampaign | null;
+    selectedVenue: RegistryEntity | null;
     selectedBlueprint: SelectedBlueprint | null;
 };
 
@@ -159,6 +160,7 @@ export default function CampaignRegistryIndex({
     campaigns,
     venueOptions,
     selectedCampaign,
+    selectedVenue,
     selectedBlueprint,
 }: Props) {
     const { flash, auth } = usePage<SharedProps>().props;
@@ -166,6 +168,16 @@ export default function CampaignRegistryIndex({
     const activeCount = campaigns.filter(
         (campaign) => campaign.status === 'active',
     ).length;
+    const suggestedVenue = editingCampaign?.venue ?? selectedCampaign?.venue ?? selectedVenue ?? venueOptions[0] ?? null;
+    const suggestedName = selectedBlueprint && suggestedVenue ? `${selectedBlueprint.title} - ${suggestedVenue.name}` : '';
+    const suggestedCode = selectedBlueprint
+        ? `${selectedBlueprint.code}-${suggestedVenue?.code ?? 'campaign'}`
+            .toLowerCase()
+            .replace(/[^a-z0-9-]+/g, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-|-$/g, '')
+            .slice(0, 64)
+        : '';
 
     return (
         <>
@@ -218,6 +230,11 @@ export default function CampaignRegistryIndex({
                             <div>
                                 <p className="text-xs text-muted-foreground">الگوی مرجع برای ساخت کمپین</p>
                                 <h2 className="mt-1 text-lg font-semibold">{selectedBlueprint.title}</h2>
+                                {selectedVenue ? (
+                                    <p className="mt-2 rounded-md bg-background/75 px-3 py-2 text-xs text-muted-foreground">
+                                        این ساخت کمپین از پیشنهاد شناخت‌نامه مکان شروع شده است: <span className="font-medium text-foreground">{selectedVenue.name}</span>
+                                    </p>
+                                ) : null}
                                 <p className="mt-1 text-muted-foreground">این الگو باید اول به کمپین تبدیل شود؛ بعد از ثبت کمپین، QR، اعضا، مأموریت، پاداش و نقشه عملیات باید تابع همین کمپین باشند.</p>
                             </div>
                             <span className="rounded-full bg-background px-3 py-1 text-xs" dir="ltr">{selectedBlueprint.code}</span>
@@ -304,7 +321,7 @@ export default function CampaignRegistryIndex({
                                             name="venue_id"
                                             required
                                             key={`campaign-venue-${editingCampaign?.id ?? 'new'}`}
-                                            defaultValue={editingCampaign?.venue?.id ?? venueOptions[0]?.id ?? ''}
+                                            defaultValue={suggestedVenue?.id ?? ''}
                                             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                         >
                                             {venueOptions.map((venue) => (
@@ -325,7 +342,7 @@ export default function CampaignRegistryIndex({
                                             name="name"
                                             required
                                             key={`campaign-name-${editingCampaign?.id ?? 'new'}`}
-                                            defaultValue={editingCampaign?.name ?? ''}
+                                            defaultValue={editingCampaign?.name ?? suggestedName}
                                             placeholder="مثلا کمپین گنج تابستان"
                                         />
                                         <InputError message={errors.name} />
@@ -339,7 +356,7 @@ export default function CampaignRegistryIndex({
                                             dir="ltr"
                                             placeholder="summer-treasure"
                                             key={`campaign-code-${editingCampaign?.id ?? selectedBlueprint?.code ?? 'new'}`}
-                                            defaultValue={editingCampaign?.code ?? (selectedBlueprint?.code ? `${selectedBlueprint.code}-campaign` : '')}
+                                            defaultValue={editingCampaign?.code ?? suggestedCode}
                                         />
                                         <InputError message={errors.code} />
                                     </div>

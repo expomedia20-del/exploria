@@ -21,6 +21,7 @@ class CampaignRegistryController extends Controller
             'campaigns' => $service->list($request->user()),
             'venueOptions' => $service->venueOptions($request->user()),
             'selectedCampaign' => $service->context($request->user(), $request->query('campaign')),
+            'selectedVenue' => $service->venueContext($request->user(), $request->query('venue')),
             'selectedBlueprint' => $blueprints->handoff($request->query('blueprint')),
         ]);
     }

@@ -44,6 +44,26 @@ class CampaignQrCoreTest extends TestCase
                 ->where('campaigns.0.code', 'ecopark-pilot-1405'));
     }
 
+    public function test_admin_can_start_campaign_form_from_blueprint_and_venue_context(): void
+    {
+        $this->withoutVite();
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $venue = Venue::query()->where('code', 'ecopark-abbasabad')->firstOrFail();
+
+        $this->actingAs($admin)
+            ->get(route('admin.campaigns.page', [
+                'blueprint' => 'foodcourt-taste-tour-quest',
+                'venue' => $venue->id,
+                'blueprint_action' => 'build',
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('admin/campaigns/index')
+                ->where('selectedBlueprint.code', 'foodcourt-taste-tour-quest')
+                ->where('selectedVenue.id', $venue->id)
+                ->where('selectedVenue.code', 'ecopark-abbasabad'));
+    }
+
     public function test_operator_can_create_campaign(): void
     {
         $operator = User::factory()->create(['role' => UserRole::Operator]);

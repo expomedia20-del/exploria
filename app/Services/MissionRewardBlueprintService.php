@@ -84,7 +84,7 @@ class MissionRewardBlueprintService
                     'matchScore' => $score,
                     'matchedUses' => $topUses,
                     'reason' => $this->recommendationReason($topUses),
-                    'buildUrl' => '/admin/campaigns?blueprint='.$template['code'].'&blueprint_action=build',
+                    'buildUrl' => '/admin/campaigns?blueprint='.$template['code'].'&venue='.$venue['id'].'&blueprint_action=build',
                 ];
             })
             ->filter(fn (array $recommendation): bool => $recommendation['matchScore'] > 0)

@@ -84,6 +84,32 @@ class CampaignRegistryService
         ];
     }
 
+    /** @return array{id: string, code: string, name: string}|null */
+    public function venueContext(?User $user, ?string $venueId): ?array
+    {
+        if (! $venueId) {
+            return null;
+        }
+
+        $venueIds = $user ? $this->accessScopes->venueIds($user) : collect();
+        $isGlobal = $user === null || $this->accessScopes->hasGlobalAccess($user);
+
+        $venue = Venue::query()
+            ->when(! $isGlobal, fn (Builder $query) => $query->whereIn('id', $venueIds))
+            ->whereKey($venueId)
+            ->first(['id', 'code', 'name']);
+
+        if (! $venue) {
+            return null;
+        }
+
+        return [
+            'id' => $venue->id,
+            'code' => $venue->code,
+            'name' => $venue->name,
+        ];
+    }
+
     /** @param array<string, mixed> $data */
     public function create(array $data): Campaign
     {

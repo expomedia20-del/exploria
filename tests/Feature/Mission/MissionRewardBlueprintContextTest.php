@@ -64,7 +64,7 @@ class MissionRewardBlueprintContextTest extends TestCase
             ->assertJsonPath('data.venueDesignContext.venues.0.designAssets.reward.0.name', 'Ravaq food court')
             ->assertJsonFragment([
                 'code' => 'foodcourt-taste-tour-quest',
-                'buildUrl' => '/admin/campaigns?blueprint=foodcourt-taste-tour-quest&blueprint_action=build',
+                'buildUrl' => '/admin/campaigns?blueprint=foodcourt-taste-tour-quest&venue='.$venue->id.'&blueprint_action=build',
             ]);
     }
 }
