@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Venue;
 use App\Models\Zone;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 
 class VenueRegistryService
@@ -38,6 +39,30 @@ class VenueRegistryService
             ->get()
             ->toBase()
             ->map(fn (Venue $venue): array => $this->serializeVenue($venue));
+    }
+
+    /** @param array<string, mixed> $data */
+    public function updateProfile(Venue $venue, array $data): Venue
+    {
+        $metadata = is_array($venue->metadata) ? $venue->metadata : [];
+        $profile = [
+            'venue_type' => $data['venue_type'],
+            'primary_audience' => $data['primary_audience'] ?? null,
+            'official_website_url' => $data['official_website_url'] ?? null,
+            'manual_research_notes' => $data['manual_research_notes'] ?? null,
+            'facilities' => $this->linesToItems($data['facilities_text'] ?? ''),
+            'constraints' => $this->linesToItems($data['constraints_text'] ?? ''),
+            'updated_at' => now()->toIso8601String(),
+        ];
+
+        $venue->update([
+            'metadata' => [
+                ...$metadata,
+                'location_profile' => $profile,
+            ],
+        ]);
+
+        return $venue->refresh();
     }
 
     /** @return array<string, mixed> */
@@ -81,7 +106,50 @@ class VenueRegistryService
             'campaignsCount' => (int) $venue->getAttribute('campaigns_count'),
             'qrCodesCount' => (int) $venue->getAttribute('qr_codes_count'),
             'partnerAccountsCount' => (int) $venue->getAttribute('partner_accounts_count'),
+            'locationProfile' => $this->locationProfile($venue),
             'zones' => $zones,
         ];
+    }
+
+    /** @return array<string, mixed> */
+    private function locationProfile(Venue $venue): array
+    {
+        $profile = Arr::get(is_array($venue->metadata) ? $venue->metadata : [], 'location_profile', []);
+        $facilities = collect(Arr::get($profile, 'facilities', []))->filter()->values();
+        $constraints = collect(Arr::get($profile, 'constraints', []))->filter()->values();
+
+        return [
+            'venueType' => Arr::get($profile, 'venue_type'),
+            'primaryAudience' => Arr::get($profile, 'primary_audience'),
+            'officialWebsiteUrl' => Arr::get($profile, 'official_website_url'),
+            'manualResearchNotes' => Arr::get($profile, 'manual_research_notes'),
+            'facilities' => $facilities,
+            'constraints' => $constraints,
+            'updatedAt' => Arr::get($profile, 'updated_at'),
+            'readinessScore' => $this->profileReadinessScore($profile, $facilities->count()),
+        ];
+    }
+
+    /** @param array<string, mixed> $profile */
+    private function profileReadinessScore(array $profile, int $facilitiesCount): int
+    {
+        $score = 0;
+        $score += filled($profile['venue_type'] ?? null) ? 25 : 0;
+        $score += filled($profile['primary_audience'] ?? null) ? 20 : 0;
+        $score += filled($profile['official_website_url'] ?? null) ? 15 : 0;
+        $score += filled($profile['manual_research_notes'] ?? null) ? 15 : 0;
+        $score += min(25, $facilitiesCount * 5);
+
+        return min(100, $score);
+    }
+
+    /** @return array<int, string> */
+    private function linesToItems(?string $value): array
+    {
+        return collect(preg_split('/\R/u', (string) $value) ?: [])
+            ->map(fn (string $line): string => trim($line, " \t\n\r\0\x0B-•*"))
+            ->filter()
+            ->values()
+            ->all();
     }
 }

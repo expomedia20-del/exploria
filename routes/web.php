@@ -228,6 +228,9 @@ Route::post('/admin/display-operations/placements/{adPlacement}/cancel', [Displa
 Route::get('/admin/venues', [VenueRegistryController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
     ->name('admin.venues.page');
+Route::patch('/admin/venues/{venue}/profile', [VenueRegistryController::class, 'updateProfile'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.venues.profile.update');
 
 Route::get('/api/v1/admin/qr-codes', [QrRegistryController::class, 'index'])
     ->middleware(['auth', 'role:admin,operator,viewer'])
@@ -320,6 +323,9 @@ Route::post('/api/v1/admin/display-operations/placements/{adPlacement}/cancel', 
 Route::get('/api/v1/admin/venues', [VenueRegistryController::class, 'index'])
     ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
     ->name('admin.venues.index');
+Route::patch('/api/v1/admin/venues/{venue}/profile', [VenueRegistryController::class, 'updateProfile'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.venues.profile.api.update');
 
 Route::get('/api/v1/visits/{visit}/missions', [VisitMissionController::class, 'index'])
     ->middleware('auth')

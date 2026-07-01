@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Form, Head } from '@inertiajs/react';
 import {
     Building2,
     CircleDot,
@@ -42,6 +42,16 @@ type VenueRegistryItem = {
     campaignsCount: number;
     qrCodesCount: number;
     partnerAccountsCount: number;
+    locationProfile: {
+        venueType: string | null;
+        primaryAudience: string | null;
+        officialWebsiteUrl: string | null;
+        manualResearchNotes: string | null;
+        facilities: string[];
+        constraints: string[];
+        updatedAt: string | null;
+        readinessScore: number;
+    };
     zones: ZoneItem[];
 };
 
@@ -63,8 +73,21 @@ const statusClasses: Record<string, string> = {
     placeholder: 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-200',
 };
 
+const venueTypeLabels: Record<string, string> = {
+    ecopark: 'اکوپارک / فضای طبیعت محور',
+    amusement_park: 'شهربازی',
+    urban_landmark: 'جاذبه شهری / برج',
+    mall: 'مرکز خرید',
+    event: 'رویداد موقت',
+    mixed: 'چندکارکردی',
+};
+
 function statusLabel(value: string) {
     return statusLabels[value] ?? value;
+}
+
+function lines(items: string[]) {
+    return items.join('\n');
 }
 
 function Stat({
@@ -208,6 +231,154 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                             </div>
                                         ))}
                                     </div>
+                                </div>
+
+                                <div className="grid gap-4 border-b border-sidebar-border/70 p-4 lg:grid-cols-[0.9fr_1.1fr] dark:border-sidebar-border">
+                                    <div className="rounded-lg bg-muted/35 p-3 text-sm">
+                                        <div className="flex items-center justify-between gap-3">
+                                            <div>
+                                                <h3 className="font-semibold">شناخت‌نامه مکان</h3>
+                                                <p className="mt-1 text-xs text-muted-foreground">
+                                                    مبنای طراحی الگوی کمپین، مأموریت، گنج، پاداش و مسیر برای این مکان.
+                                                </p>
+                                            </div>
+                                            <span className="shrink-0 rounded-full bg-background px-2.5 py-1 text-xs">
+                                                آمادگی {venue.locationProfile.readinessScore.toLocaleString('fa-IR')}٪
+                                            </span>
+                                        </div>
+                                        <div className="mt-3 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
+                                            <p>
+                                                نوع مکان:{' '}
+                                                <span className="font-medium text-foreground">
+                                                    {venue.locationProfile.venueType
+                                                        ? venueTypeLabels[venue.locationProfile.venueType] ?? venue.locationProfile.venueType
+                                                        : 'ثبت نشده'}
+                                                </span>
+                                            </p>
+                                            <p>
+                                                مخاطب غالب:{' '}
+                                                <span className="font-medium text-foreground">
+                                                    {venue.locationProfile.primaryAudience ?? 'ثبت نشده'}
+                                                </span>
+                                            </p>
+                                            <p>
+                                                امکانات/جاذبه‌ها:{' '}
+                                                <span className="font-medium text-foreground">
+                                                    {venue.locationProfile.facilities.length.toLocaleString('fa-IR')}
+                                                </span>
+                                            </p>
+                                            <p>
+                                                محدودیت‌ها:{' '}
+                                                <span className="font-medium text-foreground">
+                                                    {venue.locationProfile.constraints.length.toLocaleString('fa-IR')}
+                                                </span>
+                                            </p>
+                                        </div>
+                                        {venue.locationProfile.facilities.length > 0 ? (
+                                            <div className="mt-3 flex flex-wrap gap-2">
+                                                {venue.locationProfile.facilities.slice(0, 8).map((facility) => (
+                                                    <span key={facility} className="rounded-full bg-background px-2.5 py-1 text-xs">
+                                                        {facility}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p className="mt-3 rounded-md bg-background px-3 py-2 text-xs text-muted-foreground">
+                                                هنوز امکانات و جاذبه‌های این مکان برای طراحی کمپین ثبت نشده است.
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <Form
+                                        action={`/admin/venues/${venue.id}/profile`}
+                                        method="patch"
+                                        options={{ preserveScroll: true }}
+                                        className="grid gap-3 rounded-lg border border-sidebar-border/70 p-3 text-sm dark:border-sidebar-border"
+                                    >
+                                        {({ processing, errors }) => (
+                                            <>
+                                                <div className="grid gap-3 md:grid-cols-2">
+                                                    <label className="grid gap-1">
+                                                        <span className="text-xs font-medium">نوع مکان</span>
+                                                        <select
+                                                            name="venue_type"
+                                                            defaultValue={venue.locationProfile.venueType ?? 'mixed'}
+                                                            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                                        >
+                                                            {Object.entries(venueTypeLabels).map(([value, label]) => (
+                                                                <option key={value} value={value}>
+                                                                    {label}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                        {errors.venue_type ? <span className="text-xs text-destructive">{errors.venue_type}</span> : null}
+                                                    </label>
+                                                    <label className="grid gap-1">
+                                                        <span className="text-xs font-medium">مخاطب غالب</span>
+                                                        <input
+                                                            name="primary_audience"
+                                                            defaultValue={venue.locationProfile.primaryAudience ?? ''}
+                                                            placeholder="مثلا خانواده، کودک، گردشگر، نوجوان"
+                                                            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                                        />
+                                                        {errors.primary_audience ? <span className="text-xs text-destructive">{errors.primary_audience}</span> : null}
+                                                    </label>
+                                                </div>
+                                                <label className="grid gap-1">
+                                                    <span className="text-xs font-medium">لینک سایت رسمی یا منبع بررسی</span>
+                                                    <input
+                                                        name="official_website_url"
+                                                        defaultValue={venue.locationProfile.officialWebsiteUrl ?? ''}
+                                                        dir="ltr"
+                                                        placeholder="https://..."
+                                                        className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                                    />
+                                                    {errors.official_website_url ? <span className="text-xs text-destructive">{errors.official_website_url}</span> : null}
+                                                </label>
+                                                <div className="grid gap-3 md:grid-cols-2">
+                                                    <label className="grid gap-1">
+                                                        <span className="text-xs font-medium">امکانات و جاذبه‌ها</span>
+                                                        <textarea
+                                                            name="facilities_text"
+                                                            defaultValue={lines(venue.locationProfile.facilities)}
+                                                            placeholder="هر مورد در یک خط: دریاچه، مسیر پیاده‌روی، رستوران..."
+                                                            className="min-h-24 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                                        />
+                                                        {errors.facilities_text ? <span className="text-xs text-destructive">{errors.facilities_text}</span> : null}
+                                                    </label>
+                                                    <label className="grid gap-1">
+                                                        <span className="text-xs font-medium">محدودیت‌ها و ملاحظات</span>
+                                                        <textarea
+                                                            name="constraints_text"
+                                                            defaultValue={lines(venue.locationProfile.constraints)}
+                                                            placeholder="هر مورد در یک خط: ازدحام، ساعت کاری، نیاز به مجوز..."
+                                                            className="min-h-24 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                                        />
+                                                        {errors.constraints_text ? <span className="text-xs text-destructive">{errors.constraints_text}</span> : null}
+                                                    </label>
+                                                </div>
+                                                <label className="grid gap-1">
+                                                    <span className="text-xs font-medium">یادداشت بررسی دستی</span>
+                                                    <textarea
+                                                        name="manual_research_notes"
+                                                        defaultValue={venue.locationProfile.manualResearchNotes ?? ''}
+                                                        placeholder="خلاصه شناخت مکان، کارکرد بخش‌ها و فرصت‌های کمپین..."
+                                                        className="min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                                    />
+                                                    {errors.manual_research_notes ? <span className="text-xs text-destructive">{errors.manual_research_notes}</span> : null}
+                                                </label>
+                                                <div className="flex justify-end">
+                                                    <button
+                                                        type="submit"
+                                                        disabled={processing}
+                                                        className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                                                    >
+                                                        ذخیره شناخت‌نامه مکان
+                                                    </button>
+                                                </div>
+                                            </>
+                                        )}
+                                    </Form>
                                 </div>
 
                                 <div className="grid min-w-[940px] grid-cols-[0.9fr_1fr_1fr_0.85fr_0.85fr_1.1fr] gap-3 border-b border-sidebar-border/70 px-4 py-3 text-xs font-medium text-muted-foreground dark:border-sidebar-border">
