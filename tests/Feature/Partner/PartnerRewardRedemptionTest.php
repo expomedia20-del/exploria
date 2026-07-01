@@ -378,6 +378,27 @@ class PartnerRewardRedemptionTest extends TestCase
         $this->assertSame('Offer needs clearer redemption terms.', $offer->metadata['review_notes']);
     }
 
+    public function test_admin_can_request_partner_offer_revision(): void
+    {
+        $offer = $this->submitPartnerOffer();
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.rewards.api.revision', $offer), [
+                'notes' => 'Please clarify which item is offered for this campaign step.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'draft')
+            ->assertJsonPath('data.approvalStatus', 'revision_requested')
+            ->assertJsonPath('data.reviewNotes', 'Please clarify which item is offered for this campaign step.');
+
+        $offer->refresh();
+
+        $this->assertSame('draft', $offer->status->value);
+        $this->assertSame('revision_requested', $offer->metadata['approval_status']);
+        $this->assertSame($admin->id, $offer->metadata['revision_requested_by_user_id']);
+    }
+
     public function test_hub_manager_cannot_review_offer_outside_managed_hub(): void
     {
         $offer = $this->submitPartnerOffer();

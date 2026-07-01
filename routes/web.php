@@ -176,6 +176,10 @@ Route::post('/admin/rewards/{reward}/reject', [RewardApprovalController::class, 
     ->middleware(['auth', 'role:admin,operator,hub_manager'])
     ->name('admin.rewards.reject');
 
+Route::post('/admin/rewards/{reward}/revision', [RewardApprovalController::class, 'requestRevision'])
+    ->middleware(['auth', 'role:admin,operator,hub_manager'])
+    ->name('admin.rewards.revision');
+
 Route::post('/admin/ads/{adRequest}/approve', [AdvertisingController::class, 'approve'])
     ->middleware(['auth', 'role:admin,operator,hub_manager'])
     ->name('admin.ads.approve');
@@ -283,6 +287,10 @@ Route::post('/api/v1/admin/rewards/{reward}/approve', [RewardApprovalController:
 Route::post('/api/v1/admin/rewards/{reward}/reject', [RewardApprovalController::class, 'reject'])
     ->middleware(['auth', 'role:admin,operator,hub_manager'])
     ->name('admin.rewards.api.reject');
+
+Route::post('/api/v1/admin/rewards/{reward}/revision', [RewardApprovalController::class, 'requestRevision'])
+    ->middleware(['auth', 'role:admin,operator,hub_manager'])
+    ->name('admin.rewards.api.revision');
 
 Route::post('/api/v1/admin/ads/{adRequest}/approve', [AdvertisingController::class, 'approve'])
     ->middleware(['auth', 'role:admin,operator,hub_manager'])

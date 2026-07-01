@@ -140,6 +140,7 @@ const statusLabels: Record<string, string> = {
     pending_review: 'در انتظار تایید',
     approved: 'تایید شده',
     rejected: 'رد شده',
+    revision_requested: 'نیازمند اصلاح',
 };
 
 function formatDate(value: string | null) {

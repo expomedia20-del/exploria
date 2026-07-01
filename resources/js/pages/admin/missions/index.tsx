@@ -235,6 +235,7 @@ const statusLabels: Record<string, string> = {
     pending_review: 'در انتظار تایید',
     approved: 'تایید شده',
     rejected: 'رد شده',
+    revision_requested: 'نیازمند اصلاح',
 };
 
 const statusClasses: Record<string, string> = {
@@ -242,6 +243,7 @@ const statusClasses: Record<string, string> = {
     draft: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200',
     inactive: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200',
     placeholder: 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-200',
+    revision_requested: 'bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-200',
 };
 
 const rewardTierLabels: Record<string, string> = {
@@ -1279,6 +1281,9 @@ export default function MissionRewardRegistryIndex({
                                             <span
                                                 className={`rounded-full px-2.5 py-1 text-xs font-medium ${
                                                     statusClasses[
+                                                        reward.approvalStatus
+                                                    ] ??
+                                                    statusClasses[
                                                         reward.status
                                                     ] ?? statusClasses.inactive
                                                 }`}
@@ -1358,6 +1363,34 @@ export default function MissionRewardRegistryIndex({
                                                             >
                                                                 <CheckCircle2 className="size-4" />
                                                                 تایید
+                                                            </Button>
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </Form>
+                                            <Form
+                                                action={`/admin/rewards/${reward.id}/revision`}
+                                                method="post"
+                                                options={{
+                                                    preserveScroll: true,
+                                                }}
+                                                className="grid gap-2 md:grid-cols-[1fr_auto]"
+                                            >
+                                                {({ processing }) => (
+                                                    <>
+                                                        <textarea
+                                                            name="notes"
+                                                            className="min-h-16 rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                                            placeholder="چه چیزی باید توسط فروشگاه/اسپانسر اصلاح یا شفاف‌تر شود؟"
+                                                        />
+                                                        <div className="flex items-end">
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                disabled={processing}
+                                                            >
+                                                                <Pencil className="size-4" />
+                                                                درخواست اصلاح
                                                             </Button>
                                                         </div>
                                                     </>

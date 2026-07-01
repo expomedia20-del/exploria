@@ -58,6 +58,29 @@ class RewardApprovalController extends Controller
         return back()->with('success', 'پیشنهاد فروشگاه رد شد.');
     }
 
+    public function requestRevision(Request $request, RewardDefinition $reward, HubManagerAccessService $access): JsonResponse|RedirectResponse
+    {
+        $access->ensureCanReviewReward($request->user(), $reward);
+        $data = $this->validatedReviewData($request);
+
+        $reward->update([
+            'status' => RecordStatus::Draft,
+            'metadata' => [
+                ...($reward->metadata ?? []),
+                'approval_status' => 'revision_requested',
+                'revision_requested_by_user_id' => $request->user()?->id,
+                'revision_requested_at' => now()->toIso8601String(),
+                'review_notes' => $data['notes'],
+            ],
+        ]);
+
+        if ($request->expectsJson()) {
+            return response()->json(['status' => 'success', 'data' => $this->serialize($reward->fresh())]);
+        }
+
+        return back()->with('success', 'پیشنهاد برای اصلاح به فروشگاه/اسپانسر برگردانده شد.');
+    }
+
     /** @return array{notes: string|null} */
     private function validatedReviewData(Request $request): array
     {
