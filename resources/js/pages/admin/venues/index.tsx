@@ -398,6 +398,27 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                                         این دکمه لینک منبع را در شناخت‌نامه ثبت می‌کند؛ سپس فهرست استخراج‌شده از سایت یا بررسی میدانی را در بخش افزودن سریع وارد و موارد مهم را در ردیف‌های پایین دسته‌بندی کنید.
                                                     </span>
                                                     {errors.official_website_url ? <span className="text-xs text-destructive">{errors.official_website_url}</span> : null}
+                                                    {venue.locationProfile.officialWebsiteUrl ? (
+                                                        <div className="mt-2 grid gap-2 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-100">
+                                                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                                                <span className="font-medium">خروجی بررسی منبع: لینک ثبت شده و آماده تکمیل است.</span>
+                                                                <a
+                                                                    href={venue.locationProfile.officialWebsiteUrl}
+                                                                    target="_blank"
+                                                                    rel="noreferrer"
+                                                                    className="inline-flex h-8 items-center justify-center rounded-md border border-emerald-300 px-3 text-emerald-900 hover:bg-emerald-100 dark:border-emerald-800 dark:text-emerald-100 dark:hover:bg-emerald-900"
+                                                                >
+                                                                    باز کردن منبع
+                                                                </a>
+                                                            </div>
+                                                            <p className="break-all" dir="ltr">
+                                                                {venue.locationProfile.officialWebsiteUrl}
+                                                            </p>
+                                                            <p>
+                                                                استخراج خودکار از سایت هنوز به موتور جدا نیاز دارد؛ فعلا فهرست به‌دست‌آمده از بررسی سایت را در «افزودن سریع امکانات و جاذبه‌های جدید» وارد کنید.
+                                                            </p>
+                                                        </div>
+                                                    ) : null}
                                                 </div>
                                                 <div className="grid gap-3 md:grid-cols-2">
                                                     <label className="grid gap-1">
