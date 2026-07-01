@@ -341,6 +341,33 @@ class CampaignQrCoreTest extends TestCase
 
         $this->actingAs($operator)
             ->from(route('admin.missions.page', ['campaign' => $campaign->code]))
+            ->post(route('admin.treasures.store'), [
+                'treasure_id' => $treasure->id,
+                'campaign_id' => $campaign->id,
+                'mission_instance_id' => $mission->id,
+                'code' => 'builder-test-treasure-edited',
+                'name' => 'builder treasure edited',
+                'treasure_type' => 'hidden_treasure',
+                'treasure_tier' => 'bronze',
+                'cycle_step_index' => 1,
+                'cycle_step_label' => 'گام اول',
+                'reveal_mode' => 'hidden_qr',
+                'reveal_description' => 'edited reveal',
+                'discovery_hint' => 'edited hint',
+                'status' => RecordStatus::Active->value,
+                'required_completed_missions' => 1,
+                'required_min_points' => 130,
+            ])
+            ->assertRedirect(route('admin.missions.page', ['campaign' => $campaign->code]));
+
+        $treasure->refresh();
+        $this->assertSame('builder-test-treasure-edited', $treasure->code);
+        $this->assertSame('builder treasure edited', $treasure->name);
+        $this->assertSame('hidden_qr', $treasure->reveal_rule['reveal_mode']);
+        $this->assertSame(1, Treasure::query()->where('campaign_id', $campaign->id)->where('metadata->cycle_step_index', 1)->count());
+
+        $this->actingAs($operator)
+            ->from(route('admin.missions.page', ['campaign' => $campaign->code]))
             ->delete(route('admin.treasures.destroy', $treasure))
             ->assertRedirect(route('admin.missions.page', ['campaign' => $campaign->code]));
 

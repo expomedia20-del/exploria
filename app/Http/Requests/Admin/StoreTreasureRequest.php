@@ -18,6 +18,7 @@ class StoreTreasureRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'treasure_id' => ['nullable', 'uuid', 'exists:treasures,id'],
             'campaign_id' => ['required', 'uuid', 'exists:campaigns,id'],
             'mission_instance_id' => ['nullable', 'uuid', 'exists:mission_instances,id'],
             'code' => [
@@ -32,6 +33,7 @@ class StoreTreasureRequest extends FormRequest
                     $conflict = Treasure::query()
                         ->where('campaign_id', $campaignId)
                         ->where('code', $value)
+                        ->when($this->filled('treasure_id'), fn ($query) => $query->whereKeyNot($this->string('treasure_id')->toString()))
                         ->get(['metadata'])
                         ->contains(fn (Treasure $treasure): bool => (int) ($treasure->metadata['cycle_step_index'] ?? 0) !== $cycleStepIndex);
 

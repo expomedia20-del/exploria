@@ -296,7 +296,7 @@ class MissionRewardRegistryService
             ],
         ];
 
-        return DB::transaction(fn (): Treasure => $this->replaceTreasureCycleStep($campaign, $data['cycle_step_index'] ?? null, $attributes));
+        return DB::transaction(fn (): Treasure => $this->replaceTreasureCycleStep($campaign, $data['cycle_step_index'] ?? null, $attributes, $data['treasure_id'] ?? null));
     }
 
     private function missionIdForCycleStep(Campaign $campaign, mixed $cycleStepIndex): ?string
@@ -394,8 +394,27 @@ class MissionRewardRegistryService
     }
 
     /** @param array<string, mixed> $attributes */
-    private function replaceTreasureCycleStep(Campaign $campaign, mixed $cycleStepIndex, array $attributes): Treasure
+    private function replaceTreasureCycleStep(Campaign $campaign, mixed $cycleStepIndex, array $attributes, mixed $treasureId = null): Treasure
     {
+        if ($treasureId) {
+            $treasure = Treasure::query()
+                ->where('campaign_id', $campaign->id)
+                ->whereKey((string) $treasureId)
+                ->firstOrFail();
+
+            if ($cycleStepIndex) {
+                Treasure::query()
+                    ->where('campaign_id', $campaign->id)
+                    ->where('metadata->cycle_step_index', (int) $cycleStepIndex)
+                    ->whereKeyNot($treasure->id)
+                    ->delete();
+            }
+
+            $treasure->update($attributes);
+
+            return $treasure->refresh();
+        }
+
         if (! $cycleStepIndex) {
             return Treasure::query()->create($attributes);
         }
