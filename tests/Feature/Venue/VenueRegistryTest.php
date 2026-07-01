@@ -68,6 +68,7 @@ class VenueRegistryTest extends TestCase
                         'notes' => null,
                     ],
                 ],
+                'facilities_text' => "دریاچه\nباغ کتاب",
                 'constraints_text' => "ازدحام آخر هفته\nنیاز به جانمایی امن QR",
             ])
             ->assertOk()
@@ -78,14 +79,17 @@ class VenueRegistryTest extends TestCase
         $this->assertSame('ecopark', $venue->metadata['location_profile']['venue_type']);
         $this->assertSame('دریاچه', $venue->metadata['location_profile']['facilities'][0]['name']);
         $this->assertSame(['mission', 'treasure'], $venue->metadata['location_profile']['facilities'][0]['campaignUses']);
+        $this->assertSame('باغ کتاب', $venue->metadata['location_profile']['facilities'][2]['name']);
+        $this->assertCount(3, $venue->metadata['location_profile']['facilities']);
 
         $this->actingAs($admin)
             ->getJson(route('admin.venues.index'))
             ->assertOk()
             ->assertJsonPath('data.0.locationProfile.venueType', 'ecopark')
-            ->assertJsonPath('data.0.locationProfile.readinessScore', 85)
+            ->assertJsonPath('data.0.locationProfile.readinessScore', 90)
             ->assertJsonPath('data.0.locationProfile.facilities.0.name', 'دریاچه')
-            ->assertJsonPath('data.0.locationProfile.facilities.0.campaignUses.1', 'treasure');
+            ->assertJsonPath('data.0.locationProfile.facilities.0.campaignUses.1', 'treasure')
+            ->assertJsonPath('data.0.locationProfile.facilities.2.name', 'باغ کتاب');
     }
 
     public function test_hub_manager_can_open_venue_registry_page(): void

@@ -147,19 +147,19 @@ class VenueRegistryService
     private function facilityItems(array $data): array
     {
         $structured = $this->normalizeFacilities($data['facilities'] ?? []);
-
-        if ($structured->isNotEmpty()) {
-            return $structured->all();
-        }
-
-        return collect($this->linesToItems($data['facilities_text'] ?? ''))
+        $textItems = collect($this->linesToItems($data['facilities_text'] ?? ''))
             ->map(fn (string $name): array => [
                 'name' => $name,
                 'function' => null,
                 'campaignUses' => [],
                 'priority' => 'secondary',
                 'notes' => null,
-            ])
+            ]);
+
+        return $structured
+            ->merge($textItems)
+            ->unique(fn (array $item): string => mb_strtolower($item['name']))
+            ->values()
             ->all();
     }
 
