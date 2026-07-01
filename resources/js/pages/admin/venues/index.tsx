@@ -49,6 +49,7 @@ type VenueRegistryItem = {
         manualResearchNotes: string | null;
         facilities: LocationFacility[];
         constraints: string[];
+        sourceSuggestions: string[];
         updatedAt: string | null;
         readinessScore: number;
     };
@@ -417,6 +418,23 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                                             <p>
                                                                 استخراج خودکار از سایت هنوز به موتور جدا نیاز دارد؛ فعلا فهرست به‌دست‌آمده از بررسی سایت را در «افزودن سریع امکانات و جاذبه‌های جدید» وارد کنید.
                                                             </p>
+                                                            {venue.locationProfile.sourceSuggestions.length > 0 ? (
+                                                                <div className="grid gap-2 rounded-md bg-background/70 p-2 text-foreground">
+                                                                    <div className="flex items-center justify-between gap-2">
+                                                                        <span className="font-medium">فهرست پیشنهادی از منبع رسمی</span>
+                                                                        <span className="text-muted-foreground">
+                                                                            {venue.locationProfile.sourceSuggestions.length.toLocaleString('fa-IR')} مورد
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="flex flex-wrap gap-1.5">
+                                                                        {venue.locationProfile.sourceSuggestions.map((suggestion) => (
+                                                                            <span key={suggestion} className="rounded-md border border-emerald-200 bg-white px-2 py-1 dark:border-emerald-900 dark:bg-emerald-950">
+                                                                                {suggestion}
+                                                                            </span>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            ) : null}
                                                         </div>
                                                     ) : null}
                                                 </div>

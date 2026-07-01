@@ -13,6 +13,43 @@ use Illuminate\Support\Collection;
 
 class VenueRegistryService
 {
+    private const ABBASABAD_OFFICIAL_SOURCE_SUGGESTIONS = [
+        'خانه موسیقی تهران',
+        'خانه خلاق هزاره',
+        'مرکز نوآوری هزاره',
+        'پروژه رواق',
+        'یادمان عروج',
+        'دریاچه نوروز',
+        'بوستان بهشت مادران',
+        'میدان مشاهیر',
+        'بوستان اکو',
+        'آسمان نمای گنبد مینا',
+        'پل ابریشم 2',
+        'اسکیت پارک',
+        'پل طبیعت',
+        'پل ابریشم یک',
+        'بوستان بنادر',
+        'هتل دیدار',
+        'فانوس دریایی',
+        'اقیانوس پارک',
+        'کبوتر خانه',
+        'گذر گردشگری آب و آتش',
+        'تندیس سیاوش',
+        'سجاده نماز',
+        'بوستان آب و آتش',
+        'برج پرچم',
+        'بوستان طالقانی',
+        'موزه ملی انقلاب اسلامی و دفاع مقدس',
+        'باغ هنر',
+        'گذر فرهنگ',
+        'دریاچه هنر',
+        'کوشک باغ هنر',
+        'خانه شعر و ادبیات',
+        'باغ غذا',
+        'باغ کتاب',
+        'موزه نادر ابراهیمی',
+    ];
+
     public function __construct(private readonly UserAccessScopeService $accessScopes) {}
 
     /** @return Collection<int, array<string, mixed>> */
@@ -125,6 +162,7 @@ class VenueRegistryService
             'manualResearchNotes' => Arr::get($profile, 'manual_research_notes'),
             'facilities' => $facilities,
             'constraints' => $constraints,
+            'sourceSuggestions' => $this->sourceSuggestions($venue),
             'updatedAt' => Arr::get($profile, 'updated_at'),
             'readinessScore' => $this->profileReadinessScore($profile, $facilities->count()),
         ];
@@ -205,5 +243,15 @@ class VenueRegistryService
             ->filter()
             ->values()
             ->all();
+    }
+
+    /** @return array<int, string> */
+    private function sourceSuggestions(Venue $venue): array
+    {
+        if ($venue->code !== 'ecopark-abbasabad') {
+            return [];
+        }
+
+        return self::ABBASABAD_OFFICIAL_SOURCE_SUGGESTIONS;
     }
 }

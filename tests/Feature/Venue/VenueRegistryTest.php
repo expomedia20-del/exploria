@@ -38,7 +38,8 @@ class VenueRegistryTest extends TestCase
             ->assertJsonPath('data.0.hubsCount', 4)
             ->assertJsonPath('data.0.touchpointsCount', 1)
             ->assertJsonPath('data.0.partnerAccountsCount', 3)
-            ->assertJsonPath('data.0.locationProfile.readinessScore', 0);
+            ->assertJsonPath('data.0.locationProfile.readinessScore', 0)
+            ->assertJsonPath('data.0.locationProfile.sourceSuggestions.0', 'خانه موسیقی تهران');
     }
 
     public function test_admin_can_update_venue_location_profile(): void
