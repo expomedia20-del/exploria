@@ -17,6 +17,8 @@ class StorePartnerOfferRequest extends FormRequest
     {
         return [
             'campaign_id' => ['nullable', 'uuid', 'exists:campaigns,id'],
+            'cycle_step_index' => ['nullable', 'integer', 'min:1', 'max:50'],
+            'cycle_step_label' => ['nullable', 'string', 'max:255'],
             'name' => ['required', 'string', 'max:160'],
             'reward_type' => ['required', 'string', Rule::in(['partner_coupon', 'discount', 'gift', 'service_credit', 'sponsor_reward'])],
             'reward_tier' => ['nullable', 'string', 'max:64', 'alpha_dash:ascii'],

@@ -73,6 +73,7 @@ class PartnerDashboardService
         $proposalCampaign = $this->proposalCampaignForPartner($partner, is_string($campaignCode) ? $campaignCode : null);
         $blueprintCode = $proposalCampaign?->metadata['blueprint_code'] ?? null;
         $blueprint = $this->blueprints->handoff(is_string($blueprintCode) ? $blueprintCode : null);
+        $missionPlan = $blueprint['missionPlan'] ?? [];
         $rewardTiers = $blueprint['rewardDesign']['tiers'] ?? [];
         $rewardDefinitions = $partner->rewardDefinitions()
             ->with(['campaign:id,code,name'])
@@ -155,6 +156,7 @@ class PartnerDashboardService
                     'name' => $proposalCampaign->name,
                     'status' => $proposalCampaign->status->value,
                 ] : null,
+                'missionPlan' => $missionPlan,
                 'rewardTiers' => $rewardTiers,
             ],
             'rewardDefinitions' => $rewardDefinitions,
@@ -215,6 +217,8 @@ class PartnerDashboardService
                 'approval_status' => 'pending_review',
                 'submitted_by_user_id' => $partnerUser->id,
                 'submitted_at' => now()->toIso8601String(),
+                'cycle_step_index' => $data['cycle_step_index'] ?? null,
+                'cycle_step_label' => $data['cycle_step_label'] ?? null,
                 'reward_tier' => $data['reward_tier'] ?? null,
                 'reward_option' => $data['reward_option'] ?? null,
                 'description' => $data['description'] ?? null,
@@ -279,6 +283,8 @@ class PartnerDashboardService
             'campaignName' => $reward->campaign?->name,
             'approvalStatus' => $reward->metadata['approval_status'] ?? $reward->status->value,
             'availabilityStatus' => $reward->metadata['availability_status'] ?? ($reward->status === RecordStatus::Inactive ? 'paused' : 'active'),
+            'cycleStepIndex' => $reward->metadata['cycle_step_index'] ?? null,
+            'cycleStepLabel' => $reward->metadata['cycle_step_label'] ?? null,
             'rewardTier' => $reward->metadata['reward_tier'] ?? null,
             'rewardOption' => $reward->metadata['reward_option'] ?? null,
             'availableFrom' => $reward->metadata['available_from'] ?? null,

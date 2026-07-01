@@ -1,4 +1,5 @@
 import { Form, Head, Link, usePage } from '@inertiajs/react';
+import { useMemo, useState } from 'react';
 import {
     CheckCircle2,
     Gift,
@@ -49,6 +50,16 @@ type RewardDefinition = {
     description: string | null;
     terms: string | null;
     reviewNotes: string | null;
+    cycleStepIndex: number | null;
+    cycleStepLabel: string | null;
+};
+
+type MissionPlanStep = {
+    index: number;
+    userStep: string;
+    title: string;
+    rewardTier: string;
+    routeIntent: string;
 };
 
 type RewardDesignTier = {
@@ -107,6 +118,7 @@ type Props = {
             name: string;
             status: string;
         } | null;
+        missionPlan: MissionPlanStep[];
         rewardTiers: RewardDesignTier[];
     };
 };
@@ -189,6 +201,16 @@ export default function PartnerDashboard({
     const profileReady = Boolean(partner.contactName && partner.contactMobile && partner.category);
     const pendingOffers = rewardDefinitions.filter((reward) => reward.approvalStatus === 'pending_review').length;
     const approvedOffers = rewardDefinitions.filter((reward) => reward.approvalStatus === 'approved').length;
+    const firstStepIndex = proposalContext.missionPlan[0]?.index ?? '';
+    const [selectedStepIndex, setSelectedStepIndex] = useState<string>(String(firstStepIndex));
+    const selectedStep = useMemo(
+        () => proposalContext.missionPlan.find((step) => String(step.index) === selectedStepIndex) ?? null,
+        [proposalContext.missionPlan, selectedStepIndex],
+    );
+    const selectedTier = useMemo(
+        () => proposalContext.rewardTiers.find((tier) => tier.tierKey === selectedStep?.rewardTier) ?? null,
+        [proposalContext.rewardTiers, selectedStep?.rewardTier],
+    );
     const actionSteps = [
         {
             title: 'تکمیل اطلاعات فروشگاه',
@@ -440,7 +462,7 @@ export default function PartnerDashboard({
                             {proposalContext.campaign ? (
                                 <>
                                     <p className="font-medium text-foreground">کمپین در حال تنظیم: {proposalContext.campaign.name}</p>
-                                    <p className="mt-1">سطح و گزینه پیشنهادی برای بررسی ادمین ثبت می‌شود و اجرای نهایی در مرحله مأموریت و پاداش انجام می‌شود.</p>
+                                    <p className="mt-1">ابتدا گام چرخه کمپین را انتخاب کنید؛ سطح پاداش همان گام به‌صورت خودکار به پیشنهاد شما وصل می‌شود.</p>
                                 </>
                             ) : (
                                 <p>برای ثبت پیشنهاد پاداش، ابتدا باید یک کمپین در حال تنظیم برای مکان این فروشگاه وجود داشته باشد.</p>
@@ -458,6 +480,8 @@ export default function PartnerDashboard({
                                     {proposalContext.campaign ? (
                                         <input type="hidden" name="campaign_id" value={proposalContext.campaign.id} />
                                     ) : null}
+                                    <input type="hidden" name="cycle_step_label" value={selectedStep?.userStep ?? ''} />
+                                    <input type="hidden" name="reward_tier" value={selectedStep?.rewardTier ?? ''} />
                                     <div className="grid gap-2">
                                         <Label htmlFor="offer_name">
                                             عنوان پیشنهاد
@@ -501,23 +525,48 @@ export default function PartnerDashboard({
                                         />
                                     </div>
                                     <div className="grid gap-2">
-                                        <Label htmlFor="reward_tier">
-                                            سطح پاداش پیشنهادی
+                                        <Label htmlFor="cycle_step_index">
+                                            گام چرخه کمپین
                                         </Label>
                                         <select
-                                            id="reward_tier"
-                                            name="reward_tier"
+                                            id="cycle_step_index"
+                                            name="cycle_step_index"
+                                            required
                                             className="h-9 rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                                            defaultValue={proposalContext.rewardTiers[0]?.tierKey ?? ''}
+                                            value={selectedStepIndex}
+                                            onChange={(event) => setSelectedStepIndex(event.target.value)}
                                         >
-                                            <option value="">بدون سطح مشخص</option>
-                                            {proposalContext.rewardTiers.map((tier) => (
-                                                <option key={tier.tierKey} value={tier.tierKey}>
-                                                    {tier.level}
+                                            <option value="">انتخاب گام</option>
+                                            {proposalContext.missionPlan.map((step) => (
+                                                <option key={step.index} value={step.index}>
+                                                    گام {step.index.toLocaleString('fa-IR')} - {step.userStep}
                                                 </option>
                                             ))}
                                         </select>
+                                        <InputError message={errors.cycle_step_index} />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="reward_tier_display">
+                                            سطح پاداش همان گام
+                                        </Label>
+                                        <Input
+                                            id="reward_tier_display"
+                                            value={selectedTier?.level ?? 'پس از انتخاب گام مشخص می‌شود'}
+                                            readOnly
+                                            className="bg-muted/40"
+                                        />
                                         <InputError message={errors.reward_tier} />
+                                    </div>
+                                    <div className="grid gap-2 md:col-span-2">
+                                        <Label htmlFor="route_intent_display">
+                                            ارتباط عملیاتی گام
+                                        </Label>
+                                        <Input
+                                            id="route_intent_display"
+                                            value={selectedStep?.routeIntent ?? 'گام چرخه را انتخاب کنید'}
+                                            readOnly
+                                            className="bg-muted/40"
+                                        />
                                     </div>
                                     <div className="grid gap-2">
                                         <Label htmlFor="reward_option">
@@ -527,16 +576,15 @@ export default function PartnerDashboard({
                                             id="reward_option"
                                             name="reward_option"
                                             className="h-9 rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                                            defaultValue=""
+                                            key={selectedStep?.rewardTier ?? 'no-tier'}
+                                            defaultValue={selectedTier?.options[0] ?? ''}
                                         >
                                             <option value="">انتخاب آزاد توسط ادمین</option>
-                                            {proposalContext.rewardTiers.flatMap((tier) =>
-                                                tier.options.map((option) => (
-                                                    <option key={`${tier.tierKey}-${option}`} value={option}>
-                                                        {tier.level} - {option}
-                                                    </option>
-                                                )),
-                                            )}
+                                            {(selectedTier?.options ?? []).map((option) => (
+                                                <option key={option} value={option}>
+                                                    {option}
+                                                </option>
+                                            ))}
                                         </select>
                                         <InputError message={errors.reward_option} />
                                     </div>
@@ -758,6 +806,11 @@ export default function PartnerDashboard({
                                                 {reward.description}
                                             </p>
                                         ) : null}
+                                        <p className="text-xs text-muted-foreground">
+                                            {reward.cycleStepIndex ? `گام ${Number(reward.cycleStepIndex).toLocaleString('fa-IR')}: ${reward.cycleStepLabel ?? '-'}` : 'گام چرخه: ثبت نشده'}
+                                            {' '}· سطح: {reward.rewardTier ?? '-'}
+                                            {reward.rewardOption ? ` · گزینه: ${reward.rewardOption}` : ''}
+                                        </p>
                                         <p className="text-xs text-muted-foreground">
                                             صادر شده:{' '}
                                             {reward.userRewardsCount.toLocaleString(

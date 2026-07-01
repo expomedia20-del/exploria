@@ -75,18 +75,15 @@ class CampaignBlueprintConsistencyService
             return;
         }
 
+        $step = $this->stepFromData($blueprint, $data);
         $tierKey = (string) ($data['reward_tier'] ?? '');
-        if ($tierKey === '') {
+        if ($tierKey === '' || $tierKey !== $step['rewardTier']) {
             throw ValidationException::withMessages([
-                'reward_tier' => 'برای پیشنهاد فروشگاه، سطح پاداش مرتبط با الگوی کمپین را انتخاب کنید.',
+                'reward_tier' => 'سطح پاداش پیشنهاد فروشگاه باید با گام انتخاب‌شده در چرخه کمپین همخوان باشد.',
             ]);
         }
 
-        if (! collect($blueprint['rewardDesign']['tiers'] ?? [])->firstWhere('tierKey', $tierKey)) {
-            throw ValidationException::withMessages([
-                'reward_tier' => 'این سطح پاداش در الگوی مرجع کمپین وجود ندارد.',
-            ]);
-        }
+        $this->assertRewardOption($blueprint, $tierKey, $data['reward_option'] ?? null);
     }
 
     /** @param array<string, mixed> $data */

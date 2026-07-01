@@ -9,6 +9,7 @@ use App\Models\RewardDefinition;
 use App\Models\RewardRedemption;
 use App\Models\User;
 use App\Models\Visit;
+use App\Services\MissionRewardBlueprintService;
 use Database\Seeders\PilotLocationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -186,14 +187,14 @@ class PartnerRewardRedemptionTest extends TestCase
     {
         $partnerUser = User::query()->where('email', 'cafe.eco@example.test')->firstOrFail();
         $campaign = QrCode::query()->firstOrFail()->campaign;
+        $rewardStep = $this->rewardStepPayload('silver');
 
         $this->actingAs($partnerUser)
             ->postJson(route('partner.offers.api.store'), [
                 'campaign_id' => $campaign?->id,
+                ...$rewardStep,
                 'name' => 'Ã˜ÂªÃ˜Â®Ã™ÂÃ›Å’Ã™Â Ã™â€ Ã™Ë†Ã˜Â´Ã›Å’Ã˜Â¯Ã™â€ Ã›Å’ Ã˜Â®Ã˜Â§Ã™â€ Ã™Ë†Ã˜Â§Ã˜Â¯ÃšÂ¯Ã›Å’',
                 'reward_type' => 'discount',
-                'reward_tier' => 'silver',
-                'reward_option' => 'family drink bundle',
                 'point_cost' => 250,
                 'stock_quantity' => 30,
                 'description' => 'Ã˜Â¨Ã˜Â±Ã˜Â§Ã›Å’ Ã˜Â®Ã˜Â§Ã™â€ Ã™Ë†Ã˜Â§Ã˜Â¯Ã™â€¡Ã¢â‚¬Å’Ã™â€¡Ã˜Â§Ã›Å’Ã›Å’ ÃšÂ©Ã™â€¡ Ã™â€¦Ã˜Â³Ã›Å’Ã˜Â± Ã˜Â§ÃšÂ©Ã™Ë†Ã™Â¾Ã˜Â§Ã˜Â±ÃšÂ© Ã˜Â±Ã˜Â§ ÃšÂ©Ã˜Â§Ã™â€¦Ã™â€ž Ã™â€¦Ã›Å’Ã¢â‚¬Å’ÃšÂ©Ã™â€ Ã™â€ Ã˜Â¯.',
@@ -212,8 +213,9 @@ class PartnerRewardRedemptionTest extends TestCase
         $this->assertSame($campaign?->id, $offer->campaign_id);
         $this->assertSame('pending_review', $offer->metadata['approval_status']);
         $this->assertSame('partner_offer_submission', $offer->metadata['source']);
-        $this->assertSame('silver', $offer->metadata['reward_tier']);
-        $this->assertSame('family drink bundle', $offer->metadata['reward_option']);
+        $this->assertSame($rewardStep['cycle_step_index'], $offer->metadata['cycle_step_index']);
+        $this->assertSame($rewardStep['reward_tier'], $offer->metadata['reward_tier']);
+        $this->assertSame($rewardStep['reward_option'], $offer->metadata['reward_option']);
     }
 
     public function test_partner_dashboard_uses_campaign_query_for_draft_reward_proposals(): void
@@ -240,10 +242,9 @@ class PartnerRewardRedemptionTest extends TestCase
         $this->actingAs($partnerUser)
             ->postJson(route('partner.offers.api.store'), [
                 'campaign_id' => $draftCampaign->id,
+                ...$this->rewardStepPayload('gold'),
                 'name' => 'Draft campaign partner offer',
                 'reward_type' => 'discount',
-                'reward_tier' => 'gold',
-                'reward_option' => 'launch day bundle',
                 'point_cost' => 300,
                 'stock_quantity' => 15,
             ])
@@ -407,7 +408,7 @@ class PartnerRewardRedemptionTest extends TestCase
         $this->assertSame('active', $reward['availabilityStatus']);
         $this->assertSame('partner_offer_submission', $reward['source']);
         $this->assertSame('bronze', $reward['rewardTier']);
-        $this->assertSame('partner starter option', $reward['rewardOption']);
+        $this->assertSame($offer->metadata['reward_option'], $reward['rewardOption']);
         $this->assertSame('cafe-eco', $reward['partner']['code']);
         $this->assertArrayHasKey('submittedAt', $reward);
     }
@@ -428,15 +429,35 @@ class PartnerRewardRedemptionTest extends TestCase
 
         $this->actingAs($partnerUser)
             ->postJson(route('partner.offers.api.store'), [
+                ...$this->rewardStepPayload('bronze'),
                 'name' => $name,
                 'reward_type' => 'partner_coupon',
-                'reward_tier' => 'bronze',
-                'reward_option' => 'partner starter option',
                 'point_cost' => 120,
                 'stock_quantity' => 10,
             ])
             ->assertCreated();
 
         return RewardDefinition::query()->where('name', $name)->firstOrFail();
+    }
+
+    /** @return array{cycle_step_index: int, cycle_step_label: string, reward_tier: string, reward_option: string|null} */
+    private function rewardStepPayload(string $tierKey): array
+    {
+        $campaign = QrCode::query()->firstOrFail()->campaign;
+        $blueprintCode = $campaign?->metadata['blueprint_code'] ?? null;
+        if (! is_string($blueprintCode) && $campaign?->campaign_type === 'pilot_visit') {
+            $blueprintCode = 'ecopark-pilot-treasure-route';
+        }
+        $blueprint = app(MissionRewardBlueprintService::class)->handoff(is_string($blueprintCode) ? $blueprintCode : null);
+        $step = collect($blueprint['missionPlan'] ?? [])->firstWhere('rewardTier', $tierKey)
+            ?? collect($blueprint['missionPlan'] ?? [])->first();
+        $tier = collect($blueprint['rewardDesign']['tiers'] ?? [])->firstWhere('tierKey', $step['rewardTier'] ?? $tierKey);
+
+        return [
+            'cycle_step_index' => (int) ($step['index'] ?? 1),
+            'cycle_step_label' => (string) ($step['userStep'] ?? 'campaign step'),
+            'reward_tier' => (string) ($step['rewardTier'] ?? $tierKey),
+            'reward_option' => $tier['options'][0] ?? null,
+        ];
     }
 }

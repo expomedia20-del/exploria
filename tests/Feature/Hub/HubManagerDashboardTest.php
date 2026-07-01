@@ -5,8 +5,10 @@ namespace Tests\Feature\Hub;
 use App\Models\AdRequest;
 use App\Models\DisplayDevice;
 use App\Models\Hub;
+use App\Models\QrCode;
 use App\Models\RewardDefinition;
 use App\Models\User;
+use App\Services\MissionRewardBlueprintService;
 use Database\Seeders\PilotLocationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -231,6 +233,7 @@ class HubManagerDashboardTest extends TestCase
 
         $this->actingAs($partnerUser)
             ->postJson(route('partner.offers.api.store'), [
+                ...$this->rewardStepPayload('bronze'),
                 'name' => $name,
                 'reward_type' => 'partner_coupon',
                 'point_cost' => 120,
@@ -239,5 +242,26 @@ class HubManagerDashboardTest extends TestCase
             ->assertCreated();
 
         return RewardDefinition::query()->where('name', $name)->firstOrFail();
+    }
+
+    /** @return array{cycle_step_index: int, cycle_step_label: string, reward_tier: string, reward_option: string|null} */
+    private function rewardStepPayload(string $tierKey): array
+    {
+        $campaign = QrCode::query()->firstOrFail()->campaign;
+        $blueprintCode = $campaign?->metadata['blueprint_code'] ?? null;
+        if (! is_string($blueprintCode) && $campaign?->campaign_type === 'pilot_visit') {
+            $blueprintCode = 'ecopark-pilot-treasure-route';
+        }
+        $blueprint = app(MissionRewardBlueprintService::class)->handoff(is_string($blueprintCode) ? $blueprintCode : null);
+        $step = collect($blueprint['missionPlan'] ?? [])->firstWhere('rewardTier', $tierKey)
+            ?? collect($blueprint['missionPlan'] ?? [])->first();
+        $tier = collect($blueprint['rewardDesign']['tiers'] ?? [])->firstWhere('tierKey', $step['rewardTier'] ?? $tierKey);
+
+        return [
+            'cycle_step_index' => (int) ($step['index'] ?? 1),
+            'cycle_step_label' => (string) ($step['userStep'] ?? 'campaign step'),
+            'reward_tier' => (string) ($step['rewardTier'] ?? $tierKey),
+            'reward_option' => $tier['options'][0] ?? null,
+        ];
     }
 }
