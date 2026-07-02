@@ -154,6 +154,13 @@ const mainNavItems: RoleAwareNavItem[] = [
         roles: ['admin', 'shop_partner', 'sponsor'],
     },
     {
+        title: 'پنل خود اسپانسر',
+        href: '/sponsor/dashboard',
+        icon: BadgeDollarSign,
+        group: '۴. پنل نقش‌ها',
+        roles: ['admin', 'sponsor'],
+    },
+    {
         title: 'پنل مدیر هاب',
         href: '/hub/dashboard',
         icon: Network,

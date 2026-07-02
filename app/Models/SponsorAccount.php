@@ -59,4 +59,16 @@ class SponsorAccount extends Model
     {
         return $this->hasMany(SponsorPartnerAssignment::class);
     }
+
+    /** @return HasMany<SponsorUser, $this> */
+    public function sponsorUsers(): HasMany
+    {
+        return $this->hasMany(SponsorUser::class);
+    }
+
+    /** @return HasMany<SponsorProposal, $this> */
+    public function proposals(): HasMany
+    {
+        return $this->hasMany(SponsorProposal::class);
+    }
 }

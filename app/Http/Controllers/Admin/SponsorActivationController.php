@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreCampaignSponsorshipRequest;
 use App\Http\Requests\Admin\StoreSponsorAccountRequest;
 use App\Http\Requests\Admin\StoreSponsorPartnerAssignmentRequest;
+use App\Http\Requests\Admin\UpdateSponsorProposalStatusRequest;
+use App\Models\SponsorProposal;
 use App\Services\CampaignRegistryService;
 use App\Services\SponsorActivationService;
 use Illuminate\Http\JsonResponse;
@@ -63,5 +65,16 @@ class SponsorActivationController extends Controller
         }
 
         return back()->with('success', 'اتصال اسپانسر به واحد عضو کمپین ذخیره شد.');
+    }
+
+    public function updateProposalStatus(UpdateSponsorProposalStatusRequest $request, SponsorProposal $proposal, SponsorActivationService $service): JsonResponse|RedirectResponse
+    {
+        $proposal = $service->updateProposalStatus($proposal, $request->validated(), $request->user());
+
+        if ($request->expectsJson()) {
+            return response()->json(['status' => 'success', 'data' => ['id' => $proposal->id, 'status' => $proposal->status]]);
+        }
+
+        return back()->with('success', 'وضعیت پیشنهاد اسپانسر به‌روزرسانی شد.');
     }
 }

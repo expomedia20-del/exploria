@@ -1,10 +1,10 @@
 <?php
 
 use App\Http\Controllers\Admin\AdvertisingController;
-use App\Http\Controllers\Admin\CampaignRegistryController;
 use App\Http\Controllers\Admin\CampaignBuilderController;
-use App\Http\Controllers\Admin\CampaignParticipantController;
 use App\Http\Controllers\Admin\CampaignOperationsController;
+use App\Http\Controllers\Admin\CampaignParticipantController;
+use App\Http\Controllers\Admin\CampaignRegistryController;
 use App\Http\Controllers\Admin\DisplayOperationsController;
 use App\Http\Controllers\Admin\MissionRewardBlueprintController;
 use App\Http\Controllers\Admin\MissionRewardRegistryController;
@@ -27,6 +27,7 @@ use App\Http\Controllers\Partner\PartnerOfferController;
 use App\Http\Controllers\Partner\RewardRedemptionController;
 use App\Http\Controllers\RewardWalletController;
 use App\Http\Controllers\ScanLandingController;
+use App\Http\Controllers\Sponsor\SponsorDashboardController;
 use App\Http\Controllers\VisitExperienceController;
 use App\Http\Controllers\VisitMissionController;
 use Illuminate\Support\Facades\Route;
@@ -68,6 +69,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/partner/ads', [PartnerAdvertisingController::class, 'store'])
         ->middleware('role:admin,shop_partner,sponsor')
         ->name('partner.ads.store');
+    Route::get('/sponsor/dashboard', [SponsorDashboardController::class, 'page'])
+        ->middleware('role:admin,operator,sponsor')
+        ->name('sponsor.dashboard');
+    Route::post('/sponsor/proposals', [SponsorDashboardController::class, 'storeProposal'])
+        ->middleware('role:admin,operator,sponsor')
+        ->name('sponsor.proposals.store');
     Route::get('/hub/dashboard', [HubManagerDashboardController::class, 'page'])
         ->middleware('role:admin,hub_manager')
         ->name('hub.dashboard');
@@ -96,6 +103,10 @@ Route::prefix('api/v1/consents')->middleware('throttle:30,1')->group(function ()
     Route::get('current', [ConsentController::class, 'current'])->name('consents.current');
     Route::post('accept', [ConsentController::class, 'accept'])->middleware('auth')->name('consents.accept');
 });
+
+Route::get('/api/v1/sponsor/dashboard', [SponsorDashboardController::class, 'index'])
+    ->middleware(['auth', 'role:admin,operator,sponsor'])
+    ->name('sponsor.dashboard.index');
 
 Route::get('/admin/qr-codes', [QrRegistryController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer'])
@@ -155,6 +166,9 @@ Route::post('/admin/campaign-sponsorships', [SponsorActivationController::class,
 Route::post('/admin/sponsor-partner-assignments', [SponsorActivationController::class, 'storePartnerAssignment'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.sponsor-partner-assignments.store');
+Route::post('/admin/sponsor-proposals/{proposal}/status', [SponsorActivationController::class, 'updateProposalStatus'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.sponsor-proposals.status');
 
 Route::get('/admin/mission-blueprints', [MissionRewardBlueprintController::class, 'page'])
     ->middleware(['auth', 'role:admin'])
@@ -291,6 +305,9 @@ Route::post('/api/v1/admin/campaign-sponsorships', [SponsorActivationController:
 Route::post('/api/v1/admin/sponsor-partner-assignments', [SponsorActivationController::class, 'storePartnerAssignment'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.sponsor-partner-assignments.api.store');
+Route::post('/api/v1/admin/sponsor-proposals/{proposal}/status', [SponsorActivationController::class, 'updateProposalStatus'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.sponsor-proposals.api.status');
 
 Route::get('/api/v1/admin/mission-blueprints', [MissionRewardBlueprintController::class, 'index'])
     ->middleware(['auth', 'role:admin'])

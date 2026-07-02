@@ -7,6 +7,7 @@ use App\Models\CampaignSponsorship;
 use App\Models\PartnerAccount;
 use App\Models\SponsorAccount;
 use App\Models\SponsorPartnerAssignment;
+use App\Models\SponsorProposal;
 use App\Models\User;
 use App\Models\Venue;
 use Illuminate\Database\Eloquent\Builder;
@@ -58,6 +59,21 @@ class SponsorActivationService
             ->get()
             ->map(fn (SponsorPartnerAssignment $assignment): array => $this->serializePartnerAssignment($assignment));
 
+        $proposals = SponsorProposal::query()
+            ->when($campaignId, fn (Builder $query) => $query->where('campaign_id', $campaignId))
+            ->when(! $isGlobal, fn (Builder $query) => $query->whereHas('sponsorAccount', fn (Builder $sponsor) => $sponsor->where(function (Builder $query) use ($venueIds): void {
+                $query->whereNull('venue_id')->orWhereIn('venue_id', $venueIds);
+            })))
+            ->with([
+                'sponsorAccount:id,venue_id,code,name,sponsor_type,status',
+                'campaign:id,venue_id,code,name,status',
+                'preferredPartnerAccount:id,venue_id,code,name,partner_type,status',
+                'preferredPartnerAccount.venue:id,code,name',
+            ])
+            ->latest('created_at')
+            ->get()
+            ->map(fn (SponsorProposal $proposal): array => $this->serializeProposal($proposal));
+
         return [
             'stats' => [
                 'sponsors' => $sponsors->count(),
@@ -66,12 +82,15 @@ class SponsorActivationService
                 'activeSponsorships' => $sponsorships->where('status', 'active')->count(),
                 'partnerAssignments' => $partnerAssignments->count(),
                 'activePartnerAssignments' => $partnerAssignments->where('status', 'active')->count(),
+                'proposals' => $proposals->count(),
+                'pendingProposals' => $proposals->where('status', 'pending_review')->count(),
                 'plannedBudget' => $sponsorships->sum('budgetAmount'),
                 'contractValue' => $sponsorships->sum('contractValue'),
             ],
             'sponsors' => $sponsors,
             'sponsorships' => $sponsorships,
             'partnerAssignments' => $partnerAssignments,
+            'proposals' => $proposals,
             'formOptions' => $this->formOptions($user, $campaignId),
         ];
     }
@@ -225,6 +244,23 @@ class SponsorActivationService
         });
     }
 
+    /** @param array<string, mixed> $data */
+    public function updateProposalStatus(SponsorProposal $proposal, array $data, User $reviewer): SponsorProposal
+    {
+        $metadata = array_merge($proposal->metadata ?? [], [
+            'review_notes' => $data['review_notes'] ?? null,
+            'reviewed_by_user_id' => $reviewer->id,
+            'reviewed_at' => now()->toIso8601String(),
+        ]);
+
+        $proposal->update([
+            'status' => $data['status'],
+            'metadata' => $metadata,
+        ]);
+
+        return $proposal->refresh();
+    }
+
     /** @return array<string, mixed> */
     private function formOptions(?User $user, ?string $campaignId): array
     {
@@ -328,6 +364,49 @@ class SponsorActivationService
                 'code' => $assignment->campaign->code,
                 'name' => $assignment->campaign->name,
                 'status' => $assignment->campaign->status->value,
+            ] : null,
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function serializeProposal(SponsorProposal $proposal): array
+    {
+        return [
+            'id' => $proposal->id,
+            'code' => $proposal->code,
+            'title' => $proposal->title,
+            'proposalType' => $proposal->proposal_type,
+            'objective' => $proposal->objective,
+            'status' => $proposal->status,
+            'proposedBudgetAmount' => (int) ($proposal->proposed_budget_amount ?? 0),
+            'estimatedValueAmount' => (int) ($proposal->estimated_value_amount ?? 0),
+            'rewardOffer' => $proposal->reward_offer,
+            'discountOffer' => $proposal->discount_offer,
+            'assetUrl' => $proposal->asset_url,
+            'targetAudience' => $proposal->target_audience,
+            'notes' => $proposal->notes,
+            'reviewNotes' => $proposal->metadata['review_notes'] ?? null,
+            'createdAt' => $proposal->created_at?->toIso8601String(),
+            'sponsor' => $proposal->sponsorAccount ? [
+                'id' => $proposal->sponsorAccount->id,
+                'code' => $proposal->sponsorAccount->code,
+                'name' => $proposal->sponsorAccount->name,
+                'sponsorType' => $proposal->sponsorAccount->sponsor_type,
+                'status' => $proposal->sponsorAccount->status->value,
+            ] : null,
+            'campaign' => $proposal->campaign ? [
+                'id' => $proposal->campaign->id,
+                'code' => $proposal->campaign->code,
+                'name' => $proposal->campaign->name,
+                'status' => $proposal->campaign->status->value,
+            ] : null,
+            'preferredPartner' => $proposal->preferredPartnerAccount ? [
+                'id' => $proposal->preferredPartnerAccount->id,
+                'code' => $proposal->preferredPartnerAccount->code,
+                'name' => $proposal->preferredPartnerAccount->name,
+                'partnerType' => $proposal->preferredPartnerAccount->partner_type,
+                'status' => $proposal->preferredPartnerAccount->status->value,
+                'venueName' => $proposal->preferredPartnerAccount->venue?->name,
             ] : null,
         ];
     }

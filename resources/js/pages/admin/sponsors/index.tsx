@@ -1,5 +1,5 @@
 import { Form, Head, usePage } from '@inertiajs/react';
-import { BadgeDollarSign, Building2, Handshake, Target } from 'lucide-react';
+import { BadgeDollarSign, Building2, FileCheck2, Handshake, Target } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { CampaignContextNav } from '@/components/campaign-context-nav';
 import InputError from '@/components/input-error';
@@ -53,6 +53,26 @@ type SponsorPartnerAssignment = {
     partner: PartnerOption | null;
 };
 
+type SponsorProposal = {
+    id: string;
+    code: string;
+    title: string;
+    proposalType: string;
+    objective: string;
+    status: string;
+    proposedBudgetAmount: number;
+    estimatedValueAmount: number;
+    rewardOffer: string | null;
+    discountOffer: string | null;
+    assetUrl: string | null;
+    targetAudience: string | null;
+    notes: string | null;
+    reviewNotes: string | null;
+    campaign: AssignmentCampaignOption | null;
+    preferredPartner: PartnerOption | null;
+    sponsor: SponsorOption | null;
+};
+
 type Props = {
     stats: {
         sponsors: number;
@@ -61,12 +81,15 @@ type Props = {
         activeSponsorships: number;
         partnerAssignments: number;
         activePartnerAssignments: number;
+        proposals: number;
+        pendingProposals: number;
         plannedBudget: number;
         contractValue: number;
     };
     sponsors: SponsorAccount[];
     sponsorships: CampaignSponsorship[];
     partnerAssignments: SponsorPartnerAssignment[];
+    proposals: SponsorProposal[];
     selectedCampaign: SelectedCampaign | null;
     formOptions: {
         campaigns: CampaignOption[];
@@ -120,6 +143,25 @@ const activationRoleLabels: Record<string, string> = {
     content_delivery: 'ارائه محتوا',
 };
 
+const proposalTypeLabels: Record<string, string> = {
+    campaign_sponsorship: 'حمایت کمپین',
+    reward_offer: 'جایزه پیشنهادی',
+    discount_offer: 'تخفیف/کد خرید',
+    display_media: 'تبلیغ نمایشگر',
+    family_challenge: 'چالش خانوادگی',
+    scientific_cultural_content: 'محتوای علمی/فرهنگی',
+    product_sampling: 'نمونه‌گیری محصول',
+};
+
+const objectiveLabels: Record<string, string> = {
+    awareness: 'دیده‌شدن برند',
+    footfall: 'افزایش مراجعه',
+    lead_generation: 'جذب لید',
+    sales: 'فروش',
+    engagement: 'تعامل',
+    social_impact: 'اثر فرهنگی/اجتماعی',
+};
+
 function fa(value: number) {
     return value.toLocaleString('fa-IR');
 }
@@ -151,7 +193,7 @@ function uniqueSponsorCode(base: string, existingCodes: string[]) {
     return `${safeBase}-${Date.now().toString(36)}`;
 }
 
-export default function SponsorActivationIndex({ stats, sponsors, sponsorships, partnerAssignments, selectedCampaign, formOptions }: Props) {
+export default function SponsorActivationIndex({ stats, sponsors, sponsorships, partnerAssignments, proposals, selectedCampaign, formOptions }: Props) {
     const { flash, auth } = usePage<SharedProps>().props;
     const canMutate = auth.user.role === 'admin' || auth.user.role === 'operator';
     const [sponsorType, setSponsorType] = useState('brand');
@@ -174,6 +216,8 @@ export default function SponsorActivationIndex({ stats, sponsors, sponsorships, 
         ['حمایت فعال', fa(stats.activeSponsorships)],
         ['واحدهای متصل', fa(stats.partnerAssignments)],
         ['اتصال فعال', fa(stats.activePartnerAssignments)],
+        ['پیشنهاد اسپانسر', fa(stats.proposals)],
+        ['در انتظار بررسی', fa(stats.pendingProposals)],
         ['بودجه برنامه‌ریزی', money(stats.plannedBudget)],
         ['ارزش قرارداد', money(stats.contractValue)],
     ];
@@ -524,6 +568,75 @@ export default function SponsorActivationIndex({ stats, sponsors, sponsorships, 
                                 <span>{label(activationRoleLabels, assignment.activationRole)}</span>
                                 <span className="truncate">{assignment.campaign?.name ?? 'بدون کمپین خاص'}</span>
                                 <span className="rounded-full bg-muted px-2.5 py-1 text-center text-xs">{label(statusLabels, assignment.status)}</span>
+                            </article>
+                        ))}
+                    </div>
+                </section>
+
+                <section className="exploria-panel">
+                    <div className="border-b border-border/70 px-4 py-3 dark:border-sidebar-border">
+                        <div className="flex items-center gap-2">
+                            <FileCheck2 className="size-4 text-muted-foreground" />
+                            <h2 className="font-semibold">پیشنهادهای ارسال‌شده توسط اسپانسر</h2>
+                        </div>
+                    </div>
+                    <div className="min-w-[1040px] divide-y divide-border/70">
+                        {proposals.length === 0 ? (
+                            <div className="p-6 text-sm text-muted-foreground">هنوز پیشنهادی از سمت اسپانسر ثبت نشده است.</div>
+                        ) : proposals.map((proposal) => (
+                            <article key={proposal.id} className="grid grid-cols-[1.2fr_1fr_0.9fr_0.9fr_1.4fr] items-start gap-3 px-4 py-3 text-sm">
+                                <div className="min-w-0">
+                                    <p className="truncate font-medium">{proposal.title}</p>
+                                    <p className="mt-1 truncate text-xs text-muted-foreground">{proposal.sponsor?.name ?? 'اسپانسر نامشخص'}</p>
+                                    <p className="mt-1 truncate text-xs text-muted-foreground" dir="ltr">{proposal.code}</p>
+                                </div>
+                                <div>
+                                    <p>{label(proposalTypeLabels, proposal.proposalType)}</p>
+                                    <p className="mt-1 text-xs text-muted-foreground">{label(objectiveLabels, proposal.objective)}</p>
+                                </div>
+                                <div>
+                                    <p>{money(proposal.proposedBudgetAmount)}</p>
+                                    <p className="mt-1 text-xs text-muted-foreground">ارزش: {money(proposal.estimatedValueAmount)}</p>
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="truncate">{proposal.campaign?.name ?? 'کمپین آزاد'}</p>
+                                    <p className="mt-1 truncate text-xs text-muted-foreground">{proposal.preferredPartner?.name ?? 'واحد پیشنهادی ندارد'}</p>
+                                    <span className="mt-2 inline-flex rounded-full bg-muted px-2.5 py-1 text-xs">{label(statusLabels, proposal.status)}</span>
+                                </div>
+                                <div className="grid gap-2">
+                                    <p className="line-clamp-2 text-xs text-muted-foreground">{proposal.notes ?? proposal.rewardOffer ?? proposal.discountOffer ?? 'بدون توضیح تکمیلی'}</p>
+                                    {proposal.reviewNotes ? <p className="text-xs text-muted-foreground">یادداشت بررسی: {proposal.reviewNotes}</p> : null}
+                                    {canMutate ? (
+                                        <div className="grid gap-2">
+                                            <Form action={`/admin/sponsor-proposals/${proposal.id}/status`} method="post" options={{ preserveScroll: true }} className="grid gap-2">
+                                                {({ processing }) => (
+                                                    <>
+                                                        <input type="hidden" name="status" value="approved" />
+                                                        <Button size="sm" disabled={processing}>تأیید پیشنهاد</Button>
+                                                    </>
+                                                )}
+                                            </Form>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <Form action={`/admin/sponsor-proposals/${proposal.id}/status`} method="post" options={{ preserveScroll: true }}>
+                                                    {({ processing }) => (
+                                                        <>
+                                                            <input type="hidden" name="status" value="revision_requested" />
+                                                            <Button size="sm" variant="secondary" disabled={processing} className="w-full">اصلاح</Button>
+                                                        </>
+                                                    )}
+                                                </Form>
+                                                <Form action={`/admin/sponsor-proposals/${proposal.id}/status`} method="post" options={{ preserveScroll: true }}>
+                                                    {({ processing }) => (
+                                                        <>
+                                                            <input type="hidden" name="status" value="rejected" />
+                                                            <Button size="sm" variant="secondary" disabled={processing} className="w-full">رد</Button>
+                                                        </>
+                                                    )}
+                                                </Form>
+                                            </div>
+                                        </div>
+                                    ) : null}
+                                </div>
                             </article>
                         ))}
                     </div>

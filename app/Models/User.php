@@ -79,6 +79,11 @@ class User extends Authenticatable implements PasskeyUser
         return $this->hasMany(UserAccessScope::class);
     }
 
+    /** @return HasMany<SponsorUser, $this> */
+    public function sponsorUsers(): HasMany
+    {
+        return $this->hasMany(SponsorUser::class);
+    }
 
     /** @return HasMany<HubManagementAssignment, $this> */
     public function hubManagementAssignments(): HasMany
