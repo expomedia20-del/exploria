@@ -8,6 +8,7 @@ use App\Models\PartnerAccount;
 use App\Models\SponsorAccount;
 use App\Models\SponsorPartnerAssignment;
 use App\Models\SponsorProposal;
+use App\Models\SponsorProposalItem;
 use App\Models\User;
 use App\Models\Venue;
 use Illuminate\Database\Eloquent\Builder;
@@ -69,6 +70,9 @@ class SponsorActivationService
                 'campaign:id,venue_id,code,name,status',
                 'preferredPartnerAccount:id,venue_id,code,name,partner_type,status',
                 'preferredPartnerAccount.venue:id,code,name',
+                'partnerAccounts.partnerAccount:id,venue_id,code,name,partner_type,status',
+                'partnerAccounts.partnerAccount.venue:id,code,name',
+                'items',
             ])
             ->latest('created_at')
             ->get()
@@ -387,6 +391,23 @@ class SponsorActivationService
             'notes' => $proposal->notes,
             'reviewNotes' => $proposal->metadata['review_notes'] ?? null,
             'createdAt' => $proposal->created_at?->toIso8601String(),
+            'partners' => $proposal->partnerAccounts
+                ->sortBy('sort_order')
+                ->map(fn ($proposalPartner): array => $this->serializeProposalPartner($proposalPartner->partnerAccount))
+                ->values()
+                ->all(),
+            'items' => $proposal->items
+                ->map(fn (SponsorProposalItem $item): array => [
+                    'id' => $item->id,
+                    'itemType' => $item->item_type,
+                    'title' => $item->title,
+                    'quantity' => (int) ($item->quantity ?? 0),
+                    'estimatedUnitValueAmount' => (int) ($item->estimated_unit_value_amount ?? 0),
+                    'targetPartnerAccountIds' => $item->target_partner_account_ids ?? [],
+                    'description' => $item->description,
+                ])
+                ->values()
+                ->all(),
             'sponsor' => $proposal->sponsorAccount ? [
                 'id' => $proposal->sponsorAccount->id,
                 'code' => $proposal->sponsorAccount->code,
@@ -400,14 +421,24 @@ class SponsorActivationService
                 'name' => $proposal->campaign->name,
                 'status' => $proposal->campaign->status->value,
             ] : null,
-            'preferredPartner' => $proposal->preferredPartnerAccount ? [
-                'id' => $proposal->preferredPartnerAccount->id,
-                'code' => $proposal->preferredPartnerAccount->code,
-                'name' => $proposal->preferredPartnerAccount->name,
-                'partnerType' => $proposal->preferredPartnerAccount->partner_type,
-                'status' => $proposal->preferredPartnerAccount->status->value,
-                'venueName' => $proposal->preferredPartnerAccount->venue?->name,
-            ] : null,
+            'preferredPartner' => $proposal->preferredPartnerAccount ? $this->serializeProposalPartner($proposal->preferredPartnerAccount) : null,
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function serializeProposalPartner(?PartnerAccount $partner): array
+    {
+        if (! $partner) {
+            return [];
+        }
+
+        return [
+            'id' => $partner->id,
+            'code' => $partner->code,
+            'name' => $partner->name,
+            'partnerType' => $partner->partner_type,
+            'status' => $partner->status->value,
+            'venueName' => $partner->venue?->name,
         ];
     }
 

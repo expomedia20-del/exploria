@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property string $id
@@ -70,5 +71,17 @@ class SponsorProposal extends Model
     public function preferredPartnerAccount(): BelongsTo
     {
         return $this->belongsTo(PartnerAccount::class, 'preferred_partner_account_id');
+    }
+
+    /** @return HasMany<SponsorProposalPartnerAccount, $this> */
+    public function partnerAccounts(): HasMany
+    {
+        return $this->hasMany(SponsorProposalPartnerAccount::class);
+    }
+
+    /** @return HasMany<SponsorProposalItem, $this> */
+    public function items(): HasMany
+    {
+        return $this->hasMany(SponsorProposalItem::class);
     }
 }

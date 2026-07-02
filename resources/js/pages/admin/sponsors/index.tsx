@@ -70,7 +70,19 @@ type SponsorProposal = {
     reviewNotes: string | null;
     campaign: AssignmentCampaignOption | null;
     preferredPartner: PartnerOption | null;
+    partners: PartnerOption[];
+    items: SponsorProposalItem[];
     sponsor: SponsorOption | null;
+};
+
+type SponsorProposalItem = {
+    id: string;
+    itemType: string;
+    title: string;
+    quantity: number;
+    estimatedUnitValueAmount: number;
+    targetPartnerAccountIds: string[];
+    description: string | null;
 };
 
 type Props = {
@@ -160,6 +172,16 @@ const objectiveLabels: Record<string, string> = {
     sales: 'فروش',
     engagement: 'تعامل',
     social_impact: 'اثر فرهنگی/اجتماعی',
+};
+
+const itemTypeLabels: Record<string, string> = {
+    reward: 'جایزه',
+    discount: 'تخفیف/کد هدیه',
+    product: 'محصول',
+    sample: 'نمونه رایگان',
+    media: 'رسانه/بنر',
+    content: 'محتوا',
+    cash_support: 'حمایت نقدی',
 };
 
 function fa(value: number) {
@@ -600,10 +622,24 @@ export default function SponsorActivationIndex({ stats, sponsors, sponsorships, 
                                 </div>
                                 <div className="min-w-0">
                                     <p className="truncate">{proposal.campaign?.name ?? 'کمپین آزاد'}</p>
-                                    <p className="mt-1 truncate text-xs text-muted-foreground">{proposal.preferredPartner?.name ?? 'واحد پیشنهادی ندارد'}</p>
+                                    <p className="mt-1 truncate text-xs text-muted-foreground">
+                                        {proposal.partners?.length
+                                            ? `${fa(proposal.partners.length)} واحد: ${proposal.partners.map((partner) => partner.name).join('، ')}`
+                                            : proposal.preferredPartner?.name ?? 'واحد پیشنهادی ندارد'}
+                                    </p>
                                     <span className="mt-2 inline-flex rounded-full bg-muted px-2.5 py-1 text-xs">{label(statusLabels, proposal.status)}</span>
                                 </div>
                                 <div className="grid gap-2">
+                                    {proposal.items?.length ? (
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {proposal.items.slice(0, 3).map((item) => (
+                                                <span key={item.id} className="rounded-full bg-muted px-2 py-1 text-xs">
+                                                    {label(itemTypeLabels, item.itemType)}: {item.title}
+                                                </span>
+                                            ))}
+                                            {proposal.items.length > 3 ? <span className="rounded-full bg-muted px-2 py-1 text-xs">+{fa(proposal.items.length - 3)}</span> : null}
+                                        </div>
+                                    ) : null}
                                     <p className="line-clamp-2 text-xs text-muted-foreground">{proposal.notes ?? proposal.rewardOffer ?? proposal.discountOffer ?? 'بدون توضیح تکمیلی'}</p>
                                     {proposal.reviewNotes ? <p className="text-xs text-muted-foreground">یادداشت بررسی: {proposal.reviewNotes}</p> : null}
                                     {canMutate ? (

@@ -91,6 +91,75 @@ class SponsorPortalTest extends TestCase
             ->assertJsonPath('data.proposals.0.title', 'Family weekend drink reward');
     }
 
+    public function test_sponsor_can_submit_multi_partner_multi_item_package(): void
+    {
+        $sponsorUser = User::query()->where('email', 'family.sponsor@example.test')->firstOrFail();
+        $campaign = Campaign::query()->where('code', 'ecopark-pilot-1405')->firstOrFail();
+        $partners = PartnerAccount::query()
+            ->where('venue_id', $campaign->venue_id)
+            ->where('partner_type', '!=', 'sponsor')
+            ->orderBy('code')
+            ->limit(2)
+            ->get();
+
+        $this->assertCount(2, $partners);
+
+        $this->actingAs($sponsorUser)
+            ->postJson(route('sponsor.proposals.store'), [
+                'campaign_id' => $campaign->id,
+                'partner_account_ids' => $partners->pluck('id')->all(),
+                'title' => 'Family multi unit reward package',
+                'proposal_type' => 'product_sampling',
+                'objective' => 'sales',
+                'proposed_budget_amount' => 25000000,
+                'estimated_value_amount' => 42000000,
+                'items' => [
+                    [
+                        'item_type' => 'reward',
+                        'title' => 'Family treasure reward box',
+                        'quantity' => 100,
+                        'estimated_unit_value_amount' => 250000,
+                        'target_partner_account_ids' => $partners->pluck('id')->all(),
+                        'description' => 'Reward box for families that complete the route.',
+                    ],
+                    [
+                        'item_type' => 'product',
+                        'title' => 'Healthy snack sample',
+                        'quantity' => 300,
+                        'estimated_unit_value_amount' => 80000,
+                        'target_partner_account_ids' => [$partners[0]->id],
+                        'description' => 'Sampling pack for the first sales point.',
+                    ],
+                ],
+                'target_audience' => 'Family teams and group visitors.',
+                'notes' => 'Sponsor wants two execution units in the pilot.',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('status', 'success');
+
+        $sponsor = SponsorAccount::query()->where('code', 'family-route-sponsor')->firstOrFail();
+        $proposal = SponsorProposal::query()->where('sponsor_account_id', $sponsor->id)
+            ->where('title', 'Family multi unit reward package')
+            ->firstOrFail();
+
+        $this->assertSame($partners[0]->id, $proposal->preferred_partner_account_id);
+        $this->assertDatabaseCount('sponsor_proposal_partner_accounts', 2);
+        $this->assertDatabaseCount('sponsor_proposal_items', 2);
+        $this->assertDatabaseHas('sponsor_proposal_items', [
+            'sponsor_proposal_id' => $proposal->id,
+            'item_type' => 'reward',
+            'title' => 'Family treasure reward box',
+            'quantity' => 100,
+        ]);
+
+        $this->actingAs($sponsorUser)
+            ->getJson(route('sponsor.dashboard.index'))
+            ->assertOk()
+            ->assertJsonPath('data.proposals.0.title', 'Family multi unit reward package')
+            ->assertJsonCount(2, 'data.proposals.0.partners')
+            ->assertJsonCount(2, 'data.proposals.0.items');
+    }
+
     public function test_admin_can_review_sponsor_proposal_from_sponsor_console(): void
     {
         $admin = User::factory()->create(['role' => UserRole::Admin]);
