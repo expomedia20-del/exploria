@@ -5,13 +5,16 @@ namespace App\Services;
 use App\Models\Campaign;
 use App\Models\CampaignSponsorship;
 use App\Models\PartnerAccount;
+use App\Models\RewardDefinition;
 use App\Models\SponsorAccount;
 use App\Models\SponsorPartnerAssignment;
 use App\Models\SponsorProposal;
+use App\Models\SponsorProposalActivation;
 use App\Models\SponsorProposalItem;
 use App\Models\User;
 use App\Models\Venue;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -73,6 +76,7 @@ class SponsorActivationService
                 'partnerAccounts.partnerAccount:id,venue_id,code,name,partner_type,status',
                 'partnerAccounts.partnerAccount.venue:id,code,name',
                 'items',
+                'activation:id,sponsor_proposal_id,campaign_id,campaign_sponsorship_id,status,reward_definition_ids,partner_assignment_ids,metadata',
             ])
             ->latest('created_at')
             ->get()
@@ -265,6 +269,225 @@ class SponsorActivationService
         return $proposal->refresh();
     }
 
+    /** @param array<string, mixed> $data */
+    public function activateProposal(SponsorProposal $proposal, array $data, User $actor): SponsorProposalActivation
+    {
+        $proposal->loadMissing([
+            'sponsorAccount:id,venue_id,code,name,sponsor_type,status',
+            'campaign:id,venue_id,code,name,status',
+            'partnerAccounts.partnerAccount:id,venue_id,code,name,partner_type,status',
+            'items',
+            'activation',
+        ]);
+
+        if ($proposal->status !== 'approved') {
+            throw ValidationException::withMessages(['proposal' => 'فقط پیشنهاد تاییدشده اسپانسر قابل تبدیل به بسته اجرایی است.']);
+        }
+
+        $campaign = ! empty($data['campaign_id'])
+            ? Campaign::query()->findOrFail($data['campaign_id'])
+            : $proposal->campaign;
+
+        if (! $campaign) {
+            throw ValidationException::withMessages(['campaign_id' => 'برای تبدیل پیشنهاد اسپانسر باید کمپین مشخص شود.']);
+        }
+
+        $sponsor = $proposal->sponsorAccount;
+
+        if ($sponsor->venue_id !== null && $sponsor->venue_id !== $campaign->venue_id) {
+            throw ValidationException::withMessages(['campaign_id' => 'کمپین انتخاب‌شده با مکان اسپانسر هم‌خوان نیست.']);
+        }
+
+        $partners = $this->proposalPartnerAccounts($proposal);
+
+        foreach ($partners as $partner) {
+            if ($partner->venue_id !== $campaign->venue_id) {
+                throw ValidationException::withMessages(['proposal' => 'واحدهای هدف پیشنهاد باید به مکان کمپین انتخاب‌شده تعلق داشته باشند.']);
+            }
+        }
+
+        return DB::transaction(function () use ($actor, $campaign, $data, $partners, $proposal, $sponsor): SponsorProposalActivation {
+            $sponsorship = $this->storeSponsorship([
+                'campaign_id' => $campaign->id,
+                'sponsor_account_id' => $sponsor->id,
+                'sponsorship_goal' => $this->sponsorshipGoalForProposal($proposal->objective),
+                'package_type' => $this->sponsorshipPackageForProposal($proposal->proposal_type),
+                'status' => 'draft',
+                'budget_amount' => $proposal->proposed_budget_amount,
+                'contract_value' => $proposal->estimated_value_amount,
+                'notes' => trim((string) ($proposal->notes ?? '')."\n".(string) ($data['activation_notes'] ?? '')) ?: null,
+            ]);
+
+            $assignmentIds = [];
+            foreach ($partners as $partner) {
+                $assignment = $this->storePartnerAssignment([
+                    'sponsor_account_id' => $sponsor->id,
+                    'partner_account_id' => $partner->id,
+                    'campaign_id' => $campaign->id,
+                    'activation_role' => $this->activationRoleForProposal($proposal),
+                    'status' => 'draft',
+                    'notes' => 'Created from sponsor proposal '.$proposal->code,
+                ]);
+                $assignmentIds[] = $assignment->id;
+            }
+
+            $activation = SponsorProposalActivation::query()->updateOrCreate(
+                ['sponsor_proposal_id' => $proposal->id],
+                [
+                    'campaign_id' => $campaign->id,
+                    'campaign_sponsorship_id' => $sponsorship->id,
+                    'status' => 'ready_for_campaign_design',
+                    'partner_assignment_ids' => $assignmentIds,
+                    'metadata' => [
+                        'source' => 'sponsor_proposal_activation',
+                        'activated_by_user_id' => $actor->id,
+                        'activated_at' => now()->toIso8601String(),
+                        'activation_notes' => $data['activation_notes'] ?? null,
+                    ],
+                ],
+            );
+
+            $rewardIds = [];
+            foreach ($proposal->items as $index => $item) {
+                $rewardIds[] = $this->upsertRewardFromSponsorItem($activation, $proposal, $item, $campaign, $sponsor, $index)->id;
+            }
+
+            $activation->update(['reward_definition_ids' => $rewardIds]);
+            $proposal->update([
+                'campaign_id' => $campaign->id,
+                'metadata' => array_merge($proposal->metadata ?? [], [
+                    'activation_status' => 'ready_for_campaign_design',
+                    'activation_id' => $activation->id,
+                    'campaign_sponsorship_id' => $sponsorship->id,
+                    'reward_definition_ids' => $rewardIds,
+                    'partner_assignment_ids' => $assignmentIds,
+                ]),
+            ]);
+
+            return $activation->refresh();
+        });
+    }
+
+    private function upsertRewardFromSponsorItem(
+        SponsorProposalActivation $activation,
+        SponsorProposal $proposal,
+        SponsorProposalItem $item,
+        Campaign $campaign,
+        SponsorAccount $sponsor,
+        int $index,
+    ): RewardDefinition {
+        $targetPartnerIds = $item->target_partner_account_ids ?? [];
+        $partnerId = count($targetPartnerIds) === 1 ? $targetPartnerIds[0] : null;
+        $code = $this->rewardCodeForSponsorItem($proposal, $item, $index);
+        $metadata = [
+            'source' => 'sponsor_proposal_activation',
+            'source_type' => 'sponsor',
+            'approval_status' => 'approved',
+            'availability_status' => 'pending_campaign_assignment',
+            'sponsor_account_id' => $sponsor->id,
+            'sponsor_account_code' => $sponsor->code,
+            'sponsor_proposal_id' => $proposal->id,
+            'sponsor_proposal_code' => $proposal->code,
+            'sponsor_proposal_activation_id' => $activation->id,
+            'sponsor_proposal_item_id' => $item->id,
+            'reward_tier' => null,
+            'reward_option' => $item->item_type,
+            'target_partner_account_ids' => $targetPartnerIds,
+            'partner_allocations' => $item->partner_allocations ?? [],
+            'description' => $item->description,
+            'terms' => 'قابل اتصال به ماموریت یا سطح پاداش کمپین توسط ادمین.',
+        ];
+
+        return RewardDefinition::query()->updateOrCreate(
+            ['campaign_id' => $campaign->id, 'code' => $code],
+            [
+                'venue_id' => $campaign->venue_id,
+                'partner_account_id' => $partnerId,
+                'name' => $item->title,
+                'reward_type' => $this->rewardTypeForSponsorItem($item->item_type),
+                'point_cost' => null,
+                'stock_quantity' => $item->quantity,
+                'status' => 'draft',
+                'metadata' => $metadata,
+            ],
+        );
+    }
+
+    /** @return Collection<int, PartnerAccount> */
+    private function proposalPartnerAccounts(SponsorProposal $proposal)
+    {
+        $partnerIds = $proposal->partnerAccounts
+            ->pluck('partner_account_id')
+            ->merge($proposal->items->flatMap(fn (SponsorProposalItem $item): array => $item->target_partner_account_ids ?? []))
+            ->merge($proposal->items->flatMap(fn (SponsorProposalItem $item): array => collect($item->partner_allocations ?? [])->pluck('partner_account_id')->all()))
+            ->filter()
+            ->unique()
+            ->values();
+
+        return PartnerAccount::query()
+            ->whereIn('id', $partnerIds)
+            ->orderBy('name')
+            ->get();
+    }
+
+    private function rewardCodeForSponsorItem(SponsorProposal $proposal, SponsorProposalItem $item, int $index): string
+    {
+        $proposalPart = Str::limit(Str::slug($proposal->code, '-'), 48, '');
+        $itemPart = Str::limit(Str::slug($item->title, '-'), 28, '');
+        $suffix = substr(str_replace('-', '', $item->id), 0, 8) ?: (string) ($index + 1);
+
+        return Str::limit("sp-{$proposalPart}-{$itemPart}-{$suffix}", 96, '');
+    }
+
+    private function rewardTypeForSponsorItem(string $itemType): string
+    {
+        return match ($itemType) {
+            'discount' => 'sponsor_discount',
+            'product', 'sample' => 'sponsor_product',
+            'media' => 'sponsor_media',
+            'content' => 'sponsor_content',
+            'cash_support' => 'sponsor_cash_support',
+            default => 'sponsor_reward',
+        };
+    }
+
+    private function activationRoleForProposal(SponsorProposal $proposal): string
+    {
+        $itemTypes = $proposal->items->pluck('item_type')->all();
+
+        if (in_array('discount', $itemTypes, true)) {
+            return 'discount_redemption';
+        }
+
+        if (array_intersect(['product', 'sample'], $itemTypes) !== []) {
+            return 'product_sampling';
+        }
+
+        if (array_intersect(['media', 'content'], $itemTypes) !== []) {
+            return 'content_delivery';
+        }
+
+        return 'reward_redemption';
+    }
+
+    private function sponsorshipGoalForProposal(string $objective): string
+    {
+        return in_array($objective, ['awareness', 'footfall', 'lead_generation', 'sales', 'engagement'], true)
+            ? $objective
+            : 'engagement';
+    }
+
+    private function sponsorshipPackageForProposal(string $proposalType): string
+    {
+        return match ($proposalType) {
+            'display_media' => 'display_media',
+            'family_challenge' => 'family_team_challenge',
+            'scientific_cultural_content' => 'scientific_cultural_challenge',
+            'reward_offer', 'discount_offer', 'product_sampling' => 'treasure_sponsor',
+            default => 'pilot_activation',
+        };
+    }
+
     /** @return array<string, mixed> */
     private function formOptions(?User $user, ?string $campaignId): array
     {
@@ -390,6 +613,13 @@ class SponsorActivationService
             'targetAudience' => $proposal->target_audience,
             'notes' => $proposal->notes,
             'reviewNotes' => $proposal->metadata['review_notes'] ?? null,
+            'activationStatus' => $proposal->metadata['activation_status'] ?? $proposal->activation?->status,
+            'activation' => $proposal->activation ? [
+                'id' => $proposal->activation->id,
+                'status' => $proposal->activation->status,
+                'rewardDefinitionIds' => $proposal->activation->reward_definition_ids ?? [],
+                'partnerAssignmentIds' => $proposal->activation->partner_assignment_ids ?? [],
+            ] : null,
             'createdAt' => $proposal->created_at?->toIso8601String(),
             'partners' => $proposal->partnerAccounts
                 ->sortBy('sort_order')

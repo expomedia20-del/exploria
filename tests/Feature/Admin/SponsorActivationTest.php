@@ -5,7 +5,10 @@ namespace Tests\Feature\Admin;
 use App\Enums\UserRole;
 use App\Models\Campaign;
 use App\Models\PartnerAccount;
+use App\Models\RewardDefinition;
 use App\Models\SponsorAccount;
+use App\Models\SponsorProposal;
+use App\Models\SponsorProposalActivation;
 use App\Models\User;
 use App\Models\Venue;
 use Database\Seeders\PilotLocationSeeder;
@@ -258,5 +261,120 @@ class SponsorActivationTest extends TestCase
             'campaign_id' => $campaign->id,
             'sponsor_account_id' => $sponsor->id,
         ]);
+    }
+
+    public function test_admin_can_activate_approved_sponsor_proposal_into_campaign_reward_pool(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $campaign = Campaign::query()->where('code', 'ecopark-pilot-1405')->firstOrFail();
+        $venue = Venue::query()->where('code', 'ecopark-abbasabad')->firstOrFail();
+        $partners = PartnerAccount::query()
+            ->where('venue_id', $campaign->venue_id)
+            ->where('partner_type', '!=', 'sponsor')
+            ->orderBy('code')
+            ->limit(2)
+            ->get();
+
+        if ($partners->count() < 2) {
+            $partners->push(PartnerAccount::query()->create([
+                'venue_id' => $campaign->venue_id,
+                'code' => 'admin-activation-extra-unit',
+                'name' => 'Admin Activation Extra Unit',
+                'partner_type' => 'retail',
+                'status' => 'active',
+            ]));
+        }
+
+        $sponsor = SponsorAccount::query()->create([
+            'venue_id' => $venue->id,
+            'code' => 'activation-sponsor',
+            'name' => 'Activation Sponsor',
+            'sponsor_type' => 'brand',
+            'status' => 'active',
+        ]);
+
+        $proposal = SponsorProposal::query()->create([
+            'sponsor_account_id' => $sponsor->id,
+            'campaign_id' => $campaign->id,
+            'preferred_partner_account_id' => $partners[0]->id,
+            'code' => 'sp-activation-sponsor-0001',
+            'title' => 'Activation sponsor reward package',
+            'proposal_type' => 'reward_offer',
+            'objective' => 'engagement',
+            'status' => 'approved',
+            'proposed_budget_amount' => 15000000,
+            'estimated_value_amount' => 25000000,
+        ]);
+
+        foreach ($partners as $index => $partner) {
+            $proposal->partnerAccounts()->create([
+                'partner_account_id' => $partner->id,
+                'sort_order' => $index,
+            ]);
+        }
+
+        $proposal->items()->create([
+            'item_type' => 'reward',
+            'title' => 'Sponsor family prize box',
+            'quantity' => 100,
+            'estimated_unit_value_amount' => 200000,
+            'target_partner_account_ids' => $partners->pluck('id')->all(),
+            'partner_allocations' => [
+                ['partner_account_id' => $partners[0]->id, 'quantity' => 40],
+                ['partner_account_id' => $partners[1]->id, 'quantity' => 60],
+            ],
+            'description' => 'Prize box for mission completion tiers.',
+        ]);
+        $proposal->items()->create([
+            'item_type' => 'discount',
+            'title' => 'Sponsor cafe code',
+            'quantity' => 50,
+            'target_partner_account_ids' => [$partners[0]->id],
+            'partner_allocations' => [
+                ['partner_account_id' => $partners[0]->id, 'quantity' => 50],
+            ],
+        ]);
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.sponsor-proposals.api.activate', $proposal), [
+                'activation_notes' => 'Ready for mission reward assignment.',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('status', 'success')
+            ->assertJsonPath('data.status', 'ready_for_campaign_design');
+
+        $activation = SponsorProposalActivation::query()->where('sponsor_proposal_id', $proposal->id)->firstOrFail();
+
+        $this->assertCount(2, $activation->reward_definition_ids);
+        $this->assertCount(2, $activation->partner_assignment_ids);
+        $this->assertDatabaseHas('campaign_sponsorships', [
+            'campaign_id' => $campaign->id,
+            'sponsor_account_id' => $sponsor->id,
+            'package_type' => 'treasure_sponsor',
+            'status' => 'draft',
+        ]);
+        $this->assertDatabaseHas('sponsor_partner_assignments', [
+            'sponsor_account_id' => $sponsor->id,
+            'partner_account_id' => $partners[0]->id,
+            'campaign_id' => $campaign->id,
+            'activation_role' => 'discount_redemption',
+            'status' => 'draft',
+        ]);
+
+        $reward = RewardDefinition::query()->where('name', 'Sponsor family prize box')->firstOrFail();
+        $this->assertSame('sponsor_reward', $reward->reward_type);
+        $this->assertSame(100, $reward->stock_quantity);
+        $this->assertSame('sponsor_proposal_activation', $reward->metadata['source']);
+        $this->assertSame($proposal->id, $reward->metadata['sponsor_proposal_id']);
+        $this->assertCount(2, $reward->metadata['partner_allocations']);
+
+        $response = $this->actingAs($admin)
+            ->getJson(route('admin.missions.index', ['campaign' => $campaign->code]))
+            ->assertOk();
+
+        $this->assertTrue(collect($response->json('data.rewards'))->contains(
+            fn (array $reward): bool => $reward['source'] === 'sponsor_proposal_activation'
+                && $reward['name'] === 'Sponsor family prize box',
+        ));
     }
 }

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * @property string $id
@@ -83,5 +84,11 @@ class SponsorProposal extends Model
     public function items(): HasMany
     {
         return $this->hasMany(SponsorProposalItem::class);
+    }
+
+    /** @return HasOne<SponsorProposalActivation, $this> */
+    public function activation(): HasOne
+    {
+        return $this->hasOne(SponsorProposalActivation::class);
     }
 }

@@ -68,6 +68,13 @@ type SponsorProposal = {
     targetAudience: string | null;
     notes: string | null;
     reviewNotes: string | null;
+    activationStatus: string | null;
+    activation: {
+        id: string;
+        status: string;
+        rewardDefinitionIds: string[];
+        partnerAssignmentIds: string[];
+    } | null;
     campaign: AssignmentCampaignOption | null;
     preferredPartner: PartnerOption | null;
     partners: PartnerOption[];
@@ -644,16 +651,29 @@ export default function SponsorActivationIndex({ stats, sponsors, sponsorships, 
                                     ) : null}
                                     <p className="line-clamp-2 text-xs text-muted-foreground">{proposal.notes ?? proposal.rewardOffer ?? proposal.discountOffer ?? 'بدون توضیح تکمیلی'}</p>
                                     {proposal.reviewNotes ? <p className="text-xs text-muted-foreground">یادداشت بررسی: {proposal.reviewNotes}</p> : null}
+                                    {proposal.activation ? (
+                                        <p className="text-xs text-muted-foreground">
+                                            بسته اجرایی آماده: {fa(proposal.activation.rewardDefinitionIds.length)} پاداش، {fa(proposal.activation.partnerAssignmentIds.length)} اتصال واحد
+                                        </p>
+                                    ) : null}
                                     {canMutate ? (
                                         <div className="grid gap-2">
-                                            <Form action={`/admin/sponsor-proposals/${proposal.id}/status`} method="post" options={{ preserveScroll: true }} className="grid gap-2">
-                                                {({ processing }) => (
-                                                    <>
-                                                        <input type="hidden" name="status" value="approved" />
-                                                        <Button size="sm" disabled={processing}>تأیید پیشنهاد</Button>
-                                                    </>
-                                                )}
-                                            </Form>
+                                            {proposal.status === 'approved' && !proposal.activation ? (
+                                                <Form action={`/admin/sponsor-proposals/${proposal.id}/activate`} method="post" options={{ preserveScroll: true }} className="grid gap-2">
+                                                    {({ processing }) => (
+                                                        <Button size="sm" disabled={processing}>تبدیل به بسته اجرایی و مخزن پاداش</Button>
+                                                    )}
+                                                </Form>
+                                            ) : (
+                                                <Form action={`/admin/sponsor-proposals/${proposal.id}/status`} method="post" options={{ preserveScroll: true }} className="grid gap-2">
+                                                    {({ processing }) => (
+                                                        <>
+                                                            <input type="hidden" name="status" value="approved" />
+                                                            <Button size="sm" disabled={processing}>تأیید پیشنهاد</Button>
+                                                        </>
+                                                    )}
+                                                </Form>
+                                            )}
                                             <div className="grid grid-cols-2 gap-2">
                                                 <Form action={`/admin/sponsor-proposals/${proposal.id}/status`} method="post" options={{ preserveScroll: true }}>
                                                     {({ processing }) => (

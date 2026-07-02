@@ -169,6 +169,9 @@ Route::post('/admin/sponsor-partner-assignments', [SponsorActivationController::
 Route::post('/admin/sponsor-proposals/{proposal}/status', [SponsorActivationController::class, 'updateProposalStatus'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.sponsor-proposals.status');
+Route::post('/admin/sponsor-proposals/{proposal}/activate', [SponsorActivationController::class, 'activateProposal'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.sponsor-proposals.activate');
 
 Route::get('/admin/mission-blueprints', [MissionRewardBlueprintController::class, 'page'])
     ->middleware(['auth', 'role:admin'])
@@ -308,6 +311,9 @@ Route::post('/api/v1/admin/sponsor-partner-assignments', [SponsorActivationContr
 Route::post('/api/v1/admin/sponsor-proposals/{proposal}/status', [SponsorActivationController::class, 'updateProposalStatus'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.sponsor-proposals.api.status');
+Route::post('/api/v1/admin/sponsor-proposals/{proposal}/activate', [SponsorActivationController::class, 'activateProposal'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.sponsor-proposals.api.activate');
 
 Route::get('/api/v1/admin/mission-blueprints', [MissionRewardBlueprintController::class, 'index'])
     ->middleware(['auth', 'role:admin'])

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\ActivateSponsorProposalRequest;
 use App\Http\Requests\Admin\StoreCampaignSponsorshipRequest;
 use App\Http\Requests\Admin\StoreSponsorAccountRequest;
 use App\Http\Requests\Admin\StoreSponsorPartnerAssignmentRequest;
@@ -76,5 +77,16 @@ class SponsorActivationController extends Controller
         }
 
         return back()->with('success', 'وضعیت پیشنهاد اسپانسر به‌روزرسانی شد.');
+    }
+
+    public function activateProposal(ActivateSponsorProposalRequest $request, SponsorProposal $proposal, SponsorActivationService $service): JsonResponse|RedirectResponse
+    {
+        $activation = $service->activateProposal($proposal, $request->validated(), $request->user());
+
+        if ($request->expectsJson()) {
+            return response()->json(['status' => 'success', 'data' => ['id' => $activation->id, 'status' => $activation->status]], 201);
+        }
+
+        return back()->with('success', 'پیشنهاد اسپانسر به اتصال کمپین، واحدها و مخزن پاداش قابل استفاده در ماموریت‌ها تبدیل شد.');
     }
 }
