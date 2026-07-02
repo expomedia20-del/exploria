@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\Venue;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class SponsorActivationService
@@ -60,9 +61,11 @@ class SponsorActivationService
     /** @param array<string, mixed> $data */
     public function storeSponsor(array $data): SponsorAccount
     {
+        $code = trim((string) ($data['code'] ?? ''));
+
         $attributes = [
             'venue_id' => $data['venue_id'] ?? null,
-            'code' => strtolower((string) $data['code']),
+            'code' => $code === '' ? $this->generateSponsorCode($data['venue_id'] ?? null, (string) $data['sponsor_type']) : strtolower($code),
             'name' => $data['name'],
             'sponsor_type' => $data['sponsor_type'],
             'status' => $data['status'],
@@ -86,6 +89,25 @@ class SponsorActivationService
 
             return SponsorAccount::query()->create($attributes);
         });
+    }
+
+    private function generateSponsorCode(?string $venueId, string $sponsorType): string
+    {
+        $venueCode = $venueId
+            ? Venue::query()->whereKey($venueId)->value('code')
+            : null;
+        $base = Str::slug(($venueCode ?: 'global').'-'.$sponsorType, '-');
+        $base = $base !== '' ? Str::limit($base, 84, '') : 'global-sponsor';
+
+        for ($sequence = 1; $sequence <= 9999; $sequence++) {
+            $candidate = sprintf('%s-%04d', $base, $sequence);
+
+            if (! SponsorAccount::query()->where('code', $candidate)->exists()) {
+                return $candidate;
+            }
+        }
+
+        return Str::lower((string) Str::uuid());
     }
 
     /** @param array<string, mixed> $data */

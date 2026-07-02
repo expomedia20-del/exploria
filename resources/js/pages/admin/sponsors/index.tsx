@@ -1,5 +1,6 @@
 import { Form, Head, usePage } from '@inertiajs/react';
 import { BadgeDollarSign, Building2, Handshake, Target } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { CampaignContextNav } from '@/components/campaign-context-nav';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -106,9 +107,40 @@ function label(map: Record<string, string>, value: string) {
     return map[value] ?? value;
 }
 
+function uniqueSponsorCode(base: string, existingCodes: string[]) {
+    const safeBase = base
+        .toLowerCase()
+        .replace(/[^a-z0-9_-]+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '') || 'global-sponsor';
+    const taken = new Set(existingCodes.map((code) => code.toLowerCase()));
+
+    for (let sequence = 1; sequence <= 9999; sequence += 1) {
+        const candidate = `${safeBase}-${sequence.toString().padStart(4, '0')}`;
+
+        if (!taken.has(candidate)) {
+            return candidate;
+        }
+    }
+
+    return `${safeBase}-${Date.now().toString(36)}`;
+}
+
 export default function SponsorActivationIndex({ stats, sponsors, sponsorships, selectedCampaign, formOptions }: Props) {
     const { flash, auth } = usePage<SharedProps>().props;
     const canMutate = auth.user.role === 'admin' || auth.user.role === 'operator';
+    const [sponsorType, setSponsorType] = useState('brand');
+    const [sponsorVenueId, setSponsorVenueId] = useState('');
+    const [sponsorCode, setSponsorCode] = useState('');
+    const [codeEdited, setCodeEdited] = useState(false);
+
+    const generatedSponsorCode = useMemo(() => {
+        const venue = formOptions.venues.find((option) => option.id === sponsorVenueId);
+        const venuePrefix = venue?.code ?? 'global';
+
+        return uniqueSponsorCode(`${venuePrefix}-${sponsorType}`, sponsors.map((sponsor) => sponsor.code));
+    }, [formOptions.venues, sponsorType, sponsorVenueId, sponsors]);
+    const visibleSponsorCode = codeEdited ? sponsorCode : generatedSponsorCode;
 
     const statCards = [
         ['اسپانسر', fa(stats.sponsors)],
@@ -166,12 +198,29 @@ export default function SponsorActivationIndex({ stats, sponsors, sponsorships, 
                                         </div>
                                         <div className="grid gap-1.5">
                                             <label htmlFor="sponsor_code" className="text-xs font-medium">کد</label>
-                                            <input id="sponsor_code" name="code" required dir="ltr" className="h-9 rounded-md border border-input bg-background px-3 text-sm" placeholder="family-brand-sponsor" />
+                                            <input
+                                                id="sponsor_code"
+                                                name="code"
+                                                dir="ltr"
+                                                value={visibleSponsorCode}
+                                                onChange={(event) => {
+                                                    setCodeEdited(true);
+                                                    setSponsorCode(event.target.value);
+                                                }}
+                                                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                                placeholder="global-brand-0001"
+                                            />
                                             <InputError message={errors.code} />
                                         </div>
                                         <div className="grid gap-1.5">
                                             <label htmlFor="sponsor_type" className="text-xs font-medium">نوع</label>
-                                            <select id="sponsor_type" name="sponsor_type" defaultValue="brand" className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                            <select
+                                                id="sponsor_type"
+                                                name="sponsor_type"
+                                                value={sponsorType}
+                                                onChange={(event) => setSponsorType(event.target.value)}
+                                                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                            >
                                                 <option value="brand">برند تجاری</option>
                                                 <option value="cultural">فرهنگی</option>
                                                 <option value="scientific">علمی</option>
@@ -189,7 +238,13 @@ export default function SponsorActivationIndex({ stats, sponsors, sponsorships, 
                                         </div>
                                         <div className="grid gap-1.5">
                                             <label htmlFor="venue_id" className="text-xs font-medium">مکان مرتبط</label>
-                                            <select id="venue_id" name="venue_id" defaultValue="" className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                            <select
+                                                id="venue_id"
+                                                name="venue_id"
+                                                value={sponsorVenueId}
+                                                onChange={(event) => setSponsorVenueId(event.target.value)}
+                                                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                            >
                                                 <option value="">سراسری / بدون مکان خاص</option>
                                                 {formOptions.venues.map((venue) => <option key={venue.id} value={venue.id}>{venue.name}</option>)}
                                             </select>

@@ -122,6 +122,36 @@ class SponsorActivationTest extends TestCase
             ->assertJsonPath('data.sponsorships.0.packageType', 'family_team_challenge');
     }
 
+    public function test_sponsor_code_is_generated_when_left_empty(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $venue = Venue::query()->where('code', 'ecopark-abbasabad')->firstOrFail();
+
+        SponsorAccount::query()->create([
+            'venue_id' => $venue->id,
+            'code' => 'ecopark-abbasabad-retail-0001',
+            'name' => 'Existing Retail Sponsor',
+            'sponsor_type' => 'retail',
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.sponsors.api.store'), [
+                'venue_id' => $venue->id,
+                'name' => 'Auto Code Retail Sponsor',
+                'sponsor_type' => 'retail',
+                'status' => 'active',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('status', 'success');
+
+        $this->assertDatabaseHas('sponsor_accounts', [
+            'venue_id' => $venue->id,
+            'code' => 'ecopark-abbasabad-retail-0002',
+            'name' => 'Auto Code Retail Sponsor',
+        ]);
+    }
+
     public function test_sponsor_account_cannot_be_attached_to_another_venue_campaign(): void
     {
         $admin = User::factory()->create(['role' => UserRole::Admin]);

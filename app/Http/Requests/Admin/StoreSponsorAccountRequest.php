@@ -19,7 +19,7 @@ class StoreSponsorAccountRequest extends FormRequest
         return [
             'sponsor_id' => ['nullable', 'uuid', 'exists:sponsor_accounts,id'],
             'venue_id' => ['nullable', 'uuid', 'exists:venues,id'],
-            'code' => ['required', 'string', 'max:96', 'alpha_dash:ascii', Rule::unique('sponsor_accounts', 'code')->ignore($this->string('sponsor_id')->toString())],
+            'code' => ['nullable', 'string', 'max:96', 'alpha_dash:ascii', Rule::unique('sponsor_accounts', 'code')->ignore($this->string('sponsor_id')->toString())],
             'name' => ['required', 'string', 'max:255'],
             'sponsor_type' => ['required', 'string', Rule::in(['brand', 'cultural', 'scientific', 'retail', 'institutional'])],
             'status' => ['required', Rule::enum(RecordStatus::class)],
