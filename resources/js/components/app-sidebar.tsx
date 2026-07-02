@@ -109,7 +109,7 @@ const mainNavItems: RoleAwareNavItem[] = [
         href: '/admin/sponsors',
         icon: BadgeDollarSign,
         group: '۲. تکمیل و اجرای کمپین',
-        roles: ['admin', 'operator', 'viewer'],
+        roles: ['admin', 'operator', 'viewer', 'hub_manager'],
     },
     {
         title: 'نقشه عملیات کمپین',

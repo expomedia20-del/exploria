@@ -144,7 +144,7 @@ Route::delete('/admin/campaign-participants/{participant}', [CampaignParticipant
     ->name('admin.campaign-participants.destroy');
 
 Route::get('/admin/sponsors', [SponsorActivationController::class, 'page'])
-    ->middleware(['auth', 'role:admin,operator,viewer'])
+    ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
     ->name('admin.sponsors.page');
 Route::post('/admin/sponsors', [SponsorActivationController::class, 'storeSponsor'])
     ->middleware(['auth', 'role:admin,operator'])
@@ -277,7 +277,7 @@ Route::post('/api/v1/admin/campaign-participants', [CampaignParticipantControlle
     ->name('admin.campaign-participants.api.store');
 
 Route::get('/api/v1/admin/sponsors', [SponsorActivationController::class, 'index'])
-    ->middleware(['auth', 'role:admin,operator,viewer'])
+    ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
     ->name('admin.sponsors.index');
 Route::post('/api/v1/admin/sponsors', [SponsorActivationController::class, 'storeSponsor'])
     ->middleware(['auth', 'role:admin,operator'])

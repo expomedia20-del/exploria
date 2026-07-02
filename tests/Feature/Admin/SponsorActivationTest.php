@@ -38,6 +38,30 @@ class SponsorActivationTest extends TestCase
                 ->has('formOptions.venues', 3));
     }
 
+    public function test_hub_manager_can_open_sponsor_activation_console_read_only(): void
+    {
+        $this->withoutVite();
+        $manager = User::query()->where('email', 'ravaq.manager@example.test')->firstOrFail();
+
+        $this->actingAs($manager)
+            ->get(route('admin.sponsors.page'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('admin/sponsors/index')
+                ->where('stats.sponsors', 0)
+                ->has('formOptions.campaigns', 1)
+                ->has('formOptions.venues', 1));
+
+        $this->actingAs($manager)
+            ->postJson(route('admin.sponsors.api.store'), [
+                'code' => 'blocked-hub-manager-sponsor',
+                'name' => 'Blocked Hub Manager Sponsor',
+                'sponsor_type' => 'brand',
+                'status' => 'active',
+            ])
+            ->assertForbidden();
+    }
+
     public function test_admin_can_create_sponsor_and_attach_it_to_campaign(): void
     {
         $admin = User::factory()->create(['role' => UserRole::Admin]);
