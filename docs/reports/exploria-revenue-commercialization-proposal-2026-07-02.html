@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="utf-8">
+    <title>پروپوزال جریان درآمدزا و قابل فروش EXPLORIA</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 15mm 13mm;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: #eef4f2;
+            color: #17221f;
+            font-family: "Vazirmatn", "Segoe UI", Tahoma, Arial, sans-serif;
+            line-height: 1.85;
+        }
+
+        main {
+            max-width: 980px;
+            margin: 0 auto;
+            background: #ffffff;
+        }
+
+        .hero {
+            min-height: 288px;
+            padding: 42px 46px 36px;
+            color: #ffffff;
+            background:
+                linear-gradient(135deg, rgba(8, 67, 63, 0.98), rgba(14, 116, 144, 0.9)),
+                radial-gradient(circle at 10% 12%, rgba(245, 181, 60, 0.38), transparent 34%),
+                radial-gradient(circle at 88% 78%, rgba(34, 197, 94, 0.22), transparent 30%);
+        }
+
+        .eyebrow {
+            margin: 0 0 16px;
+            color: #bdf4eb;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        h1 {
+            max-width: 780px;
+            margin: 0;
+            font-size: 34px;
+            font-weight: 950;
+            line-height: 1.5;
+        }
+
+        .hero p {
+            max-width: 760px;
+            margin: 18px 0 0;
+            color: #e8fffb;
+            font-size: 15px;
+        }
+
+        .meta {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 28px;
+        }
+
+        .meta div {
+            min-height: 74px;
+            border: 1px solid rgba(255, 255, 255, 0.24);
+            border-radius: 8px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .meta span {
+            display: block;
+            color: #bdf4eb;
+            font-size: 11px;
+        }
+
+        .meta strong {
+            display: block;
+            margin-top: 5px;
+            font-size: 14px;
+        }
+
+        section {
+            padding: 27px 46px;
+            border-bottom: 1px solid #dce8e4;
+        }
+
+        h2 {
+            margin: 0 0 14px;
+            color: #0f4f4a;
+            font-size: 22px;
+            line-height: 1.5;
+        }
+
+        h3 {
+            margin: 16px 0 8px;
+            color: #173f3a;
+            font-size: 16px;
+        }
+
+        p {
+            margin: 0 0 12px;
+            font-size: 14px;
+        }
+
+        .lead {
+            color: #263f3b;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .callout {
+            border-right: 5px solid #0f766e;
+            border-radius: 8px;
+            padding: 14px 16px;
+            background: #edf9f6;
+            color: #153f3a;
+        }
+
+        .warning {
+            border-right-color: #d97706;
+            background: #fff7e8;
+            color: #513816;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .card {
+            border: 1px solid #d5e4df;
+            border-radius: 8px;
+            padding: 14px;
+            background: #fbfdfc;
+        }
+
+        .card strong {
+            display: block;
+            margin-bottom: 7px;
+            color: #0f4f4a;
+            font-size: 14px;
+        }
+
+        .card p {
+            font-size: 13px;
+        }
+
+        ul {
+            margin: 8px 0 0;
+            padding: 0 20px 0 0;
+            font-size: 13px;
+        }
+
+        li {
+            margin-bottom: 6px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 14px;
+            font-size: 12.8px;
+        }
+
+        th,
+        td {
+            border: 1px solid #d5e4df;
+            padding: 10px 11px;
+            text-align: right;
+            vertical-align: top;
+        }
+
+        th {
+            background: #0f4f4a;
+            color: #ffffff;
+            font-weight: 900;
+        }
+
+        tr:nth-child(even) td {
+            background: #f8fbfa;
+        }
+
+        .flow {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .step {
+            min-height: 118px;
+            border: 1px solid #cfe1dc;
+            border-radius: 8px;
+            padding: 12px;
+            background: linear-gradient(180deg, #ffffff, #f6fbf9);
+        }
+
+        .step b {
+            display: inline-grid;
+            place-items: center;
+            width: 28px;
+            height: 28px;
+            margin-bottom: 8px;
+            border-radius: 50%;
+            background: #0f766e;
+            color: #ffffff;
+            direction: ltr;
+        }
+
+        .step span {
+            display: block;
+            color: #143f3b;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .step small {
+            display: block;
+            margin-top: 5px;
+            color: #5d716d;
+            font-size: 11px;
+            line-height: 1.7;
+        }
+
+        .page-break {
+            break-before: page;
+        }
+
+        .footer {
+            padding: 18px 46px 30px;
+            background: #f8fbfa;
+            color: #60736f;
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+<main>
+    <header class="hero">
+        <p class="eyebrow">EXPLORIA Commercialization Proposal</p>
+        <h1>پروپوزال تبدیل اکسپلوریا به جریان درآمدزا، قابل فروش و قابل جذب سرمایه</h1>
+        <p>
+            هدف این پروپوزال حفظ پنل‌های ساخته‌شده و اتصال آن‌ها به یک مسیر تجاری روشن است: ارزیابی مکان، انتخاب الگو، ساخت کمپین، اتصال فروشگاه و اسپانسر، اجرای مأموریت و گزارش KPI.
+        </p>
+        <div class="meta">
+            <div><span>تاریخ</span><strong>۱۴۰۵/۰۴/۱۱</strong></div>
+            <div><span>مخاطب</span><strong>مالک پروژه، تیم محصول، سرمایه‌گذار</strong></div>
+            <div><span>تمرکز</span><strong>درآمد، فروش، اسپانسر، بازی</strong></div>
+            <div><span>وضعیت</span><strong>پیشنهاد اجرایی برای MVP تجاری</strong></div>
+        </div>
+    </header>
+
+    <section>
+        <h2>پاسخ کوتاه: پنل‌های فعلی کنار گذاشته نمی‌شوند</h2>
+        <p class="lead">
+            پنل‌های فعلی مثل ارزیابی مکان، گنجینه الگوها، کمپین‌سازی، مأموریت‌ها، پاداش‌ها، شرکای کمپین و عملیات نمایشگرها دارایی اصلی محصول هستند. راهکار پیشنهادی حذف آن‌ها نیست؛ بلکه تبدیل آن‌ها به یک pipeline درآمدزا و قابل فهم برای بازار است.
+        </p>
+        <div class="callout">
+            روایت محصول باید از «چند پنل مدیریتی» به «ماشین ساخت کمپین درآمدزا برای مکان، فروشگاه و اسپانسر» تغییر کند.
+        </div>
+    </section>
+
+    <section>
+        <h2>برای نوشتن برنامه جریان درآمدزا به چه چیزهایی نیاز داریم؟</h2>
+        <table>
+            <thead>
+            <tr><th>حوزه تصمیم</th><th>اطلاعات لازم</th><th>چرا مهم است؟</th></tr>
+            </thead>
+            <tbody>
+            <tr><td>مکان پایلوت</td><td>نام مکان، ظرفیت بازدید، نقشه، نقاط پرتردد، فروشگاه‌ها، محدودیت اجرایی</td><td>بدون مکان مشخص، بازی و درآمد فرضی می‌مانند.</td></tr>
+            <tr><td>فروشگاه‌ها</td><td>تعداد فروشگاه، دسته‌بندی، پیشنهادهای قابل ارائه، ظرفیت پاداش، ساعات شلوغ/خلوت</td><td>مدل درآمد فروشگاهی به offer و redemption واقعی وابسته است.</td></tr>
+            <tr><td>اسپانسرها</td><td>صنایع هدف، بودجه احتمالی، هدف برند، نوع داده/گزارش مورد نیاز</td><td>پنل اسپانسر باید حول KPI و outcome طراحی شود.</td></tr>
+            <tr><td>قیمت‌گذاری</td><td>تعرفه مکان، فروشگاه، اسپانسر، تبلیغ نمایشگر، کارمزد مصرف پاداش</td><td>سرمایه‌گذار و مشتری باید منطق پول‌سازی را شفاف ببینند.</td></tr>
+            <tr><td>قالب‌های بازی</td><td>۳ سناریوی اول: گنج، مأموریت فروشگاهی، کمپین اسپانسری</td><td>بازی نباید سفارشی و پیچیده شروع شود؛ باید template-driven باشد.</td></tr>
+            <tr><td>KPI</td><td>اسکن، ثبت‌نام، شروع، تکمیل، مراجعه فروشگاه، مصرف کد، lead، درآمد</td><td>موفقیت پروژه با عدد اثبات می‌شود.</td></tr>
+            <tr><td>عملیات میدانی</td><td>مسئول اجرا، آموزش فروشگاه، کنترل پاداش، پشتیبانی، گزارش روزانه</td><td>اکسپلوریا محصول صرفاً نرم‌افزاری نیست؛ تجربه میدانی دارد.</td></tr>
+            <tr><td>حقوقی و داده</td><td>متن consent، سیاست داده، قوانین قرعه‌کشی، شرایط پاداش</td><td>اعتماد کاربر و اسپانسر بدون حاکمیت داده آسیب می‌بیند.</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="page-break">
+        <h2>جریان درآمدزا و قابل فروش پیشنهادی</h2>
+        <div class="flow">
+            <div class="step"><b>1</b><span>ارزیابی مکان</span><small>شناخت ظرفیت، فروشگاه‌ها، نقاط پرتردد و فرصت تبلیغ.</small></div>
+            <div class="step"><b>2</b><span>انتخاب الگو</span><small>پیشنهاد قالب بازی/کمپین بر اساس ظرفیت مکان.</small></div>
+            <div class="step"><b>3</b><span>ساخت کمپین</span><small>تبدیل الگو به کمپین واقعی با KPI و بودجه.</small></div>
+            <div class="step"><b>4</b><span>اتصال شرکا</span><small>فروشگاه، اسپانسر، پاداش، QR و نمایشگر.</small></div>
+            <div class="step"><b>5</b><span>گزارش درآمد</span><small>داشبورد نتیجه، مصرف کد، lead، فروش و ROI.</small></div>
+        </div>
+    </section>
+
+    <section>
+        <h2>نقش پنل‌های موجود در محصول نهایی</h2>
+        <table>
+            <thead>
+            <tr><th>پنل/ماژول فعلی</th><th>نقش تجاری پیشنهادی</th><th>خروجی قابل فروش</th></tr>
+            </thead>
+            <tbody>
+            <tr><td>ارزیابی مکان</td><td>تشخیص ظرفیت درآمدی و عملیاتی مکان</td><td>گزارش فرصت‌های کمپین و تبلیغ</td></tr>
+            <tr><td>گنجینه الگوها</td><td>پیشنهاد قالب بازی/کمپین مناسب</td><td>کاتالوگ کمپین قابل فروش به مکان و اسپانسر</td></tr>
+            <tr><td>کمپین‌سازی</td><td>تبدیل الگو به کمپین اجرایی</td><td>کمپین قابل اجرا با تاریخ، بودجه، مکان و KPI</td></tr>
+            <tr><td>مأموریت‌ها و پاداش‌ها</td><td>ساخت تجربه بازدیدکننده و پیشنهاد فروشگاهی</td><td>موتور engagement و redemption</td></tr>
+            <tr><td>اعضا و شرکای کمپین</td><td>اتصال فروشگاه، اسپانسر و مجری</td><td>شبکه مشارکت کمپین</td></tr>
+            <tr><td>نقشه عملیات</td><td>کنترل مسیر میدانی و گام‌های اجرا</td><td>ابزار اجرای قابل کنترل برای تیم عملیات</td></tr>
+            <tr><td>عملیات نمایشگرها</td><td>رسانه تبلیغاتی داخل مکان</td><td>موجودی تبلیغاتی قابل فروش</td></tr>
+            <tr><td>پنل فروشگاه/رواق</td><td>مدیریت پیشنهاد، موجودی، مصرف کد و تبلیغ</td><td>درآمد اشتراک/کارمزد/تبلیغ فروشگاه</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <h2>ستون‌های محصول پول‌ساز</h2>
+        <div class="grid-2">
+            <div class="card">
+                <strong>۱. Game Template Engine</strong>
+                <p>به جای ساخت بازی پیچیده سفارشی، سه قالب تکرارپذیر ساخته شود: مسیر گنج، مأموریت فروشگاهی، کمپین اسپانسری.</p>
+                <ul>
+                    <li>QR و مأموریت مرحله‌ای</li>
+                    <li>امتیاز، گنج، پاداش، قرعه‌کشی</li>
+                    <li>قابل تنظیم توسط ادمین بدون کدنویسی</li>
+                </ul>
+            </div>
+            <div class="card">
+                <strong>۲. Store Revenue Layer</strong>
+                <p>فروشگاه باید سریع ارزش ببیند: پیشنهاد می‌سازد، مشتری می‌گیرد، کد مصرف می‌کند و گزارش می‌بیند.</p>
+                <ul>
+                    <li>ساخت offer در زمان کوتاه</li>
+                    <li>موجودی، تاریخ اعتبار و pause/resume</li>
+                    <li>گزارش مراجعه و redemption</li>
+                </ul>
+            </div>
+            <div class="card">
+                <strong>۳. Sponsor Activation Layer</strong>
+                <p>اسپانسر باید بتواند کمپین برند را با بودجه، هدف و KPI ببیند؛ نه فقط لوگو یا بنر.</p>
+                <ul>
+                    <li>هدف کمپین: awareness، lead، مراجعه، فروش</li>
+                    <li>بودجه، پاداش، مأموریت برند</li>
+                    <li>گزارش تعامل و خروجی PDF</li>
+                </ul>
+            </div>
+            <div class="card">
+                <strong>۴. Commercial KPI Dashboard</strong>
+                <p>برای سرمایه‌گذار و مشتری، داشبورد باید پول و نتیجه را نشان دهد.</p>
+                <ul>
+                    <li>اسکن، شروع، تکمیل، مصرف کد</li>
+                    <li>درآمد کمپین، فروشگاه، اسپانسر</li>
+                    <li>هزینه هر تعامل و نرخ تبدیل</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section class="page-break">
+        <h2>مدل درآمد پیشنهادی</h2>
+        <table>
+            <thead>
+            <tr><th>منبع درآمد</th><th>شرح</th><th>اولویت MVP</th></tr>
+            </thead>
+            <tbody>
+            <tr><td>Setup Fee مکان</td><td>هزینه راه‌اندازی مکان، ارزیابی، تعریف نقاط، آموزش و فعال‌سازی</td><td>بالا</td></tr>
+            <tr><td>اشتراک ماهانه مکان</td><td>استفاده از داشبورد، کمپین‌سازی، گزارش و عملیات</td><td>بالا</td></tr>
+            <tr><td>اشتراک فروشگاه</td><td>پنل فروشگاه، پیشنهادها، موجودی، مصرف کد و گزارش</td><td>متوسط</td></tr>
+            <tr><td>کارمزد redemption</td><td>درصد یا مبلغ ثابت برای هر پاداش مصرف‌شده</td><td>بالا</td></tr>
+            <tr><td>پکیج اسپانسر</td><td>کمپین برند، مأموریت اسپانسری، گنج، lead و گزارش KPI</td><td>بسیار بالا</td></tr>
+            <tr><td>تبلیغات نمایشگر/QR/PWA</td><td>فروش inventory تبلیغاتی داخل مکان</td><td>بالا</td></tr>
+            <tr><td>گزارش تحلیلی</td><td>گزارش پایان کمپین برای مدیر، اسپانسر و سرمایه‌گذار</td><td>متوسط</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <h2>Roadmap اجرایی پیشنهادی ۶۰ روزه</h2>
+        <table>
+            <thead>
+            <tr><th>فاز</th><th>خروجی</th><th>معیار موفقیت</th></tr>
+            </thead>
+            <tbody>
+            <tr><td>هفته ۱ تا ۲</td><td>قفل کردن مدل درآمد، KPI، سه قالب بازی و بسته فروش</td><td>یک سند قابل ارائه به مشتری و سرمایه‌گذار</td></tr>
+            <tr><td>هفته ۳ تا ۴</td><td>پنل اسپانسر MVP و اتصال به کمپین</td><td>ثبت کمپین اسپانسر و مشاهده KPI اولیه</td></tr>
+            <tr><td>هفته ۵</td><td>تکمیل لایه درآمد فروشگاه و گزارش redemption</td><td>فروشگاه بتواند پیشنهاد را مدیریت و نتیجه را ببیند</td></tr>
+            <tr><td>هفته ۶</td><td>داشبورد درآمد و گزارش PDF کمپین</td><td>گزارش عددی قابل ارسال به اسپانسر/سرمایه‌گذار</td></tr>
+            <tr><td>هفته ۷ تا ۸</td><td>پایلوت واقعی با یک مکان، چند فروشگاه و حداقل یک اسپانسر</td><td>traction: اسکن، تکمیل، مصرف کد، درآمد</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <h2>اولویت‌های کدنویسی بعدی</h2>
+        <div class="grid-3">
+            <div class="card">
+                <strong>۱. Sponsor MVP</strong>
+                <p>مدل داده و پنل پایه اسپانسر: حساب اسپانسر، بودجه، هدف کمپین، KPI و گزارش.</p>
+            </div>
+            <div class="card">
+                <strong>۲. Pricing & Revenue Records</strong>
+                <p>ثبت بسته درآمدی، invoice ساده، درآمد کمپین، کارمزد redemption و تبلیغ.</p>
+            </div>
+            <div class="card">
+                <strong>۳. Game Templates</strong>
+                <p>تبدیل گنجینه الگوها به template engine اجرایی برای گنج، فروشگاه و اسپانسر.</p>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <h2>ریسک‌ها و کنترل‌ها</h2>
+        <div class="callout warning">
+            ریسک اصلی این است که پروژه بیش از حد بزرگ و توضیح آن دشوار شود. کنترل این ریسک با تمرکز روی یک پایلوت درآمدزا، سه قالب بازی و KPIهای محدود اما واقعی انجام می‌شود.
+        </div>
+        <ul>
+            <li>ریسک پیچیدگی: هر ماژول فقط یک مسیر MVP داشته باشد.</li>
+            <li>ریسک فروش: پیام محصول باید بر مراجعه، پاداش و گزارش متمرکز باشد.</li>
+            <li>ریسک اجرا: عملیات میدانی و آموزش فروشگاه باید بخشی از محصول دیده شود.</li>
+            <li>ریسک سرمایه‌گذار: پیش از pitch باید عدد traction و درآمد آزمایشی وجود داشته باشد.</li>
+            <li>ریسک حقوقی: consent، داده، قرعه‌کشی و پاداش باید از ابتدا شفاف باشد.</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>جمع‌بندی اجرایی</h2>
+        <p class="lead">
+            راهکار پیشنهادی این است که پنل‌های فعلی حفظ شوند، اما در یک جریان تجاری واحد قرار بگیرند: ارزیابی مکان، انتخاب الگو، ساخت کمپین، اتصال فروشگاه و اسپانسر، اجرای مأموریت و گزارش درآمد.
+        </p>
+        <p>
+            نتیجه مطلوب این است که اکسپلوریا نه فقط یک سیستم جذاب، بلکه یک محصول قابل فروش با KPI، pricing، اسپانسر، فروشگاه و گزارش قابل دفاع شود. این مسیر شانس موفقیت محصول، جذب سرمایه و درآمدزایی را به شکل جدی افزایش می‌دهد.
+        </p>
+    </section>
+
+    <footer class="footer">
+        این پروپوزال برای ادامه توسعه EXPLORIA تهیه شده و باید در کنار اسناد محصول، برنامه MVP، و تصمیم‌های مالک پروژه استفاده شود. نسخه HTML منبع قابل ویرایش این PDF در مخزن پروژه ذخیره شده است.
+    </footer>
+</main>
+</body>
+</html>
