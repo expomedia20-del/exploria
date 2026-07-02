@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="utf-8">
+    <title>ارزیابی راهبردی پروژه EXPLORIA</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 16mm 14mm;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: #f4f7f6;
+            color: #17211f;
+            font-family: "Vazirmatn", "Segoe UI", Tahoma, Arial, sans-serif;
+            line-height: 1.85;
+        }
+
+        main {
+            max-width: 980px;
+            margin: 0 auto;
+            background: #ffffff;
+        }
+
+        .hero {
+            min-height: 260px;
+            padding: 42px 44px 34px;
+            color: #ffffff;
+            background:
+                linear-gradient(135deg, rgba(7, 73, 70, 0.96), rgba(14, 116, 144, 0.88)),
+                radial-gradient(circle at 15% 20%, rgba(244, 196, 48, 0.32), transparent 36%);
+        }
+
+        .eyebrow {
+            margin: 0 0 16px;
+            color: #bdeee6;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0;
+        }
+
+        h1 {
+            margin: 0;
+            max-width: 780px;
+            font-size: 36px;
+            line-height: 1.45;
+            font-weight: 900;
+        }
+
+        .hero-summary {
+            max-width: 760px;
+            margin: 18px 0 0;
+            color: #e7fffb;
+            font-size: 15px;
+        }
+
+        .meta {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 28px;
+        }
+
+        .meta div {
+            min-height: 70px;
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            border-radius: 8px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .meta span {
+            display: block;
+            color: #bdeee6;
+            font-size: 11px;
+        }
+
+        .meta strong {
+            display: block;
+            margin-top: 4px;
+            font-size: 15px;
+        }
+
+        section {
+            padding: 28px 44px;
+            border-bottom: 1px solid #e2ebe7;
+        }
+
+        h2 {
+            margin: 0 0 14px;
+            color: #0f4f4a;
+            font-size: 22px;
+            line-height: 1.5;
+        }
+
+        h3 {
+            margin: 18px 0 8px;
+            color: #183a37;
+            font-size: 16px;
+        }
+
+        p {
+            margin: 0 0 12px;
+            font-size: 14px;
+        }
+
+        .lead {
+            color: #314744;
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .score-card {
+            border: 1px solid #d7e5df;
+            border-radius: 8px;
+            padding: 14px;
+            background: #fbfdfc;
+        }
+
+        .score-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 10px;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .score {
+            color: #0f766e;
+            direction: ltr;
+            font-size: 18px;
+            font-weight: 900;
+        }
+
+        .bar {
+            height: 9px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: #e8f0ed;
+        }
+
+        .bar span {
+            display: block;
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #0f766e, #f2b84b);
+        }
+
+        .callout {
+            border-right: 5px solid #0f766e;
+            border-radius: 8px;
+            padding: 14px 16px;
+            background: #effaf7;
+            color: #173d39;
+        }
+
+        .risk {
+            border-right-color: #d97706;
+            background: #fff8eb;
+            color: #4c3515;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .box {
+            min-height: 150px;
+            border: 1px solid #d7e5df;
+            border-radius: 8px;
+            padding: 14px;
+            background: #ffffff;
+        }
+
+        .box strong {
+            display: block;
+            margin-bottom: 8px;
+            color: #0f4f4a;
+            font-size: 14px;
+        }
+
+        ul {
+            margin: 8px 0 0;
+            padding: 0 20px 0 0;
+            font-size: 13px;
+        }
+
+        li {
+            margin-bottom: 6px;
+        }
+
+        .matrix {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 14px;
+            font-size: 13px;
+        }
+
+        .matrix th,
+        .matrix td {
+            border: 1px solid #d7e5df;
+            padding: 10px 12px;
+            text-align: right;
+            vertical-align: top;
+        }
+
+        .matrix th {
+            background: #0f4f4a;
+            color: #ffffff;
+            font-weight: 800;
+        }
+
+        .matrix tr:nth-child(even) td {
+            background: #f8fbfa;
+        }
+
+        .verdict {
+            display: grid;
+            grid-template-columns: 160px 1fr;
+            gap: 18px;
+            align-items: center;
+        }
+
+        .big-score {
+            display: grid;
+            place-items: center;
+            width: 150px;
+            height: 150px;
+            border: 10px solid #0f766e;
+            border-radius: 50%;
+            color: #0f4f4a;
+            font-size: 34px;
+            font-weight: 900;
+            direction: ltr;
+        }
+
+        .footer {
+            padding: 18px 44px 30px;
+            color: #5f736f;
+            font-size: 11px;
+            background: #f8fbfa;
+        }
+
+        .page-break {
+            break-before: page;
+        }
+
+        a {
+            color: #0f766e;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+<main>
+    <header class="hero">
+        <p class="eyebrow">گزارش تحلیلی داخلی | EXPLORIA</p>
+        <h1>ارزیابی راهبردی پروژه اکسپلوریا از منظر نوآوری، بازار، درآمدزایی و ریسک اجرا</h1>
+        <p class="hero-summary">
+            جمع‌بندی اجرایی: اکسپلوریا یک ایده جدی و چندلایه است که اگر به شکل یک محصول قابل فروش با KPI روشن فشرده شود، ظرفیت بالایی برای جذب فروشگاه، اسپانسر، مکان‌های تفریحی و سرمایه‌گذار دارد.
+        </p>
+        <div class="meta">
+            <div><span>تاریخ</span><strong>۱۴۰۵/۰۴/۱۱ | 2026-07-02</strong></div>
+            <div><span>دامنه بررسی</span><strong>محصول، بازار، فروش، اسپانسر، ریسک</strong></div>
+            <div><span>جمع‌بندی امتیاز</span><strong>۷.۸ از ۱۰</strong></div>
+        </div>
+    </header>
+
+    <section>
+        <div class="verdict">
+            <div class="big-score">7.8</div>
+            <div>
+                <h2>نظر کلی</h2>
+                <p class="lead">
+                    اکسپلوریا از نظر ایده و ترکیب اجزای محصول، معمولی نیست. قدرت آن در اتصال تجربه واقعی مکان، بازی‌سازی، QR/PWA، پاداش، فروشگاه، اسپانسر و داشبورد قابل اندازه‌گیری است.
+                </p>
+                <p>
+                    اما آینده پروژه بیشتر از آنکه به پیچیدگی نرم‌افزار وابسته باشد، به اجرای میدانی، مدل فروش، سادگی پیام محصول و اثبات عددی ارزش برای فروشگاه و اسپانسر بستگی دارد.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <h2>امتیازدهی محوری</h2>
+        <div class="score-grid">
+            <div class="score-card"><div class="score-title"><span>خلاقیت و نوآوری</span><b class="score">8.5/10</b></div><div class="bar"><span style="width:85%"></span></div></div>
+            <div class="score-card"><div class="score-title"><span>جذابیت برای فروشگاه‌ها</span><b class="score">8/10</b></div><div class="bar"><span style="width:80%"></span></div></div>
+            <div class="score-card"><div class="score-title"><span>جذابیت برای اسپانسرها</span><b class="score">8/10</b></div><div class="bar"><span style="width:80%"></span></div></div>
+            <div class="score-card"><div class="score-title"><span>جذابیت برای سرمایه‌گذار</span><b class="score">7/10</b></div><div class="bar"><span style="width:70%"></span></div></div>
+            <div class="score-card"><div class="score-title"><span>پتانسیل درآمدزایی</span><b class="score">7.5/10</b></div><div class="bar"><span style="width:75%"></span></div></div>
+            <div class="score-card"><div class="score-title"><span>آمادگی اجرایی فعلی</span><b class="score">6.5/10</b></div><div class="bar"><span style="width:65%"></span></div></div>
+        </div>
+    </section>
+
+    <section>
+        <h2>چرا ایده جذاب است؟</h2>
+        <p>
+            برندها، فروشگاه‌ها و مکان‌های تفریحی امروز فقط نمایش لوگو یا بنر نمی‌خواهند؛ آن‌ها دنبال مراجعه، تعامل، داده رفتاری، مصرف کوپن، فروش و گزارش قابل دفاع هستند. اکسپلوریا اگر درست بسته‌بندی شود، می‌تواند این نیاز را با یک مسیر قابل تجربه و قابل اندازه‌گیری پاسخ دهد.
+        </p>
+        <div class="grid-3">
+            <div class="box">
+                <strong>برای بازدیدکننده</strong>
+                تجربه مکان از حالت تماشا به مأموریت، کشف، امتیاز، گنج و پاداش تبدیل می‌شود.
+            </div>
+            <div class="box">
+                <strong>برای فروشگاه</strong>
+                ابزار جذب مراجعه، پیشنهاد، تخفیف، مصرف پاداش و گزارش عملکرد فراهم می‌شود.
+            </div>
+            <div class="box">
+                <strong>برای اسپانسر</strong>
+                اسپانسر از نمایش منفعل به تعامل قابل سنجش، lead، تجربه برند و attribution نزدیک می‌شود.
+            </div>
+        </div>
+    </section>
+
+    <section class="page-break">
+        <h2>تحلیل تجاری و مدل درآمد</h2>
+        <table class="matrix">
+            <thead>
+            <tr><th>ذی‌نفع</th><th>ارزش پیشنهادی</th><th>مدل درآمدی محتمل</th></tr>
+            </thead>
+            <tbody>
+            <tr><td>مکان یا مجموعه تفریحی</td><td>فعال‌سازی بازدیدکننده، داشبورد، مسیر کمپین، افزایش ماندگاری</td><td>اشتراک ماهانه، قرارداد راه‌اندازی، پشتیبانی عملیاتی</td></tr>
+            <tr><td>فروشگاه و شریک داخلی</td><td>افزایش مراجعه، کوپن، پاداش، تبلیغ داخلی، گزارش مصرف</td><td>اشتراک فروشگاه، کارمزد redemption، هزینه تبلیغ یا پیشنهاد ویژه</td></tr>
+            <tr><td>اسپانسر</td><td>کمپین تجربه‌محور، مأموریت برند، گنج، قرعه‌کشی، داده تعامل</td><td>فروش پکیج کمپین، sponsorship fee، گزارش تحلیلی</td></tr>
+            <tr><td>سرمایه‌گذار</td><td>زیرساخت تکرارپذیر برای مکان‌های مختلف و شبکه retail media محلی</td><td>رشد SaaS/Marketplace، سهم از تبلیغات و عملیات کمپین</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <h2>نقاط قوت کلیدی</h2>
+        <div class="callout">
+            نقطه قوت اصلی اکسپلوریا این است که فقط یک اپلیکیشن یا بازی نیست؛ اگر درست اجرا شود، می‌تواند به زیرساخت عملیات و درآمدزایی مکان تبدیل شود.
+        </div>
+        <ul>
+            <li>ترکیب تجربه فیزیکی و دیجیتال با QR/PWA و مأموریت.</li>
+            <li>اتصال فروشگاه، اسپانسر و مدیر مکان در یک چرخه واحد.</li>
+            <li>امکان تبدیل تبلیغات محیطی به تعامل قابل اندازه‌گیری.</li>
+            <li>پتانسیل قوی برای گزارش‌دهی، داشبورد و KPIهای قابل فروش.</li>
+            <li>قابلیت تکرار در پارک، مال، مجموعه گردشگری، نمایشگاه و رویداد.</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>نقاط ضعف و ریسک‌ها</h2>
+        <div class="callout risk">
+            بزرگ‌ترین خطر پروژه، بزرگ شدن بیش از حد دامنه و سخت شدن پیام فروش است. مشتری نباید احساس کند با یک اکوسیستم پیچیده طرف است؛ باید حس کند یک راهکار روشن برای افزایش مراجعه و درآمد گرفته است.
+        </div>
+        <ul>
+            <li>پیچیدگی محصول: هم‌زمان CRM سبک، loyalty، تبلیغات، بازی‌سازی و داشبورد دارد.</li>
+            <li>نیاز به عملیات میدانی: آموزش فروشگاه، کنترل پاداش و اجرای کمپین ضروری است.</li>
+            <li>نیاز به اثبات عددی: بدون KPI واقعی، سرمایه‌گذار و اسپانسر قانع نمی‌شوند.</li>
+            <li>ریسک privacy و اعتماد: رضایت کاربر، داده رفتاری و موبایل باید بسیار شفاف مدیریت شود.</li>
+            <li>ریسک فروش: اگر پیام محصول ساده نشود، فروش سازمانی کند و پرهزینه می‌شود.</li>
+        </ul>
+    </section>
+
+    <section class="page-break">
+        <h2>پیش‌بینی موفقیت</h2>
+        <p>
+            اگر پروژه با همین دامنه وسیع و هم‌زمان همه قابلیت‌ها دنبال شود، احتمال موفقیت متوسط ارزیابی می‌شود. اما اگر روی یک vertical مشخص مثل مراکز تفریحی، اکوپارک، مال یا نمایشگاه قفل شود و ظرف ۶۰ تا ۹۰ روز KPI واقعی بسازد، شانس موفقیت به شکل جدی افزایش پیدا می‌کند.
+        </p>
+        <table class="matrix">
+            <thead>
+            <tr><th>سناریو</th><th>شرح</th><th>احتمال موفقیت تخمینی</th></tr>
+            </thead>
+            <tbody>
+            <tr><td>اجرای گسترده و نامتمرکز</td><td>ساخت هم‌زمان همه ماژول‌ها، بدون تمرکز فروش و KPI</td><td>۵۰ تا ۶۰ درصد</td></tr>
+            <tr><td>پایلوت متمرکز</td><td>یک مکان، چند فروشگاه، چند اسپانسر، داشبورد عددی</td><td>۷۰ تا ۸۰ درصد</td></tr>
+            <tr><td>تبدیل به playbook تکرارپذیر</td><td>بسته فروش روشن، onboarding سریع، مدل درآمد ثابت</td><td>بالاتر از ۸۰ درصد</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <h2>سه اقدام حیاتی بعدی</h2>
+        <div class="grid-3">
+            <div class="box">
+                <strong>۱. ساده‌سازی پیام فروش</strong>
+                اکسپلوریا بازدیدکننده مکان را با مأموریت و پاداش به فروشگاه و اسپانسر وصل می‌کند و نتیجه را قابل اندازه‌گیری می‌کند.
+            </div>
+            <div class="box">
+                <strong>۲. ساخت پایلوت عددی</strong>
+                اسکن، ثبت‌نام، تکمیل مأموریت، مصرف کوپن، مراجعه فروشگاه، درآمد کمپین و retention باید اندازه‌گیری شود.
+            </div>
+            <div class="box">
+                <strong>۳. بسته‌بندی داشبوردها</strong>
+                برای مدیر مکان، فروشگاه، اسپانسر و ادمین عملیات باید خروجی ساده و قابل فهم ساخته شود.
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <h2>جمع‌بندی نهایی</h2>
+        <p class="lead">
+            اکسپلوریا ایده‌ای با ظرفیت جدی است؛ اما ارزش واقعی آن زمانی آشکار می‌شود که از «اکوسیستم بزرگ» به «محصول قابل فروش با KPI روشن» تبدیل شود.
+        </p>
+        <p>
+            بهترین مسیر، اجرای پایلوت محدود اما بسیار دقیق است: یک مکان، فروشگاه‌های مشخص، چند اسپانسر، مأموریت‌های ساده، پاداش قابل مصرف و گزارش عددی. در این حالت پروژه می‌تواند هم جذاب، هم قابل فروش، هم قابل سرمایه‌گذاری و هم قابل توسعه باشد.
+        </p>
+    </section>
+
+    <footer class="footer">
+        این گزارش برای تصمیم‌گیری داخلی پروژه EXPLORIA تهیه شده است. منبع تحلیلی: شناخت فعلی از codebase، اسناد محصول، وضعیت MVP و روندهای عمومی retail media، experiential marketing، loyalty و gamification.
+    </footer>
+</main>
+</body>
+</html>
