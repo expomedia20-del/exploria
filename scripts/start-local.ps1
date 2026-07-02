@@ -5,8 +5,11 @@ $hostName = '127.0.0.1'
 $port = 8004
 $url = "http://$hostName`:$port"
 $hotFile = Join-Path $projectRoot 'public\hot'
+$manifestFile = Join-Path $projectRoot 'public\build\manifest.json'
 $localPhp = Join-Path $projectRoot '.codex-runtime\exploria-toolchain-local\php\php.exe'
 $fallbackPhp = 'E:\exploria-toolchain-local\php\php.exe'
+$localNpm = Join-Path $projectRoot '.codex-runtime\node\npm.cmd'
+$fallbackNpm = 'npm.cmd'
 
 if (Test-Path $localPhp) {
     $php = $localPhp
@@ -16,9 +19,42 @@ if (Test-Path $localPhp) {
     throw 'PHP executable was not found. Expected .codex-runtime\exploria-toolchain-local\php\php.exe.'
 }
 
+if (Test-Path $localNpm) {
+    $npm = $localNpm
+} else {
+    $npm = $fallbackNpm
+}
+
 $viteIsRunning = Get-NetTCPConnection -LocalAddress $hostName -LocalPort 5173 -State Listen -ErrorAction SilentlyContinue
 if ((Test-Path $hotFile) -and -not $viteIsRunning) {
     Remove-Item -LiteralPath $hotFile -Force
+}
+
+$frontendRoots = @(
+    (Join-Path $projectRoot 'resources\js'),
+    (Join-Path $projectRoot 'resources\css')
+)
+$newestFrontendSource = Get-ChildItem -Path $frontendRoots -Recurse -File -ErrorAction SilentlyContinue |
+    Sort-Object LastWriteTime -Descending |
+    Select-Object -First 1
+$buildNeedsRefresh = -not (Test-Path $manifestFile)
+
+if (-not $buildNeedsRefresh -and $newestFrontendSource) {
+    $buildNeedsRefresh = $newestFrontendSource.LastWriteTime -gt (Get-Item $manifestFile).LastWriteTime
+}
+
+if ($buildNeedsRefresh -and -not $viteIsRunning) {
+    Write-Host 'Building EXPLORIA frontend assets...'
+    $phpDir = Split-Path -Parent $php
+    $nodeDir = Split-Path -Parent $npm
+    $previousPath = $env:PATH
+    $env:PATH = "$phpDir;$nodeDir;$previousPath"
+
+    try {
+        & $npm run build
+    } finally {
+        $env:PATH = $previousPath
+    }
 }
 
 $listener = Get-NetTCPConnection -LocalAddress $hostName -LocalPort $port -State Listen -ErrorAction SilentlyContinue
