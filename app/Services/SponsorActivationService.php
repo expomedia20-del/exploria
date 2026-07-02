@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Models\Campaign;
 use App\Models\CampaignSponsorship;
+use App\Models\PartnerAccount;
 use App\Models\SponsorAccount;
+use App\Models\SponsorPartnerAssignment;
 use App\Models\User;
 use App\Models\Venue;
 use Illuminate\Database\Eloquent\Builder;
@@ -43,17 +45,33 @@ class SponsorActivationService
             ->get()
             ->map(fn (SponsorAccount $sponsor): array => $this->serializeSponsor($sponsor));
 
+        $partnerAssignments = SponsorPartnerAssignment::query()
+            ->when($campaignId, fn (Builder $query) => $query->where('campaign_id', $campaignId))
+            ->when(! $isGlobal, fn (Builder $query) => $query->whereHas('partnerAccount', fn (Builder $partner) => $partner->whereIn('venue_id', $venueIds)))
+            ->with([
+                'sponsorAccount:id,venue_id,code,name,sponsor_type,status',
+                'partnerAccount:id,venue_id,code,name,partner_type,status',
+                'partnerAccount.venue:id,code,name',
+                'campaign:id,venue_id,code,name,status',
+            ])
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(fn (SponsorPartnerAssignment $assignment): array => $this->serializePartnerAssignment($assignment));
+
         return [
             'stats' => [
                 'sponsors' => $sponsors->count(),
                 'activeSponsors' => $sponsors->where('status', 'active')->count(),
                 'sponsorships' => $sponsorships->count(),
                 'activeSponsorships' => $sponsorships->where('status', 'active')->count(),
+                'partnerAssignments' => $partnerAssignments->count(),
+                'activePartnerAssignments' => $partnerAssignments->where('status', 'active')->count(),
                 'plannedBudget' => $sponsorships->sum('budgetAmount'),
                 'contractValue' => $sponsorships->sum('contractValue'),
             ],
             'sponsors' => $sponsors,
             'sponsorships' => $sponsorships,
+            'partnerAssignments' => $partnerAssignments,
             'formOptions' => $this->formOptions($user, $campaignId),
         ];
     }
@@ -153,6 +171,60 @@ class SponsorActivationService
         });
     }
 
+    /** @param array<string, mixed> $data */
+    public function storePartnerAssignment(array $data): SponsorPartnerAssignment
+    {
+        $sponsor = SponsorAccount::query()->findOrFail($data['sponsor_account_id']);
+        $partner = PartnerAccount::query()->findOrFail($data['partner_account_id']);
+        $campaign = ! empty($data['campaign_id'])
+            ? Campaign::query()->findOrFail($data['campaign_id'])
+            : null;
+
+        if ($sponsor->venue_id !== null && $sponsor->venue_id !== $partner->venue_id) {
+            throw ValidationException::withMessages(['partner_account_id' => 'واحد عضو انتخاب‌شده به مکان این اسپانسر تعلق ندارد.']);
+        }
+
+        if ($campaign && $partner->venue_id !== $campaign->venue_id) {
+            throw ValidationException::withMessages(['partner_account_id' => 'واحد عضو انتخاب‌شده به مکان این کمپین تعلق ندارد.']);
+        }
+
+        if ($campaign && $sponsor->venue_id !== null && $sponsor->venue_id !== $campaign->venue_id) {
+            throw ValidationException::withMessages(['sponsor_account_id' => 'اسپانسر انتخاب‌شده به مکان این کمپین تعلق ندارد.']);
+        }
+
+        $attributes = [
+            'sponsor_account_id' => $sponsor->id,
+            'partner_account_id' => $partner->id,
+            'campaign_id' => $campaign?->id,
+            'activation_role' => $data['activation_role'],
+            'status' => $data['status'],
+            'starts_at' => ($data['starts_at'] ?? null) ?: null,
+            'ends_at' => ($data['ends_at'] ?? null) ?: null,
+            'notes' => $data['notes'] ?? null,
+            'metadata' => ['source' => 'admin_sponsor_activation'],
+        ];
+
+        return DB::transaction(function () use ($data, $attributes): SponsorPartnerAssignment {
+            if (! empty($data['assignment_id'])) {
+                $assignment = SponsorPartnerAssignment::query()->findOrFail($data['assignment_id']);
+                $metadata = array_merge($assignment->metadata ?? [], $attributes['metadata']);
+                $assignment->update(array_merge($attributes, ['metadata' => $metadata]));
+
+                return $assignment->refresh();
+            }
+
+            return SponsorPartnerAssignment::query()->updateOrCreate(
+                [
+                    'sponsor_account_id' => $attributes['sponsor_account_id'],
+                    'partner_account_id' => $attributes['partner_account_id'],
+                    'campaign_id' => $attributes['campaign_id'],
+                    'activation_role' => $attributes['activation_role'],
+                ],
+                $attributes,
+            );
+        });
+    }
+
     /** @return array<string, mixed> */
     private function formOptions(?User $user, ?string $campaignId): array
     {
@@ -187,6 +259,20 @@ class SponsorActivationService
                     'sponsorType' => $sponsor->sponsor_type,
                     'status' => $sponsor->status->value,
                 ]),
+            'partners' => PartnerAccount::query()
+                ->when($campaign, fn (Builder $query) => $query->where('venue_id', $campaign->venue_id))
+                ->when(! $campaign && ! $isGlobal, fn (Builder $query) => $query->whereIn('venue_id', $venueIds))
+                ->with('venue:id,code,name')
+                ->orderBy('name')
+                ->get(['id', 'venue_id', 'code', 'name', 'partner_type', 'status'])
+                ->map(fn (PartnerAccount $partner): array => [
+                    'id' => $partner->id,
+                    'code' => $partner->code,
+                    'name' => $partner->name,
+                    'partnerType' => $partner->partner_type,
+                    'status' => $partner->status->value,
+                    'venueName' => $partner->venue?->name,
+                ]),
             'venues' => Venue::query()
                 ->when(! $isGlobal, fn (Builder $query) => $query->whereIn('id', $venueIds))
                 ->orderBy('name')
@@ -209,6 +295,40 @@ class SponsorActivationService
             'websiteUrl' => $sponsor->website_url,
             'notes' => $sponsor->metadata['notes'] ?? null,
             'venue' => $sponsor->venue ? ['id' => $sponsor->venue->id, 'code' => $sponsor->venue->code, 'name' => $sponsor->venue->name] : null,
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function serializePartnerAssignment(SponsorPartnerAssignment $assignment): array
+    {
+        return [
+            'id' => $assignment->id,
+            'activationRole' => $assignment->activation_role,
+            'status' => $assignment->status->value,
+            'startsAt' => $assignment->starts_at?->toIso8601String(),
+            'endsAt' => $assignment->ends_at?->toIso8601String(),
+            'notes' => $assignment->notes,
+            'sponsor' => $assignment->sponsorAccount ? [
+                'id' => $assignment->sponsorAccount->id,
+                'code' => $assignment->sponsorAccount->code,
+                'name' => $assignment->sponsorAccount->name,
+                'sponsorType' => $assignment->sponsorAccount->sponsor_type,
+                'status' => $assignment->sponsorAccount->status->value,
+            ] : null,
+            'partner' => $assignment->partnerAccount ? [
+                'id' => $assignment->partnerAccount->id,
+                'code' => $assignment->partnerAccount->code,
+                'name' => $assignment->partnerAccount->name,
+                'partnerType' => $assignment->partnerAccount->partner_type,
+                'status' => $assignment->partnerAccount->status->value,
+                'venueName' => $assignment->partnerAccount->venue?->name,
+            ] : null,
+            'campaign' => $assignment->campaign ? [
+                'id' => $assignment->campaign->id,
+                'code' => $assignment->campaign->code,
+                'name' => $assignment->campaign->name,
+                'status' => $assignment->campaign->status->value,
+            ] : null,
         ];
     }
 

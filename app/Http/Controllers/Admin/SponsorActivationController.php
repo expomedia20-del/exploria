@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreCampaignSponsorshipRequest;
 use App\Http\Requests\Admin\StoreSponsorAccountRequest;
+use App\Http\Requests\Admin\StoreSponsorPartnerAssignmentRequest;
 use App\Services\CampaignRegistryService;
 use App\Services\SponsorActivationService;
 use Illuminate\Http\JsonResponse;
@@ -51,5 +52,16 @@ class SponsorActivationController extends Controller
         }
 
         return back()->with('success', 'حمایت اسپانسری به کمپین متصل شد.');
+    }
+
+    public function storePartnerAssignment(StoreSponsorPartnerAssignmentRequest $request, SponsorActivationService $service): JsonResponse|RedirectResponse
+    {
+        $assignment = $service->storePartnerAssignment($request->validated());
+
+        if ($request->expectsJson()) {
+            return response()->json(['status' => 'success', 'data' => ['id' => $assignment->id]], 201);
+        }
+
+        return back()->with('success', 'اتصال اسپانسر به واحد عضو کمپین ذخیره شد.');
     }
 }

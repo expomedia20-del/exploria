@@ -152,6 +152,9 @@ Route::post('/admin/sponsors', [SponsorActivationController::class, 'storeSponso
 Route::post('/admin/campaign-sponsorships', [SponsorActivationController::class, 'storeSponsorship'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.campaign-sponsorships.store');
+Route::post('/admin/sponsor-partner-assignments', [SponsorActivationController::class, 'storePartnerAssignment'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.sponsor-partner-assignments.store');
 
 Route::get('/admin/mission-blueprints', [MissionRewardBlueprintController::class, 'page'])
     ->middleware(['auth', 'role:admin'])
@@ -285,6 +288,9 @@ Route::post('/api/v1/admin/sponsors', [SponsorActivationController::class, 'stor
 Route::post('/api/v1/admin/campaign-sponsorships', [SponsorActivationController::class, 'storeSponsorship'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.campaign-sponsorships.api.store');
+Route::post('/api/v1/admin/sponsor-partner-assignments', [SponsorActivationController::class, 'storePartnerAssignment'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.sponsor-partner-assignments.api.store');
 
 Route::get('/api/v1/admin/mission-blueprints', [MissionRewardBlueprintController::class, 'index'])
     ->middleware(['auth', 'role:admin'])

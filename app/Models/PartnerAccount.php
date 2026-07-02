@@ -76,6 +76,13 @@ class PartnerAccount extends Model
     {
         return $this->hasMany(AdRequest::class);
     }
+
+    /** @return HasMany<SponsorPartnerAssignment, $this> */
+    public function sponsorAssignments(): HasMany
+    {
+        return $this->hasMany(SponsorPartnerAssignment::class);
+    }
+
     /** @return HasMany<CampaignParticipant, $this> */
     public function campaignParticipants(): HasMany
     {

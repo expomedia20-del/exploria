@@ -4,6 +4,7 @@ namespace Tests\Feature\Admin;
 
 use App\Enums\UserRole;
 use App\Models\Campaign;
+use App\Models\PartnerAccount;
 use App\Models\SponsorAccount;
 use App\Models\User;
 use App\Models\Venue;
@@ -149,6 +150,82 @@ class SponsorActivationTest extends TestCase
             'venue_id' => $venue->id,
             'code' => 'ecopark-abbasabad-retail-0002',
             'name' => 'Auto Code Retail Sponsor',
+        ]);
+    }
+
+    public function test_admin_can_connect_sponsor_to_partner_unit(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $campaign = Campaign::query()->where('code', 'ecopark-pilot-1405')->firstOrFail();
+        $venue = Venue::query()->where('code', 'ecopark-abbasabad')->firstOrFail();
+        $partner = PartnerAccount::query()->where('code', 'cafe-eco')->firstOrFail();
+
+        $sponsor = SponsorAccount::query()->create([
+            'venue_id' => $venue->id,
+            'code' => 'ecopark-family-drink-0001',
+            'name' => 'Family Drink Sponsor',
+            'sponsor_type' => 'brand',
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.sponsor-partner-assignments.api.store'), [
+                'sponsor_account_id' => $sponsor->id,
+                'partner_account_id' => $partner->id,
+                'campaign_id' => $campaign->id,
+                'activation_role' => 'reward_redemption',
+                'status' => 'active',
+                'notes' => 'Cafe handles sponsored reward handoff.',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('status', 'success');
+
+        $this->assertDatabaseHas('sponsor_partner_assignments', [
+            'sponsor_account_id' => $sponsor->id,
+            'partner_account_id' => $partner->id,
+            'campaign_id' => $campaign->id,
+            'activation_role' => 'reward_redemption',
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($admin)
+            ->getJson(route('admin.sponsors.index'))
+            ->assertOk()
+            ->assertJsonPath('data.stats.partnerAssignments', 1)
+            ->assertJsonPath('data.stats.activePartnerAssignments', 1)
+            ->assertJsonPath('data.partnerAssignments.0.activationRole', 'reward_redemption')
+            ->assertJsonPath('data.partnerAssignments.0.partner.code', 'cafe-eco');
+    }
+
+    public function test_sponsor_partner_assignment_must_match_campaign_venue(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $campaign = Campaign::query()->where('code', 'ecopark-pilot-1405')->firstOrFail();
+        $otherVenue = Venue::query()->where('code', 'eram-park')->firstOrFail();
+        $partner = PartnerAccount::query()->where('code', 'cafe-eco')->firstOrFail();
+
+        $sponsor = SponsorAccount::query()->create([
+            'venue_id' => $otherVenue->id,
+            'code' => 'eram-family-drink-0001',
+            'name' => 'Eram Family Drink Sponsor',
+            'sponsor_type' => 'brand',
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.sponsor-partner-assignments.api.store'), [
+                'sponsor_account_id' => $sponsor->id,
+                'partner_account_id' => $partner->id,
+                'campaign_id' => $campaign->id,
+                'activation_role' => 'sales_point',
+                'status' => 'active',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('partner_account_id');
+
+        $this->assertDatabaseMissing('sponsor_partner_assignments', [
+            'sponsor_account_id' => $sponsor->id,
+            'partner_account_id' => $partner->id,
         ]);
     }
 

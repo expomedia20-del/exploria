@@ -27,7 +27,9 @@ type SponsorAccount = RegistryEntity & {
 };
 
 type CampaignOption = RegistryEntity & { status: string; venueName: string | null };
+type AssignmentCampaignOption = RegistryEntity & { status: string };
 type SponsorOption = RegistryEntity & { sponsorType: string; status: string };
+type PartnerOption = RegistryEntity & { partnerType: string; status: string; venueName: string | null };
 
 type CampaignSponsorship = {
     id: string;
@@ -37,8 +39,18 @@ type CampaignSponsorship = {
     budgetAmount: number;
     contractValue: number;
     notes: string | null;
+    campaign: AssignmentCampaignOption | null;
+    sponsor: SponsorOption | null;
+};
+
+type SponsorPartnerAssignment = {
+    id: string;
+    activationRole: string;
+    status: string;
+    notes: string | null;
     campaign: CampaignOption | null;
     sponsor: SponsorOption | null;
+    partner: PartnerOption | null;
 };
 
 type Props = {
@@ -47,15 +59,19 @@ type Props = {
         activeSponsors: number;
         sponsorships: number;
         activeSponsorships: number;
+        partnerAssignments: number;
+        activePartnerAssignments: number;
         plannedBudget: number;
         contractValue: number;
     };
     sponsors: SponsorAccount[];
     sponsorships: CampaignSponsorship[];
+    partnerAssignments: SponsorPartnerAssignment[];
     selectedCampaign: SelectedCampaign | null;
     formOptions: {
         campaigns: CampaignOption[];
         sponsors: SponsorOption[];
+        partners: PartnerOption[];
         venues: RegistryEntity[];
     };
 };
@@ -95,6 +111,15 @@ const packageLabels: Record<string, string> = {
     scientific_cultural_challenge: 'چالش علمی/فرهنگی',
 };
 
+const activationRoleLabels: Record<string, string> = {
+    sales_point: 'نقطه فروش محصول اسپانسر',
+    reward_redemption: 'تحویل جایزه',
+    challenge_host: 'میزبان چالش',
+    discount_redemption: 'مصرف کد تخفیف',
+    product_sampling: 'نمونه‌گیری محصول',
+    content_delivery: 'ارائه محتوا',
+};
+
 function fa(value: number) {
     return value.toLocaleString('fa-IR');
 }
@@ -126,7 +151,7 @@ function uniqueSponsorCode(base: string, existingCodes: string[]) {
     return `${safeBase}-${Date.now().toString(36)}`;
 }
 
-export default function SponsorActivationIndex({ stats, sponsors, sponsorships, selectedCampaign, formOptions }: Props) {
+export default function SponsorActivationIndex({ stats, sponsors, sponsorships, partnerAssignments, selectedCampaign, formOptions }: Props) {
     const { flash, auth } = usePage<SharedProps>().props;
     const canMutate = auth.user.role === 'admin' || auth.user.role === 'operator';
     const [sponsorType, setSponsorType] = useState('brand');
@@ -147,6 +172,8 @@ export default function SponsorActivationIndex({ stats, sponsors, sponsorships, 
         ['اسپانسر فعال', fa(stats.activeSponsors)],
         ['حمایت کمپین', fa(stats.sponsorships)],
         ['حمایت فعال', fa(stats.activeSponsorships)],
+        ['واحدهای متصل', fa(stats.partnerAssignments)],
+        ['اتصال فعال', fa(stats.activePartnerAssignments)],
         ['بودجه برنامه‌ریزی', money(stats.plannedBudget)],
         ['ارزش قرارداد', money(stats.contractValue)],
     ];
@@ -160,7 +187,7 @@ export default function SponsorActivationIndex({ stats, sponsors, sponsorships, 
                         <p className="text-sm text-muted-foreground">لایه تجاری کمپین‌ها</p>
                         <h1 className="mt-1 text-2xl font-semibold">اسپانسر و درآمد</h1>
                     </div>
-                    <div className="grid grid-cols-2 gap-3 text-sm lg:grid-cols-6">
+                    <div className="grid grid-cols-2 gap-3 text-sm lg:grid-cols-4 xl:grid-cols-8">
                         {statCards.map(([title, value]) => (
                             <div key={title} className="rounded-lg border border-border/80 bg-card/80 px-3 py-2 shadow-sm">
                                 <p className="text-muted-foreground">{title}</p>
@@ -353,6 +380,74 @@ export default function SponsorActivationIndex({ stats, sponsors, sponsorships, 
                                 )}
                             </Form>
                         </div>
+
+                        <div className="exploria-panel xl:col-span-2">
+                            <div className="border-b border-border/70 px-4 py-3 dark:border-sidebar-border">
+                                <div className="flex items-center gap-2">
+                                    <Handshake className="size-4 text-muted-foreground" />
+                                    <h2 className="font-semibold">اتصال اسپانسر به واحد عضو</h2>
+                                </div>
+                                <p className="mt-1 text-sm text-muted-foreground">مشخص کنید اسپانسر از طریق کدام فروشگاه، کافه یا واحد عضو کمپین فعال می‌شود.</p>
+                            </div>
+                            <Form action="/admin/sponsor-partner-assignments" method="post" options={{ preserveScroll: true }} className="grid gap-4 p-4 md:grid-cols-3">
+                                {({ processing, errors }) => (
+                                    <>
+                                        <div className="grid gap-1.5">
+                                            <label htmlFor="assignment_sponsor_account_id" className="text-xs font-medium">اسپانسر</label>
+                                            <select id="assignment_sponsor_account_id" name="sponsor_account_id" required className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                                <option value="">انتخاب اسپانسر</option>
+                                                {formOptions.sponsors.map((sponsor) => <option key={sponsor.id} value={sponsor.id}>{sponsor.name}</option>)}
+                                            </select>
+                                            <InputError message={errors.sponsor_account_id} />
+                                        </div>
+                                        <div className="grid gap-1.5">
+                                            <label htmlFor="assignment_partner_account_id" className="text-xs font-medium">واحد عضو</label>
+                                            <select id="assignment_partner_account_id" name="partner_account_id" required className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                                <option value="">انتخاب فروشگاه / واحد</option>
+                                                {formOptions.partners.map((partner) => <option key={partner.id} value={partner.id}>{partner.name} {partner.venueName ? `- ${partner.venueName}` : ''}</option>)}
+                                            </select>
+                                            <InputError message={errors.partner_account_id} />
+                                        </div>
+                                        <div className="grid gap-1.5">
+                                            <label htmlFor="assignment_campaign_id" className="text-xs font-medium">کمپین</label>
+                                            <select id="assignment_campaign_id" name="campaign_id" defaultValue={selectedCampaign?.id ?? ''} className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                                <option value="">بدون کمپین خاص</option>
+                                                {formOptions.campaigns.map((campaign) => <option key={campaign.id} value={campaign.id}>{campaign.name}</option>)}
+                                            </select>
+                                        </div>
+                                        <div className="grid gap-1.5">
+                                            <label htmlFor="activation_role" className="text-xs font-medium">نقش واحد</label>
+                                            <select id="activation_role" name="activation_role" defaultValue="sales_point" className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                                <option value="sales_point">نقطه فروش محصول اسپانسر</option>
+                                                <option value="reward_redemption">تحویل جایزه</option>
+                                                <option value="challenge_host">میزبان چالش</option>
+                                                <option value="discount_redemption">مصرف کد تخفیف</option>
+                                                <option value="product_sampling">نمونه‌گیری محصول</option>
+                                                <option value="content_delivery">ارائه محتوا</option>
+                                            </select>
+                                        </div>
+                                        <div className="grid gap-1.5">
+                                            <label htmlFor="assignment_status" className="text-xs font-medium">وضعیت</label>
+                                            <select id="assignment_status" name="status" defaultValue="draft" className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                                <option value="draft">پیش‌نویس</option>
+                                                <option value="active">فعال</option>
+                                                <option value="inactive">غیرفعال</option>
+                                            </select>
+                                        </div>
+                                        <div className="grid gap-1.5 md:col-span-3">
+                                            <label htmlFor="assignment_notes" className="text-xs font-medium">یادداشت اتصال</label>
+                                            <textarea id="assignment_notes" name="notes" className="min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm" />
+                                        </div>
+                                        <div className="md:col-span-3">
+                                            <Button disabled={processing} className="w-full">
+                                                <Handshake className="size-4" />
+                                                اتصال اسپانسر به واحد عضو
+                                            </Button>
+                                        </div>
+                                    </>
+                                )}
+                            </Form>
+                        </div>
                     </section>
                 ) : null}
 
@@ -406,6 +501,31 @@ export default function SponsorActivationIndex({ stats, sponsors, sponsorships, 
                                 </article>
                             ))}
                         </div>
+                    </div>
+                </section>
+
+                <section className="exploria-panel">
+                    <div className="border-b border-border/70 px-4 py-3 dark:border-sidebar-border">
+                        <h2 className="font-semibold">واحدهای عضو متصل به اسپانسر</h2>
+                    </div>
+                    <div className="min-w-[920px] divide-y divide-border/70">
+                        {partnerAssignments.length === 0 ? (
+                            <div className="p-6 text-sm text-muted-foreground">هنوز واحد عضوی به اسپانسر وصل نشده است.</div>
+                        ) : partnerAssignments.map((assignment) => (
+                            <article key={assignment.id} className="grid grid-cols-[1fr_1fr_1fr_0.9fr_0.7fr] items-center gap-3 px-4 py-3 text-sm">
+                                <div className="min-w-0">
+                                    <p className="truncate font-medium">{assignment.sponsor?.name ?? 'اسپانسر نامشخص'}</p>
+                                    <p className="mt-1 truncate text-xs text-muted-foreground" dir="ltr">{assignment.sponsor?.code ?? '-'}</p>
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="truncate font-medium">{assignment.partner?.name ?? 'واحد نامشخص'}</p>
+                                    <p className="mt-1 truncate text-xs text-muted-foreground">{assignment.partner?.venueName ?? '-'}</p>
+                                </div>
+                                <span>{label(activationRoleLabels, assignment.activationRole)}</span>
+                                <span className="truncate">{assignment.campaign?.name ?? 'بدون کمپین خاص'}</span>
+                                <span className="rounded-full bg-muted px-2.5 py-1 text-center text-xs">{label(statusLabels, assignment.status)}</span>
+                            </article>
+                        ))}
                     </div>
                 </section>
             </div>
