@@ -255,6 +255,12 @@ const rewardTierLabels: Record<string, string> = {
     custom: 'سفارشی',
 };
 
+const rewardSourceLabels: Record<string, string> = {
+    admin_campaign_components: 'تعریف مستقیم ادمین',
+    partner_offer_submission: 'پیشنهاد واحد تجاری',
+    sponsor_proposal_activation: 'از پیشنهاد اسپانسر',
+};
+
 const rewardTierOptions = [
     { value: 'bronze', label: 'برنزی' },
     { value: 'silver', label: 'نقره‌ای' },
@@ -1438,6 +1444,11 @@ export default function MissionRewardRegistryIndex({
                                             {reward.rewardTier ? (
                                                 <span className="mt-2 inline-flex rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
                                                     سطح {rewardTierLabels[reward.rewardTier] ?? reward.rewardTier}
+                                                </span>
+                                            ) : null}
+                                            {reward.source ? (
+                                                <span className="mt-2 inline-flex rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
+                                                    {rewardSourceLabels[reward.source] ?? reward.source}
                                                 </span>
                                             ) : null}
                                             {reward.cycleStep?.label ? (

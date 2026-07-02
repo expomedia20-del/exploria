@@ -661,7 +661,19 @@ export default function SponsorActivationIndex({ stats, sponsors, sponsorships, 
                                             {proposal.status === 'approved' && !proposal.activation ? (
                                                 <Form action={`/admin/sponsor-proposals/${proposal.id}/activate`} method="post" options={{ preserveScroll: true }} className="grid gap-2">
                                                     {({ processing }) => (
-                                                        <Button size="sm" disabled={processing}>تبدیل به بسته اجرایی و مخزن پاداش</Button>
+                                                        <>
+                                                            {proposal.campaign ? (
+                                                                <input type="hidden" name="campaign_id" value={proposal.campaign.id} />
+                                                            ) : (
+                                                                <select name="campaign_id" defaultValue={selectedCampaign?.id ?? ''} required className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                                                    <option value="">انتخاب کمپین برای تبدیل</option>
+                                                                    {formOptions.campaigns.map((campaign) => (
+                                                                        <option key={campaign.id} value={campaign.id}>{campaign.name}</option>
+                                                                    ))}
+                                                                </select>
+                                                            )}
+                                                            <Button size="sm" disabled={processing}>تبدیل به بسته اجرایی و مخزن پاداش</Button>
+                                                        </>
                                                     )}
                                                 </Form>
                                             ) : (
