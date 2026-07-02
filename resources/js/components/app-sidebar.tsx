@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
     BookOpen,
+    BadgeDollarSign,
     ClipboardCheck,
     FolderGit2,
     LayoutGrid,
@@ -102,6 +103,13 @@ const mainNavItems: RoleAwareNavItem[] = [
         icon: UsersRound,
         group: '۲. تکمیل و اجرای کمپین',
         roles: ['admin', 'operator', 'viewer', 'hub_manager'],
+    },
+    {
+        title: 'اسپانسر و درآمد',
+        href: '/admin/sponsors',
+        icon: BadgeDollarSign,
+        group: '۲. تکمیل و اجرای کمپین',
+        roles: ['admin', 'operator', 'viewer'],
     },
     {
         title: 'نقشه عملیات کمپین',

@@ -73,9 +73,16 @@ class Campaign extends Model
     {
         return $this->hasMany(UserReward::class);
     }
+
     /** @return HasMany<CampaignParticipant, $this> */
     public function campaignParticipants(): HasMany
     {
         return $this->hasMany(CampaignParticipant::class);
+    }
+
+    /** @return HasMany<CampaignSponsorship, $this> */
+    public function campaignSponsorships(): HasMany
+    {
+        return $this->hasMany(CampaignSponsorship::class);
     }
 }

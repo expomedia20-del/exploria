@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\PartnerRegistryController;
 use App\Http\Controllers\Admin\QrRegistryController;
 use App\Http\Controllers\Admin\RewardApprovalController;
 use App\Http\Controllers\Admin\RoleOperationsController;
+use App\Http\Controllers\Admin\SponsorActivationController;
 use App\Http\Controllers\Admin\UserAccessScopeController;
 use App\Http\Controllers\Admin\VenueRegistryController;
 use App\Http\Controllers\Auth\OtpController;
@@ -142,6 +143,16 @@ Route::delete('/admin/campaign-participants/{participant}', [CampaignParticipant
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.campaign-participants.destroy');
 
+Route::get('/admin/sponsors', [SponsorActivationController::class, 'page'])
+    ->middleware(['auth', 'role:admin,operator,viewer'])
+    ->name('admin.sponsors.page');
+Route::post('/admin/sponsors', [SponsorActivationController::class, 'storeSponsor'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.sponsors.store');
+Route::post('/admin/campaign-sponsorships', [SponsorActivationController::class, 'storeSponsorship'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.campaign-sponsorships.store');
+
 Route::get('/admin/mission-blueprints', [MissionRewardBlueprintController::class, 'page'])
     ->middleware(['auth', 'role:admin'])
     ->name('admin.mission-blueprints.page');
@@ -264,6 +275,16 @@ Route::get('/api/v1/admin/campaign-participants', [CampaignParticipantController
 Route::post('/api/v1/admin/campaign-participants', [CampaignParticipantController::class, 'store'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.campaign-participants.api.store');
+
+Route::get('/api/v1/admin/sponsors', [SponsorActivationController::class, 'index'])
+    ->middleware(['auth', 'role:admin,operator,viewer'])
+    ->name('admin.sponsors.index');
+Route::post('/api/v1/admin/sponsors', [SponsorActivationController::class, 'storeSponsor'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.sponsors.api.store');
+Route::post('/api/v1/admin/campaign-sponsorships', [SponsorActivationController::class, 'storeSponsorship'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.campaign-sponsorships.api.store');
 
 Route::get('/api/v1/admin/mission-blueprints', [MissionRewardBlueprintController::class, 'index'])
     ->middleware(['auth', 'role:admin'])
