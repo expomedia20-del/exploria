@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $campaign_sponsorship_id
  * @property string $status
  * @property array<int, string>|null $reward_definition_ids
+ * @property array<int, string>|null $treasure_ids
  * @property array<int, string>|null $partner_assignment_ids
  * @property array<string, mixed>|null $metadata
  */
@@ -26,6 +27,7 @@ class SponsorProposalActivation extends Model
         'campaign_sponsorship_id',
         'status',
         'reward_definition_ids',
+        'treasure_ids',
         'partner_assignment_ids',
         'metadata',
     ];
@@ -35,6 +37,7 @@ class SponsorProposalActivation extends Model
     {
         return [
             'reward_definition_ids' => 'array',
+            'treasure_ids' => 'array',
             'partner_assignment_ids' => 'array',
             'metadata' => 'array',
         ];

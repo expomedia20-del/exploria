@@ -11,6 +11,7 @@ use App\Models\SponsorPartnerAssignment;
 use App\Models\SponsorProposal;
 use App\Models\SponsorProposalActivation;
 use App\Models\SponsorProposalItem;
+use App\Models\Treasure;
 use App\Models\User;
 use App\Models\Venue;
 use Illuminate\Database\Eloquent\Builder;
@@ -76,7 +77,7 @@ class SponsorActivationService
                 'partnerAccounts.partnerAccount:id,venue_id,code,name,partner_type,status',
                 'partnerAccounts.partnerAccount.venue:id,code,name',
                 'items',
-                'activation:id,sponsor_proposal_id,campaign_id,campaign_sponsorship_id,status,reward_definition_ids,partner_assignment_ids,metadata',
+                'activation:id,sponsor_proposal_id,campaign_id,campaign_sponsorship_id,status,reward_definition_ids,treasure_ids,partner_assignment_ids,metadata',
             ])
             ->latest('created_at')
             ->get()
@@ -348,11 +349,14 @@ class SponsorActivationService
             );
 
             $rewardIds = [];
+            $treasureIds = [];
             foreach ($proposal->items as $index => $item) {
-                $rewardIds[] = $this->upsertRewardFromSponsorItem($activation, $proposal, $item, $campaign, $sponsor, $index)->id;
+                $reward = $this->upsertRewardFromSponsorItem($activation, $proposal, $item, $campaign, $sponsor, $index);
+                $rewardIds[] = $reward->id;
+                $treasureIds[] = $this->upsertTreasureFromSponsorItem($activation, $proposal, $item, $reward, $campaign, $sponsor, $index)->id;
             }
 
-            $activation->update(['reward_definition_ids' => $rewardIds]);
+            $activation->update(['reward_definition_ids' => $rewardIds, 'treasure_ids' => $treasureIds]);
             $proposal->update([
                 'campaign_id' => $campaign->id,
                 'metadata' => array_merge($proposal->metadata ?? [], [
@@ -360,6 +364,7 @@ class SponsorActivationService
                     'activation_id' => $activation->id,
                     'campaign_sponsorship_id' => $sponsorship->id,
                     'reward_definition_ids' => $rewardIds,
+                    'treasure_ids' => $treasureIds,
                     'partner_assignment_ids' => $assignmentIds,
                 ]),
             ]);
@@ -413,6 +418,49 @@ class SponsorActivationService
         );
     }
 
+    private function upsertTreasureFromSponsorItem(
+        SponsorProposalActivation $activation,
+        SponsorProposal $proposal,
+        SponsorProposalItem $item,
+        RewardDefinition $reward,
+        Campaign $campaign,
+        SponsorAccount $sponsor,
+        int $index,
+    ): Treasure {
+        $code = $this->treasureCodeForSponsorItem($proposal, $item, $index);
+
+        return Treasure::query()->updateOrCreate(
+            ['campaign_id' => $campaign->id, 'code' => $code],
+            [
+                'venue_id' => $campaign->venue_id,
+                'mission_instance_id' => null,
+                'name' => $item->title,
+                'treasure_type' => $this->treasureTypeForSponsorItem($item->item_type),
+                'status' => 'draft',
+                'reveal_rule' => [
+                    'mode' => 'admin_assign_to_mission',
+                    'reward_definition_id' => $reward->id,
+                    'target_partner_account_ids' => $item->target_partner_account_ids ?? [],
+                ],
+                'metadata' => [
+                    'source' => 'sponsor_proposal_activation',
+                    'source_type' => 'sponsor',
+                    'sponsor_account_id' => $sponsor->id,
+                    'sponsor_account_code' => $sponsor->code,
+                    'sponsor_proposal_id' => $proposal->id,
+                    'sponsor_proposal_code' => $proposal->code,
+                    'sponsor_proposal_activation_id' => $activation->id,
+                    'sponsor_proposal_item_id' => $item->id,
+                    'reward_definition_id' => $reward->id,
+                    'treasure_tier' => null,
+                    'reveal_description' => $item->description,
+                    'discovery_hint' => 'این گنج از پیشنهاد اسپانسر آمده و باید به ماموریت یا گام چرخه وصل شود.',
+                    'partner_allocations' => $item->partner_allocations ?? [],
+                ],
+            ],
+        );
+    }
+
     /** @return Collection<int, PartnerAccount> */
     private function proposalPartnerAccounts(SponsorProposal $proposal)
     {
@@ -439,6 +487,11 @@ class SponsorActivationService
         return Str::limit("sp-{$proposalPart}-{$itemPart}-{$suffix}", 96, '');
     }
 
+    private function treasureCodeForSponsorItem(SponsorProposal $proposal, SponsorProposalItem $item, int $index): string
+    {
+        return Str::replaceStart('sp-', 'sp-treasure-', $this->rewardCodeForSponsorItem($proposal, $item, $index));
+    }
+
     private function rewardTypeForSponsorItem(string $itemType): string
     {
         return match ($itemType) {
@@ -448,6 +501,15 @@ class SponsorActivationService
             'content' => 'sponsor_content',
             'cash_support' => 'sponsor_cash_support',
             default => 'sponsor_reward',
+        };
+    }
+
+    private function treasureTypeForSponsorItem(string $itemType): string
+    {
+        return match ($itemType) {
+            'content', 'media' => 'sponsor_story_treasure',
+            'discount' => 'sponsor_discount_treasure',
+            default => 'sponsor_reward_treasure',
         };
     }
 
@@ -618,6 +680,7 @@ class SponsorActivationService
                 'id' => $proposal->activation->id,
                 'status' => $proposal->activation->status,
                 'rewardDefinitionIds' => $proposal->activation->reward_definition_ids ?? [],
+                'treasureIds' => $proposal->activation->treasure_ids ?? [],
                 'partnerAssignmentIds' => $proposal->activation->partner_assignment_ids ?? [],
             ] : null,
             'createdAt' => $proposal->created_at?->toIso8601String(),

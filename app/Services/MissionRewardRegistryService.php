@@ -2,16 +2,16 @@
 
 namespace App\Services;
 
-use App\Models\MissionInstance;
-use App\Models\MissionTemplate;
+use App\Enums\RecordStatus;
 use App\Models\Campaign;
 use App\Models\Hub;
+use App\Models\MissionInstance;
+use App\Models\MissionTemplate;
 use App\Models\PartnerAccount;
 use App\Models\RewardDefinition;
 use App\Models\Touchpoint;
 use App\Models\Treasure;
 use App\Models\User;
-use App\Enums\RecordStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -107,16 +107,16 @@ class MissionRewardRegistryService
                     $recommendation = $this->missionTemplateRecommendation($template, $campaign);
 
                     return [
-                    'id' => $template->id,
-                    'code' => $template->code,
-                    'title' => $template->title,
-                    'description' => $template->description,
-                    'missionType' => $template->mission_type,
-                    'triggerType' => $template->trigger_type,
-                    'points' => $template->point_value,
-                    'recommended' => $recommendation['score'] > 0,
-                    'recommendationReason' => $recommendation['reason'],
-                    '_score' => $recommendation['score'],
+                        'id' => $template->id,
+                        'code' => $template->code,
+                        'title' => $template->title,
+                        'description' => $template->description,
+                        'missionType' => $template->mission_type,
+                        'triggerType' => $template->trigger_type,
+                        'points' => $template->point_value,
+                        'recommended' => $recommendation['score'] > 0,
+                        'recommendationReason' => $recommendation['reason'],
+                        '_score' => $recommendation['score'],
                     ];
                 })
                 ->sortBy([
@@ -520,6 +520,7 @@ class MissionRewardRegistryService
             'revealMode' => $treasure->reveal_rule['reveal_mode'] ?? null,
             'revealDescription' => $treasure->metadata['reveal_description'] ?? null,
             'discoveryHint' => $treasure->metadata['discovery_hint'] ?? null,
+            'source' => $treasure->metadata['source'] ?? null,
             'cycleStep' => [
                 'index' => $treasure->metadata['cycle_step_index'] ?? null,
                 'label' => $treasure->metadata['cycle_step_label'] ?? null,

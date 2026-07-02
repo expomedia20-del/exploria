@@ -73,6 +73,7 @@ type SponsorProposal = {
         id: string;
         status: string;
         rewardDefinitionIds: string[];
+        treasureIds: string[];
         partnerAssignmentIds: string[];
     } | null;
     campaign: AssignmentCampaignOption | null;
@@ -653,7 +654,7 @@ export default function SponsorActivationIndex({ stats, sponsors, sponsorships, 
                                     {proposal.reviewNotes ? <p className="text-xs text-muted-foreground">یادداشت بررسی: {proposal.reviewNotes}</p> : null}
                                     {proposal.activation ? (
                                         <p className="text-xs text-muted-foreground">
-                                            بسته اجرایی آماده: {fa(proposal.activation.rewardDefinitionIds.length)} پاداش، {fa(proposal.activation.partnerAssignmentIds.length)} اتصال واحد
+                                            بسته اجرایی آماده: {fa(proposal.activation.rewardDefinitionIds.length)} پاداش، {fa(proposal.activation.treasureIds.length)} گنج، {fa(proposal.activation.partnerAssignmentIds.length)} اتصال واحد
                                         </p>
                                     ) : null}
                                     {canMutate ? (

@@ -9,6 +9,7 @@ use App\Models\RewardDefinition;
 use App\Models\SponsorAccount;
 use App\Models\SponsorProposal;
 use App\Models\SponsorProposalActivation;
+use App\Models\Treasure;
 use App\Models\User;
 use App\Models\Venue;
 use Database\Seeders\PilotLocationSeeder;
@@ -346,6 +347,7 @@ class SponsorActivationTest extends TestCase
         $activation = SponsorProposalActivation::query()->where('sponsor_proposal_id', $proposal->id)->firstOrFail();
 
         $this->assertCount(2, $activation->reward_definition_ids);
+        $this->assertCount(2, $activation->treasure_ids);
         $this->assertCount(2, $activation->partner_assignment_ids);
         $this->assertDatabaseHas('campaign_sponsorships', [
             'campaign_id' => $campaign->id,
@@ -368,6 +370,12 @@ class SponsorActivationTest extends TestCase
         $this->assertSame($proposal->id, $reward->metadata['sponsor_proposal_id']);
         $this->assertCount(2, $reward->metadata['partner_allocations']);
 
+        $treasure = Treasure::query()->where('name', 'Sponsor family prize box')->firstOrFail();
+        $this->assertSame('sponsor_reward_treasure', $treasure->treasure_type);
+        $this->assertSame('sponsor_proposal_activation', $treasure->metadata['source']);
+        $this->assertSame($reward->id, $treasure->metadata['reward_definition_id']);
+        $this->assertSame($reward->id, $treasure->reveal_rule['reward_definition_id']);
+
         $response = $this->actingAs($admin)
             ->getJson(route('admin.missions.index', ['campaign' => $campaign->code]))
             ->assertOk();
@@ -375,6 +383,10 @@ class SponsorActivationTest extends TestCase
         $this->assertTrue(collect($response->json('data.rewards'))->contains(
             fn (array $reward): bool => $reward['source'] === 'sponsor_proposal_activation'
                 && $reward['name'] === 'Sponsor family prize box',
+        ));
+        $this->assertTrue(collect($response->json('data.treasures'))->contains(
+            fn (array $treasure): bool => $treasure['source'] === 'sponsor_proposal_activation'
+                && $treasure['name'] === 'Sponsor family prize box',
         ));
     }
 }

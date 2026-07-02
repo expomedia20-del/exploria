@@ -160,6 +160,7 @@ type TreasureItem = {
     revealMode: string | null;
     revealDescription: string | null;
     discoveryHint: string | null;
+    source: string | null;
     cycleStep: { index: number | null; label: string | null };
     campaign: RegistryEntity | null;
     venue: RegistryEntity | null;
@@ -259,6 +260,12 @@ const rewardSourceLabels: Record<string, string> = {
     admin_campaign_components: 'تعریف مستقیم ادمین',
     partner_offer_submission: 'پیشنهاد واحد تجاری',
     sponsor_proposal_activation: 'از پیشنهاد اسپانسر',
+};
+
+const sourceClasses: Record<string, string> = {
+    admin_campaign_components: 'bg-slate-100 text-slate-700 dark:bg-slate-900 dark:text-slate-200',
+    partner_offer_submission: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200',
+    sponsor_proposal_activation: 'bg-fuchsia-100 text-fuchsia-800 ring-1 ring-fuchsia-200 dark:bg-fuchsia-950 dark:text-fuchsia-200 dark:ring-fuchsia-900',
 };
 
 const rewardTierOptions = [
@@ -1447,7 +1454,7 @@ export default function MissionRewardRegistryIndex({
                                                 </span>
                                             ) : null}
                                             {reward.source ? (
-                                                <span className="mt-2 inline-flex rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
+                                                <span className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${sourceClasses[reward.source] ?? 'bg-muted text-muted-foreground'}`}>
                                                     {rewardSourceLabels[reward.source] ?? reward.source}
                                                 </span>
                                             ) : null}
@@ -1663,6 +1670,11 @@ export default function MissionRewardRegistryIndex({
                                                 {treasure.code} ·{' '}
                                                 {treasure.treasureType}
                                             </p>
+                                            {treasure.source ? (
+                                                <span className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${sourceClasses[treasure.source] ?? 'bg-muted text-muted-foreground'}`}>
+                                                    {rewardSourceLabels[treasure.source] ?? treasure.source}
+                                                </span>
+                                            ) : null}
                                             {canMutate ? (
                                                 <div className="mt-2 flex items-center gap-1.5">
                                                     <Button type="button" variant="ghost" size="sm" className="h-8 px-2" onClick={() => startEditTreasure(treasure)} title="ویرایش گنج">
