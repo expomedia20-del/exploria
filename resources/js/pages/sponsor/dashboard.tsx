@@ -45,6 +45,7 @@ type SponsorProposalItem = {
     quantity: number;
     estimatedUnitValueAmount: number;
     targetPartnerAccountIds: string[];
+    partnerAllocations: Array<{ partner_account_id: string; quantity: number }>;
     description: string | null;
 };
 
@@ -318,6 +319,28 @@ export default function SponsorDashboard({ sponsor, stats, proposals, formOption
                                                                 <option key={partner.id} value={partner.id}>{partner.name}</option>
                                                             ))}
                                                         </select>
+                                                    </div>
+                                                    <div className="grid gap-2 md:col-span-4">
+                                                        <p className="text-xs font-medium">سهم هر واحد از این آیتم</p>
+                                                        <div className="grid gap-2 md:grid-cols-2">
+                                                            {formOptions.partners.map((partner, partnerIndex) => (
+                                                                <div key={partner.id} className="grid grid-cols-[1fr_7rem] items-center gap-2 rounded-md border border-border/70 px-3 py-2">
+                                                                    <span className="truncate text-xs text-muted-foreground">{partner.name}</span>
+                                                                    <input
+                                                                        type="hidden"
+                                                                        name={`items[${index}][partner_allocations][${partnerIndex}][partner_account_id]`}
+                                                                        value={partner.id}
+                                                                    />
+                                                                    <input
+                                                                        name={`items[${index}][partner_allocations][${partnerIndex}][quantity]`}
+                                                                        type="number"
+                                                                        min="1"
+                                                                        placeholder="تعداد"
+                                                                        className="h-8 rounded-md border border-input bg-background px-2 text-sm"
+                                                                    />
+                                                                </div>
+                                                            ))}
+                                                        </div>
                                                     </div>
                                                     <div className="grid gap-1.5 md:col-span-4">
                                                         <label htmlFor={`items_${index}_description`} className="text-xs font-medium">توضیح آیتم</label>

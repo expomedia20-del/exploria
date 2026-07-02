@@ -180,6 +180,18 @@ class SponsorPortalService
             $partnerIds->prepend($data['preferred_partner_account_id']);
         }
 
+        foreach ($data['items'] ?? [] as $item) {
+            foreach ($item['target_partner_account_ids'] ?? [] as $partnerId) {
+                $partnerIds->push($partnerId);
+            }
+
+            foreach ($item['partner_allocations'] ?? [] as $allocation) {
+                if (! empty($allocation['partner_account_id']) && ! empty($allocation['quantity'])) {
+                    $partnerIds->push($allocation['partner_account_id']);
+                }
+            }
+        }
+
         return $partnerIds
             ->unique()
             ->values()
@@ -192,23 +204,43 @@ class SponsorPortalService
         $items = collect($data['items'] ?? [])
             ->filter(fn (array $item): bool => trim((string) ($item['title'] ?? '')) !== '')
             ->map(function (array $item) use ($partnerIds): array {
+                $partnerAllocations = $this->partnerAllocationsFromItem($item, $partnerIds);
                 $targetPartnerIds = collect($item['target_partner_account_ids'] ?? [])
                     ->filter()
                     ->unique()
                     ->values()
                     ->all();
 
+                if ($targetPartnerIds === [] && $partnerAllocations !== []) {
+                    $targetPartnerIds = collect($partnerAllocations)
+                        ->pluck('partner_account_id')
+                        ->values()
+                        ->all();
+                }
+
                 $invalidTargets = array_diff($targetPartnerIds, $partnerIds);
                 if ($invalidTargets !== []) {
                     throw ValidationException::withMessages(['items' => 'واحدهای هدف هر آیتم باید از میان واحدهای انتخابی پیشنهاد باشند.']);
                 }
 
+                $quantity = $item['quantity'] ?? null;
+                $allocatedQuantity = collect($partnerAllocations)->sum('quantity');
+
+                if ($quantity === null && $allocatedQuantity > 0) {
+                    $quantity = $allocatedQuantity;
+                }
+
+                if ($quantity !== null && $allocatedQuantity > 0 && (int) $quantity !== $allocatedQuantity) {
+                    throw ValidationException::withMessages(['items' => 'مجموع سهم واحدهای هدف باید با تعداد کل همان آیتم برابر باشد.']);
+                }
+
                 return [
                     'item_type' => $item['item_type'],
                     'title' => $item['title'],
-                    'quantity' => $item['quantity'] ?? null,
+                    'quantity' => $quantity,
                     'estimated_unit_value_amount' => $item['estimated_unit_value_amount'] ?? null,
                     'target_partner_account_ids' => $targetPartnerIds,
+                    'partner_allocations' => $partnerAllocations,
                     'description' => $item['description'] ?? null,
                     'metadata' => ['source' => 'sponsor_self_service'],
                 ];
@@ -222,6 +254,7 @@ class SponsorPortalService
                 'quantity' => null,
                 'estimated_unit_value_amount' => $data['estimated_value_amount'] ?? null,
                 'target_partner_account_ids' => $partnerIds,
+                'partner_allocations' => [],
                 'description' => $data['reward_offer'],
                 'metadata' => ['source' => 'legacy_reward_offer'],
             ]);
@@ -234,12 +267,34 @@ class SponsorPortalService
                 'quantity' => null,
                 'estimated_unit_value_amount' => null,
                 'target_partner_account_ids' => $partnerIds,
+                'partner_allocations' => [],
                 'description' => $data['discount_offer'],
                 'metadata' => ['source' => 'legacy_discount_offer'],
             ]);
         }
 
         return $items->all();
+    }
+
+    /** @param array<string, mixed> $item */
+    private function partnerAllocationsFromItem(array $item, array $partnerIds): array
+    {
+        $allocations = collect($item['partner_allocations'] ?? [])
+            ->filter(fn (array $allocation): bool => ! empty($allocation['partner_account_id']) && ! empty($allocation['quantity']))
+            ->groupBy('partner_account_id')
+            ->map(fn ($partnerAllocations, string $partnerId): array => [
+                'partner_account_id' => $partnerId,
+                'quantity' => (int) $partnerAllocations->sum(fn (array $allocation): int => (int) $allocation['quantity']),
+            ])
+            ->values()
+            ->all();
+
+        $invalidTargets = array_diff(collect($allocations)->pluck('partner_account_id')->all(), $partnerIds);
+        if ($invalidTargets !== []) {
+            throw ValidationException::withMessages(['items' => 'سهم هر واحد باید فقط برای واحدهای هدف همان پیشنهاد ثبت شود.']);
+        }
+
+        return $allocations;
     }
 
     /** @return array<string, mixed> */
@@ -364,6 +419,7 @@ class SponsorPortalService
                     'quantity' => (int) ($item->quantity ?? 0),
                     'estimatedUnitValueAmount' => (int) ($item->estimated_unit_value_amount ?? 0),
                     'targetPartnerAccountIds' => $item->target_partner_account_ids ?? [],
+                    'partnerAllocations' => $item->partner_allocations ?? [],
                     'description' => $item->description,
                 ])
                 ->values()

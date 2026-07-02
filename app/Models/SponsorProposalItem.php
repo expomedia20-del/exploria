@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int|null $quantity
  * @property int|null $estimated_unit_value_amount
  * @property array<int, string>|null $target_partner_account_ids
+ * @property array<int, array{partner_account_id: string, quantity: int}>|null $partner_allocations
  * @property string|null $description
  * @property array<string, mixed>|null $metadata
  */
@@ -28,6 +29,7 @@ class SponsorProposalItem extends Model
         'quantity',
         'estimated_unit_value_amount',
         'target_partner_account_ids',
+        'partner_allocations',
         'description',
         'metadata',
     ];
@@ -37,6 +39,7 @@ class SponsorProposalItem extends Model
     {
         return [
             'target_partner_account_ids' => 'array',
+            'partner_allocations' => 'array',
             'metadata' => 'array',
         ];
     }

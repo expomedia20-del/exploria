@@ -82,6 +82,7 @@ type SponsorProposalItem = {
     quantity: number;
     estimatedUnitValueAmount: number;
     targetPartnerAccountIds: string[];
+    partnerAllocations: Array<{ partner_account_id: string; quantity: number }>;
     description: string | null;
 };
 
@@ -635,6 +636,7 @@ export default function SponsorActivationIndex({ stats, sponsors, sponsorships, 
                                             {proposal.items.slice(0, 3).map((item) => (
                                                 <span key={item.id} className="rounded-full bg-muted px-2 py-1 text-xs">
                                                     {label(itemTypeLabels, item.itemType)}: {item.title}
+                                                    {item.partnerAllocations?.length ? ` (${fa(item.partnerAllocations.length)} سهم‌بندی)` : ''}
                                                 </span>
                                             ))}
                                             {proposal.items.length > 3 ? <span className="rounded-full bg-muted px-2 py-1 text-xs">+{fa(proposal.items.length - 3)}</span> : null}

@@ -102,6 +102,16 @@ class SponsorPortalTest extends TestCase
             ->limit(2)
             ->get();
 
+        if ($partners->count() < 2) {
+            $partners->push(PartnerAccount::query()->create([
+                'venue_id' => $campaign->venue_id,
+                'code' => 'test-sponsor-allocation-unit',
+                'name' => 'Test Sponsor Allocation Unit',
+                'partner_type' => 'retail',
+                'status' => 'active',
+            ]));
+        }
+
         $this->assertCount(2, $partners);
 
         $this->actingAs($sponsorUser)
@@ -120,6 +130,10 @@ class SponsorPortalTest extends TestCase
                         'quantity' => 100,
                         'estimated_unit_value_amount' => 250000,
                         'target_partner_account_ids' => $partners->pluck('id')->all(),
+                        'partner_allocations' => [
+                            ['partner_account_id' => $partners[0]->id, 'quantity' => 40],
+                            ['partner_account_id' => $partners[1]->id, 'quantity' => 60],
+                        ],
                         'description' => 'Reward box for families that complete the route.',
                     ],
                     [
@@ -128,6 +142,9 @@ class SponsorPortalTest extends TestCase
                         'quantity' => 300,
                         'estimated_unit_value_amount' => 80000,
                         'target_partner_account_ids' => [$partners[0]->id],
+                        'partner_allocations' => [
+                            ['partner_account_id' => $partners[0]->id, 'quantity' => 300],
+                        ],
                         'description' => 'Sampling pack for the first sales point.',
                     ],
                 ],
@@ -151,13 +168,71 @@ class SponsorPortalTest extends TestCase
             'title' => 'Family treasure reward box',
             'quantity' => 100,
         ]);
+        $rewardItem = $proposal->items()->where('item_type', 'reward')->firstOrFail();
+        $this->assertSame([
+            ['partner_account_id' => $partners[0]->id, 'quantity' => 40],
+            ['partner_account_id' => $partners[1]->id, 'quantity' => 60],
+        ], $rewardItem->partner_allocations);
 
-        $this->actingAs($sponsorUser)
+        $response = $this->actingAs($sponsorUser)
             ->getJson(route('sponsor.dashboard.index'))
             ->assertOk()
             ->assertJsonPath('data.proposals.0.title', 'Family multi unit reward package')
             ->assertJsonCount(2, 'data.proposals.0.partners')
             ->assertJsonCount(2, 'data.proposals.0.items');
+
+        $rewardItem = collect($response->json('data.proposals.0.items'))
+            ->firstWhere('title', 'Family treasure reward box');
+
+        $this->assertCount(2, $rewardItem['partnerAllocations']);
+    }
+
+    public function test_sponsor_item_allocations_must_match_item_quantity(): void
+    {
+        $sponsorUser = User::query()->where('email', 'family.sponsor@example.test')->firstOrFail();
+        $campaign = Campaign::query()->where('code', 'ecopark-pilot-1405')->firstOrFail();
+        $partners = PartnerAccount::query()
+            ->where('venue_id', $campaign->venue_id)
+            ->where('partner_type', '!=', 'sponsor')
+            ->orderBy('code')
+            ->limit(2)
+            ->get();
+
+        if ($partners->count() < 2) {
+            $partners->push(PartnerAccount::query()->create([
+                'venue_id' => $campaign->venue_id,
+                'code' => 'test-invalid-allocation-unit',
+                'name' => 'Test Invalid Allocation Unit',
+                'partner_type' => 'retail',
+                'status' => 'active',
+            ]));
+        }
+
+        $this->actingAs($sponsorUser)
+            ->postJson(route('sponsor.proposals.store'), [
+                'campaign_id' => $campaign->id,
+                'partner_account_ids' => $partners->pluck('id')->all(),
+                'title' => 'Invalid allocation package',
+                'proposal_type' => 'reward_offer',
+                'objective' => 'engagement',
+                'items' => [
+                    [
+                        'item_type' => 'reward',
+                        'title' => 'Unbalanced reward',
+                        'quantity' => 100,
+                        'partner_allocations' => [
+                            ['partner_account_id' => $partners[0]->id, 'quantity' => 40],
+                            ['partner_account_id' => $partners[1]->id, 'quantity' => 50],
+                        ],
+                    ],
+                ],
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('items');
+
+        $this->assertDatabaseMissing('sponsor_proposals', [
+            'title' => 'Invalid allocation package',
+        ]);
     }
 
     public function test_admin_can_review_sponsor_proposal_from_sponsor_console(): void

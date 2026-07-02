@@ -404,6 +404,7 @@ class SponsorActivationService
                     'quantity' => (int) ($item->quantity ?? 0),
                     'estimatedUnitValueAmount' => (int) ($item->estimated_unit_value_amount ?? 0),
                     'targetPartnerAccountIds' => $item->target_partner_account_ids ?? [],
+                    'partnerAllocations' => $item->partner_allocations ?? [],
                     'description' => $item->description,
                 ])
                 ->values()
