@@ -542,4 +542,103 @@ class SponsorActivationTest extends TestCase
                 && $treasure['name'] === 'Sponsor family prize box',
         ));
     }
+
+    public function test_demo_cycle_command_connects_discount_sponsor_reward_to_step_four(): void
+    {
+        User::factory()->create(['role' => UserRole::Admin]);
+        $venue = Venue::query()->where('code', 'ecopark-abbasabad')->firstOrFail();
+        $partners = PartnerAccount::query()
+            ->where('venue_id', $venue->id)
+            ->where('partner_type', '!=', 'sponsor')
+            ->orderBy('code')
+            ->limit(2)
+            ->get();
+
+        $campaign = Campaign::query()->create([
+            'venue_id' => $venue->id,
+            'code' => 'ecopark-online-treasure-map-game-campaign',
+            'name' => 'کاشفان گنج پنهان',
+            'campaign_type' => 'treasure_route',
+            'status' => 'draft',
+            'metadata' => ['blueprint_code' => 'ecopark-online-treasure-map-game'],
+        ]);
+
+        RewardDefinition::query()->create([
+            'campaign_id' => $campaign->id,
+            'venue_id' => $venue->id,
+            'code' => 'sp-sp-global-brand-0001-20260703-0001-food-box',
+            'name' => 'بسته ویژه غذایی',
+            'reward_type' => 'sponsor_product',
+            'stock_quantity' => 100,
+            'status' => 'active',
+            'metadata' => [
+                'source' => 'sponsor_proposal_activation',
+                'approval_status' => 'approved',
+                'availability_status' => 'active',
+            ],
+        ]);
+
+        $discount = RewardDefinition::query()->create([
+            'campaign_id' => $campaign->id,
+            'venue_id' => $venue->id,
+            'code' => 'sp-sp-global-brand-0001-20260703-0004-tkhfyf-70',
+            'name' => 'تخفیف 70 %',
+            'reward_type' => 'sponsor_discount',
+            'stock_quantity' => 100,
+            'status' => 'active',
+            'metadata' => [
+                'source' => 'sponsor_proposal_activation',
+                'approval_status' => 'approved',
+                'availability_status' => 'active',
+                'partner_allocations' => [
+                    ['partner_account_id' => $partners[0]->id, 'quantity' => 40],
+                    ['partner_account_id' => $partners[1]->id, 'quantity' => 60],
+                ],
+            ],
+        ]);
+
+        $this->artisan('exploria:prepare-demo-cycle', [
+            'campaign' => $campaign->code,
+            '--reward-step' => 4,
+        ])->assertSuccessful();
+
+        $this->assertSame(5, MissionInstance::query()->where('campaign_id', $campaign->id)->count());
+
+        $stepOne = MissionInstance::query()
+            ->where('campaign_id', $campaign->id)
+            ->where('metadata->cycle_step_index', 1)
+            ->firstOrFail();
+        $stepFour = MissionInstance::query()
+            ->where('campaign_id', $campaign->id)
+            ->where('metadata->cycle_step_index', 4)
+            ->firstOrFail();
+
+        $this->assertArrayNotHasKey('reward_code', $stepOne->metadata);
+        $this->assertSame('حل سرنخ کوتاه', $stepFour->title_override);
+        $this->assertSame($discount->code, $stepFour->metadata['reward_code']);
+
+        $discount->refresh();
+
+        $this->assertSame('assigned_to_mission', $discount->metadata['assignment_status']);
+        $this->assertSame(4, $discount->metadata['cycle_step_index']);
+        $this->assertSame($stepFour->id, $discount->metadata['mission_instance_id']);
+        $this->assertSame('Demo cycle preparation.', $discount->metadata['assignment_notes']);
+
+        $this->assertSame(2, RewardInventoryAllocation::query()->where('reward_definition_id', $discount->id)->count());
+        $this->assertSame(100, RewardInventoryAllocation::query()->where('reward_definition_id', $discount->id)->sum('allocated_quantity'));
+        $this->assertDatabaseHas('reward_inventory_allocations', [
+            'reward_definition_id' => $discount->id,
+            'partner_account_id' => $partners[0]->id,
+            'mission_instance_id' => $stepFour->id,
+            'allocated_quantity' => 40,
+            'status' => 'active',
+        ]);
+        $this->assertDatabaseHas('reward_inventory_allocations', [
+            'reward_definition_id' => $discount->id,
+            'partner_account_id' => $partners[1]->id,
+            'mission_instance_id' => $stepFour->id,
+            'allocated_quantity' => 60,
+            'status' => 'active',
+        ]);
+    }
 }
