@@ -43,8 +43,7 @@ const groupDescriptions: Record<RoleItem['group'], string> = {
         'نقش‌هایی که عملیات، سیاست‌گذاری، پشتیبانی و اجرای کمپین را از سمت اکسپلوریا پیش می‌برند.',
     external_partner:
         'مدیران مکان، هاب، فروشگاه و اسپانسرهایی که در اجرای تجاری و محلی پروژه نقش دارند.',
-    public:
-        'بازدیدکننده یا مشارکت‌کننده‌ای که تجربه کمپین، ماموریت، گنج و پاداش را طی می‌کند.',
+    public: 'بازدیدکننده یا مشارکت‌کننده‌ای که تجربه کمپین، ماموریت، گنج و پاداش را طی می‌کند.',
 };
 
 const scopeLabels: Record<string, string> = {
@@ -62,16 +61,17 @@ const scopeLabels: Record<string, string> = {
 const roleLabels: Record<string, string> = {
     super_admin: 'ادمین اصلی کل اکسپلوریا',
     regional_admin: 'ادمین منطقه‌ای',
-    project_admin: 'ادمین پروژه مکانی',
+    project_admin: 'مدیر پروژه مکانی اکسپلوریا',
     field_operator: 'مجری میدانی کمپین',
     treasure_assistant: 'یاریگر کاشفان گنج',
-    display_ads_manager: 'مدیر تبلیغات نمایشگرها',
-    venue_executive: 'مدیر اجرایی مکان پروژه',
-    hub_manager: 'مدیر هاب یا رواق',
-    shop_manager: 'مدیر فروشگاه یا واحد',
-    internal_sponsor: 'اسپانسر داخلی',
-    external_sponsor: 'اسپانسر خارجی',
-    participant: 'کاربر یا مشارکت‌کننده',
+    display_ads_manager: 'مدیر تبلیغات و نمایشگرها',
+    venue_executive: 'مدیر مکان',
+    ravaq_manager: 'مدیر رواق / زون تجاری',
+    hub_manager: 'مدیر هاب',
+    shop_manager: 'مدیر فروشگاه / واحد شریک',
+    internal_sponsor: 'اسپانسر داخلی مکان یا هاب',
+    external_sponsor: 'اسپانسر مستقل / بیرونی',
+    participant: 'بازدیدکننده / مشارکت‌کننده',
 };
 
 function labelForRole(key: string) {
@@ -125,7 +125,9 @@ function RoleCard({ role }: { role: RoleItem }) {
                     </span>
                     <span className="rounded-full bg-sky-100 px-2.5 py-1 font-medium text-sky-800 dark:bg-sky-950 dark:text-sky-200">
                         گزارش به:{' '}
-                        {role.reportsTo ? labelForRole(role.reportsTo) : 'مستقل'}
+                        {role.reportsTo
+                            ? labelForRole(role.reportsTo)
+                            : 'مستقل'}
                     </span>
                 </div>
             </div>
@@ -231,8 +233,8 @@ export default function RoleOperationsIndex({
                                 دامنه‌های دسترسی قابل تخصیص
                             </h2>
                             <p className="mt-1 text-sm text-muted-foreground">
-                                هر کاربر یک نقش دارد، اما دسترسی واقعی او با دامنه
-                                مشخص می‌شود.
+                                هر کاربر یک نقش دارد، اما دسترسی واقعی او با
+                                دامنه مشخص می‌شود.
                             </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -249,7 +251,9 @@ export default function RoleOperationsIndex({
                 </section>
 
                 {(
-                    Object.keys(groupedRoles) as Array<keyof typeof groupedRoles>
+                    Object.keys(groupedRoles) as Array<
+                        keyof typeof groupedRoles
+                    >
                 ).map((group) => (
                     <section key={group} className="grid gap-3">
                         <div>

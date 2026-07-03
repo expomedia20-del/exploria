@@ -25,6 +25,7 @@ class UserAccessScopeController extends Controller
             'userOptions' => $this->userOptions(),
             'roleOptions' => $this->roleOptions(),
             'scopeOptions' => $this->scopeOptions(),
+            'assignmentTemplates' => $this->assignmentTemplates(),
         ]);
     }
 
@@ -150,6 +151,59 @@ class UserAccessScopeController extends Controller
         ];
     }
 
+    /** @return array<int, array<string, mixed>> */
+    private function assignmentTemplates(): array
+    {
+        return collect(config('exploria_roles.assignment_templates', []))
+            ->map(function (array $template): array {
+                $scopeTarget = $this->scopeTargetByCode(
+                    $template['scope_type'],
+                    $template['scope_code'] ?? null,
+                );
+
+                return [
+                    'key' => $template['key'],
+                    'title' => $template['title'],
+                    'description' => $template['description'],
+                    'roleKey' => $template['role_key'],
+                    'roleLabel' => $this->roleLabel($template['role_key']),
+                    'scopeType' => $template['scope_type'],
+                    'scopeTypeLabel' => $this->scopeTypeLabel($template['scope_type']),
+                    'scopeCode' => $template['scope_code'] ?? null,
+                    'scopeId' => $scopeTarget['id'] ?? null,
+                    'scopeLabel' => $scopeTarget['label'] ?? 'محدوده پیدا نشد',
+                    'available' => $template['scope_type'] === 'global' || $scopeTarget !== null,
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    /** @return array{id: string|null, label: string}|null */
+    private function scopeTargetByCode(string $scopeType, ?string $scopeCode): ?array
+    {
+        if ($scopeType === 'global') {
+            return ['id' => null, 'label' => 'کل اکسپلوریا'];
+        }
+
+        if (! $scopeCode) {
+            return null;
+        }
+
+        return match ($scopeType) {
+            'venue' => ($venue = Venue::query()->where('code', $scopeCode)->first(['id', 'name', 'code']))
+                ? ['id' => (string) $venue->id, 'label' => "{$venue->name} ({$venue->code})"]
+                : null,
+            'hub' => ($hub = Hub::query()->with('zone.venue:id,name')->where('code', $scopeCode)->first(['id', 'zone_id', 'name', 'code']))
+                ? ['id' => (string) $hub->id, 'label' => "{$hub->name} - {$hub->zone?->venue?->name}"]
+                : null,
+            'partner' => ($partner = PartnerAccount::query()->with('venue:id,name')->where('code', $scopeCode)->first(['id', 'venue_id', 'name', 'code']))
+                ? ['id' => (string) $partner->id, 'label' => "{$partner->name} - {$partner->venue?->name}"]
+                : null,
+            default => ['id' => $scopeCode, 'label' => $scopeCode],
+        };
+    }
+
     private function validateScopeId(string $scopeType, ?string $scopeId): void
     {
         if ($scopeType === 'global') {
@@ -183,19 +237,20 @@ class UserAccessScopeController extends Controller
 
     private function roleLabel(string $roleKey): string
     {
-        return match ($roleKey) {
+        return config("exploria_roles.roles.{$roleKey}.label") ?? match ($roleKey) {
             'super_admin' => 'ادمین اصلی کل اکسپلوریا',
             'regional_admin' => 'ادمین منطقه‌ای',
-            'project_admin' => 'ادمین پروژه مکانی',
+            'project_admin' => 'مدیر پروژه مکانی اکسپلوریا',
             'field_operator' => 'مجری میدانی کمپین',
             'treasure_assistant' => 'یاریگر کاشفان گنج',
-            'display_ads_manager' => 'مدیر تبلیغات نمایشگرها',
-            'venue_executive' => 'مدیر اجرایی مکان پروژه',
-            'hub_manager' => 'مدیر هاب یا رواق',
-            'shop_manager' => 'مدیر فروشگاه یا واحد',
-            'internal_sponsor' => 'اسپانسر داخلی',
-            'external_sponsor' => 'اسپانسر خارجی',
-            'participant' => 'کاربر یا مشارکت‌کننده',
+            'display_ads_manager' => 'مدیر تبلیغات و نمایشگرها',
+            'venue_executive' => 'مدیر مکان',
+            'ravaq_manager' => 'مدیر رواق / زون تجاری',
+            'hub_manager' => 'مدیر هاب',
+            'shop_manager' => 'مدیر فروشگاه / واحد شریک',
+            'internal_sponsor' => 'اسپانسر داخلی مکان یا هاب',
+            'external_sponsor' => 'اسپانسر مستقل / بیرونی',
+            'participant' => 'بازدیدکننده / مشارکت‌کننده',
             default => $roleKey,
         };
     }

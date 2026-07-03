@@ -405,3 +405,23 @@ Start with Phase A and the smallest part of Phase B:
 4. Add a first read-only venue manager panel for EcoPark-level visibility.
 
 This keeps the next implementation useful, bounded, and aligned with the operational model.
+
+## Implementation Update - 2026-07-04
+
+Completed in the first Phase A build slice:
+
+- Persian operational labels were added for the main role catalog.
+- `ravaq_manager` was added as a distinct operational role for ravaq / commercial zone management.
+- Access-scope assignment templates were added for common EcoPark assignments:
+  - EcoPark project admin.
+  - EcoPark venue manager.
+  - EcoPark ravaq commercial manager.
+  - EcoPark entry hub manager.
+  - Cafe Eco shop manager.
+  - EcoPark display manager.
+- The admin access-scope page now shows those templates as quick registration cards, so an admin can pick a user and assign the correct role/scope without manually copying IDs.
+
+Still pending from the immediate slice:
+
+- First read-only venue manager panel for EcoPark-level visibility.
+- Full Persian rewrite of older English responsibility text for roles that existed before this slice.

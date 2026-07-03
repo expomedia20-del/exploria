@@ -16,7 +16,7 @@ return [
     'roles' => [
         'super_admin' => [
             'group' => 'exploria_team',
-            'label' => 'Exploria super admin',
+            'label' => 'ادمین اصلی کل اکسپلوریا',
             'scope' => 'global',
             'reports_to' => null,
             'responsibilities' => [
@@ -33,7 +33,7 @@ return [
         ],
         'regional_admin' => [
             'group' => 'exploria_team',
-            'label' => 'Regional admin',
+            'label' => 'ادمین منطقه‌ای',
             'scope' => 'region',
             'reports_to' => 'super_admin',
             'responsibilities' => [
@@ -50,7 +50,7 @@ return [
         ],
         'project_admin' => [
             'group' => 'exploria_team',
-            'label' => 'Project or venue contractor admin',
+            'label' => 'مدیر پروژه مکانی اکسپلوریا',
             'scope' => 'venue',
             'reports_to' => 'regional_admin',
             'responsibilities' => [
@@ -67,7 +67,7 @@ return [
         ],
         'field_operator' => [
             'group' => 'exploria_team',
-            'label' => 'Field campaign operator',
+            'label' => 'مجری میدانی کمپین',
             'scope' => 'campaign',
             'reports_to' => 'project_admin',
             'responsibilities' => [
@@ -84,7 +84,7 @@ return [
         ],
         'treasure_assistant' => [
             'group' => 'exploria_team',
-            'label' => 'Treasure explorer assistant',
+            'label' => 'یاریگر کاشفان گنج',
             'scope' => 'campaign',
             'reports_to' => 'field_operator',
             'responsibilities' => [
@@ -101,7 +101,7 @@ return [
         ],
         'display_ads_manager' => [
             'group' => 'exploria_team',
-            'label' => 'Display advertising manager',
+            'label' => 'مدیر تبلیغات و نمایشگرها',
             'scope' => 'display_network',
             'reports_to' => 'project_admin',
             'responsibilities' => [
@@ -118,7 +118,7 @@ return [
         ],
         'venue_executive' => [
             'group' => 'external_partner',
-            'label' => 'Venue executive manager',
+            'label' => 'مدیر مکان',
             'scope' => 'venue',
             'reports_to' => 'project_admin',
             'responsibilities' => [
@@ -133,9 +133,26 @@ return [
                 'Share venue feedback and next-day constraints with the project admin.',
             ],
         ],
+        'ravaq_manager' => [
+            'group' => 'external_partner',
+            'label' => 'مدیر رواق / زون تجاری',
+            'scope' => 'hub',
+            'reports_to' => 'venue_executive',
+            'responsibilities' => [
+                'زون تجاری، رواق یا خوشه واحدهای تجاری یک مکان را مدیریت می‌کند.',
+                'فروشگاه‌ها، پیشنهادها، موجودی پاداش، تبلیغات محلی و آمادگی واحدها را در محدوده خود پایش می‌کند.',
+                'درخواست‌های فروشگاه و اسپانسر داخلی رواق را پیش از ارسال به مدیر مکان یا اکسپلوریا مرتب می‌کند.',
+            ],
+            'daily_operations' => [
+                'وضعیت واحدهای رواق، پیشنهادهای در انتظار، موجودی پاداش و تبلیغات محلی را بررسی کند.',
+                'واحدهای کم‌آمادگی یا دارای مشکل تحویل را پیگیری کند.',
+                'پیشنهادهای قابل تایید در سطح رواق را تایید، رد یا برای بررسی بالاتر ارجاع دهد.',
+                'گزارش کوتاه رواق را برای مدیر مکان و مدیر پروژه اکسپلوریا ارسال کند.',
+            ],
+        ],
         'hub_manager' => [
             'group' => 'external_partner',
-            'label' => 'Hub manager',
+            'label' => 'مدیر هاب',
             'scope' => 'hub',
             'reports_to' => 'venue_executive',
             'responsibilities' => [
@@ -152,7 +169,7 @@ return [
         ],
         'shop_manager' => [
             'group' => 'external_partner',
-            'label' => 'Shop or unit manager',
+            'label' => 'مدیر فروشگاه / واحد شریک',
             'scope' => 'partner',
             'reports_to' => 'hub_manager',
             'responsibilities' => [
@@ -169,7 +186,7 @@ return [
         ],
         'internal_sponsor' => [
             'group' => 'external_partner',
-            'label' => 'Internal venue or hub sponsor',
+            'label' => 'اسپانسر داخلی مکان یا هاب',
             'scope' => 'hub',
             'reports_to' => 'hub_manager',
             'responsibilities' => [
@@ -186,7 +203,7 @@ return [
         ],
         'external_sponsor' => [
             'group' => 'external_partner',
-            'label' => 'External sponsor',
+            'label' => 'اسپانسر مستقل / بیرونی',
             'scope' => 'region',
             'reports_to' => 'regional_admin',
             'responsibilities' => [
@@ -203,7 +220,7 @@ return [
         ],
         'participant' => [
             'group' => 'public',
-            'label' => 'Visitor or campaign participant',
+            'label' => 'بازدیدکننده / مشارکت‌کننده',
             'scope' => 'team',
             'reports_to' => null,
             'responsibilities' => [
@@ -217,6 +234,57 @@ return [
                 'Redeem approved rewards at participating shops or campaign points.',
                 'Report issues, feedback, or lost access through the visitor support flow.',
             ],
+        ],
+    ],
+
+    'assignment_templates' => [
+        [
+            'key' => 'ecopark_project_admin',
+            'title' => 'مدیر پروژه مکانی اکوپارک',
+            'role_key' => 'project_admin',
+            'scope_type' => 'venue',
+            'scope_code' => 'ecopark-abbasabad',
+            'description' => 'برای کاربر داخلی اکسپلوریا که کل اجرای پروژه اکوپارک را مدیریت می‌کند.',
+        ],
+        [
+            'key' => 'ecopark_venue_manager',
+            'title' => 'مدیر مکان اکوپارک',
+            'role_key' => 'venue_executive',
+            'scope_type' => 'venue',
+            'scope_code' => 'ecopark-abbasabad',
+            'description' => 'برای نماینده مدیریتی خود مکان؛ دسترسی فقط به داده‌های مکان اکوپارک محدود می‌شود.',
+        ],
+        [
+            'key' => 'ecopark_ravaq_manager',
+            'title' => 'مدیر رواق تجاری اکوپارک',
+            'role_key' => 'ravaq_manager',
+            'scope_type' => 'hub',
+            'scope_code' => 'ravaq-commercial-hub',
+            'description' => 'برای مدیر زون تجاری یا رواق که فروشگاه‌ها و پیشنهادهای تجاری را هماهنگ می‌کند.',
+        ],
+        [
+            'key' => 'ecopark_entry_hub_manager',
+            'title' => 'مدیر هاب ورودی اکوپارک',
+            'role_key' => 'hub_manager',
+            'scope_type' => 'hub',
+            'scope_code' => 'visitor-welcome-hub',
+            'description' => 'برای مدیر هاب ورودی، راهنمایی بازدیدکننده و کنترل آمادگی شروع تجربه.',
+        ],
+        [
+            'key' => 'cafe_eco_shop_manager',
+            'title' => 'مدیر واحد کافه اکو',
+            'role_key' => 'shop_manager',
+            'scope_type' => 'partner',
+            'scope_code' => 'cafe-eco',
+            'description' => 'برای مدیر فروشگاه/واحد شریک که پیشنهاد، مصرف کد و موجودی خودش را مدیریت می‌کند.',
+        ],
+        [
+            'key' => 'ecopark_display_manager',
+            'title' => 'مدیر تبلیغات و نمایشگرهای اکوپارک',
+            'role_key' => 'display_ads_manager',
+            'scope_type' => 'venue',
+            'scope_code' => 'ecopark-abbasabad',
+            'description' => 'تا زمان تکمیل موجودیت شبکه نمایشگر، این قالب نمایشگرها را در سطح مکان اکوپارک محدود می‌کند.',
         ],
     ],
 ];
