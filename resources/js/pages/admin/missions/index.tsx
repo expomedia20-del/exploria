@@ -1656,6 +1656,24 @@ export default function MissionRewardRegistryIndex({
                                                                 </select>
                                                                 <InputError message={errors.mission_instance_id} />
                                                             </label>
+                                                            {missions.length === 0 ? (
+                                                                <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100 md:col-span-2">
+                                                                    برای فعال شدن دکمه اتصال، ابتدا باید برای همین کمپین حداقل یک ماموریت ثبت شود.
+                                                                    {reward.campaign?.code ? (
+                                                                        <Link className="ms-2 font-medium underline underline-offset-4" href={`/admin/missions?campaign=${reward.campaign.code}`}>
+                                                                            باز کردن همین کمپین
+                                                                        </Link>
+                                                                    ) : selectedCampaign ? (
+                                                                        <Link className="ms-2 font-medium underline underline-offset-4" href={`/admin/campaign-builder?campaign=${selectedCampaign.code}`}>
+                                                                            رفتن به ساخت کمپین
+                                                                        </Link>
+                                                                    ) : (
+                                                                        <Link className="ms-2 font-medium underline underline-offset-4" href="/admin/campaign-builder">
+                                                                            رفتن به ساخت کمپین
+                                                                        </Link>
+                                                                    )}
+                                                                </div>
+                                                            ) : null}
                                                             <label className="grid gap-1">
                                                                 <span className="text-muted-foreground">گنج مرتبط</span>
                                                                 <select
