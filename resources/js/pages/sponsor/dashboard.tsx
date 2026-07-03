@@ -1,5 +1,5 @@
 import { Form, Head, Link, usePage } from '@inertiajs/react';
-import { BadgeDollarSign, FileCheck2, Gift, Megaphone, Plus, Send, Store, Trash2 } from 'lucide-react';
+import { BadgeDollarSign, FileCheck2, Gift, Megaphone, Pencil, Plus, Send, Store, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -104,7 +104,17 @@ const itemTypeLabels: Record<string, string> = {
     cash_support: 'حمایت نقدی',
 };
 
-const defaultProposalItem = { item_type: 'reward' };
+type ProposalItemForm = {
+    item_type: string;
+    title?: string;
+    quantity?: number | null;
+    estimated_unit_value_amount?: number | null;
+    target_partner_account_ids?: string[];
+    partner_allocations?: Array<{ partner_account_id: string; quantity: number }>;
+    description?: string | null;
+};
+
+const defaultProposalItem: ProposalItemForm = { item_type: 'reward', target_partner_account_ids: [], partner_allocations: [] };
 
 function fa(value: number) {
     return value.toLocaleString('fa-IR');
@@ -121,6 +131,7 @@ function label(map: Record<string, string>, value: string) {
 export default function SponsorDashboard({ sponsor, stats, proposals, formOptions }: Props) {
     const { flash } = usePage<SharedProps>().props;
     const [proposalItems, setProposalItems] = useState([defaultProposalItem]);
+    const [editingProposal, setEditingProposal] = useState<SponsorProposal | null>(null);
 
     const addProposalItem = () => {
         setProposalItems((items) => [...items, defaultProposalItem]);
@@ -129,6 +140,29 @@ export default function SponsorDashboard({ sponsor, stats, proposals, formOption
     const removeProposalItem = (index: number) => {
         setProposalItems((items) => items.filter((_, itemIndex) => itemIndex !== index));
     };
+
+    const startEditProposal = (proposal: SponsorProposal) => {
+        setEditingProposal(proposal);
+        setProposalItems(proposal.items.length > 0 ? proposal.items.map((item) => ({
+            item_type: item.itemType,
+            title: item.title,
+            quantity: item.quantity || null,
+            estimated_unit_value_amount: item.estimatedUnitValueAmount || null,
+            target_partner_account_ids: item.targetPartnerAccountIds ?? [],
+            partner_allocations: item.partnerAllocations ?? [],
+            description: item.description,
+        })) : [defaultProposalItem]);
+        document.getElementById('sponsor-proposal-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    const cancelEditProposal = () => {
+        setEditingProposal(null);
+        setProposalItems([defaultProposalItem]);
+    };
+
+    const allocationQuantity = (item: ProposalItemForm, partnerId: string) => (
+        item.partner_allocations?.find((allocation) => allocation.partner_account_id === partnerId)?.quantity ?? ''
+    );
 
     return (
         <>
@@ -180,25 +214,40 @@ export default function SponsorDashboard({ sponsor, stats, proposals, formOption
                         </div>
                     </div>
 
-                    <div className="exploria-panel">
+                    <div id="sponsor-proposal-form" className="exploria-panel">
                         <div className="border-b border-border/70 px-4 py-3 dark:border-sidebar-border">
-                            <div className="flex items-center gap-2">
-                                <Send className="size-4 text-muted-foreground" />
-                                <h2 className="font-semibold">ارسال پیشنهاد اسپانسری</h2>
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                <div className="flex items-center gap-2">
+                                    <Send className="size-4 text-muted-foreground" />
+                                    <h2 className="font-semibold">{editingProposal ? 'اصلاح پیشنهاد اسپانسری' : 'ارسال پیشنهاد اسپانسری'}</h2>
+                                </div>
+                                {editingProposal ? (
+                                    <Button type="button" variant="secondary" size="sm" onClick={cancelEditProposal}>
+                                        انصراف از اصلاح
+                                    </Button>
+                                ) : null}
                             </div>
-                            <p className="mt-1 text-sm text-muted-foreground">پیشنهاد شما برای ادمین ارسال می‌شود و بعد از بررسی می‌تواند به کمپین، جایزه، تبلیغ یا واحد عضو وصل شود.</p>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                                {editingProposal ? 'پیشنهاد برگشتی را اصلاح کنید و برای بررسی دوباره ادمین بفرستید.' : 'پیشنهاد شما برای ادمین ارسال می‌شود و بعد از بررسی می‌تواند به کمپین، جایزه، تبلیغ یا واحد عضو وصل شود.'}
+                            </p>
                         </div>
-                        <Form action="/sponsor/proposals" method="post" options={{ preserveScroll: true }} className="grid gap-4 p-4 md:grid-cols-2">
+                        <Form
+                            key={editingProposal?.id ?? 'new-proposal'}
+                            action={editingProposal ? `/sponsor/proposals/${editingProposal.id}` : '/sponsor/proposals'}
+                            method={editingProposal ? 'patch' : 'post'}
+                            options={{ preserveScroll: true }}
+                            className="grid gap-4 p-4 md:grid-cols-2"
+                        >
                             {({ processing, errors }) => (
                                 <>
                                     <div className="grid gap-1.5">
                                         <label htmlFor="title" className="text-xs font-medium">عنوان پیشنهاد</label>
-                                        <input id="title" name="title" required className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                        <input id="title" name="title" defaultValue={editingProposal?.title ?? ''} required className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
                                         <InputError message={errors.title} />
                                     </div>
                                     <div className="grid gap-1.5">
                                         <label htmlFor="proposal_type" className="text-xs font-medium">نوع پیشنهاد</label>
-                                        <select id="proposal_type" name="proposal_type" defaultValue="campaign_sponsorship" className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                        <select id="proposal_type" name="proposal_type" defaultValue={editingProposal?.proposalType ?? 'campaign_sponsorship'} className="h-9 rounded-md border border-input bg-background px-3 text-sm">
                                             <option value="campaign_sponsorship">حمایت کمپین</option>
                                             <option value="reward_offer">جایزه پیشنهادی</option>
                                             <option value="discount_offer">تخفیف/کد خرید</option>
@@ -210,7 +259,7 @@ export default function SponsorDashboard({ sponsor, stats, proposals, formOption
                                     </div>
                                     <div className="grid gap-1.5">
                                         <label htmlFor="objective" className="text-xs font-medium">هدف</label>
-                                        <select id="objective" name="objective" defaultValue="engagement" className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                        <select id="objective" name="objective" defaultValue={editingProposal?.objective ?? 'engagement'} className="h-9 rounded-md border border-input bg-background px-3 text-sm">
                                             <option value="awareness">دیده‌شدن برند</option>
                                             <option value="footfall">افزایش مراجعه</option>
                                             <option value="lead_generation">جذب لید</option>
@@ -221,14 +270,14 @@ export default function SponsorDashboard({ sponsor, stats, proposals, formOption
                                     </div>
                                     <div className="grid gap-1.5">
                                         <label htmlFor="campaign_id" className="text-xs font-medium">کمپین مورد علاقه</label>
-                                        <select id="campaign_id" name="campaign_id" defaultValue="" className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+                                        <select id="campaign_id" name="campaign_id" defaultValue={editingProposal?.campaign?.id ?? ''} className="h-9 rounded-md border border-input bg-background px-3 text-sm">
                                             <option value="">ادمین انتخاب کند</option>
                                             {formOptions.campaigns.map((campaign) => <option key={campaign.id} value={campaign.id}>{campaign.name}</option>)}
                                         </select>
                                     </div>
                                     <div className="grid gap-1.5 md:col-span-2">
                                         <label htmlFor="partner_account_ids" className="text-xs font-medium">واحدهای اجرایی پیشنهادی</label>
-                                        <select id="partner_account_ids" name="partner_account_ids[]" multiple className="min-h-28 rounded-md border border-input bg-background px-3 py-2 text-sm">
+                                        <select id="partner_account_ids" name="partner_account_ids[]" multiple defaultValue={editingProposal?.partners.map((partner) => partner.id) ?? []} className="min-h-28 rounded-md border border-input bg-background px-3 py-2 text-sm">
                                             {formOptions.partners.map((partner) => (
                                                 <option key={partner.id} value={partner.id}>
                                                     {partner.name} {partner.venueName ? `- ${partner.venueName}` : ''}
@@ -239,15 +288,15 @@ export default function SponsorDashboard({ sponsor, stats, proposals, formOption
                                     </div>
                                     <div className="grid gap-1.5">
                                         <label htmlFor="proposed_budget_amount" className="text-xs font-medium">بودجه پیشنهادی</label>
-                                        <input id="proposed_budget_amount" name="proposed_budget_amount" type="number" min="0" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                        <input id="proposed_budget_amount" name="proposed_budget_amount" type="number" min="0" defaultValue={editingProposal?.proposedBudgetAmount || ''} className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
                                     </div>
                                     <div className="grid gap-1.5">
                                         <label htmlFor="estimated_value_amount" className="text-xs font-medium">ارزش غیرنقدی/جایزه</label>
-                                        <input id="estimated_value_amount" name="estimated_value_amount" type="number" min="0" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                        <input id="estimated_value_amount" name="estimated_value_amount" type="number" min="0" defaultValue={editingProposal?.estimatedValueAmount || ''} className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
                                     </div>
                                     <div className="grid gap-1.5">
                                         <label htmlFor="asset_url" className="text-xs font-medium">لینک لوگو/بنر/دارایی</label>
-                                        <input id="asset_url" name="asset_url" dir="ltr" className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                        <input id="asset_url" name="asset_url" dir="ltr" defaultValue={editingProposal?.assetUrl ?? ''} className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
                                         <InputError message={errors.asset_url} />
                                     </div>
                                     <div className="grid gap-3 md:col-span-2">
@@ -283,6 +332,7 @@ export default function SponsorDashboard({ sponsor, stats, proposals, formOption
                                                         <input
                                                             id={`items_${index}_title`}
                                                             name={`items[${index}][title]`}
+                                                            defaultValue={item.title ?? ''}
                                                             required={index === 0}
                                                             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                                         />
@@ -294,6 +344,7 @@ export default function SponsorDashboard({ sponsor, stats, proposals, formOption
                                                             name={`items[${index}][quantity]`}
                                                             type="number"
                                                             min="1"
+                                                            defaultValue={item.quantity ?? ''}
                                                             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                                         />
                                                     </div>
@@ -304,6 +355,7 @@ export default function SponsorDashboard({ sponsor, stats, proposals, formOption
                                                             name={`items[${index}][estimated_unit_value_amount]`}
                                                             type="number"
                                                             min="0"
+                                                            defaultValue={item.estimated_unit_value_amount ?? ''}
                                                             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                                         />
                                                     </div>
@@ -313,6 +365,7 @@ export default function SponsorDashboard({ sponsor, stats, proposals, formOption
                                                             id={`items_${index}_target_partner_account_ids`}
                                                             name={`items[${index}][target_partner_account_ids][]`}
                                                             multiple
+                                                            defaultValue={item.target_partner_account_ids ?? []}
                                                             className="min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm"
                                                         >
                                                             {formOptions.partners.map((partner) => (
@@ -336,6 +389,7 @@ export default function SponsorDashboard({ sponsor, stats, proposals, formOption
                                                                         type="number"
                                                                         min="1"
                                                                         placeholder="تعداد"
+                                                                        defaultValue={allocationQuantity(item, partner.id)}
                                                                         className="h-8 rounded-md border border-input bg-background px-2 text-sm"
                                                                     />
                                                                 </div>
@@ -347,6 +401,7 @@ export default function SponsorDashboard({ sponsor, stats, proposals, formOption
                                                         <textarea
                                                             id={`items_${index}_description`}
                                                             name={`items[${index}][description]`}
+                                                            defaultValue={item.description ?? ''}
                                                             className="min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm"
                                                         />
                                                     </div>
@@ -365,16 +420,16 @@ export default function SponsorDashboard({ sponsor, stats, proposals, formOption
                                     </div>
                                     <div className="grid gap-1.5 md:col-span-2">
                                         <label htmlFor="target_audience" className="text-xs font-medium">مخاطب هدف</label>
-                                        <textarea id="target_audience" name="target_audience" className="min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm" />
+                                        <textarea id="target_audience" name="target_audience" defaultValue={editingProposal?.targetAudience ?? ''} className="min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm" />
                                     </div>
                                     <div className="grid gap-1.5 md:col-span-2">
                                         <label htmlFor="notes" className="text-xs font-medium">توضیحات برای ادمین</label>
-                                        <textarea id="notes" name="notes" className="min-h-24 rounded-md border border-input bg-background px-3 py-2 text-sm" />
+                                        <textarea id="notes" name="notes" defaultValue={editingProposal?.notes ?? ''} className="min-h-24 rounded-md border border-input bg-background px-3 py-2 text-sm" />
                                     </div>
                                     <div className="md:col-span-2">
                                         <Button disabled={processing} className="w-full">
                                             <Send className="size-4" />
-                                            ارسال برای بررسی ادمین
+                                            {editingProposal ? 'ارسال مجدد اصلاحات برای بررسی ادمین' : 'ارسال برای بررسی ادمین'}
                                         </Button>
                                     </div>
                                 </>
@@ -391,13 +446,18 @@ export default function SponsorDashboard({ sponsor, stats, proposals, formOption
                         {proposals.length === 0 ? (
                             <div className="p-6 text-sm text-muted-foreground">هنوز پیشنهادی ثبت نشده است.</div>
                         ) : proposals.map((proposal) => (
-                            <article key={proposal.id} className="grid grid-cols-[1.2fr_0.9fr_0.9fr_0.9fr_0.8fr] items-center gap-3 px-4 py-3 text-sm">
+                            <article key={proposal.id} className="grid grid-cols-[1.2fr_0.9fr_0.9fr_0.9fr_0.8fr_0.9fr] items-center gap-3 px-4 py-3 text-sm">
                                 <div className="min-w-0">
                                     <div className="flex items-center gap-2">
                                         <FileCheck2 className="size-4 text-muted-foreground" />
                                         <p className="truncate font-medium">{proposal.title}</p>
                                     </div>
                                     <p className="mt-1 truncate text-xs text-muted-foreground" dir="ltr">{proposal.code}</p>
+                                    {proposal.reviewNotes ? (
+                                        <p className="mt-1 line-clamp-2 text-xs text-orange-700 dark:text-orange-300">
+                                            یادداشت اصلاح: {proposal.reviewNotes}
+                                        </p>
+                                    ) : null}
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Megaphone className="size-4 text-muted-foreground" />
@@ -416,6 +476,16 @@ export default function SponsorDashboard({ sponsor, stats, proposals, formOption
                                     </span>
                                 </div>
                                 <span className="rounded-full bg-muted px-2.5 py-1 text-center text-xs">{label(statusLabels, proposal.status)}</span>
+                                <div className="flex justify-end">
+                                    {proposal.status === 'revision_requested' ? (
+                                        <Button type="button" variant="secondary" size="sm" onClick={() => startEditProposal(proposal)}>
+                                            <Pencil className="size-4" />
+                                            اصلاح
+                                        </Button>
+                                    ) : (
+                                        <span className="text-xs text-muted-foreground">-</span>
+                                    )}
+                                </div>
                             </article>
                         ))}
                     </div>

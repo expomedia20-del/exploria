@@ -94,6 +94,116 @@ class SponsorPortalService
     public function submitProposal(User $user, array $data): SponsorProposal
     {
         $sponsor = $this->sponsorForUser($user);
+        $prepared = $this->prepareProposalData($sponsor, $data);
+
+        return DB::transaction(function () use ($data, $prepared, $sponsor, $user): SponsorProposal {
+            $proposal = SponsorProposal::query()->create([
+                'sponsor_account_id' => $sponsor->id,
+                'campaign_id' => $prepared['campaign']?->id,
+                'preferred_partner_account_id' => $prepared['partner']?->id,
+                'code' => $this->uniqueProposalCode($sponsor),
+                'title' => $data['title'],
+                'proposal_type' => $data['proposal_type'],
+                'objective' => $data['objective'],
+                'status' => 'pending_review',
+                'proposed_budget_amount' => $data['proposed_budget_amount'] ?? null,
+                'estimated_value_amount' => $data['estimated_value_amount'] ?? null,
+                'reward_offer' => $data['reward_offer'] ?? null,
+                'discount_offer' => $data['discount_offer'] ?? null,
+                'asset_url' => $data['asset_url'] ?? null,
+                'target_audience' => $data['target_audience'] ?? null,
+                'notes' => $data['notes'] ?? null,
+                'metadata' => [
+                    'source' => 'sponsor_self_service',
+                    'submitted_by_user_id' => $user->id,
+                    'submitted_at' => now()->toIso8601String(),
+                    'partner_count' => count($prepared['partnerIds']),
+                    'item_count' => count($prepared['items']),
+                ],
+            ]);
+
+            foreach ($prepared['partnerIds'] as $index => $partnerId) {
+                $proposal->partnerAccounts()->create([
+                    'partner_account_id' => $partnerId,
+                    'sort_order' => $index,
+                    'metadata' => ['source' => 'sponsor_self_service'],
+                ]);
+            }
+
+            foreach ($prepared['items'] as $item) {
+                $proposal->items()->create($item);
+            }
+
+            return $this->loadProposalForPortal($proposal->refresh());
+        });
+    }
+
+    /** @param array<string, mixed> $data */
+    public function reviseProposal(User $user, SponsorProposal $proposal, array $data): SponsorProposal
+    {
+        $sponsor = $this->sponsorForUser($user);
+
+        if ($proposal->sponsor_account_id !== $sponsor->id) {
+            throw ValidationException::withMessages(['proposal' => 'این پیشنهاد به حساب اسپانسر فعلی تعلق ندارد.']);
+        }
+
+        if ($proposal->status !== 'revision_requested') {
+            throw ValidationException::withMessages(['proposal' => 'فقط پیشنهادهایی که برای اصلاح برگشته‌اند قابل ویرایش و ارسال مجدد هستند.']);
+        }
+
+        if ($proposal->activation()->exists()) {
+            throw ValidationException::withMessages(['proposal' => 'پیشنهاد تبدیل‌شده به بسته اجرایی دیگر از پنل اسپانسر قابل اصلاح نیست.']);
+        }
+
+        $prepared = $this->prepareProposalData($sponsor, $data);
+
+        return DB::transaction(function () use ($data, $prepared, $proposal, $user): SponsorProposal {
+            $proposal->update([
+                'campaign_id' => $prepared['campaign']?->id,
+                'preferred_partner_account_id' => $prepared['partner']?->id,
+                'title' => $data['title'],
+                'proposal_type' => $data['proposal_type'],
+                'objective' => $data['objective'],
+                'status' => 'pending_review',
+                'proposed_budget_amount' => $data['proposed_budget_amount'] ?? null,
+                'estimated_value_amount' => $data['estimated_value_amount'] ?? null,
+                'reward_offer' => $data['reward_offer'] ?? null,
+                'discount_offer' => $data['discount_offer'] ?? null,
+                'asset_url' => $data['asset_url'] ?? null,
+                'target_audience' => $data['target_audience'] ?? null,
+                'notes' => $data['notes'] ?? null,
+                'metadata' => array_merge($proposal->metadata ?? [], [
+                    'resubmitted_by_user_id' => $user->id,
+                    'resubmitted_at' => now()->toIso8601String(),
+                    'partner_count' => count($prepared['partnerIds']),
+                    'item_count' => count($prepared['items']),
+                ]),
+            ]);
+
+            $proposal->partnerAccounts()->delete();
+            $proposal->items()->delete();
+
+            foreach ($prepared['partnerIds'] as $index => $partnerId) {
+                $proposal->partnerAccounts()->create([
+                    'partner_account_id' => $partnerId,
+                    'sort_order' => $index,
+                    'metadata' => ['source' => 'sponsor_self_service_revision'],
+                ]);
+            }
+
+            foreach ($prepared['items'] as $item) {
+                $proposal->items()->create(array_merge($item, [
+                    'metadata' => array_merge($item['metadata'] ?? [], ['revision_source' => 'sponsor_self_service_revision']),
+                ]));
+            }
+
+            return $this->loadProposalForPortal($proposal->refresh());
+        });
+    }
+
+    /** @param array<string, mixed> $data */
+    private function prepareProposalData(SponsorAccount $sponsor, array $data): array
+    {
         $campaign = ! empty($data['campaign_id'])
             ? Campaign::query()->findOrFail($data['campaign_id'])
             : null;
@@ -118,55 +228,24 @@ class SponsorPortalService
             }
         }
 
-        $items = $this->proposalItemsFromData($data, $partnerIds);
+        return [
+            'campaign' => $campaign,
+            'partner' => $partner,
+            'partnerIds' => $partnerIds,
+            'items' => $this->proposalItemsFromData($data, $partnerIds),
+        ];
+    }
 
-        return DB::transaction(function () use ($campaign, $data, $items, $partner, $partnerIds, $sponsor, $user): SponsorProposal {
-            $proposal = SponsorProposal::query()->create([
-                'sponsor_account_id' => $sponsor->id,
-                'campaign_id' => $campaign?->id,
-                'preferred_partner_account_id' => $partner?->id,
-                'code' => $this->uniqueProposalCode($sponsor),
-                'title' => $data['title'],
-                'proposal_type' => $data['proposal_type'],
-                'objective' => $data['objective'],
-                'status' => 'pending_review',
-                'proposed_budget_amount' => $data['proposed_budget_amount'] ?? null,
-                'estimated_value_amount' => $data['estimated_value_amount'] ?? null,
-                'reward_offer' => $data['reward_offer'] ?? null,
-                'discount_offer' => $data['discount_offer'] ?? null,
-                'asset_url' => $data['asset_url'] ?? null,
-                'target_audience' => $data['target_audience'] ?? null,
-                'notes' => $data['notes'] ?? null,
-                'metadata' => [
-                    'source' => 'sponsor_self_service',
-                    'submitted_by_user_id' => $user->id,
-                    'submitted_at' => now()->toIso8601String(),
-                    'partner_count' => count($partnerIds),
-                    'item_count' => count($items),
-                ],
-            ]);
-
-            foreach ($partnerIds as $index => $partnerId) {
-                $proposal->partnerAccounts()->create([
-                    'partner_account_id' => $partnerId,
-                    'sort_order' => $index,
-                    'metadata' => ['source' => 'sponsor_self_service'],
-                ]);
-            }
-
-            foreach ($items as $item) {
-                $proposal->items()->create($item);
-            }
-
-            return $proposal->refresh()->load([
-                'campaign:id,code,name,status',
-                'preferredPartnerAccount:id,venue_id,code,name,partner_type,status',
-                'preferredPartnerAccount.venue:id,code,name',
-                'partnerAccounts.partnerAccount:id,venue_id,code,name,partner_type,status',
-                'partnerAccounts.partnerAccount.venue:id,code,name',
-                'items',
-            ]);
-        });
+    private function loadProposalForPortal(SponsorProposal $proposal): SponsorProposal
+    {
+        return $proposal->load([
+            'campaign:id,code,name,status',
+            'preferredPartnerAccount:id,venue_id,code,name,partner_type,status',
+            'preferredPartnerAccount.venue:id,code,name',
+            'partnerAccounts.partnerAccount:id,venue_id,code,name,partner_type,status',
+            'partnerAccounts.partnerAccount.venue:id,code,name',
+            'items',
+        ]);
     }
 
     /** @param array<string, mixed> $data */

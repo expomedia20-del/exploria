@@ -75,6 +75,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/sponsor/proposals', [SponsorDashboardController::class, 'storeProposal'])
         ->middleware('role:admin,operator,sponsor')
         ->name('sponsor.proposals.store');
+    Route::patch('/sponsor/proposals/{proposal}', [SponsorDashboardController::class, 'updateProposal'])
+        ->middleware('role:admin,operator,sponsor')
+        ->name('sponsor.proposals.update');
     Route::get('/hub/dashboard', [HubManagerDashboardController::class, 'page'])
         ->middleware('role:admin,hub_manager')
         ->name('hub.dashboard');
@@ -107,6 +110,9 @@ Route::prefix('api/v1/consents')->middleware('throttle:30,1')->group(function ()
 Route::get('/api/v1/sponsor/dashboard', [SponsorDashboardController::class, 'index'])
     ->middleware(['auth', 'role:admin,operator,sponsor'])
     ->name('sponsor.dashboard.index');
+Route::patch('/api/v1/sponsor/proposals/{proposal}', [SponsorDashboardController::class, 'updateProposal'])
+    ->middleware(['auth', 'role:admin,operator,sponsor'])
+    ->name('sponsor.proposals.api.update');
 
 Route::get('/admin/qr-codes', [QrRegistryController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer'])

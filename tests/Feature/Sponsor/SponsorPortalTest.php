@@ -235,6 +235,99 @@ class SponsorPortalTest extends TestCase
         ]);
     }
 
+    public function test_sponsor_can_revise_returned_proposal_and_resubmit_it(): void
+    {
+        $sponsorUser = User::query()->where('email', 'family.sponsor@example.test')->firstOrFail();
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $campaign = Campaign::query()->where('code', 'ecopark-pilot-1405')->firstOrFail();
+        $partners = PartnerAccount::query()
+            ->where('venue_id', $campaign->venue_id)
+            ->where('partner_type', '!=', 'sponsor')
+            ->orderBy('code')
+            ->limit(2)
+            ->get();
+
+        $this->actingAs($sponsorUser)
+            ->postJson(route('sponsor.proposals.store'), [
+                'campaign_id' => $campaign->id,
+                'partner_account_ids' => $partners->pluck('id')->all(),
+                'title' => 'Kalavand starter package',
+                'proposal_type' => 'reward_offer',
+                'objective' => 'engagement',
+                'items' => [
+                    [
+                        'item_type' => 'reward',
+                        'title' => 'Old reward title',
+                        'quantity' => 20,
+                        'target_partner_account_ids' => [$partners[0]->id],
+                        'partner_allocations' => [
+                            ['partner_account_id' => $partners[0]->id, 'quantity' => 20],
+                        ],
+                    ],
+                ],
+            ])
+            ->assertCreated();
+
+        $proposal = SponsorProposal::query()->where('title', 'Kalavand starter package')->firstOrFail();
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.sponsor-proposals.api.status', $proposal), [
+                'status' => 'revision_requested',
+                'review_notes' => 'تعداد سهم واحد دوم و عنوان جایزه را اصلاح کنید.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'revision_requested');
+
+        $this->actingAs($sponsorUser)
+            ->patchJson(route('sponsor.proposals.api.update', $proposal), [
+                'campaign_id' => $campaign->id,
+                'partner_account_ids' => $partners->pluck('id')->all(),
+                'title' => 'Kalavand revised package',
+                'proposal_type' => 'product_sampling',
+                'objective' => 'sales',
+                'items' => [
+                    [
+                        'item_type' => 'product',
+                        'title' => 'Kalavand family product box',
+                        'quantity' => 50,
+                        'estimated_unit_value_amount' => 120000,
+                        'target_partner_account_ids' => $partners->pluck('id')->all(),
+                        'partner_allocations' => [
+                            ['partner_account_id' => $partners[0]->id, 'quantity' => 20],
+                            ['partner_account_id' => $partners[1]->id, 'quantity' => 30],
+                        ],
+                        'description' => 'Revised sponsored product package.',
+                    ],
+                ],
+                'target_audience' => 'Family visitors',
+                'notes' => 'Revised after admin request.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'pending_review');
+
+        $proposal->refresh();
+
+        $this->assertSame('pending_review', $proposal->status);
+        $this->assertSame('Kalavand revised package', $proposal->title);
+        $this->assertSame('product_sampling', $proposal->proposal_type);
+        $this->assertNotNull($proposal->metadata['resubmitted_at'] ?? null);
+        $this->assertDatabaseCount('sponsor_proposal_items', 1);
+        $this->assertDatabaseHas('sponsor_proposal_items', [
+            'sponsor_proposal_id' => $proposal->id,
+            'item_type' => 'product',
+            'title' => 'Kalavand family product box',
+            'quantity' => 50,
+        ]);
+
+        $response = $this->actingAs($sponsorUser)
+            ->getJson(route('sponsor.dashboard.index'))
+            ->assertOk()
+            ->assertJsonPath('data.stats.pendingProposals', 1)
+            ->assertJsonPath('data.stats.revisionRequested', 0);
+
+        $this->assertSame('تعداد سهم واحد دوم و عنوان جایزه را اصلاح کنید.', $response->json('data.proposals.0.reviewNotes'));
+    }
+
     public function test_admin_can_review_sponsor_proposal_from_sponsor_console(): void
     {
         $admin = User::factory()->create(['role' => UserRole::Admin]);

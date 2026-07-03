@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Sponsor;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Sponsor\StoreSponsorProposalRequest;
+use App\Models\SponsorProposal;
 use App\Services\SponsorPortalService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -32,5 +33,16 @@ class SponsorDashboardController extends Controller
         }
 
         return back()->with('success', 'پیشنهاد اسپانسری برای بررسی ادمین ارسال شد.');
+    }
+
+    public function updateProposal(StoreSponsorProposalRequest $request, SponsorProposal $proposal, SponsorPortalService $service): JsonResponse|RedirectResponse
+    {
+        $proposal = $service->reviseProposal($request->user(), $proposal, $request->validated());
+
+        if ($request->expectsJson()) {
+            return response()->json(['status' => 'success', 'data' => ['id' => $proposal->id, 'status' => $proposal->status]]);
+        }
+
+        return back()->with('success', 'اصلاحات پیشنهاد برای بررسی دوباره ادمین ارسال شد.');
     }
 }
