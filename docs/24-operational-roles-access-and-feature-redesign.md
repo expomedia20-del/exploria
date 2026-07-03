@@ -425,3 +425,29 @@ Still pending from the immediate slice:
 
 - First read-only venue manager panel for EcoPark-level visibility.
 - Full Persian rewrite of older English responsibility text for roles that existed before this slice.
+
+## Implementation Update - 2026-07-04 - Venue Manager Panel
+
+Completed in the first Phase B build slice:
+
+- Added `/venue/dashboard` as a read-only venue manager panel.
+- Added `/api/v1/venue/dashboard` for scoped venue dashboard data.
+- Added scoped venue access logic so a non-platform user only sees directly assigned venue scopes.
+- Added EcoPark-level visibility for:
+  - venue profile and status.
+  - campaigns and campaign readiness counts.
+  - hubs / ravaq sections.
+  - partners and unit activity.
+  - independent ads and display scheduling summary.
+  - display device status.
+  - rewards, redemptions, and treasures.
+- Added the sidebar link `پنل مدیر مکان`.
+
+Important boundary:
+
+- This panel is read-only in this slice. It does not approve sponsor contracts, edit global settings, mutate role assignments, or perform financial actions.
+
+Next recommended slice:
+
+- Add venue manager comments / readiness confirmations as a controlled workflow.
+- Add ravaq / zone manager panel using hub scope but user-facing ravaq language.

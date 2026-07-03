@@ -28,6 +28,7 @@ use App\Http\Controllers\Partner\RewardRedemptionController;
 use App\Http\Controllers\RewardWalletController;
 use App\Http\Controllers\ScanLandingController;
 use App\Http\Controllers\Sponsor\SponsorDashboardController;
+use App\Http\Controllers\Venue\VenueManagerDashboardController;
 use App\Http\Controllers\VisitExperienceController;
 use App\Http\Controllers\VisitMissionController;
 use Illuminate\Support\Facades\Route;
@@ -81,6 +82,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/hub/dashboard', [HubManagerDashboardController::class, 'page'])
         ->middleware('role:admin,hub_manager')
         ->name('hub.dashboard');
+    Route::get('/venue/dashboard', [VenueManagerDashboardController::class, 'page'])
+        ->middleware('role:admin,operator,viewer')
+        ->name('venue.dashboard');
     Route::post('/hub/ads/{adRequest}/schedule', [HubAdScheduleController::class, 'store'])
         ->middleware('role:admin,hub_manager')
         ->name('hub.ads.schedule');
@@ -110,6 +114,9 @@ Route::prefix('api/v1/consents')->middleware('throttle:30,1')->group(function ()
 Route::get('/api/v1/sponsor/dashboard', [SponsorDashboardController::class, 'index'])
     ->middleware(['auth', 'role:admin,operator,sponsor'])
     ->name('sponsor.dashboard.index');
+Route::get('/api/v1/venue/dashboard', [VenueManagerDashboardController::class, 'index'])
+    ->middleware(['auth', 'role:admin,operator,viewer'])
+    ->name('venue.dashboard.index');
 Route::patch('/api/v1/sponsor/proposals/{proposal}', [SponsorDashboardController::class, 'updateProposal'])
     ->middleware(['auth', 'role:admin,operator,sponsor'])
     ->name('sponsor.proposals.api.update');

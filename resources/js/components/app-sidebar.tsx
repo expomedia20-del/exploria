@@ -1,7 +1,8 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
-    BookOpen,
     BadgeDollarSign,
+    BookOpen,
+    Building2,
     ClipboardCheck,
     FolderGit2,
     LayoutGrid,
@@ -166,6 +167,13 @@ const mainNavItems: RoleAwareNavItem[] = [
         icon: Network,
         group: '۵. پنل نقش‌ها',
         roles: ['admin', 'hub_manager'],
+    },
+    {
+        title: 'پنل مدیر مکان',
+        href: '/venue/dashboard',
+        icon: Building2,
+        group: '۵. پنل نقش‌ها',
+        roles: ['admin', 'operator', 'viewer'],
     },
     {
         title: 'نقش‌ها و عملیات',
