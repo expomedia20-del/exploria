@@ -124,3 +124,10 @@ The demo should include at least four incentive layers:
 3. Add missing selected-campaign context warnings where users can accidentally work on the wrong campaign.
 4. Expand the existing demo preparation command or add a new stress-demo command to create the full layered scenario.
 5. Execute the visitor and partner redemption path with the layered reward setup.
+
+## Implementation Checkpoint - 2026-07-03
+
+- Added `exploria:prepare-stress-demo` as the operational command for this plan.
+- The command completes the demo venue profile, creates the selected campaign, keeps the blueprint context, prepares partners, sponsors, sponsor proposal items, manual sponsor support, QR entry, display readiness, layered rewards, hidden treasure, inventory allocation, visitor completion, issued reward, and confirmed redemption.
+- The command is idempotent and can be rerun without duplicating the core proposal, missions, inventory allocations, or redemption code.
+- Verification coverage: `tests/Feature/Demo/StressDemoCommandTest.php`.
