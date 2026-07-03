@@ -1,6 +1,9 @@
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, Link } from '@inertiajs/react';
 import {
+    ArrowLeft,
     Building2,
+    CheckCircle2,
+    CircleAlert,
     CircleDot,
     Download,
     Layers3,
@@ -54,7 +57,36 @@ type VenueRegistryItem = {
         updatedAt: string | null;
         readinessScore: number;
     };
+    demoStressPlan: DemoStressPlan;
     zones: ZoneItem[];
+};
+
+type DemoStressPlan = {
+    title: string;
+    selectedCampaign: {
+        code: string;
+        name: string;
+        blueprintCode: string | null;
+    } | null;
+    summary: {
+        completeCount: number;
+        totalCount: number;
+        progress: number;
+        riskLevel: 'high' | 'medium' | 'low';
+    };
+    nextAction: DemoStressItem | null;
+    items: DemoStressItem[];
+};
+
+type DemoStressItem = {
+    key: string;
+    title: string;
+    owner: string;
+    complete: boolean;
+    status: 'complete' | 'needs_action';
+    detail: string;
+    actionHref: string;
+    metric: string;
 };
 
 type LocationFacility = {
@@ -117,6 +149,18 @@ const priorityLabels: Record<LocationFacility['priority'], string> = {
     primary: 'اصلی',
     secondary: 'فرعی',
     low: 'کم‌اهمیت',
+};
+
+const riskLabels: Record<DemoStressPlan['summary']['riskLevel'], string> = {
+    high: 'پرریسک',
+    medium: 'نیازمند تکمیل',
+    low: 'قابل ارائه',
+};
+
+const riskClasses: Record<DemoStressPlan['summary']['riskLevel'], string> = {
+    high: 'border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-100',
+    medium: 'border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100',
+    low: 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-100',
 };
 
 function statusLabel(value: string) {
@@ -588,6 +632,195 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                             </>
                                         )}
                                     </Form>
+                                </div>
+
+                                <div className="border-b border-sidebar-border/70 p-4 dark:border-sidebar-border">
+                                    <section className="rounded-lg border border-sidebar-border/70 bg-background p-4 shadow-sm dark:border-sidebar-border">
+                                        <div className="grid gap-4 lg:grid-cols-[1fr_260px]">
+                                            <div>
+                                                <div className="flex flex-wrap items-start justify-between gap-3">
+                                                    <div>
+                                                        <p className="text-sm text-muted-foreground">
+                                                            مسیر کنترل کیفیت محصول
+                                                        </p>
+                                                        <h3 className="mt-1 font-semibold">
+                                                            {
+                                                                venue
+                                                                    .demoStressPlan
+                                                                    .title
+                                                            }
+                                                        </h3>
+                                                        <p className="mt-1 text-xs leading-6 text-muted-foreground">
+                                                            این چک‌لیست دمو را از همین ارزیابی مکان تا اجرای کاربر، مصرف پاداش و گزارش اسپانسر دنبال می‌کند.
+                                                        </p>
+                                                    </div>
+                                                    <span
+                                                        className={`rounded-full border px-3 py-1 text-xs font-medium ${
+                                                            riskClasses[
+                                                                venue
+                                                                    .demoStressPlan
+                                                                    .summary
+                                                                    .riskLevel
+                                                            ]
+                                                        }`}
+                                                    >
+                                                        {
+                                                            riskLabels[
+                                                                venue
+                                                                    .demoStressPlan
+                                                                    .summary
+                                                                    .riskLevel
+                                                            ]
+                                                        }
+                                                    </span>
+                                                </div>
+
+                                                <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                                                    <div className="rounded-md bg-muted/40 p-3 text-sm">
+                                                        <p className="text-xs text-muted-foreground">
+                                                            پیشرفت دمو
+                                                        </p>
+                                                        <p className="mt-1 text-xl font-semibold">
+                                                            {venue.demoStressPlan.summary.progress.toLocaleString(
+                                                                'fa-IR',
+                                                            )}
+                                                            ٪
+                                                        </p>
+                                                    </div>
+                                                    <div className="rounded-md bg-muted/40 p-3 text-sm">
+                                                        <p className="text-xs text-muted-foreground">
+                                                            مراحل تکمیل‌شده
+                                                        </p>
+                                                        <p className="mt-1 font-semibold">
+                                                            {venue.demoStressPlan.summary.completeCount.toLocaleString(
+                                                                'fa-IR',
+                                                            )}{' '}
+                                                            از{' '}
+                                                            {venue.demoStressPlan.summary.totalCount.toLocaleString(
+                                                                'fa-IR',
+                                                            )}
+                                                        </p>
+                                                    </div>
+                                                    <div className="rounded-md bg-muted/40 p-3 text-sm">
+                                                        <p className="text-xs text-muted-foreground">
+                                                            کمپین مرجع
+                                                        </p>
+                                                        <p className="mt-1 truncate font-semibold">
+                                                            {venue.demoStressPlan.selectedCampaign?.name ??
+                                                                'ثبت نشده'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex flex-col justify-between gap-3 rounded-lg border border-dashed border-sidebar-border/70 bg-muted/25 p-3 text-sm dark:border-sidebar-border">
+                                                <div>
+                                                    <p className="font-medium">
+                                                        اقدام بعدی
+                                                    </p>
+                                                    {venue.demoStressPlan
+                                                        .nextAction ? (
+                                                        <>
+                                                            <p className="mt-1 text-sm leading-6">
+                                                                {
+                                                                    venue
+                                                                        .demoStressPlan
+                                                                        .nextAction
+                                                                        .title
+                                                                }
+                                                            </p>
+                                                            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                                                                {
+                                                                    venue
+                                                                        .demoStressPlan
+                                                                        .nextAction
+                                                                        .detail
+                                                                }
+                                                            </p>
+                                                        </>
+                                                    ) : (
+                                                        <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                                                            همه مراحل دمو برای این مکان از نظر داده‌های فعلی کامل است.
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                {venue.demoStressPlan
+                                                    .nextAction ? (
+                                                    <Link
+                                                        href={
+                                                            venue
+                                                                .demoStressPlan
+                                                                .nextAction
+                                                                .actionHref
+                                                        }
+                                                        className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                                                    >
+                                                        رفتن به اقدام
+                                                        <ArrowLeft className="size-4" />
+                                                    </Link>
+                                                ) : null}
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                                            {venue.demoStressPlan.items.map(
+                                                (item) => (
+                                                    <article
+                                                        key={item.key}
+                                                        className={`rounded-lg border p-3 text-sm ${
+                                                            item.complete
+                                                                ? 'border-emerald-200 bg-emerald-50/70 dark:border-emerald-900/60 dark:bg-emerald-950/20'
+                                                                : 'border-amber-300 bg-amber-50 dark:border-amber-900/60 dark:bg-amber-950/30'
+                                                        }`}
+                                                    >
+                                                        <div className="flex items-start gap-2">
+                                                            {item.complete ? (
+                                                                <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" />
+                                                            ) : (
+                                                                <CircleAlert className="mt-0.5 size-4 shrink-0 text-amber-600" />
+                                                            )}
+                                                            <div className="min-w-0">
+                                                                <div className="flex flex-wrap items-center gap-2">
+                                                                    <h4 className="font-medium">
+                                                                        {
+                                                                            item.title
+                                                                        }
+                                                                    </h4>
+                                                                    <span className="rounded-full bg-background px-2 py-0.5 text-[11px] text-muted-foreground">
+                                                                        {
+                                                                            item.metric
+                                                                        }
+                                                                    </span>
+                                                                </div>
+                                                                <p className="mt-1 text-xs text-muted-foreground">
+                                                                    مالک:{' '}
+                                                                    {
+                                                                        item.owner
+                                                                    }
+                                                                </p>
+                                                                <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                                                                    {
+                                                                        item.detail
+                                                                    }
+                                                                </p>
+                                                                {!item.complete ? (
+                                                                    <Link
+                                                                        href={
+                                                                            item.actionHref
+                                                                        }
+                                                                        className="mt-3 inline-flex h-8 items-center justify-center gap-2 rounded-md border border-input bg-background px-3 text-xs font-medium hover:bg-muted"
+                                                                    >
+                                                                        تکمیل این مرحله
+                                                                        <ArrowLeft className="size-3.5" />
+                                                                    </Link>
+                                                                ) : null}
+                                                            </div>
+                                                        </div>
+                                                    </article>
+                                                ),
+                                            )}
+                                        </div>
+                                    </section>
                                 </div>
 
                                 <div className="grid min-w-[940px] grid-cols-[0.9fr_1fr_1fr_0.85fr_0.85fr_1.1fr] gap-3 border-b border-sidebar-border/70 px-4 py-3 text-xs font-medium text-muted-foreground dark:border-sidebar-border">

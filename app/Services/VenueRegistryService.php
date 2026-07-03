@@ -2,9 +2,22 @@
 
 namespace App\Services;
 
+use App\Models\AdRequest;
+use App\Models\Campaign;
+use App\Models\CampaignParticipant;
+use App\Models\CampaignSponsorship;
+use App\Models\DisplayDevice;
 use App\Models\Hub;
 use App\Models\HubManagementAssignment;
+use App\Models\MissionInstance;
+use App\Models\QrCode;
+use App\Models\RewardDefinition;
+use App\Models\RewardInventoryAllocation;
+use App\Models\RewardRedemption;
+use App\Models\Treasure;
 use App\Models\User;
+use App\Models\UserMissionProgress;
+use App\Models\UserReward;
 use App\Models\Venue;
 use App\Models\Zone;
 use Illuminate\Database\Eloquent\Builder;
@@ -132,6 +145,8 @@ class VenueRegistryService
             fn (array $zone): int => collect($zone['hubs'])->sum('touchpointsCount'),
         );
 
+        $locationProfile = $this->locationProfile($venue);
+
         return [
             'id' => $venue->id,
             'code' => $venue->code,
@@ -145,9 +160,137 @@ class VenueRegistryService
             'campaignsCount' => (int) $venue->getAttribute('campaigns_count'),
             'qrCodesCount' => (int) $venue->getAttribute('qr_codes_count'),
             'partnerAccountsCount' => (int) $venue->getAttribute('partner_accounts_count'),
-            'locationProfile' => $this->locationProfile($venue),
+            'locationProfile' => $locationProfile,
+            'demoStressPlan' => $this->demoStressPlan($venue, $locationProfile),
             'zones' => $zones,
         ];
+    }
+
+    /** @param array<string, mixed> $locationProfile @return array<string, mixed> */
+    private function demoStressPlan(Venue $venue, array $locationProfile): array
+    {
+        $campaigns = Campaign::query()
+            ->where('venue_id', $venue->id)
+            ->orderByDesc('created_at')
+            ->get(['id', 'code', 'name', 'status', 'metadata']);
+        $campaignIds = $campaigns->pluck('id');
+        $selectedCampaign = $campaigns->first(fn (Campaign $campaign): bool => ($campaign->metadata['blueprint_code'] ?? null) === 'ecopark-online-treasure-map-game')
+            ?? $campaigns->first();
+        $campaignCode = $selectedCampaign?->code;
+        $blueprintCode = $selectedCampaign?->metadata['blueprint_code'] ?? null;
+        $facilities = collect($locationProfile['facilities'] ?? []);
+        $hasUse = fn (string $use): bool => $facilities->contains(fn (array $facility): bool => in_array($use, $facility['campaignUses'] ?? [], true));
+
+        $readyParticipants = CampaignParticipant::query()
+            ->whereIn('campaign_id', $campaignIds)
+            ->where('onboarding_status', 'ready')
+            ->count();
+        $sponsorships = CampaignSponsorship::query()->whereIn('campaign_id', $campaignIds)->count();
+        $partnerOffers = RewardDefinition::query()
+            ->whereIn('campaign_id', $campaignIds)
+            ->where('metadata->source', 'partner_offer_submission')
+            ->count();
+        $sponsorRewards = RewardDefinition::query()
+            ->whereIn('campaign_id', $campaignIds)
+            ->whereIn('metadata->source', ['sponsor_proposal_activation', 'admin_sponsor_activation'])
+            ->count();
+        $assignedSponsorRewards = RewardDefinition::query()
+            ->whereIn('campaign_id', $campaignIds)
+            ->whereIn('metadata->source', ['sponsor_proposal_activation', 'admin_sponsor_activation'])
+            ->where('metadata->assignment_status', 'assigned_to_mission')
+            ->count();
+        $approvedRewards = RewardDefinition::query()
+            ->whereIn('campaign_id', $campaignIds)
+            ->where('status', 'active')
+            ->where(function (Builder $query): void {
+                $query->where('metadata->approval_status', 'approved')
+                    ->orWhereNull('metadata->approval_status');
+            })
+            ->count();
+        $missions = MissionInstance::query()->whereIn('campaign_id', $campaignIds)->count();
+        $treasures = Treasure::query()->whereIn('campaign_id', $campaignIds)->count();
+        $qrCodes = QrCode::query()->whereIn('campaign_id', $campaignIds)->count();
+        $entryQrCode = QrCode::query()
+            ->whereIn('campaign_id', $campaignIds)
+            ->orderBy('created_at')
+            ->value('code');
+        $routeReviewed = $campaigns->contains(fn (Campaign $campaign): bool => filled($campaign->metadata['route_reviewed_at'] ?? null));
+        $allocations = RewardInventoryAllocation::query()->whereIn('campaign_id', $campaignIds);
+        $activeAllocations = (clone $allocations)->where('status', 'active')->count();
+        $allocatedQuantity = (int) (clone $allocations)->sum('allocated_quantity');
+        $completedMissions = UserMissionProgress::query()
+            ->whereHas('missionInstance', fn (Builder $query) => $query->whereIn('campaign_id', $campaignIds))
+            ->where('status', 'completed')
+            ->count();
+        $issuedRewards = UserReward::query()->whereIn('campaign_id', $campaignIds)->count();
+        $redemptions = RewardRedemption::query()
+            ->whereHas('userReward', fn (Builder $query) => $query->whereIn('campaign_id', $campaignIds))
+            ->count();
+        $confirmedRedemptions = RewardRedemption::query()
+            ->whereHas('userReward', fn (Builder $query) => $query->whereIn('campaign_id', $campaignIds))
+            ->where('status', 'confirmed')
+            ->count();
+        $mediaAssets = AdRequest::query()->where('venue_id', $venue->id)->count()
+            + DisplayDevice::query()->where('venue_id', $venue->id)->count();
+
+        $items = [
+            $this->demoStressItem('venue', 'ارزیابی مکان', 'ادمین / مدیر مکان', $locationProfile['readinessScore'] >= 70 && $facilities->count() >= 3, 'شناخت مکان، مخاطب، امکانات، محدودیت‌ها و قابلیت‌های QR/ماموریت/گنج/پاداش باید ثبت شود.', '/admin/venues', $locationProfile['readinessScore'].'٪ آمادگی'),
+            $this->demoStressItem('blueprint', 'انتخاب الگو و ساخت کمپین', 'ادمین / اپراتور', $selectedCampaign !== null && filled($blueprintCode), 'کمپین باید با الگوی مشخص ساخته و در ادامه صفحات حفظ شود.', $campaignCode ? '/admin/campaign-builder?campaign='.$campaignCode : '/admin/campaigns', $campaigns->count().' کمپین'),
+            $this->demoStressItem('partner_mix', 'مشارکت فروشگاه‌ها و شرکا', 'ادمین / فروشگاه', $readyParticipants > 0 && $venue->getAttribute('partner_accounts_count') >= 2, 'حداقل چند واحد فروشگاهی/غذایی با نقش اجرایی و وضعیت آماده لازم است.', $this->contextUrl('/admin/campaign-participants', $campaignCode, $blueprintCode, 'participants'), $readyParticipants.' آماده'),
+            $this->demoStressItem('sponsor_mix', 'مشارکت اسپانسرها', 'ادمین / اسپانسر', $sponsorships > 0 && $sponsorRewards > 0, 'دمو باید هم مسیر دستی اسپانسر و هم پیشنهاد اسپانسر قابل تبدیل به بسته اجرایی را پوشش دهد.', $this->contextUrl('/admin/sponsors', $campaignCode, $blueprintCode, 'sponsors'), $sponsorRewards.' مشوق اسپانسری'),
+            $this->demoStressItem('layered_incentives', 'امتیاز، پاداش و گنج چندلایه', 'ادمین / فروشگاه / اسپانسر', $missions >= 3 && $approvedRewards >= 2 && $treasures > 0 && $assignedSponsorRewards > 0, 'باید امتیاز پایه، پاداش فروشگاهی، پاداش اسپانسری و گنج پنهان در گام‌های مختلف وجود داشته باشد.', $this->contextUrl('/admin/missions', $campaignCode, $blueprintCode, 'components'), $approvedRewards.' پاداش، '.$treasures.' گنج'),
+            $this->demoStressItem('qr_entry', 'QR و ورود کاربر', 'ادمین / مدیر هاب', $qrCodes > 0 && $hasUse('qr'), 'کاربر باید از QR درست وارد کمپین درست شود و اولین ماموریت را ببیند.', $this->contextUrl('/admin/qr-codes', $campaignCode, $blueprintCode, 'qr'), $qrCodes.' QR'),
+            $this->demoStressItem('route_operations', 'نقشه عملیات و مسیر اجرایی', 'ادمین / مدیر هاب', $routeReviewed && $hasUse('mission'), 'اتصال QR، هاب، مسیر، ماموریت، فروشگاه، اسپانسر، نمایشگر و نقطه تحویل باید تایید شود.', $this->contextUrl('/admin/campaign-operations', $campaignCode, $blueprintCode, 'route'), $routeReviewed ? 'تایید شده' : 'در انتظار'),
+            $this->demoStressItem('inventory', 'سهم واحدها و موجودی پاداش', 'ادمین / فروشگاه', $activeAllocations > 0 && $allocatedQuantity > 0, 'پاداش‌های اسپانسری باید سهم واحد، موجودی قابل ارائه، رزرو و مصرف قابل ردیابی داشته باشند.', $this->contextUrl('/admin/missions', $campaignCode, $blueprintCode, 'inventory'), $allocatedQuantity.' آیتم'),
+            $this->demoStressItem('visitor_execution', 'اجرای واقعی کاربر', 'کاربر مصرف‌کننده', $completedMissions > 0 && $issuedRewards > 0, 'حداقل یک کاربر باید ماموریت متصل را کامل کند و پاداش یا گنج دریافت کند.', $entryQrCode ? '/scan/'.$entryQrCode : '/admin/qr-codes', $completedMissions.' تکمیل'),
+            $this->demoStressItem('redemption', 'تایید مصرف توسط فروشگاه', 'فروشگاه / شریک', $redemptions > 0 && $confirmedRedemptions > 0, 'کد پاداش باید در پنل فروشگاه تایید و موجودی از رزرو به مصرف‌شده منتقل شود.', $campaignCode ? '/partner/dashboard?campaign='.$campaignCode : '/partner/dashboard', $confirmedRedemptions.' تایید'),
+            $this->demoStressItem('reporting', 'گزارش نهایی قابل فروش', 'ادمین / اسپانسر', $confirmedRedemptions > 0 && $mediaAssets > 0, 'خروجی نهایی باید اثر کمپین، مصرف پاداش، وضعیت اسپانسر و آمادگی رسانه‌ای را نشان دهد.', $this->contextUrl('/admin/campaign-builder', $campaignCode, $blueprintCode, 'review'), $mediaAssets.' رسانه/تبلیغ'),
+        ];
+        $completeCount = collect($items)->where('complete', true)->count();
+        $nextAction = collect($items)->firstWhere('complete', false);
+
+        return [
+            'title' => 'دموی فشار از ارزیابی مکان تا اجرا',
+            'selectedCampaign' => $selectedCampaign ? [
+                'code' => $selectedCampaign->code,
+                'name' => $selectedCampaign->name,
+                'blueprintCode' => $blueprintCode,
+            ] : null,
+            'summary' => [
+                'completeCount' => $completeCount,
+                'totalCount' => count($items),
+                'progress' => count($items) > 0 ? (int) round(($completeCount / count($items)) * 100) : 0,
+                'riskLevel' => $completeCount < 4 ? 'high' : ($completeCount < 8 ? 'medium' : 'low'),
+            ],
+            'nextAction' => $nextAction,
+            'items' => $items,
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function demoStressItem(string $key, string $title, string $owner, bool $complete, string $detail, string $actionHref, string $metric): array
+    {
+        return [
+            'key' => $key,
+            'title' => $title,
+            'owner' => $owner,
+            'complete' => $complete,
+            'status' => $complete ? 'complete' : 'needs_action',
+            'detail' => $detail,
+            'actionHref' => $actionHref,
+            'metric' => $metric,
+        ];
+    }
+
+    private function contextUrl(string $path, ?string $campaignCode, mixed $blueprintCode, string $action): string
+    {
+        $params = array_filter([
+            'campaign' => $campaignCode,
+            'blueprint' => is_string($blueprintCode) ? $blueprintCode : null,
+            'blueprint_action' => $action,
+        ]);
+
+        return $path.($params === [] ? '' : '?'.http_build_query($params));
     }
 
     /** @return array<string, mixed> */

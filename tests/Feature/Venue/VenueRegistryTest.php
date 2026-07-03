@@ -41,7 +41,12 @@ class VenueRegistryTest extends TestCase
             ->assertJsonPath('data.0.touchpointsCount', 1)
             ->assertJsonPath('data.0.partnerAccountsCount', 3)
             ->assertJsonPath('data.0.locationProfile.readinessScore', 0)
-            ->assertJsonPath('data.0.locationProfile.sourceSuggestions.0', 'خانه موسیقی تهران');
+            ->assertJsonPath('data.0.locationProfile.sourceSuggestions.0', 'خانه موسیقی تهران')
+            ->assertJsonPath('data.0.demoStressPlan.title', 'دموی فشار از ارزیابی مکان تا اجرا')
+            ->assertJsonPath('data.0.demoStressPlan.summary.totalCount', 11)
+            ->assertJsonPath('data.0.demoStressPlan.items.0.key', 'venue')
+            ->assertJsonPath('data.0.demoStressPlan.items.0.complete', false)
+            ->assertJsonPath('data.0.demoStressPlan.nextAction.key', 'venue');
     }
 
     public function test_admin_can_update_venue_location_profile(): void
@@ -92,7 +97,9 @@ class VenueRegistryTest extends TestCase
             ->assertJsonPath('data.0.locationProfile.readinessScore', 90)
             ->assertJsonPath('data.0.locationProfile.facilities.0.name', 'دریاچه')
             ->assertJsonPath('data.0.locationProfile.facilities.0.campaignUses.1', 'treasure')
-            ->assertJsonPath('data.0.locationProfile.facilities.2.name', 'باغ کتاب');
+            ->assertJsonPath('data.0.locationProfile.facilities.2.name', 'باغ کتاب')
+            ->assertJsonPath('data.0.demoStressPlan.items.0.key', 'venue')
+            ->assertJsonPath('data.0.demoStressPlan.items.0.complete', true);
     }
 
     public function test_admin_can_import_venue_facilities_from_spreadsheet_csv(): void
