@@ -37,7 +37,7 @@ class SponsorPortalTest extends TestCase
                 ->where('sponsor.code', 'family-route-sponsor')
                 ->where('stats.proposals', 0)
                 ->has('formOptions.campaigns', 1)
-                ->has('formOptions.partners', 3));
+                ->has('formOptions.partners', 2));
 
         $this->assertDatabaseHas('sponsor_accounts', [
             'code' => 'family-route-sponsor',
@@ -228,7 +228,7 @@ class SponsorPortalTest extends TestCase
                 ],
             ])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors('items');
+            ->assertJsonValidationErrors('items.0.quantity');
 
         $this->assertDatabaseMissing('sponsor_proposals', [
             'title' => 'Invalid allocation package',

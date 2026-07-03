@@ -219,6 +219,10 @@ class SponsorPortalService
         }
 
         foreach ($partners as $partnerAccount) {
+            if ($partnerAccount->partner_type === 'sponsor') {
+                throw ValidationException::withMessages(['partner_account_ids' => 'واحد اجرایی پیشنهاد باید فروشگاه، کافه یا واحد عملیاتی باشد؛ حساب اسپانسر را به عنوان واحد هدف انتخاب نکنید.']);
+            }
+
             if ($sponsor->venue_id !== null && $partnerAccount->venue_id !== $sponsor->venue_id) {
                 throw ValidationException::withMessages(['partner_account_ids' => 'واحدهای پیشنهادی باید به مکان این اسپانسر تعلق داشته باشند.']);
             }
@@ -282,7 +286,7 @@ class SponsorPortalService
     {
         $items = collect($data['items'] ?? [])
             ->filter(fn (array $item): bool => trim((string) ($item['title'] ?? '')) !== '')
-            ->map(function (array $item) use ($partnerIds): array {
+            ->map(function (array $item, int $index) use ($partnerIds): array {
                 $partnerAllocations = $this->partnerAllocationsFromItem($item, $partnerIds);
                 $targetPartnerIds = collect($item['target_partner_account_ids'] ?? [])
                     ->filter()
@@ -299,7 +303,9 @@ class SponsorPortalService
 
                 $invalidTargets = array_diff($targetPartnerIds, $partnerIds);
                 if ($invalidTargets !== []) {
-                    throw ValidationException::withMessages(['items' => 'واحدهای هدف هر آیتم باید از میان واحدهای انتخابی پیشنهاد باشند.']);
+                    throw ValidationException::withMessages([
+                        "items.{$index}.target_partner_account_ids" => 'واحدهای هدف این آیتم باید از میان واحدهای اجرایی پیشنهادی همان بسته باشند.',
+                    ]);
                 }
 
                 $quantity = $item['quantity'] ?? null;
@@ -310,7 +316,13 @@ class SponsorPortalService
                 }
 
                 if ($quantity !== null && $allocatedQuantity > 0 && (int) $quantity !== $allocatedQuantity) {
-                    throw ValidationException::withMessages(['items' => 'مجموع سهم واحدهای هدف باید با تعداد کل همان آیتم برابر باشد.']);
+                    throw ValidationException::withMessages([
+                        "items.{$index}.quantity" => sprintf(
+                            'تعداد کل این آیتم %s است، اما مجموع سهم واحدها %s ثبت شده است. این دو عدد باید برابر باشند.',
+                            number_format((int) $quantity),
+                            number_format((int) $allocatedQuantity),
+                        ),
+                    ]);
                 }
 
                 return [
@@ -394,6 +406,7 @@ class SponsorPortalService
                 ]),
             'partners' => PartnerAccount::query()
                 ->when($sponsor->venue_id !== null, fn (Builder $query) => $query->where('venue_id', $sponsor->venue_id))
+                ->where('partner_type', '!=', 'sponsor')
                 ->with('venue:id,code,name')
                 ->orderBy('name')
                 ->get(['id', 'venue_id', 'code', 'name', 'partner_type', 'status'])

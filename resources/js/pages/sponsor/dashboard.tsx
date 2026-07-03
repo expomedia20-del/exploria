@@ -65,6 +65,7 @@ type Props = {
 };
 
 type SharedProps = { flash?: { success?: string } };
+type FormErrorBag = Record<string, string | undefined>;
 
 const statusLabels: Record<string, string> = {
     active: 'فعال',
@@ -114,7 +115,9 @@ type ProposalItemForm = {
     description?: string | null;
 };
 
-const defaultProposalItem: ProposalItemForm = { item_type: 'reward', target_partner_account_ids: [], partner_allocations: [] };
+function newDefaultProposalItem(): ProposalItemForm {
+    return { item_type: 'reward', target_partner_account_ids: [], partner_allocations: [] };
+}
 
 function fa(value: number) {
     return value.toLocaleString('fa-IR');
@@ -128,13 +131,25 @@ function label(map: Record<string, string>, value: string) {
     return map[value] ?? value;
 }
 
+function errorAt(errors: FormErrorBag, field: string) {
+    return errors[field];
+}
+
+function itemError(errors: FormErrorBag, index: number) {
+    return errors[`items.${index}.quantity`]
+        ?? errors[`items.${index}.target_partner_account_ids`]
+        ?? errors[`items.${index}.partner_allocations`]
+        ?? errors[`items.${index}.title`]
+        ?? errors.items;
+}
+
 export default function SponsorDashboard({ sponsor, stats, proposals, formOptions }: Props) {
     const { flash } = usePage<SharedProps>().props;
-    const [proposalItems, setProposalItems] = useState([defaultProposalItem]);
+    const [proposalItems, setProposalItems] = useState([newDefaultProposalItem()]);
     const [editingProposal, setEditingProposal] = useState<SponsorProposal | null>(null);
 
     const addProposalItem = () => {
-        setProposalItems((items) => [...items, defaultProposalItem]);
+        setProposalItems((items) => [...items, newDefaultProposalItem()]);
     };
 
     const removeProposalItem = (index: number) => {
@@ -151,13 +166,13 @@ export default function SponsorDashboard({ sponsor, stats, proposals, formOption
             target_partner_account_ids: item.targetPartnerAccountIds ?? [],
             partner_allocations: item.partnerAllocations ?? [],
             description: item.description,
-        })) : [defaultProposalItem]);
+        })) : [newDefaultProposalItem()]);
         document.getElementById('sponsor-proposal-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
 
     const cancelEditProposal = () => {
         setEditingProposal(null);
-        setProposalItems([defaultProposalItem]);
+        setProposalItems([newDefaultProposalItem()]);
     };
 
     const allocationQuantity = (item: ProposalItemForm, partnerId: string) => (
@@ -240,6 +255,15 @@ export default function SponsorDashboard({ sponsor, stats, proposals, formOption
                         >
                             {({ processing, errors }) => (
                                 <>
+                                    {Object.keys(errors).length > 0 ? (
+                                        <div className="md:col-span-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                                            <p className="font-medium">فرم ارسال نشد؛ موارد مشخص‌شده را اصلاح کنید.</p>
+                                            {Object.values(errors)[0] ? <p className="mt-1 text-xs">{Object.values(errors)[0]}</p> : null}
+                                        </div>
+                                    ) : null}
+                                    <div className="md:col-span-2 rounded-md bg-muted/40 px-3 py-2">
+                                        <h3 className="text-sm font-semibold">اطلاعات کل بسته پیشنهادی</h3>
+                                    </div>
                                     <div className="grid gap-1.5">
                                         <label htmlFor="title" className="text-xs font-medium">عنوان پیشنهاد</label>
                                         <input id="title" name="title" defaultValue={editingProposal?.title ?? ''} required className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
@@ -256,6 +280,7 @@ export default function SponsorDashboard({ sponsor, stats, proposals, formOption
                                             <option value="scientific_cultural_content">محتوای علمی/فرهنگی</option>
                                             <option value="product_sampling">نمونه‌گیری محصول</option>
                                         </select>
+                                        <InputError message={errors.proposal_type} />
                                     </div>
                                     <div className="grid gap-1.5">
                                         <label htmlFor="objective" className="text-xs font-medium">هدف</label>
@@ -267,6 +292,7 @@ export default function SponsorDashboard({ sponsor, stats, proposals, formOption
                                             <option value="engagement">تعامل</option>
                                             <option value="social_impact">اثر فرهنگی/اجتماعی</option>
                                         </select>
+                                        <InputError message={errors.objective} />
                                     </div>
                                     <div className="grid gap-1.5">
                                         <label htmlFor="campaign_id" className="text-xs font-medium">کمپین مورد علاقه</label>
@@ -274,6 +300,7 @@ export default function SponsorDashboard({ sponsor, stats, proposals, formOption
                                             <option value="">ادمین انتخاب کند</option>
                                             {formOptions.campaigns.map((campaign) => <option key={campaign.id} value={campaign.id}>{campaign.name}</option>)}
                                         </select>
+                                        <InputError message={errors.campaign_id} />
                                     </div>
                                     <div className="grid gap-1.5 md:col-span-2">
                                         <label htmlFor="partner_account_ids" className="text-xs font-medium">واحدهای اجرایی پیشنهادی</label>
@@ -289,10 +316,12 @@ export default function SponsorDashboard({ sponsor, stats, proposals, formOption
                                     <div className="grid gap-1.5">
                                         <label htmlFor="proposed_budget_amount" className="text-xs font-medium">بودجه پیشنهادی</label>
                                         <input id="proposed_budget_amount" name="proposed_budget_amount" type="number" min="0" defaultValue={editingProposal?.proposedBudgetAmount || ''} className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                        <InputError message={errors.proposed_budget_amount} />
                                     </div>
                                     <div className="grid gap-1.5">
                                         <label htmlFor="estimated_value_amount" className="text-xs font-medium">ارزش غیرنقدی/جایزه</label>
                                         <input id="estimated_value_amount" name="estimated_value_amount" type="number" min="0" defaultValue={editingProposal?.estimatedValueAmount || ''} className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+                                        <InputError message={errors.estimated_value_amount} />
                                     </div>
                                     <div className="grid gap-1.5">
                                         <label htmlFor="asset_url" className="text-xs font-medium">لینک لوگو/بنر/دارایی</label>
@@ -300,8 +329,8 @@ export default function SponsorDashboard({ sponsor, stats, proposals, formOption
                                         <InputError message={errors.asset_url} />
                                     </div>
                                     <div className="grid gap-3 md:col-span-2">
-                                        <div className="flex flex-wrap items-center justify-between gap-2">
-                                            <label className="text-xs font-medium">جایزه‌ها، تخفیف‌ها و محصولات پیشنهادی</label>
+                                        <div className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-muted/40 px-3 py-2">
+                                            <h3 className="text-sm font-semibold">جایزه‌ها، تخفیف‌ها و محصولات پیشنهادی</h3>
                                             <Button type="button" variant="secondary" size="sm" onClick={addProposalItem}>
                                                 <Plus className="size-4" />
                                                 افزودن آیتم
@@ -310,6 +339,19 @@ export default function SponsorDashboard({ sponsor, stats, proposals, formOption
                                         <div className="grid gap-3">
                                             {proposalItems.map((item, index) => (
                                                 <div key={index} className="grid gap-3 rounded-md border border-border/80 p-3 md:grid-cols-4">
+                                                    <div className="flex items-center justify-between gap-2 md:col-span-4">
+                                                        <h4 className="text-sm font-semibold">آیتم {fa(index + 1)}</h4>
+                                                        {itemError(errors, index) ? (
+                                                            <span className="rounded-full bg-destructive/10 px-2.5 py-1 text-xs text-destructive">
+                                                                نیازمند اصلاح
+                                                            </span>
+                                                        ) : null}
+                                                    </div>
+                                                    {itemError(errors, index) ? (
+                                                        <div className="md:col-span-4">
+                                                            <InputError message={itemError(errors, index)} />
+                                                        </div>
+                                                    ) : null}
                                                     <div className="grid gap-1.5">
                                                         <label htmlFor={`items_${index}_item_type`} className="text-xs font-medium">نوع</label>
                                                         <select
@@ -326,6 +368,7 @@ export default function SponsorDashboard({ sponsor, stats, proposals, formOption
                                                             <option value="content">محتوا</option>
                                                             <option value="cash_support">حمایت نقدی</option>
                                                         </select>
+                                                        <InputError message={errorAt(errors, `items.${index}.item_type`)} />
                                                     </div>
                                                     <div className="grid gap-1.5 md:col-span-3">
                                                         <label htmlFor={`items_${index}_title`} className="text-xs font-medium">عنوان آیتم</label>
@@ -336,9 +379,10 @@ export default function SponsorDashboard({ sponsor, stats, proposals, formOption
                                                             required={index === 0}
                                                             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                                         />
+                                                        <InputError message={errorAt(errors, `items.${index}.title`)} />
                                                     </div>
                                                     <div className="grid gap-1.5">
-                                                        <label htmlFor={`items_${index}_quantity`} className="text-xs font-medium">تعداد</label>
+                                                        <label htmlFor={`items_${index}_quantity`} className="text-xs font-medium">تعداد کل آیتم</label>
                                                         <input
                                                             id={`items_${index}_quantity`}
                                                             name={`items[${index}][quantity]`}
@@ -347,6 +391,7 @@ export default function SponsorDashboard({ sponsor, stats, proposals, formOption
                                                             defaultValue={item.quantity ?? ''}
                                                             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                                         />
+                                                        <InputError message={errorAt(errors, `items.${index}.quantity`)} />
                                                     </div>
                                                     <div className="grid gap-1.5">
                                                         <label htmlFor={`items_${index}_estimated_unit_value_amount`} className="text-xs font-medium">ارزش هر واحد</label>
@@ -358,6 +403,7 @@ export default function SponsorDashboard({ sponsor, stats, proposals, formOption
                                                             defaultValue={item.estimated_unit_value_amount ?? ''}
                                                             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                                         />
+                                                        <InputError message={errorAt(errors, `items.${index}.estimated_unit_value_amount`)} />
                                                     </div>
                                                     <div className="grid gap-1.5 md:col-span-2">
                                                         <label htmlFor={`items_${index}_target_partner_account_ids`} className="text-xs font-medium">واحدهای هدف این آیتم</label>
@@ -372,6 +418,7 @@ export default function SponsorDashboard({ sponsor, stats, proposals, formOption
                                                                 <option key={partner.id} value={partner.id}>{partner.name}</option>
                                                             ))}
                                                         </select>
+                                                        <InputError message={errorAt(errors, `items.${index}.target_partner_account_ids`)} />
                                                     </div>
                                                     <div className="grid gap-2 md:col-span-4">
                                                         <p className="text-xs font-medium">سهم هر واحد از این آیتم</p>
@@ -395,6 +442,7 @@ export default function SponsorDashboard({ sponsor, stats, proposals, formOption
                                                                 </div>
                                                             ))}
                                                         </div>
+                                                        <InputError message={errorAt(errors, `items.${index}.partner_allocations`)} />
                                                     </div>
                                                     <div className="grid gap-1.5 md:col-span-4">
                                                         <label htmlFor={`items_${index}_description`} className="text-xs font-medium">توضیح آیتم</label>
