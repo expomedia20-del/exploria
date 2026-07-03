@@ -1591,6 +1591,21 @@ export default function MissionRewardRegistryIndex({
                                     </p>
                                     {reward.source && sponsorIncentiveSources.includes(reward.source) ? (
                                         <div className="grid gap-3 rounded-md border border-fuchsia-200 bg-fuchsia-50/60 p-3 text-xs dark:border-fuchsia-900 dark:bg-fuchsia-950/20">
+                                            {reward.campaign ? (
+                                                <div className="rounded-md bg-background/80 px-3 py-2 text-muted-foreground">
+                                                    کمپین این مشوق:{' '}
+                                                    <span className="font-medium text-foreground">{reward.campaign.name}</span>
+                                                    <span className="ms-2" dir="ltr">{reward.campaign.code}</span>
+                                                    {selectedCampaign && selectedCampaign.code !== reward.campaign.code ? (
+                                                        <p className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+                                                            این صفحه با کمپین دیگری باز شده است. برای اتصال، همین کمپین مشوق را باز کنید.
+                                                            <Link className="ms-2 font-medium underline underline-offset-4" href={`/admin/missions?campaign=${reward.campaign.code}`}>
+                                                                باز کردن کمپین مشوق
+                                                            </Link>
+                                                        </p>
+                                                    ) : null}
+                                                </div>
+                                            ) : null}
                                             <div className="grid gap-2 text-muted-foreground sm:grid-cols-3">
                                                 <p>
                                                     اتصال:{' '}
@@ -1832,7 +1847,7 @@ export default function MissionRewardRegistryIndex({
                                                                 <Button type="button" variant="outline" onClick={() => setExpandedSponsorRewardId(null)}>
                                                                     بستن فرم
                                                                 </Button>
-                                                                <Button type="submit" disabled={processing || missions.length === 0}>
+                                                                <Button type="submit" disabled={processing || missions.length === 0 || Boolean(selectedCampaign && reward.campaign && selectedCampaign.code !== reward.campaign.code)}>
                                                                     <Sparkles className="size-4" />
                                                                     اتصال به ماموریت و ثبت سهم واحدها
                                                                 </Button>
