@@ -328,8 +328,29 @@ class MissionRewardRegistryService
         $cycleStepIndex = $mission->metadata['cycle_step_index'] ?? null;
         $cycleStepLabel = $mission->metadata['cycle_step_label'] ?? null;
         $rewardTier = $data['reward_tier'];
+        $partnerAllocations = collect($data['partner_allocations'] ?? [])
+            ->map(fn (array $allocation): array => [
+                'partner_account_id' => (string) ($allocation['partner_account_id'] ?? ''),
+                'quantity' => (int) ($allocation['quantity'] ?? 0),
+            ])
+            ->filter(fn (array $allocation): bool => $allocation['partner_account_id'] !== '' && $allocation['quantity'] > 0)
+            ->values();
+        $allocationTotal = (int) $partnerAllocations->sum('quantity');
+        $stockQuantity = array_key_exists('stock_quantity', $data) && $data['stock_quantity'] !== null
+            ? (int) $data['stock_quantity']
+            : $reward->stock_quantity;
 
-        return DB::transaction(function () use ($actor, $campaign, $cycleStepIndex, $cycleStepLabel, $data, $mission, $reward, $rewardTier, $treasure): RewardDefinition {
+        if (($stockQuantity === null || $stockQuantity === 0) && $allocationTotal > 0) {
+            $stockQuantity = $allocationTotal;
+        }
+
+        if ($stockQuantity !== null && $stockQuantity > 0 && $allocationTotal > 0 && $allocationTotal !== $stockQuantity) {
+            throw ValidationException::withMessages([
+                'stock_quantity' => 'تعداد کل مشوق باید با مجموع سهم واحدها برابر باشد. تعداد کل '.$stockQuantity.' و مجموع سهم‌ها '.$allocationTotal.' ثبت شده است.',
+            ]);
+        }
+
+        return DB::transaction(function () use ($actor, $campaign, $cycleStepIndex, $cycleStepLabel, $data, $mission, $partnerAllocations, $reward, $rewardTier, $stockQuantity, $treasure): RewardDefinition {
             $metadata = array_merge($reward->metadata ?? [], [
                 'reward_tier' => $rewardTier,
                 'reward_option' => $data['reward_option'] ?? ($reward->metadata['reward_option'] ?? null),
@@ -346,8 +367,13 @@ class MissionRewardRegistryService
                 'fulfillment_window' => $data['fulfillment_window'] ?? ($reward->metadata['fulfillment_window'] ?? null),
             ]);
 
+            if (array_key_exists('partner_allocations', $data)) {
+                $metadata['partner_allocations'] = $partnerAllocations->all();
+            }
+
             $reward->update([
                 'point_cost' => $data['point_cost'] ?? null,
+                'stock_quantity' => $stockQuantity,
                 'status' => $data['status'],
                 'metadata' => $metadata,
             ]);
@@ -652,6 +678,42 @@ class MissionRewardRegistryService
     /** @return array<string, mixed> */
     private function serializeReward(RewardDefinition $reward): array
     {
+        $metadata = $reward->metadata ?? [];
+        $plannedAllocations = collect($metadata['partner_allocations'] ?? [])
+            ->mapWithKeys(fn (array $allocation): array => [
+                (string) ($allocation['partner_account_id'] ?? '') => (int) ($allocation['quantity'] ?? 0),
+            ]);
+        $inventoryAllocationsByPartner = $reward->inventoryAllocations->keyBy('partner_account_id');
+        $targetPartnerIds = collect($metadata['target_partner_account_ids'] ?? [])
+            ->when($reward->partner_account_id, fn (Collection $ids): Collection => $ids->push($reward->partner_account_id))
+            ->merge($plannedAllocations->keys())
+            ->merge($inventoryAllocationsByPartner->keys())
+            ->filter()
+            ->unique()
+            ->values();
+        $targetPartnersById = PartnerAccount::query()
+            ->whereIn('id', $targetPartnerIds)
+            ->get(['id', 'code', 'name', 'partner_type'])
+            ->keyBy('id');
+        $targetPartners = $targetPartnerIds
+            ->map(function (string $partnerId) use ($inventoryAllocationsByPartner, $plannedAllocations, $targetPartnersById): ?array {
+                $partner = $targetPartnersById->get($partnerId);
+
+                if (! $partner) {
+                    return null;
+                }
+
+                return [
+                    'id' => $partner->id,
+                    'code' => $partner->code,
+                    'name' => $partner->name,
+                    'partnerType' => $partner->partner_type,
+                    'plannedQuantity' => $inventoryAllocationsByPartner->get($partnerId)?->allocated_quantity ?? $plannedAllocations->get($partnerId),
+                ];
+            })
+            ->filter()
+            ->values();
+
         return [
             'id' => $reward->id,
             'code' => $reward->code,
@@ -685,6 +747,7 @@ class MissionRewardRegistryService
             'campaign' => $reward->campaign ? ['id' => $reward->campaign->id, 'code' => $reward->campaign->code, 'name' => $reward->campaign->name] : null,
             'venue' => $reward->venue ? ['id' => $reward->venue->id, 'code' => $reward->venue->code, 'name' => $reward->venue->name] : null,
             'partner' => $reward->partnerAccount ? ['id' => $reward->partnerAccount->id, 'code' => $reward->partnerAccount->code, 'name' => $reward->partnerAccount->name, 'partnerType' => $reward->partnerAccount->partner_type] : null,
+            'targetPartners' => $targetPartners,
             'inventorySummary' => [
                 'allocated' => (int) $reward->inventoryAllocations->sum('allocated_quantity'),
                 'reserved' => (int) $reward->inventoryAllocations->sum('reserved_quantity'),

@@ -148,6 +148,60 @@ class SponsorActivationTest extends TestCase
         $this->assertSame([$partner->id], $reward->metadata['target_partner_account_ids']);
         $this->assertSame($partner->id, $reward->partner_account_id);
 
+        $missionTemplate = MissionTemplate::query()->create([
+            'code' => 'manual-sponsor-mission',
+            'title' => 'Manual Sponsor Mission',
+            'description' => 'Mission for manually connected sponsor incentive.',
+            'mission_type' => 'challenge',
+            'trigger_type' => 'manual',
+            'point_value' => 80,
+            'status' => 'active',
+        ]);
+        $mission = MissionInstance::query()->create([
+            'mission_template_id' => $missionTemplate->id,
+            'campaign_id' => $campaign->id,
+            'venue_id' => $campaign->venue_id,
+            'code' => 'manual-sponsor-mission-01',
+            'title_override' => 'Manual sponsor mission',
+            'status' => 'active',
+            'metadata' => [
+                'source' => 'test',
+                'cycle_step_index' => 3,
+                'cycle_step_label' => 'گام مشوق دستی اسپانسر',
+            ],
+        ]);
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.rewards.api.sponsor-assignment', $reward), [
+                'mission_instance_id' => $mission->id,
+                'reward_tier' => 'silver',
+                'reward_option' => 'manual family challenge',
+                'claim_condition' => 'mission_completion',
+                'point_cost' => 0,
+                'stock_quantity' => 20,
+                'partner_allocations' => [
+                    ['partner_account_id' => $partner->id, 'quantity' => 20],
+                ],
+                'status' => 'active',
+                'availability_status' => 'active',
+                'fulfillment_window' => '3 days after mission completion',
+                'notes' => 'Assign manual sponsor incentive to mission.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('status', 'success');
+
+        $reward->refresh();
+        $this->assertSame(20, $reward->stock_quantity);
+        $this->assertSame('assigned_to_mission', $reward->metadata['assignment_status']);
+        $this->assertSame([['partner_account_id' => $partner->id, 'quantity' => 20]], $reward->metadata['partner_allocations']);
+        $this->assertDatabaseHas('reward_inventory_allocations', [
+            'reward_definition_id' => $reward->id,
+            'partner_account_id' => $partner->id,
+            'mission_instance_id' => $mission->id,
+            'allocated_quantity' => 20,
+            'status' => 'active',
+        ]);
+
         $this->actingAs($admin)
             ->getJson(route('admin.sponsors.index'))
             ->assertOk()

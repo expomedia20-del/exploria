@@ -88,6 +88,7 @@ type RewardItem = {
     campaign: RegistryEntity | null;
     venue: RegistryEntity | null;
     partner: (RegistryEntity & { partnerType: string }) | null;
+    targetPartners: (RegistryEntity & { partnerType: string; plannedQuantity: number | null })[];
     inventorySummary: {
         allocated: number;
         reserved: number;
@@ -1722,6 +1723,50 @@ export default function MissionRewardRegistryIndex({
                                                                     className="rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                                                                 />
                                                             </label>
+                                                            <label className="grid gap-1">
+                                                                <span className="text-muted-foreground">تعداد کل قابل ارائه</span>
+                                                                <input
+                                                                    name="stock_quantity"
+                                                                    type="number"
+                                                                    min="0"
+                                                                    defaultValue={(reward.stockQuantity ?? reward.inventorySummary.allocated) || ''}
+                                                                    className="rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                                                    placeholder="مثلا ۱۰۰"
+                                                                />
+                                                                <InputError message={errors.stock_quantity} />
+                                                            </label>
+                                                            <div className="grid gap-2 rounded-md border border-fuchsia-200 bg-background/70 p-3 dark:border-fuchsia-900 md:col-span-2">
+                                                                <div>
+                                                                    <p className="font-medium text-foreground">سهم واحدهای هدف</p>
+                                                                    <p className="mt-1 text-muted-foreground">
+                                                                        اگر سهم‌ها را وارد کنید، مجموع سهم‌ها باید با تعداد کل برابر باشد.
+                                                                    </p>
+                                                                </div>
+                                                                {reward.targetPartners.length === 0 ? (
+                                                                    <p className="rounded-md bg-muted/50 px-3 py-2 text-muted-foreground">
+                                                                        هنوز واحد هدفی برای این مشوق ثبت نشده است. ابتدا در صفحه اسپانسر و درآمد، اسپانسر را به واحد عضو وصل کنید یا این مشوق را بدون سهم واحدی ذخیره کنید.
+                                                                    </p>
+                                                                ) : (
+                                                                    <div className="grid gap-2 sm:grid-cols-2">
+                                                                        {reward.targetPartners.map((partner, index) => (
+                                                                            <label key={partner.id} className="grid gap-1 rounded-md bg-background/90 px-3 py-2">
+                                                                                <span className="font-medium text-foreground">{partner.name}</span>
+                                                                                <span className="text-muted-foreground" dir="ltr">{partner.code}</span>
+                                                                                <input type="hidden" name={`partner_allocations[${index}][partner_account_id]`} value={partner.id} />
+                                                                                <input
+                                                                                    name={`partner_allocations[${index}][quantity]`}
+                                                                                    type="number"
+                                                                                    min="0"
+                                                                                    defaultValue={partner.plannedQuantity ?? ''}
+                                                                                    className="rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                                                                    placeholder="تعداد سهم"
+                                                                                />
+                                                                                <InputError message={(errors as Record<string, string>)[`partner_allocations.${index}.quantity`]} />
+                                                                            </label>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                             <label className="grid gap-1">
                                                                 <span className="text-muted-foreground">وضعیت پاداش</span>
                                                                 <select
