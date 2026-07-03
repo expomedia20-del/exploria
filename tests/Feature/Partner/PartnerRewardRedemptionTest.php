@@ -4,8 +4,11 @@ namespace Tests\Feature\Partner;
 
 use App\Enums\UserRole;
 use App\Models\MissionInstance;
+use App\Models\MissionTemplate;
+use App\Models\PartnerAccount;
 use App\Models\QrCode;
 use App\Models\RewardDefinition;
+use App\Models\RewardInventoryAllocation;
 use App\Models\RewardRedemption;
 use App\Models\User;
 use App\Models\Visit;
@@ -112,6 +115,88 @@ class PartnerRewardRedemptionTest extends TestCase
 
         $this->assertSame('confirmed', $redemption->status);
         $this->assertSame('redeemed', $redemption->userReward->status);
+    }
+
+    public function test_sponsor_inventory_is_reserved_and_redeemed_through_partner_code(): void
+    {
+        $campaign = $this->visit->campaign;
+        $partner = PartnerAccount::query()->where('code', 'cafe-eco')->firstOrFail();
+        $reward = RewardDefinition::query()->create([
+            'campaign_id' => $campaign->id,
+            'venue_id' => $campaign->venue_id,
+            'code' => 'sponsor-inventory-redemption',
+            'name' => 'Sponsor Inventory Redemption',
+            'reward_type' => 'sponsor_reward',
+            'point_cost' => 0,
+            'stock_quantity' => 3,
+            'status' => 'active',
+            'metadata' => [
+                'source' => 'admin_sponsor_activation',
+                'approval_status' => 'approved',
+                'availability_status' => 'active',
+                'target_partner_account_ids' => [$partner->id],
+                'partner_allocations' => [
+                    ['partner_account_id' => $partner->id, 'quantity' => 3],
+                ],
+            ],
+        ]);
+        $allocation = RewardInventoryAllocation::query()->create([
+            'reward_definition_id' => $reward->id,
+            'campaign_id' => $campaign->id,
+            'partner_account_id' => $partner->id,
+            'allocated_quantity' => 3,
+            'reserved_quantity' => 0,
+            'redeemed_quantity' => 0,
+            'status' => 'active',
+            'metadata' => ['source' => 'test'],
+        ]);
+        $template = MissionTemplate::query()->create([
+            'code' => 'sponsor-inventory-redemption-template',
+            'title' => 'Sponsor Inventory Redemption Template',
+            'description' => 'Issues a sponsor redemption code.',
+            'mission_type' => 'challenge',
+            'trigger_type' => 'manual',
+            'point_value' => 20,
+            'status' => 'active',
+        ]);
+        MissionInstance::query()->create([
+            'mission_template_id' => $template->id,
+            'campaign_id' => $campaign->id,
+            'venue_id' => $campaign->venue_id,
+            'code' => 'sponsor-inventory-redemption-mission',
+            'title_override' => 'Sponsor inventory redemption mission',
+            'status' => 'active',
+            'metadata' => [
+                'source' => 'test',
+                'reward_code' => $reward->code,
+            ],
+        ]);
+
+        $this->completeMission('sponsor-inventory-redemption-mission');
+
+        $redemption = RewardRedemption::query()
+            ->with(['partnerAccount', 'userReward.rewardDefinition'])
+            ->whereHas('userReward', fn ($query) => $query->where('reward_definition_id', $reward->id))
+            ->firstOrFail();
+
+        $this->assertSame('pending', $redemption->status);
+        $this->assertSame('cafe-eco', $redemption->partnerAccount->code);
+        $this->assertSame($allocation->id, $redemption->metadata['reward_inventory_allocation_id']);
+        $this->assertSame(1, $allocation->fresh()->reserved_quantity);
+        $this->assertSame(0, $allocation->fresh()->redeemed_quantity);
+
+        $partnerUser = User::query()->where('email', 'cafe.eco@example.test')->firstOrFail();
+        $this->actingAs($partnerUser)
+            ->postJson(route('partner.redemptions.api.confirm'), [
+                'redemption_code' => $redemption->redemption_code,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'confirmed');
+
+        $allocation->refresh();
+        $this->assertSame(0, $allocation->reserved_quantity);
+        $this->assertSame(1, $allocation->redeemed_quantity);
+        $this->assertSame('redeemed', $redemption->fresh()->userReward->status);
     }
 
     public function test_other_partner_cannot_confirm_foreign_redemption_code(): void

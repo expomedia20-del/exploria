@@ -9,6 +9,7 @@ use App\Models\Campaign;
 use App\Models\PartnerAccount;
 use App\Models\PartnerUser;
 use App\Models\RewardDefinition;
+use App\Models\RewardInventoryAllocation;
 use App\Models\RewardRedemption;
 use App\Models\User;
 use App\Models\UserReward;
@@ -299,18 +300,39 @@ class PartnerDashboardService
     {
         $userReward->loadMissing('rewardDefinition');
 
-        return RewardRedemption::query()->firstOrCreate(
-            [
+        return DB::transaction(function () use ($userReward): RewardRedemption {
+            $existing = RewardRedemption::query()
+                ->where('user_reward_id', $userReward->id)
+                ->where('user_id', $userReward->user_id)
+                ->lockForUpdate()
+                ->first();
+
+            if ($existing) {
+                return $existing;
+            }
+
+            $allocation = $this->reserveInventoryForReward($userReward->rewardDefinition);
+            $partnerId = $allocation?->partner_account_id ?? $userReward->rewardDefinition?->partner_account_id;
+
+            if (! $partnerId) {
+                throw ValidationException::withMessages([
+                    'reward' => 'برای این پاداش واحد تحویل یا موجودی قابل رزرو ثبت نشده است.',
+                ]);
+            }
+
+            return RewardRedemption::query()->create([
                 'user_reward_id' => $userReward->id,
                 'user_id' => $userReward->user_id,
-            ],
-            [
-                'partner_account_id' => $userReward->rewardDefinition?->partner_account_id,
+                'partner_account_id' => $partnerId,
                 'redemption_code' => $this->uniqueRedemptionCode(),
                 'status' => 'pending',
-                'metadata' => ['source' => 'reward_awarded'],
-            ],
-        );
+                'metadata' => [
+                    'source' => 'reward_awarded',
+                    'reward_inventory_allocation_id' => $allocation?->id,
+                    'reserved_at' => $allocation ? now()->toIso8601String() : null,
+                ],
+            ]);
+        });
     }
 
     public function confirmRedemption(User $partnerUser, string $redemptionCode): RewardRedemption
@@ -319,7 +341,7 @@ class PartnerDashboardService
 
         return DB::transaction(function () use ($partner, $redemptionCode): RewardRedemption {
             $redemption = RewardRedemption::query()
-                ->with('userReward')
+                ->with('userReward.rewardDefinition')
                 ->where('redemption_code', Str::upper($redemptionCode))
                 ->lockForUpdate()
                 ->first();
@@ -340,18 +362,83 @@ class PartnerDashboardService
                 ]);
             }
 
+            $allocation = $this->allocationForRedemption($redemption);
+
+            if ($allocation) {
+                $allocation->update([
+                    'reserved_quantity' => max(0, $allocation->reserved_quantity - 1),
+                    'redeemed_quantity' => $allocation->redeemed_quantity + 1,
+                ]);
+            }
+
             $redemption->update([
                 'status' => 'confirmed',
                 'redeemed_at' => now(),
                 'metadata' => [
                     ...($redemption->metadata ?? []),
                     'confirmed_by_partner_id' => $partner->id,
+                    'reward_inventory_allocation_id' => $allocation?->id ?? ($redemption->metadata['reward_inventory_allocation_id'] ?? null),
                 ],
             ]);
             $redemption->userReward?->update(['status' => 'redeemed']);
 
             return $redemption;
         });
+    }
+
+    private function reserveInventoryForReward(?RewardDefinition $reward): ?RewardInventoryAllocation
+    {
+        if (! $reward) {
+            return null;
+        }
+
+        $query = RewardInventoryAllocation::query()
+            ->where('reward_definition_id', $reward->id)
+            ->whereRaw('allocated_quantity > reserved_quantity + redeemed_quantity')
+            ->lockForUpdate();
+
+        if ($reward->partner_account_id) {
+            $query->where('partner_account_id', $reward->partner_account_id);
+        }
+
+        $allocation = $query
+            ->orderByDesc(DB::raw('allocated_quantity - reserved_quantity - redeemed_quantity'))
+            ->orderBy('created_at')
+            ->first();
+
+        if (! $allocation) {
+            return null;
+        }
+
+        $allocation->update(['reserved_quantity' => $allocation->reserved_quantity + 1]);
+
+        return $allocation->refresh();
+    }
+
+    private function allocationForRedemption(RewardRedemption $redemption): ?RewardInventoryAllocation
+    {
+        $allocationId = $redemption->metadata['reward_inventory_allocation_id'] ?? null;
+
+        if (is_string($allocationId) && $allocationId !== '') {
+            return RewardInventoryAllocation::query()
+                ->whereKey($allocationId)
+                ->where('partner_account_id', $redemption->partner_account_id)
+                ->lockForUpdate()
+                ->first();
+        }
+
+        $reward = $redemption->userReward?->rewardDefinition;
+
+        if (! $reward) {
+            return null;
+        }
+
+        return RewardInventoryAllocation::query()
+            ->where('reward_definition_id', $reward->id)
+            ->where('partner_account_id', $redemption->partner_account_id)
+            ->where('reserved_quantity', '>', 0)
+            ->lockForUpdate()
+            ->first();
     }
 
     /** @return array<string, mixed> */

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\RecordStatus;
 use App\Models\MissionInstance;
 use App\Models\RewardDefinition;
+use App\Models\RewardInventoryAllocation;
 use App\Models\User;
 use App\Models\UserMissionProgress;
 use App\Models\UserReward;
@@ -283,11 +284,19 @@ class MissionFlowService
             ],
         );
 
-        if ($rewardDefinition->partner_account_id) {
+        if ($rewardDefinition->partner_account_id || $this->hasRedeemableInventory($rewardDefinition)) {
             app(PartnerDashboardService::class)->ensureRedemptionForReward($userReward);
         }
 
         return $userReward;
+    }
+
+    private function hasRedeemableInventory(RewardDefinition $rewardDefinition): bool
+    {
+        return RewardInventoryAllocation::query()
+            ->where('reward_definition_id', $rewardDefinition->id)
+            ->whereRaw('allocated_quantity > reserved_quantity + redeemed_quantity')
+            ->exists();
     }
 
     private function existingRewardForMission(User $user, MissionInstance $mission): ?UserReward
