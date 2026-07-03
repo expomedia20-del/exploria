@@ -120,6 +120,34 @@ class SponsorActivationTest extends TestCase
             'contract_value' => 75000000,
         ]);
 
+        $reward = RewardDefinition::query()
+            ->where('campaign_id', $campaign->id)
+            ->where('code', 'manual-sp-ecopark-pilot-1405-family-market-sponsor')
+            ->firstOrFail();
+
+        $this->assertSame('admin_sponsor_activation', $reward->metadata['source']);
+        $this->assertSame('family_team_challenge', $reward->metadata['package_type']);
+        $this->assertSame([], $reward->metadata['target_partner_account_ids']);
+        $this->assertSame('sponsor_reward', $reward->reward_type);
+
+        $partner = PartnerAccount::query()->where('code', 'cafe-eco')->firstOrFail();
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.sponsor-partner-assignments.api.store'), [
+                'sponsor_account_id' => $sponsor->id,
+                'partner_account_id' => $partner->id,
+                'campaign_id' => $campaign->id,
+                'activation_role' => 'reward_redemption',
+                'status' => 'active',
+                'notes' => 'Cafe handles manual sponsor campaign rewards.',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('status', 'success');
+
+        $reward->refresh();
+        $this->assertSame([$partner->id], $reward->metadata['target_partner_account_ids']);
+        $this->assertSame($partner->id, $reward->partner_account_id);
+
         $this->actingAs($admin)
             ->getJson(route('admin.sponsors.index'))
             ->assertOk()

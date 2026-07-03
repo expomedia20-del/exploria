@@ -284,6 +284,7 @@ const rewardTierLabels: Record<string, string> = {
 
 const rewardSourceLabels: Record<string, string> = {
     admin_campaign_components: 'تعریف مستقیم ادمین',
+    admin_sponsor_activation: 'از اتصال دستی اسپانسر',
     partner_offer_submission: 'پیشنهاد واحد تجاری',
     sponsor_proposal_activation: 'از پیشنهاد اسپانسر',
 };
@@ -302,9 +303,12 @@ const claimConditionOptions = Object.entries(claimConditionLabels).map(([value, 
 
 const sourceClasses: Record<string, string> = {
     admin_campaign_components: 'bg-slate-100 text-slate-700 dark:bg-slate-900 dark:text-slate-200',
+    admin_sponsor_activation: 'bg-cyan-100 text-cyan-800 ring-1 ring-cyan-200 dark:bg-cyan-950 dark:text-cyan-200 dark:ring-cyan-900',
     partner_offer_submission: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200',
     sponsor_proposal_activation: 'bg-fuchsia-100 text-fuchsia-800 ring-1 ring-fuchsia-200 dark:bg-fuchsia-950 dark:text-fuchsia-200 dark:ring-fuchsia-900',
 };
+
+const sponsorIncentiveSources = ['sponsor_proposal_activation', 'admin_sponsor_activation'];
 
 const rewardTierOptions = [
     { value: 'bronze', label: 'برنزی' },
@@ -486,8 +490,8 @@ export default function MissionRewardRegistryIndex({
     const approvedPartnerOffers = partnerRewardOffers.filter((reward) => reward.approvalStatus === 'approved');
     const revisionPartnerOffers = partnerRewardOffers.filter((reward) => reward.approvalStatus === 'revision_requested');
     const directRewardDefinitions = rewards.filter((reward) => reward.source !== 'partner_offer_submission');
-    const sponsorTreasures = treasures.filter((treasure) => treasure.source === 'sponsor_proposal_activation');
-    const standaloneTreasures = treasures.filter((treasure) => !(treasure.source === 'sponsor_proposal_activation' && treasure.linkedRewardId));
+    const sponsorTreasures = treasures.filter((treasure) => treasure.source && sponsorIncentiveSources.includes(treasure.source));
+    const standaloneTreasures = treasures.filter((treasure) => !(treasure.source && sponsorIncentiveSources.includes(treasure.source) && treasure.linkedRewardId));
 
     function selectMissionPlanStep(step: MissionPlanStep, index: number) {
         setSelectedMissionPlanIndex(index);
@@ -1584,7 +1588,7 @@ export default function MissionRewardRegistryIndex({
                                         اعتبار: {formatDate(reward.availableFrom)} تا {formatDate(reward.availableUntil)}
                                         {reward.fulfillmentWindow ? ` · تحویل: ${reward.fulfillmentWindow}` : ''}
                                     </p>
-                                    {reward.source === 'sponsor_proposal_activation' ? (
+                                    {reward.source && sponsorIncentiveSources.includes(reward.source) ? (
                                         <div className="grid gap-3 rounded-md border border-fuchsia-200 bg-fuchsia-50/60 p-3 text-xs dark:border-fuchsia-900 dark:bg-fuchsia-950/20">
                                             <div className="grid gap-2 text-muted-foreground sm:grid-cols-3">
                                                 <p>

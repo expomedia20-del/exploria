@@ -311,8 +311,8 @@ class MissionRewardRegistryService
     {
         $reward->loadMissing('campaign');
 
-        if (($reward->metadata['source'] ?? null) !== 'sponsor_proposal_activation') {
-            throw ValidationException::withMessages(['reward' => 'فقط مشوق‌های ایجادشده از پیشنهاد اسپانسر از این مسیر به ماموریت وصل می‌شوند.']);
+        if (! in_array($reward->metadata['source'] ?? null, ['sponsor_proposal_activation', 'admin_sponsor_activation'], true)) {
+            throw ValidationException::withMessages(['reward' => 'فقط مشوق‌های اسپانسری آماده طراحی از این مسیر به ماموریت وصل می‌شوند.']);
         }
 
         $campaign = $reward->campaign;

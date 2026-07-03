@@ -186,16 +186,23 @@ class SponsorActivationService
                 $metadata = array_merge($sponsorship->metadata ?? [], $attributes['metadata']);
                 $sponsorship->update(array_merge($attributes, ['metadata' => $metadata]));
 
-                return $sponsorship->refresh();
+                $sponsorship = $sponsorship->refresh();
+                $this->syncManualSponsorshipIncentive($sponsorship);
+
+                return $sponsorship;
             }
 
-            return CampaignSponsorship::query()->updateOrCreate(
+            $sponsorship = CampaignSponsorship::query()->updateOrCreate(
                 [
                     'campaign_id' => $attributes['campaign_id'],
                     'sponsor_account_id' => $attributes['sponsor_account_id'],
                 ],
                 $attributes,
             );
+
+            $this->syncManualSponsorshipIncentive($sponsorship->refresh());
+
+            return $sponsorship;
         });
     }
 
@@ -238,10 +245,13 @@ class SponsorActivationService
                 $metadata = array_merge($assignment->metadata ?? [], $attributes['metadata']);
                 $assignment->update(array_merge($attributes, ['metadata' => $metadata]));
 
-                return $assignment->refresh();
+                $assignment = $assignment->refresh();
+                $this->syncManualSponsorshipForAssignment($assignment);
+
+                return $assignment;
             }
 
-            return SponsorPartnerAssignment::query()->updateOrCreate(
+            $assignment = SponsorPartnerAssignment::query()->updateOrCreate(
                 [
                     'sponsor_account_id' => $attributes['sponsor_account_id'],
                     'partner_account_id' => $attributes['partner_account_id'],
@@ -250,7 +260,154 @@ class SponsorActivationService
                 ],
                 $attributes,
             );
+
+            $this->syncManualSponsorshipForAssignment($assignment->refresh());
+
+            return $assignment;
         });
+    }
+
+    private function syncManualSponsorshipForAssignment(SponsorPartnerAssignment $assignment): void
+    {
+        if (! $assignment->campaign_id) {
+            return;
+        }
+
+        $sponsorship = CampaignSponsorship::query()
+            ->where('campaign_id', $assignment->campaign_id)
+            ->where('sponsor_account_id', $assignment->sponsor_account_id)
+            ->first();
+
+        if ($sponsorship) {
+            $this->syncManualSponsorshipIncentive($sponsorship);
+        }
+    }
+
+    private function syncManualSponsorshipIncentive(CampaignSponsorship $sponsorship): RewardDefinition
+    {
+        $sponsorship->loadMissing(['campaign', 'sponsorAccount']);
+
+        $campaign = $sponsorship->campaign;
+        $sponsor = $sponsorship->sponsorAccount;
+        $targetPartnerIds = SponsorPartnerAssignment::query()
+            ->where('campaign_id', $sponsorship->campaign_id)
+            ->where('sponsor_account_id', $sponsorship->sponsor_account_id)
+            ->where('status', '!=', 'inactive')
+            ->pluck('partner_account_id')
+            ->unique()
+            ->values()
+            ->all();
+        $partnerId = count($targetPartnerIds) === 1 ? $targetPartnerIds[0] : null;
+        $code = $this->manualSponsorshipRewardCode($campaign, $sponsor);
+        $metadata = [
+            'source' => 'admin_sponsor_activation',
+            'source_type' => 'sponsor',
+            'approval_status' => 'approved',
+            'availability_status' => 'pending_campaign_assignment',
+            'sponsor_account_id' => $sponsor->id,
+            'sponsor_account_code' => $sponsor->code,
+            'campaign_sponsorship_id' => $sponsorship->id,
+            'sponsorship_goal' => $sponsorship->sponsorship_goal,
+            'package_type' => $sponsorship->package_type,
+            'reward_tier' => null,
+            'reward_option' => $sponsorship->package_type,
+            'target_partner_account_ids' => $targetPartnerIds,
+            'partner_allocations' => [],
+            'description' => $sponsorship->notes,
+            'terms' => 'این مشوق از اتصال دستی اسپانسر به کمپین ساخته شده و باید در صفحه ماموریت‌ها به گام، شرط دریافت و سهم اجرایی وصل شود.',
+            'budget_amount' => $sponsorship->budget_amount,
+            'contract_value' => $sponsorship->contract_value,
+            'available_from' => $sponsorship->starts_at?->toIso8601String(),
+            'available_until' => $sponsorship->ends_at?->toIso8601String(),
+        ];
+
+        $reward = RewardDefinition::query()->updateOrCreate(
+            ['campaign_id' => $campaign->id, 'code' => $code],
+            [
+                'venue_id' => $campaign->venue_id,
+                'partner_account_id' => $partnerId,
+                'name' => $this->manualSponsorshipRewardName($sponsorship),
+                'reward_type' => 'sponsor_reward',
+                'point_cost' => null,
+                'stock_quantity' => null,
+                'status' => 'draft',
+                'metadata' => $metadata,
+            ],
+        );
+
+        if ($sponsorship->package_type === 'treasure_sponsor') {
+            $this->syncManualSponsorshipTreasure($sponsorship, $reward);
+        } else {
+            $this->deactivateManualSponsorshipTreasure($sponsorship);
+        }
+
+        return $reward->refresh();
+    }
+
+    private function syncManualSponsorshipTreasure(CampaignSponsorship $sponsorship, RewardDefinition $reward): Treasure
+    {
+        $campaign = $sponsorship->campaign;
+        $sponsor = $sponsorship->sponsorAccount;
+        $targetPartnerIds = $reward->metadata['target_partner_account_ids'] ?? [];
+        $code = Str::limit($this->manualSponsorshipRewardCode($campaign, $sponsor).'-treasure', 120, '');
+
+        return Treasure::query()->updateOrCreate(
+            ['campaign_id' => $campaign->id, 'code' => $code],
+            [
+                'venue_id' => $campaign->venue_id,
+                'mission_instance_id' => null,
+                'name' => $reward->name,
+                'treasure_type' => 'sponsor_reward_treasure',
+                'status' => 'draft',
+                'reveal_rule' => [
+                    'mode' => 'admin_assign_to_mission',
+                    'reward_definition_id' => $reward->id,
+                    'target_partner_account_ids' => $targetPartnerIds,
+                ],
+                'metadata' => [
+                    'source' => 'admin_sponsor_activation',
+                    'source_type' => 'sponsor',
+                    'sponsor_account_id' => $sponsor->id,
+                    'sponsor_account_code' => $sponsor->code,
+                    'campaign_sponsorship_id' => $sponsorship->id,
+                    'reward_definition_id' => $reward->id,
+                    'treasure_tier' => null,
+                    'reveal_description' => $sponsorship->notes,
+                    'discovery_hint' => 'این گنج از اتصال دستی اسپانسر به کمپین ساخته شده و باید در صفحه ماموریت‌ها به گام چرخه وصل شود.',
+                    'target_partner_account_ids' => $targetPartnerIds,
+                ],
+            ],
+        );
+    }
+
+    private function deactivateManualSponsorshipTreasure(CampaignSponsorship $sponsorship): void
+    {
+        $code = Str::limit($this->manualSponsorshipRewardCode($sponsorship->campaign, $sponsorship->sponsorAccount).'-treasure', 120, '');
+
+        Treasure::query()
+            ->where('campaign_id', $sponsorship->campaign_id)
+            ->where('code', $code)
+            ->update(['status' => 'inactive']);
+    }
+
+    private function manualSponsorshipRewardCode(Campaign $campaign, SponsorAccount $sponsor): string
+    {
+        return Str::limit(Str::slug('manual-sp-'.$campaign->code.'-'.$sponsor->code, '-'), 120, '');
+    }
+
+    private function manualSponsorshipRewardName(CampaignSponsorship $sponsorship): string
+    {
+        $packageLabels = [
+            'pilot_activation' => 'فعال‌سازی پایلوت',
+            'display_media' => 'رسانه نمایشی',
+            'treasure_sponsor' => 'اسپانسر گنج',
+            'family_team_challenge' => 'چالش خانوادگی',
+            'scientific_cultural_challenge' => 'چالش علمی/فرهنگی',
+        ];
+
+        $package = $packageLabels[$sponsorship->package_type] ?? $sponsorship->package_type;
+
+        return trim(($sponsorship->sponsorAccount?->name ?? 'اسپانسر').' - '.$package);
     }
 
     /** @param array<string, mixed> $data */
