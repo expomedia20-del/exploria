@@ -9,10 +9,12 @@ use App\Models\MissionInstance;
 use App\Models\MissionTemplate;
 use App\Models\PartnerAccount;
 use App\Models\RewardDefinition;
+use App\Models\RewardInventoryAllocation;
 use App\Models\Touchpoint;
 use App\Models\Treasure;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -58,7 +60,12 @@ class MissionRewardRegistryService
                 $query->whereIn('venue_id', $venueIds)
                     ->orWhereIn('partner_account_id', $partnerIds);
             }))
-            ->with(['campaign:id,code,name', 'venue:id,code,name', 'partnerAccount:id,code,name,partner_type'])
+            ->with([
+                'campaign:id,code,name',
+                'venue:id,code,name',
+                'partnerAccount:id,code,name,partner_type',
+                'inventoryAllocations.partnerAccount:id,code,name,partner_type',
+            ])
             ->withCount('userRewards')
             ->orderBy('created_at')
             ->get()
@@ -299,6 +306,81 @@ class MissionRewardRegistryService
         return DB::transaction(fn (): Treasure => $this->replaceTreasureCycleStep($campaign, $data['cycle_step_index'] ?? null, $attributes, $data['treasure_id'] ?? null));
     }
 
+    /** @param array<string, mixed> $data */
+    public function assignSponsorIncentive(RewardDefinition $reward, array $data, User $actor): RewardDefinition
+    {
+        $reward->loadMissing('campaign');
+
+        if (($reward->metadata['source'] ?? null) !== 'sponsor_proposal_activation') {
+            throw ValidationException::withMessages(['reward' => 'فقط مشوق‌های ایجادشده از پیشنهاد اسپانسر از این مسیر به ماموریت وصل می‌شوند.']);
+        }
+
+        $campaign = $reward->campaign;
+        $mission = MissionInstance::query()
+            ->whereKey($data['mission_instance_id'])
+            ->where('campaign_id', $campaign->id)
+            ->firstOrFail();
+
+        $treasure = ! empty($data['treasure_id'])
+            ? Treasure::query()->whereKey($data['treasure_id'])->where('campaign_id', $campaign->id)->firstOrFail()
+            : $this->linkedTreasureForReward($reward);
+
+        $cycleStepIndex = $mission->metadata['cycle_step_index'] ?? null;
+        $cycleStepLabel = $mission->metadata['cycle_step_label'] ?? null;
+        $rewardTier = $data['reward_tier'];
+
+        return DB::transaction(function () use ($actor, $campaign, $cycleStepIndex, $cycleStepLabel, $data, $mission, $reward, $rewardTier, $treasure): RewardDefinition {
+            $metadata = array_merge($reward->metadata ?? [], [
+                'reward_tier' => $rewardTier,
+                'reward_option' => $data['reward_option'] ?? ($reward->metadata['reward_option'] ?? null),
+                'cycle_step_index' => $cycleStepIndex,
+                'cycle_step_label' => $cycleStepLabel,
+                'claim_condition' => $data['claim_condition'],
+                'mission_instance_id' => $mission->id,
+                'linked_treasure_id' => $treasure?->id,
+                'availability_status' => $data['availability_status'],
+                'assignment_status' => 'assigned_to_mission',
+                'assigned_by_user_id' => $actor->id,
+                'assigned_at' => now()->toIso8601String(),
+                'assignment_notes' => $data['notes'] ?? null,
+                'fulfillment_window' => $data['fulfillment_window'] ?? ($reward->metadata['fulfillment_window'] ?? null),
+            ]);
+
+            $reward->update([
+                'point_cost' => $data['point_cost'] ?? null,
+                'status' => $data['status'],
+                'metadata' => $metadata,
+            ]);
+
+            if ($treasure) {
+                $treasure->update([
+                    'mission_instance_id' => $mission->id,
+                    'status' => $data['status'],
+                    'reveal_rule' => array_merge($treasure->reveal_rule ?? [], [
+                        'mode' => 'mission_reward_claim',
+                        'reward_definition_id' => $reward->id,
+                        'required_reward_id' => $reward->id,
+                        'required_mission_instance_id' => $mission->id,
+                        'required_reward_tier' => $rewardTier,
+                        'claim_condition' => $data['claim_condition'],
+                    ]),
+                    'metadata' => array_merge($treasure->metadata ?? [], [
+                        'treasure_tier' => $rewardTier,
+                        'cycle_step_index' => $cycleStepIndex,
+                        'cycle_step_label' => $cycleStepLabel,
+                        'mission_instance_id' => $mission->id,
+                        'reward_definition_id' => $reward->id,
+                        'assignment_status' => 'assigned_to_mission',
+                    ]),
+                ]);
+            }
+
+            $this->syncRewardInventoryAllocations($reward->refresh(), $treasure, $mission);
+
+            return $reward->refresh()->load('inventoryAllocations.partnerAccount');
+        });
+    }
+
     private function missionIdForCycleStep(Campaign $campaign, mixed $cycleStepIndex): ?string
     {
         if (! $cycleStepIndex) {
@@ -310,6 +392,102 @@ class MissionRewardRegistryService
             ->where('metadata->cycle_step_index', (int) $cycleStepIndex)
             ->latest()
             ->value('id');
+    }
+
+    private function linkedTreasureForReward(RewardDefinition $reward): ?Treasure
+    {
+        return Treasure::query()
+            ->where('campaign_id', $reward->campaign_id)
+            ->get()
+            ->first(function (Treasure $treasure) use ($reward): bool {
+                return ($treasure->metadata['reward_definition_id'] ?? null) === $reward->id
+                    || ($treasure->reveal_rule['reward_definition_id'] ?? null) === $reward->id;
+            });
+    }
+
+    private function syncRewardInventoryAllocations(RewardDefinition $reward, ?Treasure $treasure, MissionInstance $mission): void
+    {
+        $plan = $this->inventoryPlanForReward($reward);
+
+        if ($plan->isEmpty()) {
+            return;
+        }
+
+        $partnerIds = $plan->pluck('partner_account_id')->unique()->values();
+        $partners = PartnerAccount::query()
+            ->whereIn('id', $partnerIds)
+            ->where('venue_id', $reward->venue_id)
+            ->pluck('id');
+
+        if ($partners->count() !== $partnerIds->count()) {
+            throw ValidationException::withMessages(['partner_allocations' => 'همه واحدهای سهم‌بر باید به مکان همین کمپین تعلق داشته باشند.']);
+        }
+
+        foreach ($plan as $item) {
+            RewardInventoryAllocation::query()->updateOrCreate(
+                [
+                    'reward_definition_id' => $reward->id,
+                    'partner_account_id' => $item['partner_account_id'],
+                ],
+                [
+                    'treasure_id' => $treasure?->id,
+                    'campaign_id' => $reward->campaign_id,
+                    'sponsor_proposal_activation_id' => $reward->metadata['sponsor_proposal_activation_id'] ?? null,
+                    'mission_instance_id' => $mission->id,
+                    'allocated_quantity' => $item['quantity'],
+                    'status' => $reward->status->value === RecordStatus::Active->value ? 'active' : 'planned',
+                    'metadata' => [
+                        'source' => 'sponsor_incentive_assignment',
+                        'claim_condition' => $reward->metadata['claim_condition'] ?? null,
+                        'reward_tier' => $reward->metadata['reward_tier'] ?? null,
+                    ],
+                ],
+            );
+        }
+
+        RewardInventoryAllocation::query()
+            ->where('reward_definition_id', $reward->id)
+            ->whereNotIn('partner_account_id', $partnerIds)
+            ->update(['status' => 'inactive']);
+    }
+
+    /** @return Collection<int, array{partner_account_id: string, quantity: int}> */
+    private function inventoryPlanForReward(RewardDefinition $reward): Collection
+    {
+        $metadata = $reward->metadata ?? [];
+        $allocations = collect($metadata['partner_allocations'] ?? [])
+            ->map(fn (array $allocation): array => [
+                'partner_account_id' => (string) ($allocation['partner_account_id'] ?? ''),
+                'quantity' => (int) ($allocation['quantity'] ?? 0),
+            ])
+            ->filter(fn (array $allocation): bool => $allocation['partner_account_id'] !== '' && $allocation['quantity'] > 0)
+            ->values();
+
+        if ($allocations->isNotEmpty()) {
+            return $allocations;
+        }
+
+        $partnerIds = collect($metadata['target_partner_account_ids'] ?? [])
+            ->when($reward->partner_account_id, fn (Collection $ids): Collection => $ids->push($reward->partner_account_id))
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($partnerIds->isEmpty()) {
+            return collect();
+        }
+
+        $total = (int) ($reward->stock_quantity ?? 0);
+        $base = $total > 0 ? intdiv($total, $partnerIds->count()) : 0;
+        $remainder = $total > 0 ? $total % $partnerIds->count() : 0;
+
+        return $partnerIds
+            ->map(fn (string $partnerId, int $index): array => [
+                'partner_account_id' => $partnerId,
+                'quantity' => $base + ($index < $remainder ? 1 : 0),
+            ])
+            ->filter(fn (array $allocation): bool => $allocation['quantity'] > 0)
+            ->values();
     }
 
     public function deleteMission(MissionInstance $mission): void
@@ -485,6 +663,10 @@ class MissionRewardRegistryService
             'source' => $reward->metadata['source'] ?? null,
             'rewardTier' => $reward->metadata['reward_tier'] ?? null,
             'rewardOption' => $reward->metadata['reward_option'] ?? null,
+            'assignmentStatus' => $reward->metadata['assignment_status'] ?? null,
+            'claimCondition' => $reward->metadata['claim_condition'] ?? null,
+            'missionInstanceId' => $reward->metadata['mission_instance_id'] ?? null,
+            'linkedTreasureId' => $reward->metadata['linked_treasure_id'] ?? null,
             'cycleStep' => [
                 'index' => $reward->metadata['cycle_step_index'] ?? null,
                 'label' => $reward->metadata['cycle_step_label'] ?? null,
@@ -503,6 +685,28 @@ class MissionRewardRegistryService
             'campaign' => $reward->campaign ? ['id' => $reward->campaign->id, 'code' => $reward->campaign->code, 'name' => $reward->campaign->name] : null,
             'venue' => $reward->venue ? ['id' => $reward->venue->id, 'code' => $reward->venue->code, 'name' => $reward->venue->name] : null,
             'partner' => $reward->partnerAccount ? ['id' => $reward->partnerAccount->id, 'code' => $reward->partnerAccount->code, 'name' => $reward->partnerAccount->name, 'partnerType' => $reward->partnerAccount->partner_type] : null,
+            'inventorySummary' => [
+                'allocated' => (int) $reward->inventoryAllocations->sum('allocated_quantity'),
+                'reserved' => (int) $reward->inventoryAllocations->sum('reserved_quantity'),
+                'redeemed' => (int) $reward->inventoryAllocations->sum('redeemed_quantity'),
+                'remaining' => (int) $reward->inventoryAllocations->sum(fn (RewardInventoryAllocation $allocation): int => max(0, $allocation->allocated_quantity - $allocation->reserved_quantity - $allocation->redeemed_quantity)),
+            ],
+            'inventoryAllocations' => $reward->inventoryAllocations
+                ->map(fn (RewardInventoryAllocation $allocation): array => [
+                    'id' => $allocation->id,
+                    'partner' => $allocation->partnerAccount ? [
+                        'id' => $allocation->partnerAccount->id,
+                        'code' => $allocation->partnerAccount->code,
+                        'name' => $allocation->partnerAccount->name,
+                        'partnerType' => $allocation->partnerAccount->partner_type,
+                    ] : null,
+                    'allocatedQuantity' => $allocation->allocated_quantity,
+                    'reservedQuantity' => $allocation->reserved_quantity,
+                    'redeemedQuantity' => $allocation->redeemed_quantity,
+                    'remainingQuantity' => max(0, $allocation->allocated_quantity - $allocation->reserved_quantity - $allocation->redeemed_quantity),
+                    'status' => $allocation->status,
+                ])
+                ->values(),
         ];
     }
 
@@ -521,6 +725,7 @@ class MissionRewardRegistryService
             'revealDescription' => $treasure->metadata['reveal_description'] ?? null,
             'discoveryHint' => $treasure->metadata['discovery_hint'] ?? null,
             'source' => $treasure->metadata['source'] ?? null,
+            'linkedRewardId' => $treasure->metadata['reward_definition_id'] ?? ($treasure->reveal_rule['reward_definition_id'] ?? null),
             'cycleStep' => [
                 'index' => $treasure->metadata['cycle_step_index'] ?? null,
                 'label' => $treasure->metadata['cycle_step_label'] ?? null,

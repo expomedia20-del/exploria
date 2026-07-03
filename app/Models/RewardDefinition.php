@@ -67,4 +67,10 @@ class RewardDefinition extends Model
     {
         return $this->hasMany(UserReward::class);
     }
+
+    /** @return HasMany<RewardInventoryAllocation, $this> */
+    public function inventoryAllocations(): HasMany
+    {
+        return $this->hasMany(RewardInventoryAllocation::class);
+    }
 }

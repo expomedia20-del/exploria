@@ -4,8 +4,11 @@ namespace Tests\Feature\Admin;
 
 use App\Enums\UserRole;
 use App\Models\Campaign;
+use App\Models\MissionInstance;
+use App\Models\MissionTemplate;
 use App\Models\PartnerAccount;
 use App\Models\RewardDefinition;
+use App\Models\RewardInventoryAllocation;
 use App\Models\SponsorAccount;
 use App\Models\SponsorProposal;
 use App\Models\SponsorProposalActivation;
@@ -376,13 +379,81 @@ class SponsorActivationTest extends TestCase
         $this->assertSame($reward->id, $treasure->metadata['reward_definition_id']);
         $this->assertSame($reward->id, $treasure->reveal_rule['reward_definition_id']);
 
+        $missionTemplate = MissionTemplate::query()->create([
+            'code' => 'sponsor-prize-mission',
+            'title' => 'Sponsor Prize Mission',
+            'description' => 'Mission for sponsored prize claim.',
+            'mission_type' => 'challenge',
+            'trigger_type' => 'manual',
+            'point_value' => 100,
+            'status' => 'active',
+        ]);
+        $mission = MissionInstance::query()->create([
+            'mission_template_id' => $missionTemplate->id,
+            'campaign_id' => $campaign->id,
+            'venue_id' => $campaign->venue_id,
+            'code' => 'sponsor-prize-mission-01',
+            'title_override' => 'Sponsor prize mission',
+            'status' => 'active',
+            'metadata' => [
+                'source' => 'test',
+                'cycle_step_index' => 2,
+                'cycle_step_label' => 'گام جایزه اسپانسری',
+            ],
+        ]);
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.rewards.api.sponsor-assignment', $reward), [
+                'mission_instance_id' => $mission->id,
+                'treasure_id' => $treasure->id,
+                'reward_tier' => 'gold',
+                'reward_option' => 'family prize box',
+                'claim_condition' => 'family_team_completion',
+                'point_cost' => 10,
+                'status' => 'active',
+                'availability_status' => 'active',
+                'fulfillment_window' => '7 days after mission completion',
+                'notes' => 'Assign sponsor prize to mission step.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('status', 'success');
+
+        $reward->refresh();
+        $treasure->refresh();
+
+        $this->assertSame('gold', $reward->metadata['reward_tier']);
+        $this->assertSame('family_team_completion', $reward->metadata['claim_condition']);
+        $this->assertSame($mission->id, $reward->metadata['mission_instance_id']);
+        $this->assertSame($treasure->id, $reward->metadata['linked_treasure_id']);
+        $this->assertSame($mission->id, $treasure->mission_instance_id);
+        $this->assertSame('family_team_completion', $treasure->reveal_rule['claim_condition']);
+        $this->assertSame('gold', $treasure->metadata['treasure_tier']);
+
+        $this->assertSame(2, RewardInventoryAllocation::query()->where('reward_definition_id', $reward->id)->count());
+        $this->assertDatabaseHas('reward_inventory_allocations', [
+            'reward_definition_id' => $reward->id,
+            'partner_account_id' => $partners[0]->id,
+            'mission_instance_id' => $mission->id,
+            'allocated_quantity' => 40,
+            'status' => 'active',
+        ]);
+        $this->assertDatabaseHas('reward_inventory_allocations', [
+            'reward_definition_id' => $reward->id,
+            'partner_account_id' => $partners[1]->id,
+            'mission_instance_id' => $mission->id,
+            'allocated_quantity' => 60,
+            'status' => 'active',
+        ]);
+
         $response = $this->actingAs($admin)
             ->getJson(route('admin.missions.index', ['campaign' => $campaign->code]))
             ->assertOk();
 
         $this->assertTrue(collect($response->json('data.rewards'))->contains(
             fn (array $reward): bool => $reward['source'] === 'sponsor_proposal_activation'
-                && $reward['name'] === 'Sponsor family prize box',
+                && $reward['name'] === 'Sponsor family prize box'
+                && $reward['claimCondition'] === 'family_team_completion'
+                && $reward['inventorySummary']['allocated'] === 100,
         ));
         $this->assertTrue(collect($response->json('data.treasures'))->contains(
             fn (array $treasure): bool => $treasure['source'] === 'sponsor_proposal_activation'

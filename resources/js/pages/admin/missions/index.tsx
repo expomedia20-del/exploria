@@ -68,6 +68,10 @@ type RewardItem = {
     rewardTier: string | null;
     source: string | null;
     rewardOption: string | null;
+    assignmentStatus: string | null;
+    claimCondition: string | null;
+    missionInstanceId: string | null;
+    linkedTreasureId: string | null;
     cycleStep: { index: number | null; label: string | null };
     description: string | null;
     terms: string | null;
@@ -84,6 +88,21 @@ type RewardItem = {
     campaign: RegistryEntity | null;
     venue: RegistryEntity | null;
     partner: (RegistryEntity & { partnerType: string }) | null;
+    inventorySummary: {
+        allocated: number;
+        reserved: number;
+        redeemed: number;
+        remaining: number;
+    };
+    inventoryAllocations: {
+        id: string;
+        partner: (RegistryEntity & { partnerType: string }) | null;
+        allocatedQuantity: number;
+        reservedQuantity: number;
+        redeemedQuantity: number;
+        remainingQuantity: number;
+        status: string;
+    }[];
 };
 
 
@@ -161,6 +180,7 @@ type TreasureItem = {
     revealDescription: string | null;
     discoveryHint: string | null;
     source: string | null;
+    linkedRewardId: string | null;
     cycleStep: { index: number | null; label: string | null };
     campaign: RegistryEntity | null;
     venue: RegistryEntity | null;
@@ -235,9 +255,12 @@ const statusLabels: Record<string, string> = {
     inactive: 'غیرفعال',
     placeholder: 'نمونه کنترل شده',
     pending_review: 'در انتظار تایید',
+    pending_campaign_assignment: 'در انتظار اتصال به ماموریت',
     approved: 'تایید شده',
     rejected: 'رد شده',
     revision_requested: 'نیازمند اصلاح',
+    paused: 'متوقف',
+    planned: 'برنامه‌ریزی شده',
 };
 
 const statusClasses: Record<string, string> = {
@@ -246,6 +269,9 @@ const statusClasses: Record<string, string> = {
     inactive: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200',
     placeholder: 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-200',
     revision_requested: 'bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-200',
+    pending_campaign_assignment: 'bg-fuchsia-100 text-fuchsia-800 dark:bg-fuchsia-950 dark:text-fuchsia-200',
+    paused: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200',
+    planned: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-200',
 };
 
 const rewardTierLabels: Record<string, string> = {
@@ -261,6 +287,18 @@ const rewardSourceLabels: Record<string, string> = {
     partner_offer_submission: 'پیشنهاد واحد تجاری',
     sponsor_proposal_activation: 'از پیشنهاد اسپانسر',
 };
+
+const claimConditionLabels: Record<string, string> = {
+    mission_completion: 'تکمیل ماموریت',
+    treasure_discovery: 'کشف گنج',
+    qr_scan: 'اسکن QR',
+    purchase_validation: 'تایید خرید',
+    family_team_completion: 'مشارکت گروهی/خانوادگی',
+    referral_activation: 'دعوت و جذب کاربر',
+    manual_admin: 'تایید دستی ادمین',
+};
+
+const claimConditionOptions = Object.entries(claimConditionLabels).map(([value, label]) => ({ value, label }));
 
 const sourceClasses: Record<string, string> = {
     admin_campaign_components: 'bg-slate-100 text-slate-700 dark:bg-slate-900 dark:text-slate-200',
@@ -447,6 +485,7 @@ export default function MissionRewardRegistryIndex({
     const approvedPartnerOffers = partnerRewardOffers.filter((reward) => reward.approvalStatus === 'approved');
     const revisionPartnerOffers = partnerRewardOffers.filter((reward) => reward.approvalStatus === 'revision_requested');
     const directRewardDefinitions = rewards.filter((reward) => reward.source !== 'partner_offer_submission');
+    const sponsorTreasures = treasures.filter((treasure) => treasure.source === 'sponsor_proposal_activation');
 
     function selectMissionPlanStep(step: MissionPlanStep, index: number) {
         setSelectedMissionPlanIndex(index);
@@ -1423,7 +1462,7 @@ export default function MissionRewardRegistryIndex({
                         <div className="border-b border-sidebar-border/70 px-4 py-3 dark:border-sidebar-border">
                             <h2 className="font-semibold">پاداش‌های داخلی و نهایی کمپین</h2>
                             <p className="mt-1 text-xs text-muted-foreground">
-                                پیشنهادهای فروشگاه/اسپانسر در میز بازبینی مرحله ۴ مدیریت می‌شوند؛ این بخش برای پاداش‌هایی است که ادمین مستقیم تعریف یا نهایی می‌کند.
+                                پاداش‌های مستقیم ادمین و مشوق‌های اسپانسری نهایی‌شده در این بخش به ماموریت، سطح پاداش، شرط دریافت و سهم واحدها وصل می‌شوند.
                             </p>
                         </div>
                         <div className="divide-y divide-sidebar-border/70 dark:divide-sidebar-border">
@@ -1543,6 +1582,194 @@ export default function MissionRewardRegistryIndex({
                                         اعتبار: {formatDate(reward.availableFrom)} تا {formatDate(reward.availableUntil)}
                                         {reward.fulfillmentWindow ? ` · تحویل: ${reward.fulfillmentWindow}` : ''}
                                     </p>
+                                    {reward.source === 'sponsor_proposal_activation' ? (
+                                        <div className="grid gap-3 rounded-md border border-fuchsia-200 bg-fuchsia-50/60 p-3 text-xs dark:border-fuchsia-900 dark:bg-fuchsia-950/20">
+                                            <div className="grid gap-2 text-muted-foreground sm:grid-cols-3">
+                                                <p>
+                                                    اتصال:{' '}
+                                                    <span className="font-medium text-foreground">
+                                                        {reward.assignmentStatus === 'assigned_to_mission' ? 'وصل شده' : 'در انتظار اتصال'}
+                                                    </span>
+                                                </p>
+                                                <p>
+                                                    شرط دریافت:{' '}
+                                                    <span className="font-medium text-foreground">
+                                                        {reward.claimCondition ? claimConditionLabels[reward.claimCondition] ?? reward.claimCondition : '-'}
+                                                    </span>
+                                                </p>
+                                                <p>
+                                                    موجودی باقی‌مانده:{' '}
+                                                    <span className="font-medium text-foreground">
+                                                        {reward.inventorySummary.remaining.toLocaleString('fa-IR')}
+                                                    </span>
+                                                </p>
+                                            </div>
+                                            {reward.inventoryAllocations.length > 0 ? (
+                                                <div className="grid gap-2 sm:grid-cols-2">
+                                                    {reward.inventoryAllocations.map((allocation) => (
+                                                        <div key={allocation.id} className="rounded-md bg-background/80 px-3 py-2">
+                                                            <p className="font-medium text-foreground">
+                                                                {allocation.partner?.name ?? 'واحد نامشخص'}
+                                                            </p>
+                                                            <p className="mt-1 text-muted-foreground">
+                                                                سهم: {allocation.allocatedQuantity.toLocaleString('fa-IR')} · رزرو: {allocation.reservedQuantity.toLocaleString('fa-IR')} · مصرف: {allocation.redeemedQuantity.toLocaleString('fa-IR')} · مانده: {allocation.remainingQuantity.toLocaleString('fa-IR')}
+                                                            </p>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <p className="text-muted-foreground">
+                                                    هنوز سهم واحدها برای این مشوق ثبت نشده است؛ با اتصال به ماموریت، سهم پیشنهادی اسپانسر به ردیابی موجودی تبدیل می‌شود.
+                                                </p>
+                                            )}
+                                            {canMutate ? (
+                                                <Form
+                                                    action={`/admin/rewards/${reward.id}/sponsor-assignment`}
+                                                    method="post"
+                                                    options={{ preserveScroll: true }}
+                                                    className="grid gap-3 border-t border-fuchsia-200 pt-3 dark:border-fuchsia-900 md:grid-cols-2"
+                                                >
+                                                    {({ processing, errors }) => (
+                                                        <>
+                                                            <label className="grid gap-1">
+                                                                <span className="text-muted-foreground">ماموریت دریافت</span>
+                                                                <select
+                                                                    name="mission_instance_id"
+                                                                    defaultValue={reward.missionInstanceId ?? missions.find((mission) => mission.cycleStep.index === reward.cycleStep.index)?.id ?? missions[0]?.id ?? ''}
+                                                                    className="rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                                                    required
+                                                                >
+                                                                    {missions.length === 0 ? <option value="">ماموریتی ثبت نشده است</option> : null}
+                                                                    {missions.map((mission) => (
+                                                                        <option key={mission.id} value={mission.id}>
+                                                                            {mission.title ?? mission.code}
+                                                                        </option>
+                                                                    ))}
+                                                                </select>
+                                                                <InputError message={errors.mission_instance_id} />
+                                                            </label>
+                                                            <label className="grid gap-1">
+                                                                <span className="text-muted-foreground">گنج مرتبط</span>
+                                                                <select
+                                                                    name="treasure_id"
+                                                                    defaultValue={reward.linkedTreasureId ?? sponsorTreasures.find((treasure) => treasure.linkedRewardId === reward.id)?.id ?? ''}
+                                                                    className="rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                                                >
+                                                                    <option value="">بدون گنج مستقیم</option>
+                                                                    {sponsorTreasures.map((treasure) => (
+                                                                        <option key={treasure.id} value={treasure.id}>
+                                                                            {treasure.name}
+                                                                        </option>
+                                                                    ))}
+                                                                </select>
+                                                                <InputError message={errors.treasure_id} />
+                                                            </label>
+                                                            <label className="grid gap-1">
+                                                                <span className="text-muted-foreground">سطح پاداش</span>
+                                                                <select
+                                                                    name="reward_tier"
+                                                                    defaultValue={reward.rewardTier ?? selectedRewardTier}
+                                                                    className="rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                                                    required
+                                                                >
+                                                                    {rewardTierOptions.map((tier) => (
+                                                                        <option key={tier.value} value={tier.value}>
+                                                                            {tier.label}
+                                                                        </option>
+                                                                    ))}
+                                                                </select>
+                                                                <InputError message={errors.reward_tier} />
+                                                            </label>
+                                                            <label className="grid gap-1">
+                                                                <span className="text-muted-foreground">شرط دریافت</span>
+                                                                <select
+                                                                    name="claim_condition"
+                                                                    defaultValue={reward.claimCondition ?? 'mission_completion'}
+                                                                    className="rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                                                    required
+                                                                >
+                                                                    {claimConditionOptions.map((condition) => (
+                                                                        <option key={condition.value} value={condition.value}>
+                                                                            {condition.label}
+                                                                        </option>
+                                                                    ))}
+                                                                </select>
+                                                                <InputError message={errors.claim_condition} />
+                                                            </label>
+                                                            <label className="grid gap-1">
+                                                                <span className="text-muted-foreground">گزینه/عنوان اجرایی</span>
+                                                                <input
+                                                                    name="reward_option"
+                                                                    defaultValue={reward.rewardOption ?? ''}
+                                                                    className="rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                                                    placeholder="مثلا جعبه جایزه خانواده"
+                                                                />
+                                                            </label>
+                                                            <label className="grid gap-1">
+                                                                <span className="text-muted-foreground">هزینه امتیازی</span>
+                                                                <input
+                                                                    name="point_cost"
+                                                                    type="number"
+                                                                    min="0"
+                                                                    defaultValue={reward.pointCost ?? 0}
+                                                                    className="rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                                                />
+                                                            </label>
+                                                            <label className="grid gap-1">
+                                                                <span className="text-muted-foreground">وضعیت پاداش</span>
+                                                                <select
+                                                                    name="status"
+                                                                    defaultValue={reward.status === 'active' ? 'active' : 'draft'}
+                                                                    className="rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                                                    required
+                                                                >
+                                                                    <option value="draft">پیش نویس</option>
+                                                                    <option value="active">فعال</option>
+                                                                    <option value="inactive">غیرفعال</option>
+                                                                </select>
+                                                            </label>
+                                                            <label className="grid gap-1">
+                                                                <span className="text-muted-foreground">وضعیت ارائه</span>
+                                                                <select
+                                                                    name="availability_status"
+                                                                    defaultValue={reward.availabilityStatus ?? 'pending_campaign_assignment'}
+                                                                    className="rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                                                    required
+                                                                >
+                                                                    <option value="pending_campaign_assignment">در انتظار اتصال</option>
+                                                                    <option value="active">فعال</option>
+                                                                    <option value="paused">متوقف</option>
+                                                                </select>
+                                                            </label>
+                                                            <label className="grid gap-1 md:col-span-2">
+                                                                <span className="text-muted-foreground">پنجره تحویل</span>
+                                                                <input
+                                                                    name="fulfillment_window"
+                                                                    defaultValue={reward.fulfillmentWindow ?? ''}
+                                                                    className="rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                                                    placeholder="مثلا تا ۷ روز پس از تکمیل ماموریت"
+                                                                />
+                                                            </label>
+                                                            <label className="grid gap-1 md:col-span-2">
+                                                                <span className="text-muted-foreground">یادداشت اتصال</span>
+                                                                <textarea
+                                                                    name="notes"
+                                                                    className="min-h-16 rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                                                    placeholder="جزئیات اجرایی برای تیم عملیات یا واحدهای هدف"
+                                                                />
+                                                            </label>
+                                                            <div className="md:col-span-2">
+                                                                <Button type="submit" disabled={processing || missions.length === 0}>
+                                                                    <Sparkles className="size-4" />
+                                                                    اتصال به ماموریت و ثبت سهم واحدها
+                                                                </Button>
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                </Form>
+                                            ) : null}
+                                        </div>
+                                    ) : null}
                                     {reward.reviewNotes ? (
                                         <p className="rounded-md bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
                                             یادداشت بازبینی: {reward.reviewNotes}

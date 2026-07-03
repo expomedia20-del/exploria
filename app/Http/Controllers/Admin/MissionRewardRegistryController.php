@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\AssignSponsorIncentiveRequest;
 use App\Http\Requests\Admin\StoreMissionInstanceRequest;
 use App\Http\Requests\Admin\StoreRewardDefinitionRequest;
 use App\Http\Requests\Admin\StoreTreasureRequest;
@@ -71,6 +72,17 @@ class MissionRewardRegistryController extends Controller
         }
 
         return back()->with('success', 'گنج کمپین ثبت شد.');
+    }
+
+    public function assignSponsorIncentive(AssignSponsorIncentiveRequest $request, RewardDefinition $reward, MissionRewardRegistryService $service): JsonResponse|RedirectResponse
+    {
+        $reward = $service->assignSponsorIncentive($reward, $request->validated(), $request->user());
+
+        if ($request->expectsJson()) {
+            return response()->json(['status' => 'success', 'data' => ['id' => $reward->id, 'code' => $reward->code]]);
+        }
+
+        return back()->with('success', 'مشوق اسپانسری به ماموریت، سطح پاداش و ردیابی موجودی وصل شد.');
     }
 
     public function destroyMission(Request $request, MissionInstance $mission, MissionRewardRegistryService $service): JsonResponse|RedirectResponse

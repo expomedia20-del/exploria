@@ -188,6 +188,9 @@ Route::delete('/admin/missions/{mission}', [MissionRewardRegistryController::cla
 Route::post('/admin/rewards', [MissionRewardRegistryController::class, 'storeReward'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.rewards.store');
+Route::post('/admin/rewards/{reward}/sponsor-assignment', [MissionRewardRegistryController::class, 'assignSponsorIncentive'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.rewards.sponsor-assignment');
 Route::delete('/admin/rewards/{reward}', [MissionRewardRegistryController::class, 'destroyReward'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.rewards.destroy');
@@ -327,6 +330,9 @@ Route::post('/api/v1/admin/missions', [MissionRewardRegistryController::class, '
 Route::post('/api/v1/admin/rewards', [MissionRewardRegistryController::class, 'storeReward'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.rewards.api.store');
+Route::post('/api/v1/admin/rewards/{reward}/sponsor-assignment', [MissionRewardRegistryController::class, 'assignSponsorIncentive'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.rewards.api.sponsor-assignment');
 Route::post('/api/v1/admin/treasures', [MissionRewardRegistryController::class, 'storeTreasure'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.treasures.api.store');
