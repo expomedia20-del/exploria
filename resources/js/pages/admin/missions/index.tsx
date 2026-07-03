@@ -434,6 +434,7 @@ export default function MissionRewardRegistryIndex({
     const [editingMission, setEditingMission] = useState<MissionItem | null>(null);
     const [editingReward, setEditingReward] = useState<RewardItem | null>(null);
     const [editingTreasure, setEditingTreasure] = useState<TreasureItem | null>(null);
+    const [expandedSponsorRewardId, setExpandedSponsorRewardId] = useState<string | null>(null);
     const selectedMissionPlan = missionPlan[selectedMissionPlanIndex] ?? null;
     const selectedMissionTemplate = formOptions.missionTemplates.find((template) => template.id === selectedMissionTemplateId) ?? formOptions.missionTemplates[0] ?? null;
     const missionPlanTemplate = formOptions.missionTemplates.find((template) => template.code === selectedMissionPlan?.recommendedTemplateCode) ?? selectedMissionTemplate;
@@ -486,6 +487,7 @@ export default function MissionRewardRegistryIndex({
     const revisionPartnerOffers = partnerRewardOffers.filter((reward) => reward.approvalStatus === 'revision_requested');
     const directRewardDefinitions = rewards.filter((reward) => reward.source !== 'partner_offer_submission');
     const sponsorTreasures = treasures.filter((treasure) => treasure.source === 'sponsor_proposal_activation');
+    const standaloneTreasures = treasures.filter((treasure) => !(treasure.source === 'sponsor_proposal_activation' && treasure.linkedRewardId));
 
     function selectMissionPlanStep(step: MissionPlanStep, index: number) {
         setSelectedMissionPlanIndex(index);
@@ -1460,9 +1462,9 @@ export default function MissionRewardRegistryIndex({
                 <section className="grid gap-4 lg:grid-cols-2">
                     <div className="rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border">
                         <div className="border-b border-sidebar-border/70 px-4 py-3 dark:border-sidebar-border">
-                            <h2 className="font-semibold">پاداش‌های داخلی و نهایی کمپین</h2>
+                            <h2 className="font-semibold">پاداش‌ها و مشوق‌های آماده اتصال</h2>
                             <p className="mt-1 text-xs text-muted-foreground">
-                                پاداش‌های مستقیم ادمین و مشوق‌های اسپانسری نهایی‌شده در این بخش به ماموریت، سطح پاداش، شرط دریافت و سهم واحدها وصل می‌شوند.
+                                پاداش‌های مستقیم ادمین و بسته‌های اسپانسری نهایی‌شده اینجا به ماموریت، سطح پاداش، شرط دریافت و سهم واحدها وصل می‌شوند.
                             </p>
                         </div>
                         <div className="divide-y divide-sidebar-border/70 dark:divide-sidebar-border">
@@ -1623,12 +1625,13 @@ export default function MissionRewardRegistryIndex({
                                                 </p>
                                             )}
                                             {canMutate ? (
-                                                <Form
-                                                    action={`/admin/rewards/${reward.id}/sponsor-assignment`}
-                                                    method="post"
-                                                    options={{ preserveScroll: true }}
-                                                    className="grid gap-3 border-t border-fuchsia-200 pt-3 dark:border-fuchsia-900 md:grid-cols-2"
-                                                >
+                                                expandedSponsorRewardId === reward.id ? (
+                                                    <Form
+                                                        action={`/admin/rewards/${reward.id}/sponsor-assignment`}
+                                                        method="post"
+                                                        options={{ preserveScroll: true }}
+                                                        className="grid gap-3 border-t border-fuchsia-200 pt-3 dark:border-fuchsia-900 md:grid-cols-2"
+                                                    >
                                                     {({ processing, errors }) => (
                                                         <>
                                                             <label className="grid gap-1">
@@ -1758,7 +1761,10 @@ export default function MissionRewardRegistryIndex({
                                                                     placeholder="جزئیات اجرایی برای تیم عملیات یا واحدهای هدف"
                                                                 />
                                                             </label>
-                                                            <div className="md:col-span-2">
+                                                            <div className="flex flex-wrap items-center justify-between gap-2 md:col-span-2">
+                                                                <Button type="button" variant="outline" onClick={() => setExpandedSponsorRewardId(null)}>
+                                                                    بستن فرم
+                                                                </Button>
                                                                 <Button type="submit" disabled={processing || missions.length === 0}>
                                                                     <Sparkles className="size-4" />
                                                                     اتصال به ماموریت و ثبت سهم واحدها
@@ -1766,7 +1772,15 @@ export default function MissionRewardRegistryIndex({
                                                             </div>
                                                         </>
                                                     )}
-                                                </Form>
+                                                    </Form>
+                                                ) : (
+                                                    <div className="border-t border-fuchsia-200 pt-3 dark:border-fuchsia-900">
+                                                        <Button type="button" size="sm" onClick={() => setExpandedSponsorRewardId(reward.id)}>
+                                                            <Sparkles className="size-4" />
+                                                            اتصال به ماموریت و ثبت سهم واحدها
+                                                        </Button>
+                                                    </div>
+                                                )
                                             ) : null}
                                         </div>
                                     ) : null}
@@ -1870,17 +1884,17 @@ export default function MissionRewardRegistryIndex({
 
                     <div className="rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border">
                         <div className="border-b border-sidebar-border/70 px-4 py-3 dark:border-sidebar-border">
-                            <h2 className="font-semibold">گنج‌ها</h2>
+                            <h2 className="font-semibold">گنج‌های مستقل مسیر</h2>
                             <p className="mt-1 text-xs text-muted-foreground">
-                                گنج با پاداش فرق دارد: گنج لحظه کشف، پیام، قفل‌گشایی یا جایزه پنهان مسیر است و باید به ماموریت و گام چرخه وصل بماند.
+                                این بخش فقط گنج‌هایی را نشان می‌دهد که مستقل از بسته‌های اسپانسری ساخته شده‌اند. گنج‌های وابسته به اسپانسر داخل همان کارت مشوق مدیریت می‌شوند.
                             </p>
                         </div>
                         <div className="divide-y divide-sidebar-border/70 dark:divide-sidebar-border">
-                            {treasures.length === 0 ? (
+                            {standaloneTreasures.length === 0 ? (
                                 <div className="p-6 text-sm text-muted-foreground">
-                                    هنوز گنجی برای چرخه این کمپین ثبت نشده است. از فرم گنج مرحله ۳، گنج را به ماموریت همان گام وصل کنید.
+                                    هنوز گنج مستقل برای چرخه این کمپین ثبت نشده است. گنج‌های ساخته‌شده از پیشنهاد اسپانسر در کارت همان مشوق نمایش داده می‌شوند.
                                 </div>
-                            ) : treasures.map((treasure) => (
+                            ) : standaloneTreasures.map((treasure) => (
                                 <article
                                     key={treasure.id}
                                     className="grid gap-2 px-4 py-3 text-sm"
