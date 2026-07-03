@@ -162,8 +162,8 @@ const mainNavItems: RoleAwareNavItem[] = [
         roles: ['admin', 'sponsor'],
     },
     {
-        title: 'پنل مدیر هاب',
-        href: '/hub/dashboard',
+        title: 'پنل مدیر رواق / زون',
+        href: '/ravaq/dashboard',
         icon: Network,
         group: '۵. پنل نقش‌ها',
         roles: ['admin', 'hub_manager'],

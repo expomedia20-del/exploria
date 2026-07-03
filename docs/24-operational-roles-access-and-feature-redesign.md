@@ -451,3 +451,8 @@ Next recommended slice:
 
 - Add venue manager comments / readiness confirmations as a controlled workflow.
 - Add ravaq / zone manager panel using hub scope but user-facing ravaq language.
+
+Quick follow-up:
+
+- Added `/ravaq/dashboard` and `/api/v1/ravaq/dashboard` as the user-facing ravaq / zone panel route.
+- The first slice intentionally reuses hub-scoped data and review actions, while the sidebar and page language now present it as `پنل مدیر رواق / زون`.

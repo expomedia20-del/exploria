@@ -42,6 +42,25 @@ class HubManagerDashboardTest extends TestCase
                 ->has('displayDevices', 1));
     }
 
+    public function test_ravaq_manager_can_open_ravaq_named_dashboard(): void
+    {
+        $this->withoutVite();
+        $manager = User::query()->where('email', 'ravaq.manager@example.test')->firstOrFail();
+
+        $this->actingAs($manager)
+            ->get(route('ravaq.dashboard'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('hub/dashboard')
+                ->where('stats.hubs', 1)
+                ->where('hubs.0.code', 'ravaq-commercial-hub'));
+
+        $this->actingAs($manager)
+            ->getJson(route('ravaq.dashboard.index'))
+            ->assertOk()
+            ->assertJsonPath('data.hubs.0.code', 'ravaq-commercial-hub');
+    }
+
     public function test_admin_can_open_hub_dashboard_for_support(): void
     {
         $this->withoutVite();

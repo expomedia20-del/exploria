@@ -82,6 +82,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/hub/dashboard', [HubManagerDashboardController::class, 'page'])
         ->middleware('role:admin,hub_manager')
         ->name('hub.dashboard');
+    Route::get('/ravaq/dashboard', [HubManagerDashboardController::class, 'page'])
+        ->middleware('role:admin,hub_manager')
+        ->name('ravaq.dashboard');
     Route::get('/venue/dashboard', [VenueManagerDashboardController::class, 'page'])
         ->middleware('role:admin,operator,viewer')
         ->name('venue.dashboard');
@@ -117,6 +120,9 @@ Route::get('/api/v1/sponsor/dashboard', [SponsorDashboardController::class, 'ind
 Route::get('/api/v1/venue/dashboard', [VenueManagerDashboardController::class, 'index'])
     ->middleware(['auth', 'role:admin,operator,viewer'])
     ->name('venue.dashboard.index');
+Route::get('/api/v1/ravaq/dashboard', [HubManagerDashboardController::class, 'index'])
+    ->middleware(['auth', 'role:admin,hub_manager'])
+    ->name('ravaq.dashboard.index');
 Route::patch('/api/v1/sponsor/proposals/{proposal}', [SponsorDashboardController::class, 'updateProposal'])
     ->middleware(['auth', 'role:admin,operator,sponsor'])
     ->name('sponsor.proposals.api.update');

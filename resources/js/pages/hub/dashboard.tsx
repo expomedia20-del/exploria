@@ -405,7 +405,7 @@ export default function HubDashboard({
 }: Props) {
     return (
         <>
-            <Head title="پنل مدیر رواق" />
+            <Head title="پنل مدیر رواق / زون" />
             <div
                 dir="rtl"
                 className="flex h-full flex-1 flex-col gap-5 overflow-x-auto p-4"
@@ -416,7 +416,7 @@ export default function HubDashboard({
                             دسترسی محدود به محدوده مدیریتی
                         </p>
                         <h1 className="mt-1 text-2xl font-semibold">
-                            پنل مدیر رواق / هاب
+                            پنل مدیر رواق / زون
                         </h1>
                     </div>
                     <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-5">
@@ -686,8 +686,8 @@ function EmptyState() {
 HubDashboard.layout = {
     breadcrumbs: [
         {
-            title: 'پنل مدیر رواق',
-            href: '/hub/dashboard',
+            title: 'پنل مدیر رواق / زون',
+            href: '/ravaq/dashboard',
         },
     ],
 };
