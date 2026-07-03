@@ -318,6 +318,7 @@ export default function CampaignRegistryIndex({
                             action="/admin/campaigns"
                             method="post"
                             options={{ preserveScroll: true }}
+                            autoComplete="off"
                             className="grid gap-4 md:grid-cols-6"
                         >
                             {({ processing, errors }) => (
@@ -351,6 +352,7 @@ export default function CampaignRegistryIndex({
                                             id="name"
                                             name="name"
                                             required
+                                            autoComplete="off"
                                             key={`campaign-name-${editingCampaign?.id ?? 'new'}`}
                                             defaultValue={editingCampaign?.name ?? suggestedName}
                                             placeholder="مثلا کمپین گنج تابستان"
@@ -364,6 +366,7 @@ export default function CampaignRegistryIndex({
                                             name="code"
                                             required
                                             dir="ltr"
+                                            autoComplete="off"
                                             placeholder="summer-treasure"
                                             key={`campaign-code-${editingCampaign?.id ?? selectedBlueprint?.code ?? 'new'}`}
                                             defaultValue={editingCampaign?.code ?? suggestedCode}
@@ -379,6 +382,7 @@ export default function CampaignRegistryIndex({
                                             name="campaign_type"
                                             required
                                             dir="ltr"
+                                            autoComplete="off"
                                             key={`campaign-type-${editingCampaign?.id ?? 'new'}`}
                                             defaultValue={editingCampaign?.campaignType ?? (selectedBlueprint ? 'blueprint_campaign' : 'pilot_visit')}
                                         />
