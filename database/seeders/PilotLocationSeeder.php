@@ -68,6 +68,19 @@ class PilotLocationSeeder extends Seeder
             ['name' => 'محدوده ورودی اصلی', 'status' => RecordStatus::Active, 'metadata' => ['is_demo' => true]],
         );
 
+        $ravaqZone = Zone::query()->updateOrCreate(
+            ['venue_id' => $ecoPark->id, 'code' => 'ravaq-commercial-zone'],
+            [
+                'name' => 'محدوده رواق تجاری',
+                'status' => RecordStatus::Active,
+                'metadata' => [
+                    'is_demo' => true,
+                    'operational_scope' => 'ravaq_commercial_units',
+                    'scope_note' => 'Ravaq managers see only the commercial ravaq, food court, restaurant, and shop units inside this zone.',
+                ],
+            ],
+        );
+
         $hub = Hub::query()->updateOrCreate(
             ['zone_id' => $zone->id, 'code' => 'visitor-welcome-hub'],
             [
@@ -91,22 +104,32 @@ class PilotLocationSeeder extends Seeder
         );
 
         $ravaqHub = Hub::query()->updateOrCreate(
-            ['zone_id' => $zone->id, 'code' => 'ravaq-commercial-hub'],
+            ['zone_id' => $ravaqZone->id, 'code' => 'ravaq-commercial-hub'],
             [
                 'name' => 'رواق تجاری اکوپارک',
                 'hub_type' => 'commercial_ravaq',
                 'status' => RecordStatus::Active,
-                'metadata' => ['is_demo' => true, 'commercial_role' => 'merchant_cluster'],
+                'metadata' => [
+                    'is_demo' => true,
+                    'commercial_role' => 'merchant_cluster',
+                    'manager_scope' => 'ravaq_manager',
+                    'scope_note' => 'Commercial units, shops, and ravaq retailers only.',
+                ],
             ],
         );
 
         $foodHub = Hub::query()->updateOrCreate(
-            ['zone_id' => $zone->id, 'code' => 'foodcourt-family-hub'],
+            ['zone_id' => $ravaqZone->id, 'code' => 'foodcourt-family-hub'],
             [
                 'name' => 'هاب فودکورت و خانواده',
                 'hub_type' => 'food_family',
                 'status' => RecordStatus::Active,
-                'metadata' => ['is_demo' => true, 'commercial_role' => 'reward_redemption'],
+                'metadata' => [
+                    'is_demo' => true,
+                    'commercial_role' => 'reward_redemption',
+                    'manager_scope' => 'ravaq_manager',
+                    'scope_note' => 'Food court, restaurant, ice cream, and food-service units inside the ravaq commercial zone.',
+                ],
             ],
         );
 
@@ -129,9 +152,17 @@ class PilotLocationSeeder extends Seeder
             ['hub_id' => $ravaqHub->id, 'user_id' => $ravaqManager->id, 'assignment_role' => 'ravaq_manager'],
             ['status' => RecordStatus::Active, 'metadata' => ['is_demo' => true]],
         );
+        HubManagementAssignment::query()->updateOrCreate(
+            ['hub_id' => $foodHub->id, 'user_id' => $ravaqManager->id, 'assignment_role' => 'ravaq_manager'],
+            ['status' => RecordStatus::Active, 'metadata' => ['is_demo' => true, 'scope_reason' => 'foodcourt_inside_ravaq_zone']],
+        );
         UserAccessScope::query()->updateOrCreate(
             ['user_id' => $ravaqManager->id, 'role_key' => 'hub_manager', 'scope_type' => 'hub', 'scope_id' => $ravaqHub->id],
             ['status' => RecordStatus::Active, 'metadata' => ['source' => 'pilot_seed', 'legacy_table' => 'hub_management_assignments']],
+        );
+        UserAccessScope::query()->updateOrCreate(
+            ['user_id' => $ravaqManager->id, 'role_key' => 'hub_manager', 'scope_type' => 'hub', 'scope_id' => $foodHub->id],
+            ['status' => RecordStatus::Active, 'metadata' => ['source' => 'pilot_seed', 'scope_reason' => 'foodcourt_inside_ravaq_zone']],
         );
 
         $partners = [
@@ -193,7 +224,7 @@ class PilotLocationSeeder extends Seeder
                 ['partner_account_id' => $partner->id, 'hub_id' => $partnerHub->id],
                 [
                     'venue_id' => $ecoPark->id,
-                    'zone_id' => $zone->id,
+                    'zone_id' => $partnerHub->zone_id,
                     'touchpoint_id' => null,
                     'location_role' => $partnerData['location_role'],
                     'status' => RecordStatus::Active,

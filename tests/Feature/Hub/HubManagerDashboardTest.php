@@ -34,11 +34,11 @@ class HubManagerDashboardTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('hub/dashboard')
-                ->where('stats.hubs', 1)
-                ->where('stats.partners', 1)
+                ->where('stats.hubs', 2)
+                ->where('stats.partners', 2)
                 ->where('stats.displayDevices', 1)
-                ->has('hubs', 1)
-                ->has('partners', 1)
+                ->has('hubs', 2)
+                ->has('partners', 2)
                 ->has('displayDevices', 1));
     }
 
@@ -52,13 +52,17 @@ class HubManagerDashboardTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('hub/dashboard')
-                ->where('stats.hubs', 1)
-                ->where('hubs.0.code', 'ravaq-commercial-hub'));
+                ->where('stats.hubs', 2)
+                ->where('hubs.0.code', 'ravaq-commercial-hub')
+                ->where('hubs.1.code', 'foodcourt-family-hub'));
 
         $this->actingAs($manager)
             ->getJson(route('ravaq.dashboard.index'))
             ->assertOk()
-            ->assertJsonPath('data.hubs.0.code', 'ravaq-commercial-hub');
+            ->assertJsonPath('data.hubs.0.code', 'ravaq-commercial-hub')
+            ->assertJsonPath('data.hubs.1.code', 'foodcourt-family-hub')
+            ->assertJsonMissing(['code' => 'gonbad-mina-science-hub'])
+            ->assertJsonMissing(['code' => 'family-route-sponsor']);
     }
 
     public function test_admin_can_open_hub_dashboard_for_support(): void
@@ -86,7 +90,7 @@ class HubManagerDashboardTest extends TestCase
     {
         $manager = User::query()->where('email', 'ravaq.manager@example.test')->firstOrFail();
 
-        $this->submitAdRequest('cafe.eco@example.test', 'Out of scope cafe ad');
+        $this->submitAdRequest('family.sponsor@example.test', 'Out of scope science sponsor ad');
         $this->submitAdRequest('ravaq.store@example.test', 'Scoped ravaq ad');
         $this->submitPartnerOffer('ravaq.store@example.test', 'Scoped ravaq offer');
 
@@ -97,7 +101,7 @@ class HubManagerDashboardTest extends TestCase
             ->assertJsonPath('data.stats.pendingRewards', 1)
             ->assertJsonPath('data.adRequests.0.title', 'Scoped ravaq ad')
             ->assertJsonPath('data.rewards.0.name', 'Scoped ravaq offer')
-            ->assertJsonMissing(['title' => 'Out of scope cafe ad']);
+            ->assertJsonMissing(['title' => 'Out of scope science sponsor ad']);
     }
 
     public function test_hub_dashboard_api_reports_review_notes_after_scoped_decisions(): void
@@ -123,10 +127,13 @@ class HubManagerDashboardTest extends TestCase
             ->getJson(route('hub.dashboard.index'))
             ->assertOk();
 
-        $this->assertSame('Approved for mobile ravaq display.', $response->json('data.adRequests.0.reviewNotes'));
-        $this->assertNotNull($response->json('data.adRequests.0.reviewedAt'));
-        $this->assertSame('Partner must clarify terms before publishing.', $response->json('data.rewards.0.reviewNotes'));
-        $this->assertNotNull($response->json('data.rewards.0.reviewedAt'));
+        $reviewedAd = collect($response->json('data.adRequests'))->firstWhere('title', 'Reviewed ravaq ad');
+        $reviewedReward = collect($response->json('data.rewards'))->firstWhere('name', 'Reviewed ravaq offer');
+
+        $this->assertSame('Approved for mobile ravaq display.', $reviewedAd['reviewNotes'] ?? null);
+        $this->assertNotNull($reviewedAd['reviewedAt'] ?? null);
+        $this->assertSame('Partner must clarify terms before publishing.', $reviewedReward['reviewNotes'] ?? null);
+        $this->assertNotNull($reviewedReward['reviewedAt'] ?? null);
     }
 
     public function test_hub_manager_can_schedule_approved_ad_to_managed_display(): void
