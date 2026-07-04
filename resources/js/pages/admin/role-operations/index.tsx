@@ -100,8 +100,11 @@ function Stat({
 }: {
     icon: LucideIcon;
     label: string;
-    value: number;
+    value?: number;
 }) {
+    const safeValue =
+        typeof value === 'number' && Number.isFinite(value) ? value : 0;
+
     return (
         <div className="rounded-lg border border-sidebar-border/70 px-3 py-2 dark:border-sidebar-border">
             <div className="flex items-center gap-2 text-muted-foreground">
@@ -109,7 +112,7 @@ function Stat({
                 <span className="text-sm">{label}</span>
             </div>
             <p className="mt-2 text-xl font-semibold">
-                {value.toLocaleString('fa-IR')}
+                {safeValue.toLocaleString('fa-IR')}
             </p>
         </div>
     );
@@ -180,9 +183,16 @@ function RoleCard({ role }: { role: RoleItem }) {
 }
 
 export default function RoleOperationsIndex({
-    roles,
-    scopeTypes,
-    stats,
+    roles = [],
+    scopeTypes = [],
+    stats = {
+        totalRoles: 0,
+        exploriaTeamRoles: 0,
+        venueManagementRoles: 0,
+        commercialPartnerRoles: 0,
+        publicRoles: 0,
+        scopeTypes: 0,
+    },
 }: Props) {
     const groupedRoles: Record<RoleGroup, RoleItem[]> = {
         exploria_team: roles.filter((role) => role.group === 'exploria_team'),

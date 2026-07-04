@@ -85,6 +85,21 @@ class HubManagerDashboardTest extends TestCase
             ->assertJsonPath('data.stats.hubs', $activeHubCount);
     }
 
+    public function test_admin_ravaq_dashboard_still_uses_ravaq_scope(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)
+            ->getJson(route('ravaq.dashboard.index'))
+            ->assertOk()
+            ->assertJsonPath('data.stats.hubs', 2)
+            ->assertJsonPath('data.hubs.0.code', 'ravaq-commercial-hub')
+            ->assertJsonPath('data.hubs.1.code', 'foodcourt-family-hub')
+            ->assertJsonMissing(['code' => 'visitor-welcome-hub'])
+            ->assertJsonMissing(['code' => 'gonbad-mina-science-hub'])
+            ->assertJsonMissing(['code' => 'family-route-sponsor']);
+    }
+
 
     public function test_hub_dashboard_api_only_returns_managed_scope(): void
     {

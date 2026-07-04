@@ -13,11 +13,11 @@ class HubManagerDashboardController extends Controller
 {
     public function page(Request $request, HubManagerDashboardService $service): Response
     {
-        return Inertia::render('hub/dashboard', $service->overview($request->user()));
+        return Inertia::render('hub/dashboard', $service->overview($request->user(), $request->routeIs('ravaq.*')));
     }
 
     public function index(Request $request, HubManagerDashboardService $service): JsonResponse
     {
-        return response()->json(['status' => 'success', 'data' => $service->overview($request->user())]);
+        return response()->json(['status' => 'success', 'data' => $service->overview($request->user(), $request->routeIs('ravaq.*'))]);
     }
 }

@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Models\AdRequest;
 use App\Models\DisplayDevice;
 use App\Models\Hub;
+use App\Models\PartnerLocation;
 use App\Models\RewardDefinition;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -13,24 +14,51 @@ use Illuminate\Support\Collection;
 
 class HubManagerAccessService
 {
+    private const RAVAQ_HUB_CODES = [
+        'ravaq-commercial-hub',
+        'foodcourt-family-hub',
+    ];
+
     public function __construct(private readonly UserAccessScopeService $accessScopes) {}
 
     /** @return Collection<int, string> */
-    public function managedHubIds(User $user): Collection
+    public function managedHubIds(User $user, bool $ravaqOnly = false): Collection
     {
-        return $this->accessScopes->hubIds($user);
+        $hubIds = $this->accessScopes->hubIds($user);
+
+        if (! $ravaqOnly) {
+            return $hubIds;
+        }
+
+        $ravaqHubIds = Hub::query()
+            ->whereIn('code', self::RAVAQ_HUB_CODES)
+            ->pluck('id');
+
+        return $hubIds
+            ->intersect($ravaqHubIds)
+            ->values();
     }
 
     /** @return Collection<int, string> */
-    public function managedPartnerIds(User $user): Collection
+    public function managedPartnerIds(User $user, bool $ravaqOnly = false): Collection
     {
+        if ($ravaqOnly) {
+            return PartnerLocation::query()
+                ->whereIn('hub_id', $this->managedHubIds($user, true))
+                ->where('status', 'active')
+                ->pluck('partner_account_id')
+                ->filter()
+                ->unique()
+                ->values();
+        }
+
         return $this->accessScopes->partnerIds($user);
     }
 
     /** @return Collection<int, Hub> */
-    public function managedHubs(User $user): Collection
+    public function managedHubs(User $user, bool $ravaqOnly = false): Collection
     {
-        $hubIds = $this->managedHubIds($user);
+        $hubIds = $this->managedHubIds($user, $ravaqOnly);
 
         return Hub::query()
             ->with(['zone.venue:id,code,name'])

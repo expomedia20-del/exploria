@@ -15,11 +15,11 @@ class HubManagerDashboardService
     public function __construct(private readonly HubManagerAccessService $access) {}
 
     /** @return array<string, mixed> */
-    public function overview(User $user): array
+    public function overview(User $user, bool $ravaqOnly = false): array
     {
-        $hubs = $this->access->managedHubs($user);
-        $hubIds = $this->access->managedHubIds($user);
-        $partnerIds = $this->access->managedPartnerIds($user);
+        $hubs = $this->access->managedHubs($user, $ravaqOnly);
+        $hubIds = $this->access->managedHubIds($user, $ravaqOnly);
+        $partnerIds = $this->access->managedPartnerIds($user, $ravaqOnly);
 
         $partners = PartnerLocation::query()
             ->with(['partnerAccount:id,code,name,partner_type,status', 'hub:id,code,name', 'venue:id,code,name'])

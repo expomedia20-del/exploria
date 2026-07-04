@@ -412,7 +412,7 @@ export default function VenueDashboard({
 
                 <section className="grid gap-4 xl:grid-cols-2">
                     <Panel
-                        title="واحدها و شرکا"
+                        title="خلاصه مدیریتی واحدها و شرکا"
                         isEmpty={partners.length === 0}
                     >
                         {partners.map((partner) => (
@@ -438,7 +438,7 @@ export default function VenueDashboard({
                                     </span>
                                 </div>
                                 <p className="text-xs text-muted-foreground">
-                                    هاب/رواق: {partner.hubName ?? '-'} · پاداش:{' '}
+                                    محدوده: {partner.hubName ?? '-'} · پاداش:{' '}
                                     {formatNumber(partner.rewardCount)} · مصرف:{' '}
                                     {formatNumber(partner.redemptionCount)} ·
                                     تبلیغ: {formatNumber(partner.adCount)}

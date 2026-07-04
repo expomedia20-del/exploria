@@ -91,24 +91,28 @@ class VenueManagerDashboardService
                 'missionCount' => $hub->mission_instances_count,
             ]);
 
-        $partners = PartnerAccount::query()
+        $partnerAccounts = PartnerAccount::query()
             ->with(['locations.hub:id,code,name', 'venue:id,code,name'])
             ->withCount(['rewardDefinitions', 'rewardRedemptions', 'adRequests'])
             ->whereIn('venue_id', $venueIds)
             ->orderBy('created_at')
-            ->get()
-            ->map(fn (PartnerAccount $partner): array => [
-                'id' => $partner->id,
-                'code' => $partner->code,
-                'name' => $partner->name,
-                'partnerType' => $partner->partner_type,
-                'status' => $partner->status->value,
-                'venueName' => $partner->venue?->name,
-                'hubName' => $partner->locations->first()?->hub?->name,
-                'rewardCount' => $partner->reward_definitions_count,
-                'redemptionCount' => $partner->reward_redemptions_count,
-                'adCount' => $partner->ad_requests_count,
-            ]);
+            ->get();
+
+        $partners = $partnerAccounts
+            ->groupBy(fn (PartnerAccount $partner): string => $partner->locations->first()?->hub?->name ?? 'بدون هاب مشخص')
+            ->map(fn ($group, string $hubName): array => [
+                'id' => 'hub-partner-summary-'.md5($hubName),
+                'code' => 'summary',
+                'name' => $hubName,
+                'partnerType' => $group->count().' واحد/شریک',
+                'status' => RecordStatus::Active->value,
+                'venueName' => $group->first()?->venue?->name,
+                'hubName' => $hubName,
+                'rewardCount' => $group->sum('reward_definitions_count'),
+                'redemptionCount' => $group->sum('reward_redemptions_count'),
+                'adCount' => $group->sum('ad_requests_count'),
+            ])
+            ->values();
 
         $adRequests = AdRequest::query()
             ->with(['partnerAccount:id,code,name', 'hub:id,code,name', 'placements.displayDevice:id,code,name,device_type'])
@@ -213,7 +217,7 @@ class VenueManagerDashboardService
                 'venues' => $venues->count(),
                 'activeCampaigns' => $campaigns->where('status', RecordStatus::Active->value)->count(),
                 'hubs' => $hubs->count(),
-                'partners' => $partners->count(),
+                'partners' => $partnerAccounts->count(),
                 'pendingAds' => $adRequests->where('status', 'pending_review')->count(),
                 'displayDevices' => $displayDevices->count(),
                 'rewards' => $rewards->count(),
