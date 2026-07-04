@@ -27,6 +27,12 @@ type RoleItem = {
     dailyOperations: string[];
 };
 
+type AuthorityGuide = {
+    allowed: string[];
+    observeOnly: string[];
+    notAllowed: string[];
+};
+
 type Props = {
     roles: RoleItem[];
     scopeTypes: string[];
@@ -85,12 +91,85 @@ const roleLabels: Record<string, string> = {
     participant: 'بازدیدکننده / مشارکت‌کننده',
 };
 
+const authorityGuides: Record<string, AuthorityGuide> = {
+    venue_executive: {
+        allowed: [
+            'مشاهده وضعیت کلان مکان، کمپین‌ها، هاب‌ها، رواق‌ها و ریسک‌های روز اجرا',
+            'ثبت نظر مدیریتی درباره تغییراتی که روی کل مکان یا جریان بازدید اثر دارد',
+            'دریافت خلاصه عملکرد، آمادگی و نیازهای هماهنگی از مدیران زون/هاب',
+        ],
+        observeOnly: [
+            'خلاصه تبلیغات، پاداش‌ها، گنج‌ها، نمایشگرها و مشارکت واحدها در سطح مدیریتی',
+            'وضعیت آماده/نیازمند بررسی بدون ورود به جزئیات تجاری هر فروشگاه',
+        ],
+        notAllowed: [
+            'تصمیم درباره قیمت، درآمد، موجودی، نوع پاداش یا پیشنهاد اختصاصی هر واحد',
+            'تایید قرارداد اسپانسر، تایید مالی یا تغییر نقش‌ها و دسترسی‌های اکسپلوریا',
+        ],
+    },
+    ravaq_manager: {
+        allowed: [
+            'پایش نظم، آمادگی، ظرفیت، ازدحام و مشکلات اجرایی رواق و فودکورت',
+            'اعلام مغایرت با قوانین مجموعه یا مانع اجرایی برای تبلیغ، پاداش یا نمایشگر',
+            'تهیه گزارش کوتاه از وضعیت واحدهای داخل رواق برای مدیر مکان و اکسپلوریا',
+        ],
+        observeOnly: [
+            'تبلیغات و پاداش‌های واحدهای داخل رواق فقط برای هماهنگی و تطبیق با مقررات مجموعه',
+            'برنامه نمایشگرهای محدوده فقط برای پایش سلامت و نظم پخش',
+        ],
+        notAllowed: [
+            'تعیین نوع پاداش، ارزش اقتصادی پیشنهاد، قیمت، درآمد یا موجودی فروشگاه‌ها',
+            'تایید یا رد نهایی تبلیغ، قرارداد اسپانسر، بسته تجاری یا تصمیم مالی واحدها',
+        ],
+    },
+};
+
 function labelForRole(key: string) {
     return roleLabels[key] ?? key;
 }
 
 function labelForScope(scope: string) {
     return scopeLabels[scope] ?? scope;
+}
+
+function AuthorityGuideBox({ roleKey }: { roleKey: string }) {
+    const guide = authorityGuides[roleKey];
+
+    if (!guide) {
+        return null;
+    }
+
+    return (
+        <section className="mt-4 rounded-lg border border-sidebar-border/70 bg-muted/30 p-4 dark:border-sidebar-border">
+            <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
+                <ShieldCheck className="size-4 text-muted-foreground" />
+                حدود اختیار عملیاتی این نقش
+            </div>
+            <div className="grid gap-3 lg:grid-cols-3">
+                <AuthorityColumn title="مجاز است" items={guide.allowed} />
+                <AuthorityColumn
+                    title="فقط مشاهده / اعلام نظر"
+                    items={guide.observeOnly}
+                />
+                <AuthorityColumn title="خارج از اختیار" items={guide.notAllowed} />
+            </div>
+        </section>
+    );
+}
+
+function AuthorityColumn({ title, items }: { title: string; items: string[] }) {
+    return (
+        <div className="rounded-md bg-background p-3">
+            <p className="mb-2 text-sm font-medium">{title}</p>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+                {items.map((item) => (
+                    <li key={item} className="leading-7">
+                        {item}
+                    </li>
+                ))}
+            </ul>
+        </div>
+    );
 }
 
 function Stat({
@@ -178,6 +257,7 @@ function RoleCard({ role }: { role: RoleItem }) {
                     </ol>
                 </section>
             </div>
+            <AuthorityGuideBox roleKey={role.key} />
         </article>
     );
 }

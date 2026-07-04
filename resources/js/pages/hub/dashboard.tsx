@@ -1,18 +1,15 @@
-import { Form, Head } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import {
+    AlertTriangle,
     Building2,
-    CheckCircle2,
+    ClipboardCheck,
     Gift,
     Megaphone,
     MonitorPlay,
     Store,
-    XCircle,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { DateTimePickerField } from '@/components/date-time-picker-field';
-import { Button } from '@/components/ui/button';
 
 type HubItem = {
     id: string;
@@ -92,6 +89,7 @@ type DisplayScheduleItem = {
     startsAt: string | null;
     endsAt: string | null;
 };
+
 type Props = {
     stats: {
         hubs: number;
@@ -111,25 +109,12 @@ type Props = {
 const statusLabels: Record<string, string> = {
     active: 'فعال',
     inactive: 'غیرفعال',
-    draft: 'پیش نویس',
-    pending_review: 'در انتظار تایید',
+    draft: 'پیش‌نویس',
+    pending_review: 'نیازمند بررسی',
     approved: 'تایید شده',
     rejected: 'رد شده',
     scheduled: 'زمان‌بندی شده',
 };
-
-function toDateTimeLocal(value: string | null) {
-    if (!value) {
-        return '';
-    }
-
-    const date = new Date(value);
-    const offsetDate = new Date(
-        date.getTime() - date.getTimezoneOffset() * 60000,
-    );
-
-    return offsetDate.toISOString().slice(0, 16);
-}
 
 function formatDate(value: string | null) {
     if (!value) {
@@ -140,6 +125,18 @@ function formatDate(value: string | null) {
         dateStyle: 'short',
         timeStyle: 'short',
     }).format(new Date(value));
+}
+
+function formatNumber(value: number | null | undefined) {
+    return (value ?? 0).toLocaleString('fa-IR');
+}
+
+function labelForStatus(status: string | null | undefined) {
+    if (!status) {
+        return '-';
+    }
+
+    return statusLabels[status] ?? status;
 }
 
 function Stat({
@@ -157,169 +154,34 @@ function Stat({
                 <Icon className="size-4" />
                 <p>{label}</p>
             </div>
-            <p className="mt-1 font-semibold">
-                {value.toLocaleString('fa-IR')}
-            </p>
+            <p className="mt-1 font-semibold">{formatNumber(value)}</p>
         </div>
     );
 }
 
-function ReviewActions({
-    approveAction,
-    rejectAction,
-    placeholder,
+function OperationalBoundaryNote({
+    tone = 'info',
+    title,
+    children,
 }: {
-    approveAction: string;
-    rejectAction: string;
-    placeholder: string;
+    tone?: 'info' | 'warning';
+    title: string;
+    children: ReactNode;
 }) {
-    const [notes, setNotes] = useState('');
+    const Icon = tone === 'warning' ? AlertTriangle : ClipboardCheck;
 
     return (
-        <div className="grid gap-2 pt-1">
-            <textarea
-                name="review_notes"
-                value={notes}
-                onChange={(event) => setNotes(event.target.value)}
-                maxLength={1000}
-                rows={2}
-                className="min-h-16 w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                placeholder={placeholder}
-            />
-            <div className="flex flex-wrap gap-2">
-                <Form
-                    action={approveAction}
-                    method="post"
-                    options={{ preserveScroll: true }}
-                >
-                    {({ processing }) => (
-                        <>
-                            <input
-                                type="hidden"
-                                name="notes"
-                                value={notes}
-                                readOnly
-                            />
-                            <Button
-                                size="sm"
-                                type="submit"
-                                disabled={processing}
-                            >
-                                <CheckCircle2 className="size-4" />
-                                تایید
-                            </Button>
-                        </>
-                    )}
-                </Form>
-                <Form
-                    action={rejectAction}
-                    method="post"
-                    options={{ preserveScroll: true }}
-                >
-                    {({ processing }) => (
-                        <>
-                            <input
-                                type="hidden"
-                                name="notes"
-                                value={notes}
-                                readOnly
-                            />
-                            <Button
-                                size="sm"
-                                type="submit"
-                                variant="outline"
-                                disabled={processing}
-                            >
-                                <XCircle className="size-4" />
-                                رد
-                            </Button>
-                        </>
-                    )}
-                </Form>
+        <div className="flex gap-2 rounded-md border border-sidebar-border/70 bg-muted/40 px-3 py-2 text-xs text-muted-foreground dark:border-sidebar-border">
+            <Icon className="mt-0.5 size-4 shrink-0 text-foreground" />
+            <div className="grid gap-1">
+                <p className="font-medium text-foreground">{title}</p>
+                <p className="leading-6">{children}</p>
             </div>
         </div>
     );
 }
 
-function ScheduleActions({
-    adRequest,
-    displayDevices,
-}: {
-    adRequest: AdRequestItem;
-    displayDevices: DisplayDeviceItem[];
-}) {
-    if (displayDevices.length === 0) {
-        return (
-            <p className="rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
-                نمایشگر فعالی با نوع جایگاه این تبلیغ در محدوده شما ثبت نشده
-                است.
-            </p>
-        );
-    }
-
-    return (
-        <Form
-            action={`/hub/ads/${adRequest.id}/schedule`}
-            method="post"
-            options={{ preserveScroll: true }}
-        >
-            {({ processing }) => (
-                <div className="grid gap-2 rounded-md border border-sidebar-border/70 p-3 dark:border-sidebar-border">
-                    <div className="grid gap-2 sm:grid-cols-2">
-                        <label className="grid gap-1 text-xs text-muted-foreground">
-                            نمایشگر
-                            <select
-                                name="display_device_id"
-                                defaultValue={
-                                    adRequest.displayDeviceId ??
-                                    displayDevices[0]?.id ??
-                                    ''
-                                }
-                                className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                            >
-                                {displayDevices.map((device) => (
-                                    <option key={device.id} value={device.id}>
-                                        {device.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
-                        <label className="grid gap-1 text-xs text-muted-foreground">
-                            اولویت
-                            <input
-                                name="priority"
-                                type="number"
-                                min="1"
-                                max="10"
-                                defaultValue={adRequest.priority ?? 5}
-                                className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                            />
-                        </label>
-                        <DateTimePickerField
-                            name="starts_at"
-                            label="شروع نمایش"
-                            defaultValue={toDateTimeLocal(adRequest.startsAt)}
-                            hint={null}
-                            wrapperClassName="gap-1 text-xs text-muted-foreground"
-                        />
-                        <DateTimePickerField
-                            name="ends_at"
-                            label="پایان نمایش"
-                            defaultValue={toDateTimeLocal(adRequest.endsAt)}
-                            hint={null}
-                            wrapperClassName="gap-1 text-xs text-muted-foreground"
-                        />
-                    </div>
-                    <Button size="sm" type="submit" disabled={processing}>
-                        <MonitorPlay className="size-4" />
-                        زمان‌بندی روی نمایشگر
-                    </Button>
-                </div>
-            )}
-        </Form>
-    );
-}
-function DecisionNote({
+function ReviewTrail({
     notes,
     reviewedAt,
 }: {
@@ -334,66 +196,95 @@ function DecisionNote({
 
     return (
         <div className="rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
-            {notes ? <p>یادداشت تصمیم: {notes}</p> : null}
+            {notes ? <p>یادداشت بررسی اکسپلوریا: {notes}</p> : null}
             {reviewedAtLabel ? (
-                <p className="mt-1">زمان تصمیم: {reviewedAtLabel}</p>
+                <p className="mt-1">زمان ثبت بررسی: {reviewedAtLabel}</p>
             ) : null}
         </div>
     );
 }
 
+function Panel({
+    title,
+    description,
+    children,
+    isEmpty = false,
+}: {
+    title: string;
+    description?: string;
+    children: ReactNode;
+    isEmpty?: boolean;
+}) {
+    return (
+        <section className="rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border">
+            <div className="border-b border-sidebar-border/70 px-4 py-3 dark:border-sidebar-border">
+                <h2 className="font-semibold">{title}</h2>
+                {description ? (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                        {description}
+                    </p>
+                ) : null}
+            </div>
+            <div className="divide-y divide-sidebar-border/70 dark:divide-sidebar-border">
+                {isEmpty ? <EmptyState /> : children}
+            </div>
+        </section>
+    );
+}
+
+function EmptyState() {
+    return (
+        <p className="px-4 py-4 text-sm text-muted-foreground">
+            موردی برای نمایش وجود ندارد.
+        </p>
+    );
+}
+
 function DisplayScheduleQueue({ items }: { items: DisplayScheduleItem[] }) {
     return (
-        <Panel title="برنامه فعال نمایشگرها" isEmpty={items.length === 0}>
+        <Panel
+            title="برنامه فعال نمایشگرها"
+            description="برای اطلاع مدیر رواق از نظم پخش در محدوده؛ تغییر زمان‌بندی در اختیار تیم تبلیغات اکسپلوریا است."
+            isEmpty={items.length === 0}
+        >
             {items.map((item) => (
                 <article key={item.id} className="grid gap-2 px-4 py-3 text-sm">
                     <div className="flex items-center justify-between gap-3">
                         <div className="min-w-0">
                             <p className="truncate font-medium">
-                                {item.adTitle}
+                                {item.adTitle ?? '-'}
                             </p>
                             <p
                                 className="mt-1 truncate text-xs text-muted-foreground"
                                 dir="ltr"
                             >
-                                {item.adCode} · {item.placementType}
+                                {item.adCode ?? '-'} · {item.placementType}
                             </p>
                         </div>
                         <span className="shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
-                            {statusLabels[item.status] ?? item.status}
+                            {labelForStatus(item.status)}
                         </span>
                     </div>
                     <p className="text-xs text-muted-foreground">
                         نمایشگر: {item.displayDeviceName ?? '-'} · شریک:{' '}
                         {item.partnerName ?? '-'} · اولویت:{' '}
-                        {item.priority.toLocaleString('fa-IR')}
+                        {formatNumber(item.priority)}
                     </p>
                     <p className="text-xs text-muted-foreground">
                         شروع: {formatDate(item.startsAt) ?? '-'} · پایان:{' '}
                         {formatDate(item.endsAt) ?? '-'}
                     </p>
-                    <Form
-                        action={`/hub/ad-placements/${item.id}/cancel`}
-                        method="post"
-                        options={{ preserveScroll: true }}
-                    >
-                        {({ processing }) => (
-                            <Button
-                                size="sm"
-                                type="submit"
-                                variant="outline"
-                                disabled={processing}
-                            >
-                                <XCircle className="size-4" />
-                                لغو زمان‌بندی
-                            </Button>
-                        )}
-                    </Form>
+                    <OperationalBoundaryNote title="حد اختیار مدیر رواق">
+                        مدیر رواق می‌تواند مشکل اجرایی، ازدحام، مغایرت با قوانین
+                        مجموعه یا خرابی نمایشگر را گزارش کند؛ لغو یا تغییر پخش از این
+                        پنل انجام نمی‌شود.
+                    </OperationalBoundaryNote>
                 </article>
             ))}
         </Panel>
     );
 }
+
 export default function HubDashboard({
     stats,
     hubs,
@@ -405,7 +296,7 @@ export default function HubDashboard({
 }: Props) {
     return (
         <>
-            <Head title="پنل مدیر رواق / زون" />
+            <Head title="پنل مدیر رواق تجاری" />
             <div
                 dir="rtl"
                 className="flex h-full flex-1 flex-col gap-5 overflow-x-auto p-4"
@@ -413,27 +304,23 @@ export default function HubDashboard({
                 <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                     <div>
                         <p className="text-sm text-muted-foreground">
-                            دسترسی محدود به محدوده مدیریتی
+                            نظارت اجرایی بر رواق، فودکورت و واحدهای داخل محدوده
                         </p>
                         <h1 className="mt-1 text-2xl font-semibold">
-                            پنل مدیر رواق / زون
+                            پنل مدیر رواق تجاری
                         </h1>
                     </div>
                     <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-5">
-                        <Stat icon={Building2} label="هاب" value={stats.hubs} />
-                        <Stat
-                            icon={Store}
-                            label="شریک"
-                            value={stats.partners}
-                        />
+                        <Stat icon={Building2} label="محدوده" value={stats.hubs} />
+                        <Stat icon={Store} label="واحد/شریک" value={stats.partners} />
                         <Stat
                             icon={Megaphone}
-                            label="تبلیغ منتظر"
+                            label="تبلیغ نیازمند بررسی"
                             value={stats.pendingAds}
                         />
                         <Stat
                             icon={Gift}
-                            label="پاداش منتظر"
+                            label="پاداش نیازمند بررسی"
                             value={stats.pendingRewards}
                         />
                         <Stat
@@ -444,56 +331,58 @@ export default function HubDashboard({
                     </div>
                 </header>
 
-                <section className="rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border">
-                    <div className="border-b border-sidebar-border/70 px-4 py-3 dark:border-sidebar-border">
-                        <h2 className="font-semibold">هاب‌های تحت مدیریت</h2>
-                    </div>
-                    <div className="divide-y divide-sidebar-border/70 dark:divide-sidebar-border">
-                        {hubs.length === 0 ? <EmptyState /> : null}
-                        {hubs.map((hub) => (
-                            <article
-                                key={hub.id}
-                                className="grid gap-1 px-4 py-3 text-sm"
-                            >
-                                <p className="font-medium">{hub.name}</p>
-                                <p
-                                    className="text-xs text-muted-foreground"
-                                    dir="ltr"
-                                >
-                                    {hub.code} · {hub.hubType}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                    {hub.venueName ?? '-'}
-                                </p>
-                            </article>
-                        ))}
-                    </div>
-                </section>
+                <OperationalBoundaryNote title="تعریف نقش این پنل">
+                    این پنل برای نظم، آمادگی، هماهنگی و اعلام مغایرت‌های اجرایی
+                    رواق است. تصمیم تجاری هر فروشگاه، قیمت‌گذاری، درآمد، نوع پاداش،
+                    قرارداد اسپانسر و تایید نهایی تبلیغ از این پنل انجام نمی‌شود.
+                </OperationalBoundaryNote>
+
+                <Panel
+                    title="محدوده‌های تحت مدیریت"
+                    description="در پایلوت اکوپارک فقط رواق تجاری و فودکورت زیرمجموعه مدیر رواق نمایش داده می‌شود."
+                    isEmpty={hubs.length === 0}
+                >
+                    {hubs.map((hub) => (
+                        <article key={hub.id} className="grid gap-1 px-4 py-3 text-sm">
+                            <p className="font-medium">{hub.name}</p>
+                            <p className="text-xs text-muted-foreground" dir="ltr">
+                                {hub.code} · {hub.hubType}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                                {hub.venueName ?? '-'}
+                            </p>
+                        </article>
+                    ))}
+                </Panel>
 
                 <section className="grid gap-4 lg:grid-cols-2">
-                    <Panel title="شرکای محدوده" isEmpty={partners.length === 0}>
+                    <Panel
+                        title="واحدها و شرکای محدوده"
+                        description="برای هماهنگی اجرایی و آمادگی روز اجرا؛ نه بررسی درآمد یا تصمیم تجاری واحد."
+                        isEmpty={partners.length === 0}
+                    >
                         {partners.map((partner) => (
                             <article
-                                key={partner.id}
+                                key={partner.id ?? partner.code}
                                 className="grid gap-1 px-4 py-3 text-sm"
                             >
                                 <div className="flex items-center justify-between gap-3">
                                     <p className="truncate font-medium">
-                                        {partner.name}
+                                        {partner.name ?? '-'}
                                     </p>
                                     <span className="shrink-0 text-xs text-muted-foreground">
-                                        {statusLabels[partner.status ?? ''] ??
-                                            partner.status}
+                                        {labelForStatus(partner.status)}
                                     </span>
                                 </div>
                                 <p
                                     className="truncate text-xs text-muted-foreground"
                                     dir="ltr"
                                 >
-                                    {partner.code} · {partner.partnerType}
+                                    {partner.code ?? '-'} · {partner.partnerType ?? '-'}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
-                                    {partner.hubName} · {partner.locationRole}
+                                    {partner.hubName ?? '-'} · نقش در محدوده:{' '}
+                                    {partner.locationRole}
                                 </p>
                             </article>
                         ))}
@@ -501,20 +390,15 @@ export default function HubDashboard({
 
                     <Panel
                         title="نمایشگرهای محدوده"
+                        description="پایش سلامت و محل نمایشگر؛ برنامه‌ریزی محتوا با تیم تبلیغات اکسپلوریا است."
                         isEmpty={displayDevices.length === 0}
                     >
                         {displayDevices.map((device) => (
-                            <article
-                                key={device.id}
-                                className="grid gap-1 px-4 py-3 text-sm"
-                            >
+                            <article key={device.id} className="grid gap-1 px-4 py-3 text-sm">
                                 <div className="flex items-center justify-between gap-3">
-                                    <p className="truncate font-medium">
-                                        {device.name}
-                                    </p>
+                                    <p className="truncate font-medium">{device.name}</p>
                                     <span className="shrink-0 text-xs text-muted-foreground">
-                                        {statusLabels[device.status] ??
-                                            device.status}
+                                        {labelForStatus(device.status)}
                                     </span>
                                 </div>
                                 <p
@@ -524,7 +408,7 @@ export default function HubDashboard({
                                     {device.code} · {device.deviceType}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
-                                    {device.hubName}
+                                    {device.hubName ?? '-'}
                                 </p>
                             </article>
                         ))}
@@ -535,14 +419,12 @@ export default function HubDashboard({
 
                 <section className="grid gap-4 lg:grid-cols-2">
                     <Panel
-                        title="تبلیغات در محدوده رواق"
+                        title="تبلیغات محدوده رواق - پایش اجرایی"
+                        description="مدیر رواق مغایرت با قوانین مجموعه و مشکلات اجرایی را اعلام می‌کند؛ تایید نهایی تبلیغ با اکسپلوریا است."
                         isEmpty={adRequests.length === 0}
                     >
                         {adRequests.map((adRequest) => (
-                            <article
-                                key={adRequest.id}
-                                className="grid gap-2 px-4 py-3 text-sm"
-                            >
+                            <article key={adRequest.id} className="grid gap-2 px-4 py-3 text-sm">
                                 <div className="flex items-center justify-between gap-3">
                                     <div className="min-w-0">
                                         <p className="truncate font-medium">
@@ -552,17 +434,15 @@ export default function HubDashboard({
                                             className="mt-1 truncate text-xs text-muted-foreground"
                                             dir="ltr"
                                         >
-                                            {adRequest.code} ·{' '}
-                                            {adRequest.creativeType}
+                                            {adRequest.code} · {adRequest.creativeType ?? '-'}
                                         </p>
                                     </div>
                                     <span className="shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
-                                        {statusLabels[adRequest.status] ??
-                                            adRequest.status}
+                                        {labelForStatus(adRequest.status)}
                                     </span>
                                 </div>
                                 <p className="text-xs text-muted-foreground">
-                                    شریک: {adRequest.partnerName ?? '-'} · هاب:{' '}
+                                    شریک: {adRequest.partnerName ?? '-'} · محدوده:{' '}
                                     {adRequest.hubName ?? '-'} · جایگاه:{' '}
                                     {adRequest.placementType ?? '-'}
                                 </p>
@@ -570,48 +450,34 @@ export default function HubDashboard({
                                     <p className="text-xs text-muted-foreground">
                                         نمایشگر زمان‌بندی‌شده:{' '}
                                         {adRequest.displayDeviceName} · اولویت:{' '}
-                                        {adRequest.priority?.toLocaleString(
-                                            'fa-IR',
-                                        ) ?? '-'}
+                                        {formatNumber(adRequest.priority)}
                                     </p>
                                 ) : null}
                                 {adRequest.status === 'pending_review' ? (
-                                    <ReviewActions
-                                        approveAction={`/admin/ads/${adRequest.id}/approve`}
-                                        rejectAction={`/admin/ads/${adRequest.id}/reject`}
-                                        placeholder="یادداشت تایید یا دلیل رد تبلیغ"
-                                    />
-                                ) : (
-                                    <>
-                                        <DecisionNote
-                                            notes={adRequest.reviewNotes}
-                                            reviewedAt={adRequest.reviewedAt}
-                                        />
-                                        {adRequest.status === 'approved' ? (
-                                            <ScheduleActions
-                                                adRequest={adRequest}
-                                                displayDevices={displayDevices.filter(
-                                                    (device) =>
-                                                        device.deviceType ===
-                                                        adRequest.placementType,
-                                                )}
-                                            />
-                                        ) : null}
-                                    </>
-                                )}
+                                    <OperationalBoundaryNote
+                                        tone="warning"
+                                        title="نیازمند بررسی اکسپلوریا"
+                                    >
+                                        مدیر رواق فقط محدودیت‌های اجرایی، تعارض با
+                                        قوانین مجموعه، ازدحام یا مشکل محل نمایش را گزارش
+                                        می‌کند. تایید یا رد تبلیغ تصمیم تجاری این پنل نیست.
+                                    </OperationalBoundaryNote>
+                                ) : null}
+                                <ReviewTrail
+                                    notes={adRequest.reviewNotes}
+                                    reviewedAt={adRequest.reviewedAt}
+                                />
                             </article>
                         ))}
                     </Panel>
 
                     <Panel
-                        title="پیشنهادها و پاداش‌های فروشگاهی"
+                        title="پیشنهادها و پاداش‌های واحدها - پایش مقررات رواق"
+                        description="مدیر رواق مالک نوع پاداش یا ارزش اقتصادی پیشنهاد نیست؛ فقط آمادگی و مغایرت اجرایی را پایش می‌کند."
                         isEmpty={rewards.length === 0}
                     >
                         {rewards.map((reward) => (
-                            <article
-                                key={reward.id}
-                                className="grid gap-2 px-4 py-3 text-sm"
-                            >
+                            <article key={reward.id} className="grid gap-2 px-4 py-3 text-sm">
                                 <div className="flex items-center justify-between gap-3">
                                     <div className="min-w-0">
                                         <p className="truncate font-medium">
@@ -625,8 +491,7 @@ export default function HubDashboard({
                                         </p>
                                     </div>
                                     <span className="shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
-                                        {statusLabels[reward.approvalStatus] ??
-                                            reward.approvalStatus}
+                                        {labelForStatus(reward.approvalStatus)}
                                     </span>
                                 </div>
                                 <p className="text-xs text-muted-foreground">
@@ -634,17 +499,19 @@ export default function HubDashboard({
                                     {reward.campaignName ?? '-'}
                                 </p>
                                 {reward.approvalStatus === 'pending_review' ? (
-                                    <ReviewActions
-                                        approveAction={`/admin/rewards/${reward.id}/approve`}
-                                        rejectAction={`/admin/rewards/${reward.id}/reject`}
-                                        placeholder="یادداشت تایید یا دلیل رد پیشنهاد"
-                                    />
-                                ) : (
-                                    <DecisionNote
-                                        notes={reward.reviewNotes}
-                                        reviewedAt={reward.reviewedAt}
-                                    />
-                                )}
+                                    <OperationalBoundaryNote
+                                        tone="warning"
+                                        title="نظر رواق، نه تصمیم تجاری"
+                                    >
+                                        نوع پاداش، ارزش اقتصادی و شرایط فروشگاهی در
+                                        اختیار واحد تجاری و اکسپلوریا است. مدیر رواق فقط
+                                        مغایرت با مقررات مجموعه یا مانع اجرایی را اعلام می‌کند.
+                                    </OperationalBoundaryNote>
+                                ) : null}
+                                <ReviewTrail
+                                    notes={reward.reviewNotes}
+                                    reviewedAt={reward.reviewedAt}
+                                />
                             </article>
                         ))}
                     </Panel>
@@ -654,39 +521,10 @@ export default function HubDashboard({
     );
 }
 
-function Panel({
-    title,
-    children,
-    isEmpty = false,
-}: {
-    title: string;
-    children: ReactNode;
-    isEmpty?: boolean;
-}) {
-    return (
-        <div className="rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border">
-            <div className="border-b border-sidebar-border/70 px-4 py-3 dark:border-sidebar-border">
-                <h2 className="font-semibold">{title}</h2>
-            </div>
-            <div className="divide-y divide-sidebar-border/70 dark:divide-sidebar-border">
-                {isEmpty ? <EmptyState /> : children}
-            </div>
-        </div>
-    );
-}
-
-function EmptyState() {
-    return (
-        <p className="px-4 py-4 text-sm text-muted-foreground">
-            موردی برای نمایش وجود ندارد.
-        </p>
-    );
-}
-
 HubDashboard.layout = {
     breadcrumbs: [
         {
-            title: 'پنل مدیر رواق / زون',
+            title: 'پنل مدیر رواق تجاری',
             href: '/ravaq/dashboard',
         },
     ],
