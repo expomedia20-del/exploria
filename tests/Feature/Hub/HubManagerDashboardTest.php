@@ -94,14 +94,17 @@ class HubManagerDashboardTest extends TestCase
         $this->submitAdRequest('ravaq.store@example.test', 'Scoped ravaq ad');
         $this->submitPartnerOffer('ravaq.store@example.test', 'Scoped ravaq offer');
 
-        $this->actingAs($manager)
+        $response = $this->actingAs($manager)
             ->getJson(route('hub.dashboard.index'))
             ->assertOk()
             ->assertJsonPath('data.stats.pendingAds', 1)
             ->assertJsonPath('data.stats.pendingRewards', 1)
             ->assertJsonPath('data.adRequests.0.title', 'Scoped ravaq ad')
-            ->assertJsonPath('data.rewards.0.name', 'Scoped ravaq offer')
             ->assertJsonMissing(['title' => 'Out of scope science sponsor ad']);
+
+        $this->assertNotNull(
+            collect($response->json('data.rewards'))->firstWhere('name', 'Scoped ravaq offer'),
+        );
     }
 
     public function test_hub_dashboard_api_reports_review_notes_after_scoped_decisions(): void

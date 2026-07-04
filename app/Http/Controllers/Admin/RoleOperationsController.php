@@ -40,7 +40,8 @@ class RoleOperationsController extends Controller
         return [
             'totalRoles' => $roles->count(),
             'exploriaTeamRoles' => $roles->where('group', 'exploria_team')->count(),
-            'externalPartnerRoles' => $roles->where('group', 'external_partner')->count(),
+            'venueManagementRoles' => $roles->where('group', 'venue_management')->count(),
+            'commercialPartnerRoles' => $roles->where('group', 'commercial_partner')->count(),
             'publicRoles' => $roles->where('group', 'public')->count(),
             'scopeTypes' => count(config('exploria_roles.scope_types', [])),
         ];

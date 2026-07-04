@@ -1,18 +1,25 @@
 import { Head } from '@inertiajs/react';
 import {
+    Building2,
     CalendarCheck2,
     ClipboardList,
     Layers3,
-    Network,
     ShieldCheck,
+    Store,
     UserCog,
     UsersRound,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
+type RoleGroup =
+    | 'exploria_team'
+    | 'venue_management'
+    | 'commercial_partner'
+    | 'public';
+
 type RoleItem = {
     key: string;
-    group: 'exploria_team' | 'external_partner' | 'public';
+    group: RoleGroup;
     label: string;
     scope: string;
     reportsTo: string | null;
@@ -26,24 +33,28 @@ type Props = {
     stats: {
         totalRoles: number;
         exploriaTeamRoles: number;
-        externalPartnerRoles: number;
+        venueManagementRoles: number;
+        commercialPartnerRoles: number;
         publicRoles: number;
         scopeTypes: number;
     };
 };
 
-const groupLabels: Record<RoleItem['group'], string> = {
-    exploria_team: 'تیم اکسپلوریا',
-    external_partner: 'نقش‌های بیرونی و شرکا',
-    public: 'کاربران و مشارکت‌کنندگان',
+const groupLabels: Record<RoleGroup, string> = {
+    exploria_team: 'تیم داخلی اکسپلوریا',
+    venue_management: 'مدیریت مکان و زون‌ها',
+    commercial_partner: 'واحدهای تجاری و اسپانسرها',
+    public: 'بازدیدکنندگان و مشارکت‌کنندگان',
 };
 
-const groupDescriptions: Record<RoleItem['group'], string> = {
+const groupDescriptions: Record<RoleGroup, string> = {
     exploria_team:
-        'نقش‌هایی که عملیات، سیاست‌گذاری، پشتیبانی و اجرای کمپین را از سمت اکسپلوریا پیش می‌برند.',
-    external_partner:
-        'مدیران مکان، هاب، فروشگاه و اسپانسرهایی که در اجرای تجاری و محلی پروژه نقش دارند.',
-    public: 'بازدیدکننده یا مشارکت‌کننده‌ای که تجربه کمپین، ماموریت، گنج و پاداش را طی می‌کند.',
+        'نقش‌هایی که پروژه، اجرا، تبلیغات، پشتیبانی، گزارش و درآمد را از سمت اکسپلوریا مدیریت می‌کنند.',
+    venue_management:
+        'نقش‌های سمت مکان که دید مدیریتی به مکان، زون، هاب یا مجموعه دارند و وارد تصمیم تجاری هر واحد نمی‌شوند.',
+    commercial_partner:
+        'فروشگاه‌ها، واحدهای غذایی، واحدهای تجاری و اسپانسرهایی که منبع درآمد، تبلیغ، پاداش و بده‌بستان تجاری هستند.',
+    public: 'کاربرانی که به شکل فردی، خانوادگی یا تیمی در کمپین شرکت می‌کنند.',
 };
 
 const scopeLabels: Record<string, string> = {
@@ -51,7 +62,7 @@ const scopeLabels: Record<string, string> = {
     region: 'منطقه یا استان',
     venue: 'مکان پروژه',
     project: 'پروژه اجرایی',
-    hub: 'هاب یا رواق',
+    hub: 'هاب، زون یا مجموعه',
     partner: 'فروشگاه یا واحد',
     campaign: 'کمپین',
     display_network: 'شبکه نمایشگرها',
@@ -59,17 +70,17 @@ const scopeLabels: Record<string, string> = {
 };
 
 const roleLabels: Record<string, string> = {
-    super_admin: 'ادمین اصلی کل اکسپلوریا',
-    regional_admin: 'ادمین منطقه‌ای',
+    super_admin: 'ادمین مرکزی اکسپلوریا',
+    regional_admin: 'مدیر منطقه‌ای / عاملیت',
     project_admin: 'مدیر پروژه مکانی اکسپلوریا',
-    field_operator: 'مجری میدانی کمپین',
-    treasure_assistant: 'یاریگر کاشفان گنج',
-    display_ads_manager: 'مدیر تبلیغات و نمایشگرها',
-    venue_executive: 'مدیر مکان',
-    ravaq_manager: 'مدیر رواق / زون تجاری',
-    hub_manager: 'مدیر هاب',
-    shop_manager: 'مدیر فروشگاه / واحد شریک',
-    internal_sponsor: 'اسپانسر داخلی مکان یا هاب',
+    field_operator: 'مجری میدانی پروژه',
+    treasure_assistant: 'یاریگر کاربران',
+    display_ads_manager: 'مدیر تبلیغات و نمایشگرهای اکسپلوریا',
+    venue_executive: 'مدیر اجرایی مکان پروژه',
+    ravaq_manager: 'مدیر مجموعه تجاری رواق / زون تجاری',
+    hub_manager: 'مدیر هاب / مجموعه تخصصی مکان',
+    shop_manager: 'مدیر فروشگاه / واحد تجاری یا غذایی',
+    internal_sponsor: 'اسپانسر داخل مکان یا مجموعه',
     external_sponsor: 'اسپانسر مستقل / بیرونی',
     participant: 'بازدیدکننده / مشارکت‌کننده',
 };
@@ -150,7 +161,7 @@ function RoleCard({ role }: { role: RoleItem }) {
                 <section>
                     <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
                         <CalendarCheck2 className="size-4 text-muted-foreground" />
-                        برنامه عملیاتی روزانه
+                        عملیات روزانه
                     </div>
                     <ol className="space-y-2 text-sm text-muted-foreground">
                         {role.dailyOperations.map((item, index) => (
@@ -173,10 +184,13 @@ export default function RoleOperationsIndex({
     scopeTypes,
     stats,
 }: Props) {
-    const groupedRoles = {
+    const groupedRoles: Record<RoleGroup, RoleItem[]> = {
         exploria_team: roles.filter((role) => role.group === 'exploria_team'),
-        external_partner: roles.filter(
-            (role) => role.group === 'external_partner',
+        venue_management: roles.filter(
+            (role) => role.group === 'venue_management',
+        ),
+        commercial_partner: roles.filter(
+            (role) => role.group === 'commercial_partner',
         ),
         public: roles.filter((role) => role.group === 'public'),
     };
@@ -191,13 +205,13 @@ export default function RoleOperationsIndex({
                 <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                     <div>
                         <p className="text-sm text-muted-foreground">
-                            مدل Role + Scope برای اکوسیستم اکسپلوریا
+                            مدل Role + Scope برای تبدیل اکسپلوریا به پایلوت قابل اجرا و قابل فروش
                         </p>
                         <h1 className="mt-1 text-2xl font-semibold">
-                            نقش‌ها، وظایف و برنامه عملیاتی روزانه
+                            نقش‌ها، حدود اختیار و عملیات روزانه
                         </h1>
                     </div>
-                    <div className="grid grid-cols-2 gap-3 text-sm lg:grid-cols-5">
+                    <div className="grid grid-cols-2 gap-3 text-sm lg:grid-cols-6">
                         <Stat
                             icon={ShieldCheck}
                             label="کل نقش‌ها"
@@ -209,9 +223,14 @@ export default function RoleOperationsIndex({
                             value={stats.exploriaTeamRoles}
                         />
                         <Stat
-                            icon={Network}
-                            label="شرکا"
-                            value={stats.externalPartnerRoles}
+                            icon={Building2}
+                            label="مدیریت مکان"
+                            value={stats.venueManagementRoles}
+                        />
+                        <Stat
+                            icon={Store}
+                            label="تجاری"
+                            value={stats.commercialPartnerRoles}
                         />
                         <Stat
                             icon={UserCog}
@@ -230,11 +249,10 @@ export default function RoleOperationsIndex({
                     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                         <div>
                             <h2 className="text-base font-semibold">
-                                دامنه‌های دسترسی قابل تخصیص
+                                قاعده کنترل پیچیدگی
                             </h2>
                             <p className="mt-1 text-sm text-muted-foreground">
-                                هر کاربر یک نقش دارد، اما دسترسی واقعی او با
-                                دامنه مشخص می‌شود.
+                                مدیر مکان دید کلان دارد، مدیر زون نظم و آمادگی محدوده خودش را مدیریت می‌کند، و تصمیم تجاری هر فروشگاه یا اسپانسر در پنل همان واحد انجام می‌شود.
                             </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -251,9 +269,7 @@ export default function RoleOperationsIndex({
                 </section>
 
                 {(
-                    Object.keys(groupedRoles) as Array<
-                        keyof typeof groupedRoles
-                    >
+                    Object.keys(groupedRoles) as Array<keyof typeof groupedRoles>
                 ).map((group) => (
                     <section key={group} className="grid gap-3">
                         <div>

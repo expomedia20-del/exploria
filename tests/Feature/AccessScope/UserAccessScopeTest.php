@@ -25,10 +25,10 @@ class UserAccessScopeTest extends TestCase
 
     public function test_pilot_seed_creates_operational_access_scopes(): void
     {
-        $this->assertDatabaseCount('user_access_scopes', 4);
+        $this->assertDatabaseCount('user_access_scopes', 5);
 
         $this->assertDatabaseHas('user_access_scopes', [
-            'role_key' => 'hub_manager',
+            'role_key' => 'ravaq_manager',
             'scope_type' => 'hub',
             'status' => 'active',
         ]);

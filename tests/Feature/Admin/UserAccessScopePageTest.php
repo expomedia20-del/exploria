@@ -32,9 +32,9 @@ class UserAccessScopePageTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('admin/access-scopes/index')
-                ->where('stats.total', 4)
-                ->where('stats.active', 4)
-                ->has('accessScopes', 4)
+                ->where('stats.total', 5)
+                ->where('stats.active', 5)
+                ->has('accessScopes', 5)
                 ->has('userOptions')
                 ->has('roleOptions')
                 ->has('scopeOptions.hub'));

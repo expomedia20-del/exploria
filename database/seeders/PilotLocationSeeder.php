@@ -157,11 +157,11 @@ class PilotLocationSeeder extends Seeder
             ['status' => RecordStatus::Active, 'metadata' => ['is_demo' => true, 'scope_reason' => 'foodcourt_inside_ravaq_zone']],
         );
         UserAccessScope::query()->updateOrCreate(
-            ['user_id' => $ravaqManager->id, 'role_key' => 'hub_manager', 'scope_type' => 'hub', 'scope_id' => $ravaqHub->id],
+            ['user_id' => $ravaqManager->id, 'role_key' => 'ravaq_manager', 'scope_type' => 'hub', 'scope_id' => $ravaqHub->id],
             ['status' => RecordStatus::Active, 'metadata' => ['source' => 'pilot_seed', 'legacy_table' => 'hub_management_assignments']],
         );
         UserAccessScope::query()->updateOrCreate(
-            ['user_id' => $ravaqManager->id, 'role_key' => 'hub_manager', 'scope_type' => 'hub', 'scope_id' => $foodHub->id],
+            ['user_id' => $ravaqManager->id, 'role_key' => 'ravaq_manager', 'scope_type' => 'hub', 'scope_id' => $foodHub->id],
             ['status' => RecordStatus::Active, 'metadata' => ['source' => 'pilot_seed', 'scope_reason' => 'foodcourt_inside_ravaq_zone']],
         );
 
