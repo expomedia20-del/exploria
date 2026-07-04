@@ -131,6 +131,10 @@ Route::get('/admin/qr-codes', [QrRegistryController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer'])
     ->name('admin.qr-codes.page');
 
+Route::inertia('/admin/internal-operations', 'admin/internal-operations/index')
+    ->middleware(['auth', 'role:admin,operator,viewer'])
+    ->name('admin.internal-operations.page');
+
 Route::post('/admin/qr-codes', [QrRegistryController::class, 'store'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.qr-codes.store');

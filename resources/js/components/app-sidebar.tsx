@@ -71,6 +71,13 @@ const mainNavItems: RoleAwareNavItem[] = [
         roles: ['admin', 'operator', 'viewer', 'hub_manager'],
     },
     {
+        title: 'پنل عملیات داخلی',
+        href: '/admin/internal-operations',
+        icon: ClipboardCheck,
+        group: '۱. تیم داخلی اکسپلوریا',
+        roles: ['admin', 'operator', 'viewer'],
+    },
+    {
         title: 'گنجینه الگوها',
         href: '/admin/mission-blueprints',
         icon: BookOpen,
