@@ -1,12 +1,17 @@
 import { Head, Link } from '@inertiajs/react';
 import {
+    ArrowLeft,
     ClipboardCheck,
+    Eye,
+    KeyRound,
     Megaphone,
     MonitorPlay,
+    Network,
     QrCode,
     Route,
     ShieldCheck,
     Trophy,
+    UserCheck,
     UsersRound,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -22,6 +27,51 @@ type Workstream = {
         href: string;
     }>;
     guardrails: string[];
+};
+
+type TeamMember = {
+    id: string;
+    user: {
+        id: number | null;
+        name: string;
+        email: string | null;
+        accountRole: string | null;
+        accountRoleLabel: string;
+    };
+    roleKey: string;
+    roleLabel: string;
+    scopeType: string;
+    scopeTypeLabel: string;
+    scopeId: string | null;
+    scopeLabel: string;
+    reportsToKey: string | null;
+    reportsToLabel: string | null;
+    defaultAccountRole: string;
+    entryHref: string;
+    entryLabel: string;
+    subordinateCount: number;
+};
+
+type SupervisionLine = {
+    key: string;
+    label: string;
+    reportsToKey: string | null;
+    reportsToLabel: string | null;
+    defaultAccountRole: string;
+    entryHref: string;
+    scopeLabel: string;
+    activeCount: number;
+};
+
+type Props = {
+    stats: {
+        internalUsers: number;
+        activeAssignments: number;
+        supervisorRoles: number;
+        unassignedSupervisorLinks: number;
+    };
+    teamMembers: TeamMember[];
+    supervisionLines: SupervisionLine[];
 };
 
 const workstreams: Workstream[] = [
@@ -92,11 +142,15 @@ const workstreams: Workstream[] = [
 ];
 
 const principles = [
-    'هر کار باید به دمو، فروش یا اجرای واقعی کمک کند.',
-    'تیم داخلی اکسپلوریا مالک هماهنگی و اجراست، نه مالک تصمیم تجاری فروشگاه‌ها.',
-    'تصمیم پخش تبلیغ با تیم نمایشگر است؛ نظر رواق و مکان برای محدودیت اجرایی ثبت می‌شود.',
-    'گزارش ROI و readiness باید خروجی مشترک همه جریان‌ها باشد.',
+    'هر نفر با اکانت خودش وارد می‌شود، اما نقش دقیق و محدوده کاری از تخصیص دسترسی مشخص می‌شود.',
+    'مدیر بالادست، زیرمجموعه را بر اساس reports_to و scope می‌بیند، نه بر اساس حدس یا عنوان دستی.',
+    'صفحه شروع هر نقش باید کوتاه و عملیاتی باشد؛ تصمیم‌های تجاری در پنل مالک همان کسب‌وکار می‌ماند.',
+    'پنل داخلی مرکز کنترل تیم اکسپلوریاست، نه جایگزین پنل مدیر مکان، رواق، فروشگاه یا اسپانسر.',
 ];
+
+function numberFa(value: number) {
+    return value.toLocaleString('fa-IR');
+}
 
 function Panel({
     title,
@@ -122,7 +176,124 @@ function Panel({
     );
 }
 
-export default function InternalOperationsIndex() {
+function Stat({
+    icon: Icon,
+    label,
+    value,
+}: {
+    icon: LucideIcon;
+    label: string;
+    value: number;
+}) {
+    return (
+        <div className="rounded-lg border border-sidebar-border/70 px-3 py-2 dark:border-sidebar-border">
+            <div className="flex items-center gap-2 text-muted-foreground">
+                <Icon className="size-4" />
+                <span className="text-sm">{label}</span>
+            </div>
+            <p className="mt-2 text-xl font-semibold">{numberFa(value)}</p>
+        </div>
+    );
+}
+
+function EmptyState() {
+    return (
+        <div className="p-4 text-sm leading-7 text-muted-foreground">
+            هنوز نقش داخلی فعالی ثبت نشده است. از صفحه تخصیص دسترسی، برای
+            کاربران داخلی نقش‌هایی مثل مدیر پروژه، مجری میدانی یا مدیر نمایشگر
+            تعریف کنید.
+        </div>
+    );
+}
+
+function TeamMemberCard({ member }: { member: TeamMember }) {
+    return (
+        <article className="rounded-lg border border-sidebar-border/70 p-4 dark:border-sidebar-border">
+            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <div>
+                    <h3 className="font-semibold">{member.user.name}</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                        {member.user.email ?? 'ایمیل ثبت نشده'}
+                    </p>
+                </div>
+                <Link
+                    href={member.entryHref}
+                    className="inline-flex h-9 items-center gap-2 rounded-md border border-input bg-background px-3 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+                >
+                    {member.entryLabel}
+                    <ArrowLeft className="size-4" />
+                </Link>
+            </div>
+
+            <div className="mt-4 grid gap-3 text-sm md:grid-cols-2 xl:grid-cols-4">
+                <InfoTile
+                    icon={KeyRound}
+                    label="اکانت ورود"
+                    value={`${member.user.accountRoleLabel} / پیشنهادی: ${member.defaultAccountRole}`}
+                />
+                <InfoTile
+                    icon={UserCheck}
+                    label="نقش عملیاتی"
+                    value={member.roleLabel}
+                />
+                <InfoTile
+                    icon={Network}
+                    label="محدوده"
+                    value={`${member.scopeTypeLabel}: ${member.scopeLabel}`}
+                />
+                <InfoTile
+                    icon={Eye}
+                    label="نظارت"
+                    value={
+                        member.reportsToLabel
+                            ? `گزارش به ${member.reportsToLabel}`
+                            : 'نقش بالادست ندارد'
+                    }
+                />
+            </div>
+
+            <div className="mt-3 rounded-md bg-muted/35 p-3 text-sm leading-7 text-muted-foreground">
+                زیرمجموعه مستقیم این نقش:{' '}
+                <span className="font-semibold text-foreground">
+                    {numberFa(member.subordinateCount)}
+                </span>
+                . مدیر بالادست باید همین افراد و کارهای باز مربوط به محدوده خودش
+                را در گزارش روزانه کنترل کند.
+            </div>
+        </article>
+    );
+}
+
+function InfoTile({
+    icon: Icon,
+    label,
+    value,
+}: {
+    icon: LucideIcon;
+    label: string;
+    value: string;
+}) {
+    return (
+        <div className="rounded-md bg-muted/35 p-3">
+            <div className="mb-2 flex items-center gap-2 text-muted-foreground">
+                <Icon className="size-4" />
+                <span>{label}</span>
+            </div>
+            <p className="leading-7">{value}</p>
+        </div>
+    );
+}
+
+export default function InternalOperationsIndex({
+    stats = {
+        internalUsers: 0,
+        activeAssignments: 0,
+        supervisorRoles: 0,
+        unassignedSupervisorLinks: 0,
+    },
+    teamMembers = [],
+    supervisionLines = [],
+}: Props) {
     return (
         <>
             <Head title="پنل عملیات داخلی اکسپلوریا" />
@@ -130,7 +301,7 @@ export default function InternalOperationsIndex() {
                 dir="rtl"
                 className="flex h-full flex-1 flex-col gap-5 overflow-x-auto p-4"
             >
-                <header className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                     <div>
                         <p className="text-sm text-muted-foreground">
                             مرکز فرمان سبک برای تیم داخلی اکسپلوریا
@@ -139,27 +310,33 @@ export default function InternalOperationsIndex() {
                             پنل عملیات داخلی اکسپلوریا
                         </h1>
                     </div>
-                    <div className="grid grid-cols-2 gap-2 text-sm md:grid-cols-4">
-                        {[
-                            ['پروژه', 'readiness'],
-                            ['میدان', 'اجرا'],
-                            ['نمایشگر', 'پخش'],
-                            ['گزارش', 'ROI'],
-                        ].map(([label, value]) => (
-                            <div
-                                key={label}
-                                className="rounded-lg border border-sidebar-border/70 px-3 py-2 dark:border-sidebar-border"
-                            >
-                                <p className="text-muted-foreground">{label}</p>
-                                <p className="mt-1 font-semibold">{value}</p>
-                            </div>
-                        ))}
+                    <div className="grid grid-cols-2 gap-3 text-sm lg:grid-cols-4">
+                        <Stat
+                            icon={UsersRound}
+                            label="کاربر داخلی"
+                            value={stats.internalUsers}
+                        />
+                        <Stat
+                            icon={KeyRound}
+                            label="تخصیص فعال"
+                            value={stats.activeAssignments}
+                        />
+                        <Stat
+                            icon={Network}
+                            label="خط نظارت"
+                            value={stats.supervisorRoles}
+                        />
+                        <Stat
+                            icon={ShieldCheck}
+                            label="نیازمند بالادست"
+                            value={stats.unassignedSupervisorLinks}
+                        />
                     </div>
                 </header>
 
                 <Panel
-                    title="قاعده کار تیم داخلی"
-                    description="این پنل جایگزین پنل ادمین مرکزی نیست؛ فقط مسیرهای اجرایی تیم داخلی را در یک نگاه جمع می‌کند."
+                    title="قاعده ورود، نقش و نظارت"
+                    description="اکانت ورود فقط در را باز می‌کند؛ نقش دقیق، صفحه شروع، محدوده کار و مدیر بالادست از تخصیص دسترسی تعیین می‌شود."
                 >
                     <div className="grid gap-3 p-4 md:grid-cols-2 xl:grid-cols-4">
                         {principles.map((principle) => (
@@ -170,6 +347,85 @@ export default function InternalOperationsIndex() {
                                 {principle}
                             </div>
                         ))}
+                    </div>
+                </Panel>
+
+                <Panel
+                    title="اعضای داخلی و مسیر شروع کار"
+                    description="این بخش پاسخ عملی به این است که هر نفر با چه اکانتی وارد می‌شود، صفحه شروع او کجاست و به چه نقشی گزارش می‌دهد."
+                >
+                    <div className="grid gap-3 p-4">
+                        {teamMembers.length > 0 ? (
+                            teamMembers.map((member) => (
+                                <TeamMemberCard key={member.id} member={member} />
+                            ))
+                        ) : (
+                            <EmptyState />
+                        )}
+                    </div>
+                </Panel>
+
+                <Panel
+                    title="نقشه سلسله‌مراتب تیم داخلی"
+                    description="این جدول مدل پایه نظارت را نشان می‌دهد؛ با اضافه شدن اکانت‌های واقعی، ستون تعداد فعال پر می‌شود."
+                >
+                    <div className="overflow-x-auto">
+                        <table className="w-full min-w-[820px] text-sm">
+                            <thead className="bg-muted/40 text-muted-foreground">
+                                <tr>
+                                    <th className="px-4 py-3 text-right font-medium">
+                                        نقش
+                                    </th>
+                                    <th className="px-4 py-3 text-right font-medium">
+                                        اکانت پیشنهادی
+                                    </th>
+                                    <th className="px-4 py-3 text-right font-medium">
+                                        محدوده پیش‌فرض
+                                    </th>
+                                    <th className="px-4 py-3 text-right font-medium">
+                                        گزارش به
+                                    </th>
+                                    <th className="px-4 py-3 text-right font-medium">
+                                        صفحه شروع
+                                    </th>
+                                    <th className="px-4 py-3 text-right font-medium">
+                                        فعال
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {supervisionLines.map((line) => (
+                                    <tr
+                                        key={line.key}
+                                        className="border-t border-sidebar-border/70"
+                                    >
+                                        <td className="px-4 py-3 font-medium">
+                                            {line.label}
+                                        </td>
+                                        <td className="px-4 py-3 text-muted-foreground">
+                                            {line.defaultAccountRole}
+                                        </td>
+                                        <td className="px-4 py-3 text-muted-foreground">
+                                            {line.scopeLabel}
+                                        </td>
+                                        <td className="px-4 py-3 text-muted-foreground">
+                                            {line.reportsToLabel ?? 'مستقل'}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <Link
+                                                href={line.entryHref}
+                                                className="text-primary hover:underline"
+                                            >
+                                                {line.entryHref}
+                                            </Link>
+                                        </td>
+                                        <td className="px-4 py-3 font-semibold">
+                                            {numberFa(line.activeCount)}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
                 </Panel>
 

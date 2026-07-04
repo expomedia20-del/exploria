@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\CampaignOperationsController;
 use App\Http\Controllers\Admin\CampaignParticipantController;
 use App\Http\Controllers\Admin\CampaignRegistryController;
 use App\Http\Controllers\Admin\DisplayOperationsController;
+use App\Http\Controllers\Admin\InternalOperationsController;
 use App\Http\Controllers\Admin\MissionRewardBlueprintController;
 use App\Http\Controllers\Admin\MissionRewardRegistryController;
 use App\Http\Controllers\Admin\PartnerRegistryController;
@@ -131,7 +132,7 @@ Route::get('/admin/qr-codes', [QrRegistryController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer'])
     ->name('admin.qr-codes.page');
 
-Route::inertia('/admin/internal-operations', 'admin/internal-operations/index')
+Route::get('/admin/internal-operations', [InternalOperationsController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer'])
     ->name('admin.internal-operations.page');
 
