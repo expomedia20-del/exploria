@@ -1,4 +1,4 @@
-# EXPLORIA Local Development
+﻿# EXPLORIA Local Development
 
 This note records the reproducible local setup used for the recovered EXPLORIA codebase.
 
@@ -7,7 +7,7 @@ This note records the reproducible local setup used for the recovered EXPLORIA c
 Recommended local paths on the current machine:
 
 ```powershell
-$env:PATH='E:\فایل 1 اصلی پروژه اکسپلوریا\فایل های تکمیلی قبل از کدنویسی\.toolchain\node;E:\exploria-toolchain-local\php;C:\Program Files\Git\cmd;' + $env:PATH
+$env:PATH='E:\ÙØ§ÛŒÙ„ 1 Ø§ØµÙ„ÛŒ Ù¾Ø±ÙˆÚ˜Ù‡ Ø§Ú©Ø³Ù¾Ù„ÙˆØ±ÛŒØ§\ÙØ§ÛŒÙ„ Ù‡Ø§ÛŒ ØªÚ©Ù…ÛŒÙ„ÛŒ Ù‚Ø¨Ù„ Ø§Ø² Ú©Ø¯Ù†ÙˆÛŒØ³ÛŒ\.toolchain\node;E:\exploria-toolchain-local\php;C:\Program Files\Git\cmd;' + $env:PATH
 ```
 
 Composer PHAR:
@@ -54,7 +54,7 @@ npm install
 Create local `.env` from `.env.example`, then use SQLite for portable development:
 
 ```dotenv
-APP_URL=http://127.0.0.1:8000
+APP_URL=http://127.0.0.1:8004
 DB_CONNECTION=sqlite
 DB_DATABASE=database/database.sqlite
 SESSION_DRIVER=file
@@ -117,7 +117,7 @@ npm run build
 When running `npm run build`, keep the local PHP directory in `PATH` because the Wayfinder Vite plugin calls `php artisan wayfinder:generate --with-form`:
 
 ```powershell
-$env:PATH='E:\exploria-toolchain-local\php;E:\فایل 1 اصلی پروژه اکسپلوریا\فایل های تکمیلی قبل از کدنویسی\.toolchain\node;' + $env:PATH
+$env:PATH='E:\exploria-toolchain-local\php;E:\ÙØ§ÛŒÙ„ 1 Ø§ØµÙ„ÛŒ Ù¾Ø±ÙˆÚ˜Ù‡ Ø§Ú©Ø³Ù¾Ù„ÙˆØ±ÛŒØ§\ÙØ§ÛŒÙ„ Ù‡Ø§ÛŒ ØªÚ©Ù…ÛŒÙ„ÛŒ Ù‚Ø¨Ù„ Ø§Ø² Ú©Ø¯Ù†ÙˆÛŒØ³ÛŒ\.toolchain\node;' + $env:PATH
 npm run build
 ```
 

@@ -1,4 +1,4 @@
-# EXPLORIA Client Demo Guide
+﻿# EXPLORIA Client Demo Guide
 
 This guide is the shortest reliable path for presenting the current EXPLORIA local demo.
 
@@ -10,52 +10,52 @@ Use these URLs on the current machine:
 
 ```text
 Board-facing entry:
-http://127.0.0.1:8000/board
+http://127.0.0.1:8004/board
 
 Full mock ecosystem demo:
-http://127.0.0.1:8000/demo/ecosystem
+http://127.0.0.1:8004/demo/ecosystem
 
 Employer demo hub:
-http://127.0.0.1:8000/demo
+http://127.0.0.1:8004/demo
 
 Proposal coverage:
-http://127.0.0.1:8000/demo/proposal
+http://127.0.0.1:8004/demo/proposal
 
 Mission and rewards simulator:
-http://127.0.0.1:8000/demo/missions
+http://127.0.0.1:8004/demo/missions
 
 Visitor QR landing:
-http://127.0.0.1:8000/scan/ep1405-a7f3k9m2q8x4
+http://127.0.0.1:8004/scan/ep1405-a7f3k9m2q8x4
 
 Operational dashboard:
-http://127.0.0.1:8000/dashboard
+http://127.0.0.1:8004/dashboard
 
 QR registry:
-http://127.0.0.1:8000/admin/qr-codes
+http://127.0.0.1:8004/admin/qr-codes
 
 Campaign registry:
-http://127.0.0.1:8000/admin/campaigns
+http://127.0.0.1:8004/admin/campaigns
 
 Mission, treasure, and reward registry:
-http://127.0.0.1:8000/admin/missions
+http://127.0.0.1:8004/admin/missions
 
 Partner registry:
-http://127.0.0.1:8000/admin/partners
+http://127.0.0.1:8004/admin/partners
 
 Partner dashboard:
-http://127.0.0.1:8000/partner/dashboard
+http://127.0.0.1:8004/partner/dashboard
 
 Standalone advertising admin:
-http://127.0.0.1:8000/admin/ads
+http://127.0.0.1:8004/admin/ads
 
 Partner advertising submission:
-http://127.0.0.1:8000/partner/ads
+http://127.0.0.1:8004/partner/ads
 
 
 Display schedule API:
-http://127.0.0.1:8000/api/v1/display/ecopark-entry-fixed-display/schedule
+http://127.0.0.1:8004/api/v1/display/ecopark-entry-fixed-display/schedule
 Venue and hub registry:
-http://127.0.0.1:8000/admin/venues
+http://127.0.0.1:8004/admin/venues
 ```
 
 ## Demo Credentials
@@ -97,21 +97,21 @@ For a fresh repeat of the same flow, use another valid Iranian-format mobile num
 ## Presentation Flow
 
 1. Open the board-facing entry:
-   `http://127.0.0.1:8000/board`
+   `http://127.0.0.1:8004/board`
 2. Open the full mock ecosystem demo:
-   `http://127.0.0.1:8000/demo/ecosystem`
+   `http://127.0.0.1:8004/demo/ecosystem`
 3. Show the four role panels: visitor, shop/partner, ravaq manager, and platform admin.
 4. Show mock definitions for treasures, rewards, discounts, partner offers, standalone ads, sponsor placements, ravaq capacity, rules, and anti-fraud controls.
 5. Explain that this page is front-end mock data for the complete product vision, while the QR/OTP/consent/dashboard flow is the working MVP core.
 6. Open the proposal coverage page:
-   `http://127.0.0.1:8000/demo/proposal`
+   `http://127.0.0.1:8004/demo/proposal`
 7. Show how the demo covers the board proposal: visitor journey, treasure campaign, touchpoints, hub scenarios, business value, and KPI.
 8. Show the live demo cards and the complete QR -> OTP -> Consent -> Visit -> Dashboard flow.
 9. Open the mission simulator:
-   `http://127.0.0.1:8000/demo/missions`
+   `http://127.0.0.1:8004/demo/missions`
 10. Complete the first missions and show that points, rewards, level, and the locked challenge update live.
 11. Open the QR landing page:
-    `http://127.0.0.1:8000/scan/ep1405-a7f3k9m2q8x4`
+    `http://127.0.0.1:8004/scan/ep1405-a7f3k9m2q8x4`
 12. Show that the QR is bound to the Abbasabad Eco Park pilot location.
 13. Click the start/continue action to go to mobile OTP.
 14. Enter `09120000000` or another valid demo mobile number.
@@ -163,7 +163,7 @@ If the local server is closed, run this from the project root:
 Then open:
 
 ```text
-http://127.0.0.1:8000/demo
+http://127.0.0.1:8004/demo
 ```
 
 ## Current Technical Checkpoint
