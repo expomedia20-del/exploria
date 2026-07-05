@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\RewardApprovalController;
 use App\Http\Controllers\Admin\RoleOperationsController;
 use App\Http\Controllers\Admin\SponsorActivationController;
 use App\Http\Controllers\Admin\UserAccessScopeController;
+use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Admin\VenueRegistryController;
 use App\Http\Controllers\Auth\OtpController;
 use App\Http\Controllers\ConsentController;
@@ -138,6 +139,19 @@ Route::get('/admin/qr-codes', [QrRegistryController::class, 'page'])
 Route::get('/admin/internal-operations', [InternalOperationsController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer'])
     ->name('admin.internal-operations.page');
+
+Route::get('/admin/users', [UserManagementController::class, 'page'])
+    ->middleware(['auth', 'role:admin,operator,viewer'])
+    ->name('admin.users.page');
+Route::patch('/admin/users/{user}/role', [UserManagementController::class, 'updateRole'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.users.role');
+Route::post('/admin/users/{user}/deactivate-access', [UserManagementController::class, 'deactivateAccess'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.users.deactivate-access');
+Route::delete('/admin/users/{user}', [UserManagementController::class, 'destroy'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.users.destroy');
 
 Route::post('/admin/qr-codes', [QrRegistryController::class, 'store'])
     ->middleware(['auth', 'role:admin,operator'])

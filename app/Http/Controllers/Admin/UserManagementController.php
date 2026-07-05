@@ -1,0 +1,319 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Enums\RecordStatus;
+use App\Enums\UserRole;
+use App\Http\Controllers\Controller;
+use App\Models\Hub;
+use App\Models\PartnerAccount;
+use App\Models\User;
+use App\Models\UserAccessScope;
+use App\Models\Venue;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class UserManagementController extends Controller
+{
+    public function page(): Response
+    {
+        return Inertia::render('admin/users/index', [
+            'users' => $this->users(),
+            'stats' => $this->stats(),
+            'roleOptions' => $this->roleOptions(),
+            'filters' => $this->filters(),
+        ]);
+    }
+
+    public function updateRole(Request $request, User $user): RedirectResponse
+    {
+        $data = $request->validate([
+            'role' => ['required', Rule::enum(UserRole::class)],
+        ]);
+
+        if ($request->user()?->is($user) && $data['role'] !== UserRole::Admin->value) {
+            return back()->withErrors([
+                'role' => 'ادمین مرکزی نمی‌تواند نقش پایه خودش را از این صفحه کاهش دهد.',
+            ]);
+        }
+
+        $user->update(['role' => UserRole::from($data['role'])]);
+
+        return back()->with('success', 'نقش پایه کاربر به‌روزرسانی شد.');
+    }
+
+    public function deactivateAccess(User $user): RedirectResponse
+    {
+        $updated = UserAccessScope::query()
+            ->where('user_id', $user->id)
+            ->where('status', RecordStatus::Active)
+            ->update(['status' => RecordStatus::Inactive]);
+
+        return back()->with(
+            'success',
+            $updated > 0
+                ? 'همه دسترسی‌های فعال این کاربر غیرفعال شد.'
+                : 'این کاربر دسترسی فعال برای غیرفعال‌سازی ندارد.',
+        );
+    }
+
+    public function destroy(Request $request, User $user): RedirectResponse
+    {
+        if ($request->user()?->is($user)) {
+            return back()->withErrors([
+                'delete' => 'حذف اکانت فعلی شما مجاز نیست.',
+            ]);
+        }
+
+        $blockers = $this->safeDeleteBlockers($user);
+
+        if ($blockers !== []) {
+            return back()->withErrors([
+                'delete' => 'این کاربر سابقه عملیاتی دارد و حذف ایمن نیست. ابتدا دسترسی‌های فعال را غیرفعال کنید و سوابق را نگه دارید.',
+            ]);
+        }
+
+        $user->delete();
+
+        return back()->with('success', 'کاربر بدون سابقه عملیاتی حذف شد.');
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private function users(): array
+    {
+        return User::query()
+            ->with([
+                'accessScopes' => fn ($query) => $query
+                    ->latest('updated_at'),
+            ])
+            ->withCount([
+                'accessScopes',
+                'accessScopes as active_access_scopes_count' => fn ($query) => $query
+                    ->where('status', RecordStatus::Active),
+                'visits',
+                'missionProgress',
+                'rewards',
+                'rewardRedemptions',
+                'consentLogs',
+                'partnerUsers',
+                'sponsorUsers',
+                'hubManagementAssignments',
+            ])
+            ->orderBy('role')
+            ->orderBy('name')
+            ->get()
+            ->map(function (User $user): array {
+                $activeScopes = $user->accessScopes
+                    ->where('status', RecordStatus::Active);
+                $kind = $this->userKind($user, $activeScopes->pluck('role_key')->all());
+                $blockers = $this->safeDeleteBlockers($user);
+
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->role?->value,
+                    'roleLabel' => $this->accountRoleLabel($user->role?->value),
+                    'kind' => $kind,
+                    'kindLabel' => $this->userKindLabel($kind),
+                    'statusLabel' => $this->statusLabel($user),
+                    'isStressDemo' => str_contains((string) $user->email, 'stress-demo'),
+                    'counts' => [
+                        'accessScopes' => (int) $user->access_scopes_count,
+                        'activeScopes' => (int) $user->active_access_scopes_count,
+                        'visits' => (int) $user->visits_count,
+                        'missionProgress' => (int) $user->mission_progress_count,
+                        'rewards' => (int) $user->rewards_count,
+                        'redemptions' => (int) $user->reward_redemptions_count,
+                        'consents' => (int) $user->consent_logs_count,
+                    ],
+                    'canDelete' => $blockers === [],
+                    'deleteBlockers' => $blockers,
+                    'scopes' => $user->accessScopes
+                        ->map(fn (UserAccessScope $scope): array => [
+                            'id' => $scope->id,
+                            'roleKey' => $scope->role_key,
+                            'roleLabel' => $this->roleLabel($scope->role_key),
+                            'scopeType' => $scope->scope_type,
+                            'scopeTypeLabel' => $this->scopeTypeLabel($scope->scope_type),
+                            'scopeId' => $scope->scope_id,
+                            'scopeLabel' => $this->scopeLabel($scope->scope_type, $scope->scope_id),
+                            'status' => $scope->status->value,
+                            'statusLabel' => $scope->status === RecordStatus::Active ? 'فعال' : 'غیرفعال',
+                        ])
+                        ->values()
+                        ->all(),
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    /** @return array<string, int> */
+    private function stats(): array
+    {
+        return [
+            'total' => User::query()->count(),
+            'internal' => User::query()->whereIn('role', [
+                UserRole::Admin,
+                UserRole::Operator,
+                UserRole::Viewer,
+            ])->count(),
+            'partners' => User::query()->whereIn('role', [
+                UserRole::ShopPartner,
+                UserRole::HubManager,
+                UserRole::Sponsor,
+            ])->count(),
+            'visitors' => User::query()->where('role', UserRole::Visitor)->count(),
+            'activeScopedUsers' => UserAccessScope::query()
+                ->where('status', RecordStatus::Active)
+                ->distinct('user_id')
+                ->count('user_id'),
+        ];
+    }
+
+    /** @return array<int, array<string, string>> */
+    private function roleOptions(): array
+    {
+        return collect(UserRole::cases())
+            ->map(fn (UserRole $role): array => [
+                'key' => $role->value,
+                'label' => $this->accountRoleLabel($role->value),
+            ])
+            ->values()
+            ->all();
+    }
+
+    /** @return array<int, array<string, string>> */
+    private function filters(): array
+    {
+        return [
+            ['key' => 'all', 'label' => 'همه کاربران'],
+            ['key' => 'exploria_team', 'label' => 'تیم داخلی اکسپلوریا'],
+            ['key' => 'venue_management', 'label' => 'مدیریت مکان و زون'],
+            ['key' => 'commercial_partner', 'label' => 'واحدها و اسپانسرها'],
+            ['key' => 'public', 'label' => 'بازدیدکنندگان'],
+        ];
+    }
+
+    /** @param array<int, string> $activeRoleKeys */
+    private function userKind(User $user, array $activeRoleKeys): string
+    {
+        foreach ($activeRoleKeys as $roleKey) {
+            $group = config("exploria_roles.roles.{$roleKey}.group");
+            if (is_string($group)) {
+                return $group;
+            }
+        }
+
+        return match ($user->role) {
+            UserRole::Admin, UserRole::Operator, UserRole::Viewer => 'exploria_team',
+            UserRole::HubManager => 'venue_management',
+            UserRole::ShopPartner, UserRole::Sponsor => 'commercial_partner',
+            UserRole::Visitor => 'public',
+            default => 'uncategorized',
+        };
+    }
+
+    private function userKindLabel(string $kind): string
+    {
+        return match ($kind) {
+            'exploria_team' => 'تیم داخلی اکسپلوریا',
+            'venue_management' => 'مدیریت مکان / زون / هاب',
+            'commercial_partner' => 'واحد تجاری / اسپانسر',
+            'public' => 'بازدیدکننده / مشارکت‌کننده',
+            default => 'دسته‌بندی نشده',
+        };
+    }
+
+    private function accountRoleLabel(?string $role): string
+    {
+        return match ($role) {
+            'admin' => 'ادمین مرکزی',
+            'operator' => 'اپراتور داخلی',
+            'viewer' => 'مشاهده‌گر',
+            'visitor' => 'بازدیدکننده / مشارکت‌کننده',
+            'shop_partner' => 'مدیر فروشگاه / واحد تجاری',
+            'hub_manager' => 'مدیر هاب / زون',
+            'sponsor' => 'اسپانسر',
+            default => '-',
+        };
+    }
+
+    private function roleLabel(string $roleKey): string
+    {
+        return config("exploria_roles.roles.{$roleKey}.label", $roleKey);
+    }
+
+    private function scopeTypeLabel(string $scopeType): string
+    {
+        return match ($scopeType) {
+            'global' => 'کل سیستم',
+            'region' => 'منطقه / عاملیت',
+            'venue' => 'مکان پروژه',
+            'project' => 'پروژه',
+            'hub' => 'هاب / رواق',
+            'partner' => 'فروشگاه / شریک',
+            'campaign' => 'کمپین',
+            'display_network' => 'شبکه نمایشگرها',
+            'team' => 'تیم / خانواده',
+            default => $scopeType,
+        };
+    }
+
+    private function scopeLabel(string $scopeType, ?string $scopeId): string
+    {
+        if ($scopeType === 'global') {
+            return 'کل اکسپلوریا';
+        }
+
+        if (! $scopeId) {
+            return 'بدون محدوده مشخص';
+        }
+
+        return match ($scopeType) {
+            'venue' => Venue::query()->whereKey($scopeId)->value('name') ?? $scopeId,
+            'hub' => Hub::query()->whereKey($scopeId)->value('name') ?? $scopeId,
+            'partner' => PartnerAccount::query()->whereKey($scopeId)->value('name') ?? $scopeId,
+            default => $scopeId,
+        };
+    }
+
+    private function statusLabel(User $user): string
+    {
+        if ((int) $user->active_access_scopes_count > 0) {
+            return 'دارای دسترسی فعال';
+        }
+
+        if ($user->role === UserRole::Visitor && (int) $user->visits_count > 0) {
+            return 'مشارکت‌کننده ثبت‌شده';
+        }
+
+        return 'بدون دسترسی فعال';
+    }
+
+    /** @return array<int, string> */
+    private function safeDeleteBlockers(User $user): array
+    {
+        $counts = [
+            'دسترسی ثبت‌شده' => $user->access_scopes_count ?? $user->accessScopes()->count(),
+            'بازدید' => $user->visits_count ?? $user->visits()->count(),
+            'رضایت‌نامه' => $user->consent_logs_count ?? $user->consentLogs()->count(),
+            'پیشرفت ماموریت' => $user->mission_progress_count ?? $user->missionProgress()->count(),
+            'پاداش' => $user->rewards_count ?? $user->rewards()->count(),
+            'مصرف پاداش' => $user->reward_redemptions_count ?? $user->rewardRedemptions()->count(),
+            'اتصال فروشگاه' => $user->partner_users_count ?? $user->partnerUsers()->count(),
+            'اتصال اسپانسر' => $user->sponsor_users_count ?? $user->sponsorUsers()->count(),
+            'مدیریت هاب' => $user->hub_management_assignments_count ?? $user->hubManagementAssignments()->count(),
+        ];
+
+        return collect($counts)
+            ->filter(fn (int $count): bool => $count > 0)
+            ->keys()
+            ->values()
+            ->all();
+    }
+}

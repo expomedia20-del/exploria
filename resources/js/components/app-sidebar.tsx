@@ -192,6 +192,13 @@ const mainNavItems: RoleAwareNavItem[] = [
         roles: ['admin', 'operator', 'viewer'],
     },
     {
+        title: 'مدیریت کاربران',
+        href: '/admin/users',
+        icon: UsersRound,
+        group: '۴. دسترسی و کنترل',
+        roles: ['admin', 'operator', 'viewer'],
+    },
+    {
         title: 'تخصیص دسترسی',
         href: '/admin/access-scopes',
         icon: ShieldCheck,
