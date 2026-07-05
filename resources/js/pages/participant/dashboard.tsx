@@ -112,6 +112,39 @@ type Journey = {
         totalMissions: number;
         progressPercent: number;
     }[];
+    rewardCatalog: {
+        id: string;
+        name: string;
+        rewardType: string;
+        rewardTypeLabel: string;
+        campaignName: string | null;
+        campaignCode: string | null;
+        partnerName: string | null;
+        partnerType: string | null;
+        pointCost: number | null;
+        stockQuantity: number | null;
+        remainingStock: number | null;
+        source: string | null;
+        tier: string | null;
+    }[];
+    rewardWallet: {
+        id: string;
+        status: string;
+        awardedAt: string | null;
+        expiresAt: string | null;
+        campaignName: string | null;
+        campaignCode: string | null;
+        rewardName: string | null;
+        rewardType: string | null;
+        rewardTypeLabel: string;
+        pointCost: number | null;
+        partnerName: string | null;
+        redemptionCode: string | null;
+        redemptionStatus: string | null;
+        redeemedAt: string | null;
+        redemption?: { partnerName: string | null } | null;
+        reward?: { partnerName: string | null } | null;
+    }[];
     history: {
         id: string;
         venueName: string | null;
@@ -126,6 +159,11 @@ type Journey = {
     partners: {
         name: string;
         type: string | null;
+        rewardName: string | null;
+        rewardType: string | null;
+        rewardTypeLabel: string;
+        campaignName: string | null;
+        pointCost: number | null;
         status: string;
         redeemedAt: string | null;
     }[];
@@ -345,6 +383,39 @@ export default function ParticipantDashboard({
                 </div>
             </section>
 
+            <section className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
+                <div className="flex items-center gap-2">
+                    <Gift className="size-5 text-rose-500" />
+                    <h2 className="font-semibold">پاداش‌ها و مشوق‌های قابل دریافت</h2>
+                </div>
+                <p className="mt-2 text-sm leading-7 text-muted-foreground">
+                    این بخش نشان می‌دهد در کمپین‌های فعال چه نوع مشوقی ممکن است دریافت شود؛ کوپن فروشگاهی، تخفیف اسپانسری، هدیه محصولی یا جایزه.
+                </p>
+                <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                    {journey.rewardCatalog.length === 0 ? (
+                        <EmptyBox text="هنوز پاداش فعالی برای کمپین‌های قابل انتخاب ثبت نشده است." />
+                    ) : (
+                        journey.rewardCatalog.map((reward) => (
+                            <article key={reward.id} className="rounded-md border border-sidebar-border/70 p-3 text-sm dark:border-sidebar-border">
+                                <div className="flex flex-wrap items-start justify-between gap-2">
+                                    <p className="font-medium">{reward.name}</p>
+                                    <span className="rounded-full bg-rose-50 px-2.5 py-1 text-xs text-rose-800 dark:bg-rose-950 dark:text-rose-100">
+                                        {reward.rewardTypeLabel}
+                                    </span>
+                                </div>
+                                <p className="mt-2 text-xs leading-6 text-muted-foreground">
+                                    {reward.campaignName ?? 'کمپین'} - {reward.partnerName ?? 'اکسپلوریا'}
+                                </p>
+                                <p className="mt-2 text-xs text-muted-foreground">
+                                    {reward.pointCost !== null ? `${reward.pointCost.toLocaleString('fa-IR')} امتیاز` : 'بدون هزینه امتیازی'}
+                                    {reward.remainingStock !== null ? ` - موجودی قابل صدور: ${reward.remainingStock.toLocaleString('fa-IR')}` : ''}
+                                </p>
+                            </article>
+                        ))
+                    )}
+                </div>
+            </section>
+
             {!latestVisit ? (
                 <section className="rounded-lg border border-dashed border-sidebar-border/70 bg-background p-6 text-sm leading-7 dark:border-sidebar-border">
                     <div className="flex items-center gap-2 font-semibold">
@@ -449,21 +520,27 @@ export default function ParticipantDashboard({
                                 <Gift className="size-5 text-rose-500" />
                                 <h2 className="font-semibold">کیف پاداش</h2>
                             </div>
-                            {(missionFlow?.rewards ?? []).length === 0 ? (
+                            {journey.rewardWallet.length === 0 ? (
                                 <EmptyBox text="هنوز پاداشی صادر نشده است." />
                             ) : (
                                 <div className="mt-4 grid gap-3">
-                                    {missionFlow?.rewards.map((reward) => (
+                                    {journey.rewardWallet.map((reward) => (
                                         <div key={reward.id} className="rounded-md border border-sidebar-border/70 p-3 text-sm dark:border-sidebar-border">
-                                            <p className="font-medium">{reward.reward?.name}</p>
+                                            <p className="font-medium">{reward.rewardName ?? 'پاداش'}</p>
                                             <p className="mt-1 text-xs text-muted-foreground">
                                                 شریک: {reward.redemption?.partnerName ?? reward.reward?.partnerName ?? 'پلتفرم'} · وضعیت: {rewardStatusLabels[reward.status] ?? reward.status}
                                             </p>
-                                            {reward.redemption ? (
+                                            {reward.redemptionCode ? (
                                                 <p className="mt-3 rounded-md bg-amber-50 px-3 py-2 font-mono text-base font-semibold text-amber-900 dark:bg-amber-950 dark:text-amber-100" dir="ltr">
-                                                    {reward.redemption.redemptionCode}
+                                                    {reward.redemptionCode}
                                                 </p>
                                             ) : null}
+                                            <p className="mt-2 text-xs leading-6 text-muted-foreground">
+                                                {reward.rewardTypeLabel} - {reward.campaignName ?? 'کمپین'} - {reward.partnerName ?? 'اکسپلوریا'}
+                                                {reward.pointCost !== null ? ` - ${reward.pointCost.toLocaleString('fa-IR')} امتیاز` : ''}
+                                                {reward.awardedAt ? ` - صدور: ${formatDate(reward.awardedAt)}` : ''}
+                                                {reward.redeemedAt ? ` - مصرف: ${formatDate(reward.redeemedAt)}` : ''}
+                                            </p>
                                         </div>
                                     ))}
                                 </div>
@@ -502,6 +579,10 @@ export default function ParticipantDashboard({
                                 <p className="mt-1 text-xs text-muted-foreground">
                                     وضعیت مشوق: {partner.status}
                                     {partner.redeemedAt ? ` · ${formatDate(partner.redeemedAt)}` : ''}
+                                </p>
+                                <p className="mt-2 text-xs leading-6 text-muted-foreground">
+                                    {partner.rewardName ?? 'مشوق ثبت‌شده'} - {partner.rewardTypeLabel} - {partner.campaignName ?? 'کمپین'}
+                                    {partner.pointCost !== null ? ` - ${partner.pointCost.toLocaleString('fa-IR')} امتیاز` : ''}
                                 </p>
                             </div>
                         ))

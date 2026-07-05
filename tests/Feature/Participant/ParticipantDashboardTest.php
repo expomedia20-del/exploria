@@ -74,6 +74,22 @@ class ParticipantDashboardTest extends TestCase
                         'progressPercent',
                     ])
                     ->etc())
+                ->has('journey.rewardCatalog.0', fn (Assert $reward) => $reward
+                    ->hasAll([
+                        'id',
+                        'name',
+                        'rewardType',
+                        'rewardTypeLabel',
+                        'campaignName',
+                        'campaignCode',
+                        'partnerName',
+                        'partnerType',
+                        'pointCost',
+                        'stockQuantity',
+                        'remainingStock',
+                    ])
+                    ->etc())
+                ->has('journey.rewardWallet')
                 ->where('journey.history.0.id', $visit->id)
                 ->has('missionFlow.missions', 4));
     }

@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Enums\RecordStatus;
 use App\Models\Campaign;
 use App\Models\MissionInstance;
+use App\Models\RewardDefinition;
 use App\Models\RewardRedemption;
 use App\Models\Treasure;
 use App\Models\User;
@@ -105,7 +106,11 @@ class ParticipantDashboardController extends Controller
             ->pluck('points', 'visit_id');
 
         $partners = RewardRedemption::query()
-            ->with('partnerAccount:id,name,partner_type')
+            ->with([
+                'partnerAccount:id,name,partner_type',
+                'userReward.rewardDefinition:id,name,reward_type,point_cost',
+                'userReward.campaign:id,name',
+            ])
             ->where('user_id', $user->id)
             ->whereNotNull('partner_account_id')
             ->latest()
@@ -114,6 +119,11 @@ class ParticipantDashboardController extends Controller
             ->map(fn (RewardRedemption $redemption): array => [
                 'name' => $redemption->partnerAccount?->name ?? 'واحد تجاری',
                 'type' => $redemption->partnerAccount?->partner_type,
+                'rewardName' => $redemption->userReward?->rewardDefinition?->name,
+                'rewardType' => $redemption->userReward?->rewardDefinition?->reward_type,
+                'rewardTypeLabel' => $this->rewardTypeLabel($redemption->userReward?->rewardDefinition?->reward_type),
+                'campaignName' => $redemption->userReward?->campaign?->name,
+                'pointCost' => $redemption->userReward?->rewardDefinition?->point_cost,
                 'status' => $redemption->status,
                 'redeemedAt' => $redemption->redeemed_at?->toIso8601String(),
             ])
@@ -174,6 +184,66 @@ class ParticipantDashboardController extends Controller
             })
             ->values();
 
+        $rewardCatalog = RewardDefinition::query()
+            ->with(['campaign:id,name,code', 'partnerAccount:id,name,partner_type'])
+            ->withCount('userRewards')
+            ->whereIn('campaign_id', $activeCampaignIds)
+            ->where('status', RecordStatus::Active)
+            ->orderBy('point_cost')
+            ->limit(10)
+            ->get()
+            ->map(fn (RewardDefinition $reward): array => [
+                'id' => $reward->id,
+                'name' => $reward->name,
+                'rewardType' => $reward->reward_type,
+                'rewardTypeLabel' => $this->rewardTypeLabel($reward->reward_type),
+                'campaignName' => $reward->campaign?->name,
+                'campaignCode' => $reward->campaign?->code,
+                'partnerName' => $reward->partnerAccount?->name,
+                'partnerType' => $reward->partnerAccount?->partner_type,
+                'pointCost' => $reward->point_cost,
+                'stockQuantity' => $reward->stock_quantity,
+                'remainingStock' => $reward->stock_quantity === null
+                    ? null
+                    : max(0, (int) $reward->stock_quantity - (int) $reward->getAttribute('user_rewards_count')),
+                'source' => $reward->metadata['source'] ?? null,
+                'tier' => $reward->metadata['reward_tier'] ?? null,
+            ])
+            ->values();
+
+        $rewardWallet = UserReward::query()
+            ->with([
+                'rewardDefinition:id,name,reward_type,point_cost,partner_account_id',
+                'rewardDefinition.partnerAccount:id,name,partner_type',
+                'campaign:id,name,code',
+                'redemptions.partnerAccount:id,name,partner_type',
+            ])
+            ->where('user_id', $user->id)
+            ->latest('awarded_at')
+            ->limit(12)
+            ->get()
+            ->map(function (UserReward $userReward): array {
+                $redemption = $userReward->redemptions->sortByDesc('redeemed_at')->first();
+
+                return [
+                    'id' => $userReward->id,
+                    'status' => $userReward->status,
+                    'awardedAt' => $userReward->awarded_at?->toIso8601String(),
+                    'expiresAt' => $userReward->expires_at?->toIso8601String(),
+                    'campaignName' => $userReward->campaign?->name,
+                    'campaignCode' => $userReward->campaign?->code,
+                    'rewardName' => $userReward->rewardDefinition?->name,
+                    'rewardType' => $userReward->rewardDefinition?->reward_type,
+                    'rewardTypeLabel' => $this->rewardTypeLabel($userReward->rewardDefinition?->reward_type),
+                    'pointCost' => $userReward->rewardDefinition?->point_cost,
+                    'partnerName' => $redemption?->partnerAccount?->name ?? $userReward->rewardDefinition?->partnerAccount?->name,
+                    'redemptionCode' => $redemption?->redemption_code,
+                    'redemptionStatus' => $redemption?->status,
+                    'redeemedAt' => $redemption?->redeemed_at?->toIso8601String(),
+                ];
+            })
+            ->values();
+
         $treasures = Treasure::query()
             ->with(['campaign:id,name', 'missionInstance.progressRecords' => fn ($query) => $query->where('user_id', $user->id)])
             ->whereHas('missionInstance.progressRecords', fn ($query) => $query
@@ -201,6 +271,8 @@ class ParticipantDashboardController extends Controller
                 'nextPotential' => $potentialNextPoints,
             ],
             'activeCampaigns' => $activeCampaigns,
+            'rewardCatalog' => $rewardCatalog,
+            'rewardWallet' => $rewardWallet,
             'history' => $visits->map(fn (Visit $visit): array => [
                 'id' => $visit->id,
                 'venueName' => $visit->venue?->name,
@@ -222,6 +294,20 @@ class ParticipantDashboardController extends Controller
                 'href' => $latestVisit ? route('visits.show', ['visit' => $latestVisit->id]) : null,
             ],
         ];
+    }
+
+    private function rewardTypeLabel(?string $type): string
+    {
+        return match ($type) {
+            'partner_coupon' => 'کوپن فروشگاهی',
+            'sponsor_discount', 'sponsor_discount_treasure' => 'تخفیف اسپانسری',
+            'sponsor_product', 'sponsor_product_treasure' => 'هدیه محصولی',
+            'sponsor_prize_draw' => 'قرعه‌کشی اسپانسری',
+            'sponsor_reward' => 'پاداش اسپانسری',
+            'badge' => 'نشان تجربه',
+            'mission_unlock' => 'باز شدن مرحله',
+            default => $type ?: 'پاداش',
+        };
     }
 
     private function resolveParticipant(Request $request, User $viewer): User
