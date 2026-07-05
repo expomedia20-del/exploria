@@ -76,4 +76,55 @@ class ParticipantDashboardTest extends TestCase
                 ->where('missionFlow', null)
                 ->where('participant.mode', 'individual'));
     }
+
+    public function test_admin_can_preview_a_real_participant_dashboard(): void
+    {
+        $this->withoutVite();
+
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $visitor = User::factory()->create([
+            'name' => 'Preview Visitor',
+            'role' => UserRole::Visitor,
+        ]);
+        $qr = QrCode::query()->firstOrFail();
+
+        $visit = Visit::query()->create([
+            'user_id' => $visitor->id,
+            'qr_code_id' => $qr->id,
+            'venue_id' => $qr->venue_id,
+            'touchpoint_id' => $qr->touchpoint_id,
+            'campaign_id' => $qr->campaign_id,
+            'source' => 'qr_landing',
+            'status' => 'confirmed',
+            'occurred_at' => now(),
+            'metadata' => [
+                'participation_mode' => 'team',
+                'team_name' => 'Preview Team',
+            ],
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('participant.dashboard', ['visitor_id' => $visitor->id]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('participant/dashboard')
+                ->where('participant.mode', 'team')
+                ->where('latestVisit.id', $visit->id)
+                ->where('viewerMode.canPreviewVisitors', true)
+                ->where('viewerMode.isAdminPreview', true)
+                ->where('viewerMode.currentVisitorId', $visitor->id)
+                ->has('viewerMode.previewOptions', 1));
+    }
+
+    public function test_visitor_cannot_preview_another_participant(): void
+    {
+        $this->withoutVite();
+
+        $viewer = User::factory()->create(['role' => UserRole::Visitor]);
+        $other = User::factory()->create(['role' => UserRole::Visitor]);
+
+        $this->actingAs($viewer)
+            ->get(route('participant.dashboard', ['visitor_id' => $other->id]))
+            ->assertForbidden();
+    }
 }

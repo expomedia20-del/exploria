@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Enums\UserRole;
 use App\Infrastructure\Otp\LocalFixedOtpProvider;
 use App\Models\OtpRequest;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -42,6 +43,7 @@ class OtpAuthenticationTest extends TestCase
             ->assertOk()->assertJsonPath('data.consentRequired', true);
 
         $this->assertAuthenticated();
+        $this->assertSame(UserRole::Visitor, auth()->user()->role);
         $this->assertNotNull(OtpRequest::find($otpId)->verified_at);
     }
 

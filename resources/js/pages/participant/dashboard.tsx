@@ -70,10 +70,25 @@ type UserRewardItem = {
     } | null;
 };
 
+type VisitorPreviewOption = {
+    id: number;
+    name: string;
+    email: string;
+    visitsCount: number;
+};
+
+type ViewerMode = {
+    canPreviewVisitors: boolean;
+    isAdminPreview: boolean;
+    currentVisitorId: number | null;
+    previewOptions: VisitorPreviewOption[];
+};
+
 type Props = {
     participant: Participant;
     latestVisit: LatestVisit | null;
     missionFlow: MissionFlow;
+    viewerMode: ViewerMode;
 };
 
 const missionStatusLabels: Record<MissionItem['status'], string> = {
@@ -111,6 +126,7 @@ export default function ParticipantDashboard({
     participant,
     latestVisit,
     missionFlow,
+    viewerMode,
 }: Props) {
     const progress = progressPercent(missionFlow);
     const nextMission =
@@ -168,6 +184,51 @@ export default function ParticipantDashboard({
                     </div>
                 </div>
             </header>
+
+            {viewerMode.canPreviewVisitors ? (
+                <section className="rounded-lg border border-sidebar-border/70 bg-background p-4 text-sm dark:border-sidebar-border">
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                        <div>
+                            <h2 className="font-semibold">
+                                پیش‌نمایش پنل مشارکت‌کننده برای ادمین
+                            </h2>
+                            <p className="mt-1 text-muted-foreground">
+                                برای پشتیبانی یا دمو، یک بازدیدکننده واقعی را انتخاب کنید؛ نیازی به خروج از اکانت ادمین نیست.
+                            </p>
+                        </div>
+                        <select
+                            className="min-h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                            value={viewerMode.currentVisitorId ?? ''}
+                            onChange={(event) => {
+                                const visitorId = event.currentTarget.value;
+
+                                if (visitorId) {
+                                    window.location.href = `/participant/dashboard?visitor_id=${visitorId}`;
+                                }
+                            }}
+                        >
+                            <option value="" disabled>
+                                انتخاب بازدیدکننده
+                            </option>
+                            {viewerMode.previewOptions.length === 0 ? (
+                                <option value="" disabled>
+                                    هنوز بازدیدکننده دارای بازدید ثبت‌شده وجود ندارد
+                                </option>
+                            ) : null}
+                            {viewerMode.previewOptions.map((option) => (
+                                <option key={option.id} value={option.id}>
+                                    {option.name} - {option.email} ({option.visitsCount.toLocaleString('fa-IR')} بازدید)
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                    {viewerMode.isAdminPreview ? (
+                        <p className="mt-3 rounded-md bg-sky-50 px-3 py-2 text-xs text-sky-900 dark:bg-sky-950 dark:text-sky-100">
+                            این صفحه در حالت پیش‌نمایش ادمین نمایش داده می‌شود؛ عملیات واقعی همچنان متعلق به اکانت بازدیدکننده انتخاب‌شده است.
+                        </p>
+                    ) : null}
+                </section>
+            ) : null}
 
             {!latestVisit ? (
                 <section className="rounded-lg border border-dashed border-sidebar-border/70 bg-background p-6 text-sm leading-7 dark:border-sidebar-border">

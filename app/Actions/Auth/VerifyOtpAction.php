@@ -35,7 +35,7 @@ class VerifyOtpAction
                     'mobile' => $otp->mobile,
                     'email' => 'visitor-'.substr($otp->mobile_hash, 0, 24).'@local.invalid',
                     'password' => Str::password(32),
-                    'role' => UserRole::Viewer,
+                    'role' => UserRole::Visitor,
                 ],
             );
 

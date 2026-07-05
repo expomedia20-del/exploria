@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\UserRole;
 use App\Models\User;
 use App\Models\Visit;
 use App\Services\MissionFlowService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -13,9 +15,11 @@ class ParticipantDashboardController extends Controller
 {
     public function __invoke(Request $request, MissionFlowService $missionFlow): Response
     {
-        $user = $request->user();
+        $viewer = $request->user();
 
-        abort_unless($user instanceof User, 401);
+        abort_unless($viewer instanceof User, 401);
+
+        $user = $this->resolveParticipant($request, $viewer);
 
         $latestVisit = Visit::query()
             ->with(['venue', 'touchpoint.hub.zone', 'campaign', 'qrCode'])
@@ -49,7 +53,60 @@ class ParticipantDashboardController extends Controller
                 'isDemo' => (bool) data_get($latestVisit->metadata, 'is_demo', false),
             ] : null,
             'missionFlow' => $flow,
+            'viewerMode' => [
+                'canPreviewVisitors' => $this->canPreviewVisitors($viewer),
+                'isAdminPreview' => $viewer->id !== $user->id,
+                'currentVisitorId' => $user->role === UserRole::Visitor ? $user->id : null,
+                'previewOptions' => $this->visitorPreviewOptions($viewer),
+            ],
         ]);
+    }
+
+    private function resolveParticipant(Request $request, User $viewer): User
+    {
+        $previewId = $request->integer('visitor_id');
+
+        if ($previewId > 0) {
+            abort_unless($this->canPreviewVisitors($viewer), 403);
+
+            return User::query()
+                ->whereKey($previewId)
+                ->where('role', UserRole::Visitor)
+                ->firstOrFail();
+        }
+
+        return $viewer;
+    }
+
+    private function canPreviewVisitors(User $user): bool
+    {
+        return in_array($user->role, [UserRole::Admin, UserRole::Operator], true);
+    }
+
+    /** @return array<int, array{id: int, name: string, email: string, visitsCount: int}> */
+    private function visitorPreviewOptions(User $viewer): array
+    {
+        if (! $this->canPreviewVisitors($viewer)) {
+            return [];
+        }
+
+        return User::query()
+            ->where('role', UserRole::Visitor)
+            ->whereHas('visits', fn (Builder $query): Builder => $query)
+            ->select(['id', 'name', 'email'])
+            ->withCount('visits')
+            ->orderByDesc('visits_count')
+            ->orderBy('name')
+            ->limit(30)
+            ->get()
+            ->map(fn (User $user): array => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'visitsCount' => (int) $user->visits_count,
+            ])
+            ->values()
+            ->all();
     }
 
     /** @return array{mode: string, modeLabel: string, teamName: string|null, members: array<int, string>} */
