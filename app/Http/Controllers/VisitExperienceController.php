@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\UserRole;
 use App\Models\User;
 use App\Models\Visit;
 use App\Services\MissionFlowService;
@@ -15,7 +16,15 @@ class VisitExperienceController extends Controller
     {
         $user = $request->user();
 
-        abort_unless($user instanceof User && $user->id === $visit->user_id, 403);
+        abort_unless($user instanceof User, 401);
+
+        $participant = $user;
+
+        if ($user->id !== $visit->user_id) {
+            abort_unless(in_array($user->role, [UserRole::Admin, UserRole::Operator], true), 403);
+
+            $participant = User::query()->whereKey($visit->user_id)->firstOrFail();
+        }
 
         $visit->load(['venue', 'touchpoint.hub.zone', 'campaign', 'qrCode']);
 
@@ -33,7 +42,11 @@ class VisitExperienceController extends Controller
                 'campaignName' => $visit->campaign?->name,
                 'isDemo' => (bool) data_get($visit->metadata, 'is_demo', false),
             ],
-            'missionFlow' => $missionFlow->visitMissionSummary($user, $visit),
+            'missionFlow' => $missionFlow->visitMissionSummary($participant, $visit),
+            'viewerMode' => [
+                'isAdminPreview' => $user->id !== $participant->id,
+                'participantName' => $participant->name,
+            ],
         ]);
     }
 }

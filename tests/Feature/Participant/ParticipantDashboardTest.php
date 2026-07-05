@@ -114,6 +114,14 @@ class ParticipantDashboardTest extends TestCase
                 ->where('viewerMode.isAdminPreview', true)
                 ->where('viewerMode.currentVisitorId', $visitor->id)
                 ->has('viewerMode.previewOptions', 1));
+
+        $this->actingAs($admin)
+            ->get(route('visits.show', ['visit' => $visit]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('visits/show')
+                ->where('visit.id', $visit->id)
+                ->where('viewerMode.isAdminPreview', true));
     }
 
     public function test_visitor_cannot_preview_another_participant(): void
