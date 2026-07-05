@@ -10,6 +10,7 @@ import {
     Megaphone,
     MonitorPlay,
     Network,
+    PlayCircle,
     QrCode,
     Route,
     ShieldCheck,
@@ -195,6 +196,13 @@ const mainNavItems: RoleAwareNavItem[] = [
         icon: ShieldCheck,
         group: '۴. دسترسی و کنترل',
         roles: ['admin', 'operator', 'viewer'],
+    },
+    {
+        title: 'پنل مشارکت‌کننده',
+        href: '/participant/dashboard',
+        icon: PlayCircle,
+        group: '۵. پنل کاربر',
+        roles: ['admin', 'visitor'],
     },
 ];
 

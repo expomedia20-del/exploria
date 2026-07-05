@@ -25,6 +25,7 @@ use App\Http\Controllers\Hub\HubManagerDashboardController;
 use App\Http\Controllers\Partner\PartnerAdvertisingController;
 use App\Http\Controllers\Partner\PartnerDashboardController;
 use App\Http\Controllers\Partner\PartnerOfferController;
+use App\Http\Controllers\ParticipantDashboardController;
 use App\Http\Controllers\Partner\RewardRedemptionController;
 use App\Http\Controllers\RewardWalletController;
 use App\Http\Controllers\ScanLandingController;
@@ -50,6 +51,8 @@ Route::middleware('auth')->group(function () {
         ->name('visits.missions.start');
     Route::post('/visits/{visit}/missions/{mission}/complete', [VisitMissionController::class, 'complete'])
         ->name('visits.missions.complete');
+    Route::get('/participant/dashboard', ParticipantDashboardController::class)
+        ->name('participant.dashboard');
     Route::get('/partner/dashboard', [PartnerDashboardController::class, 'page'])
         ->middleware('role:admin,shop_partner,sponsor')
         ->name('partner.dashboard');
