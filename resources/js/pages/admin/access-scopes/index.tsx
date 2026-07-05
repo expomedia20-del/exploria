@@ -1,4 +1,5 @@
 import { Form, Head, usePage } from '@inertiajs/react';
+import { useMemo, useState } from 'react';
 import {
     AlertTriangle,
     CheckCircle2,
@@ -21,6 +22,10 @@ type UserOption = {
     name: string;
     email: string;
     role: string | null;
+    roleLabel: string;
+    kind: string;
+    kindLabel: string;
+    isStressDemo: boolean;
 };
 
 type RoleOption = {
@@ -125,6 +130,39 @@ const userRoleLabels: Record<string, string> = {
     sponsor: 'اسپانسر',
 };
 
+const accountRoleCompatibility: Record<string, string[]> = {
+    admin: ['admin'],
+    operator: ['admin', 'operator'],
+    viewer: ['viewer'],
+    visitor: ['visitor'],
+    shop_partner: ['shop_partner'],
+    hub_manager: ['hub_manager'],
+    sponsor: ['sponsor'],
+};
+
+function compatibleUsersForRole(
+    users: UserOption[],
+    role?: RoleOption,
+): UserOption[] {
+    if (!role) {
+        return [];
+    }
+
+    const allowedRoles =
+        accountRoleCompatibility[role.governance.accountRole] ?? [];
+
+    return users.filter(
+        (user) =>
+            user.role !== null &&
+            allowedRoles.includes(user.role) &&
+            !user.isStressDemo,
+    );
+}
+
+function userOptionLabel(user: UserOption) {
+    return `${user.name} - ${user.email} (${user.kindLabel})`;
+}
+
 function canMutate(role?: string) {
     return role === 'admin' || role === 'operator';
 }
@@ -206,6 +244,25 @@ export default function AccessScopesIndex({
     const activeScopes = accessScopes.filter(
         (scope) => scope.status === 'active',
     );
+    const [selectedRoleKey, setSelectedRoleKey] = useState(
+        roleOptions[0]?.key ?? '',
+    );
+    const [selectedUserId, setSelectedUserId] = useState('');
+    const selectedRole = useMemo(
+        () =>
+            roleOptions.find((role) => role.key === selectedRoleKey) ??
+            roleOptions[0],
+        [roleOptions, selectedRoleKey],
+    );
+    const eligibleManualUsers = useMemo(
+        () => compatibleUsersForRole(userOptions, selectedRole),
+        [userOptions, selectedRole],
+    );
+    const manualUserValue = eligibleManualUsers.some(
+        (user) => String(user.id) === selectedUserId,
+    )
+        ? selectedUserId
+        : String(eligibleManualUsers[0]?.id ?? '');
 
     return (
         <>
@@ -303,7 +360,19 @@ export default function AccessScopesIndex({
                             </div>
                         </div>
                         <div className="grid gap-3 xl:grid-cols-3">
-                            {assignmentTemplates.map((template) => (
+                            {assignmentTemplates.map((template) => {
+                                const templateRole = roleOptions.find(
+                                    (role) => role.key === template.roleKey,
+                                );
+                                const eligibleTemplateUsers =
+                                    compatibleUsersForRole(
+                                        userOptions,
+                                        templateRole,
+                                    );
+                                const hasEligibleTemplateUsers =
+                                    eligibleTemplateUsers.length > 0;
+
+                                return (
                                 <Form
                                     key={template.key}
                                     action="/admin/access-scopes"
@@ -362,29 +431,21 @@ export default function AccessScopesIndex({
                                                 </p>
                                             </div>
 
-                                            {(() => {
-                                                const role = roleOptions.find(
-                                                    (item) =>
-                                                        item.key ===
-                                                        template.roleKey,
-                                                );
-
-                                                return role ? (
+                                            {templateRole ? (
                                                     <div className="rounded-md bg-muted/25 p-2">
                                                         <GovernancePill
                                                             governance={
-                                                                role.governance
+                                                                templateRole.governance
                                                             }
                                                         />
                                                         <p className="mt-2 text-xs leading-6 text-muted-foreground">
                                                             {
-                                                                role.governance
+                                                                templateRole.governance
                                                                     .policy
                                                             }
                                                         </p>
                                                     </div>
-                                                ) : null;
-                                            })()}
+                                                ) : null}
 
                                             <input
                                                 type="hidden"
@@ -413,20 +474,33 @@ export default function AccessScopesIndex({
                                                     name="user_id"
                                                     required
                                                     defaultValue={
-                                                        userOptions[0]?.id ?? ''
+                                                        eligibleTemplateUsers[0]
+                                                            ?.id ?? ''
+                                                    }
+                                                    disabled={
+                                                        !hasEligibleTemplateUsers
                                                     }
                                                     className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                                 >
-                                                    {userOptions.map((user) => (
+                                                    {hasEligibleTemplateUsers ? null : (
+                                                        <option value="">
+                                                            کاربر مناسب برای این نقش موجود نیست
+                                                        </option>
+                                                    )}
+                                                    {eligibleTemplateUsers.map((user) => (
                                                         <option
                                                             key={user.id}
                                                             value={user.id}
                                                         >
-                                                            {user.name} -{' '}
-                                                            {user.email}
+                                                            {userOptionLabel(
+                                                                user,
+                                                            )}
                                                         </option>
                                                     ))}
                                                 </select>
+                                                <p className="text-xs leading-6 text-muted-foreground">
+                                                    فقط کاربران سازگار با نوع اکانت نقش نمایش داده می‌شوند؛ اکانت‌های دموی فشار در انتخاب عادی پنهان شده‌اند.
+                                                </p>
                                                 <InputError
                                                     message={errors.user_id}
                                                 />
@@ -438,7 +512,7 @@ export default function AccessScopesIndex({
                                                     disabled={
                                                         processing ||
                                                         !template.available ||
-                                                        userOptions.length === 0
+                                                        !hasEligibleTemplateUsers
                                                     }
                                                     className="w-full"
                                                 >
@@ -448,7 +522,8 @@ export default function AccessScopesIndex({
                                         </div>
                                     )}
                                 </Form>
-                            ))}
+                                );
+                            })}
                         </div>
                     </section>
                 ) : null}
@@ -473,20 +548,35 @@ export default function AccessScopesIndex({
                                             id="user_id"
                                             name="user_id"
                                             required
-                                            defaultValue={
-                                                userOptions[0]?.id ?? ''
+                                            value={manualUserValue}
+                                            onChange={(event) =>
+                                                setSelectedUserId(
+                                                    event.target.value,
+                                                )
+                                            }
+                                            disabled={
+                                                eligibleManualUsers.length === 0
                                             }
                                             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                         >
-                                            {userOptions.map((user) => (
+                                            {eligibleManualUsers.length ===
+                                            0 ? (
+                                                <option value="">
+                                                    کاربر مناسب برای این نقش موجود نیست
+                                                </option>
+                                            ) : null}
+                                            {eligibleManualUsers.map((user) => (
                                                 <option
                                                     key={user.id}
                                                     value={user.id}
                                                 >
-                                                    {user.name} - {user.email}
+                                                    {userOptionLabel(user)}
                                                 </option>
                                             ))}
                                         </select>
+                                        <p className="text-xs leading-6 text-muted-foreground">
+                                            اکانت‌های دموی فشار برای تخصیص عادی نمایش داده نمی‌شوند.
+                                        </p>
                                         <InputError message={errors.user_id} />
                                     </div>
 
@@ -498,9 +588,13 @@ export default function AccessScopesIndex({
                                             id="role_key"
                                             name="role_key"
                                             required
-                                            defaultValue={
-                                                roleOptions[0]?.key ?? ''
-                                            }
+                                            value={selectedRoleKey}
+                                            onChange={(event) => {
+                                                setSelectedRoleKey(
+                                                    event.target.value,
+                                                );
+                                                setSelectedUserId('');
+                                            }}
                                             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                         >
                                             {roleOptions.map((role) => (
@@ -512,6 +606,15 @@ export default function AccessScopesIndex({
                                                 </option>
                                             ))}
                                         </select>
+                                        {selectedRole ? (
+                                            <div className="rounded-md bg-muted/25 p-2">
+                                                <GovernancePill
+                                                    governance={
+                                                        selectedRole.governance
+                                                    }
+                                                />
+                                            </div>
+                                        ) : null}
                                         <InputError message={errors.role_key} />
                                     </div>
 
@@ -585,7 +688,10 @@ export default function AccessScopesIndex({
                                     <div className="flex items-end lg:col-span-5">
                                         <Button
                                             type="submit"
-                                            disabled={processing}
+                                            disabled={
+                                                processing ||
+                                                eligibleManualUsers.length === 0
+                                            }
                                         >
                                             ثبت دسترسی
                                         </Button>

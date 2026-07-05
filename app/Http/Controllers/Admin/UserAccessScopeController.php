@@ -108,12 +108,21 @@ class UserAccessScopeController extends Controller
         return User::query()
             ->orderBy('name')
             ->get(['id', 'name', 'email', 'role'])
-            ->map(fn (User $user): array => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'role' => $user->role?->value,
-            ])
+            ->map(function (User $user): array {
+                $role = $user->role?->value;
+                $kind = $this->userKind($user);
+
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $role,
+                    'roleLabel' => $role ? $this->accountRoleLabel($role) : '-',
+                    'kind' => $kind,
+                    'kindLabel' => $this->userKindLabel($kind),
+                    'isStressDemo' => str_contains((string) $user->email, 'stress-demo'),
+                ];
+            })
             ->all();
     }
 
@@ -325,6 +334,37 @@ class UserAccessScopeController extends Controller
             'hub_manager' => 'اکانت مدیر هاب/رواق',
             'sponsor' => 'اکانت اسپانسر',
             default => $role,
+        };
+    }
+
+    private function userKind(User $user): string
+    {
+        if (str_contains((string) $user->email, 'stress-demo')) {
+            return 'stress_demo';
+        }
+
+        return match ($user->role?->value) {
+            'admin', 'operator' => 'exploria_internal',
+            'viewer' => 'internal_viewer',
+            'hub_manager' => 'hub_manager',
+            'shop_partner' => 'commercial_partner',
+            'sponsor' => 'sponsor',
+            'visitor' => 'visitor',
+            default => 'unknown',
+        };
+    }
+
+    private function userKindLabel(string $kind): string
+    {
+        return match ($kind) {
+            'exploria_internal' => 'تیم داخلی اکسپلوریا',
+            'internal_viewer' => 'مشاهده‌گر یا مدیر محدود',
+            'hub_manager' => 'مدیر هاب/رواق',
+            'commercial_partner' => 'فروشگاه/واحد تجاری',
+            'sponsor' => 'اسپانسر',
+            'visitor' => 'بازدیدکننده',
+            'stress_demo' => 'دموی فشار',
+            default => 'نامشخص',
         };
     }
 
