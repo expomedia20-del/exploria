@@ -1,5 +1,6 @@
 import { Form, Head, usePage } from '@inertiajs/react';
 import {
+    AlertTriangle,
     CheckCircle2,
     ClipboardCheck,
     Layers3,
@@ -26,6 +27,7 @@ type RoleOption = {
     key: string;
     label: string;
     defaultScope: string;
+    governance: RoleGovernance;
 };
 
 type ScopeOption = {
@@ -37,6 +39,7 @@ type AccessScope = {
     id: string;
     roleKey: string;
     roleLabel: string;
+    roleGovernance: RoleGovernance;
     scopeType: string;
     scopeTypeLabel: string;
     scopeId: string | null;
@@ -49,6 +52,16 @@ type AccessScope = {
         role: string | null;
     };
     updatedAt: string | null;
+};
+
+type RoleGovernance = {
+    accountRole: string;
+    accountRoleLabel: string;
+    approvalLevel: string;
+    approvalLabel: string;
+    risk: string;
+    riskLabel: string;
+    policy: string;
 };
 
 type AssignmentTemplate = {
@@ -149,6 +162,37 @@ function Stat({
     );
 }
 
+function riskClass(risk: string) {
+    return {
+        critical:
+            'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-200',
+        high: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200',
+        medium:
+            'bg-cyan-100 text-cyan-800 dark:bg-cyan-950 dark:text-cyan-200',
+        low: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200',
+    }[risk] ?? 'bg-muted text-muted-foreground';
+}
+
+function GovernancePill({ governance }: { governance: RoleGovernance }) {
+    return (
+        <div className="flex flex-wrap gap-2 text-xs">
+            <span className="rounded-full bg-muted px-2.5 py-1 font-medium">
+                اکانت: {governance.accountRoleLabel}
+            </span>
+            <span className="rounded-full bg-sky-100 px-2.5 py-1 font-medium text-sky-800 dark:bg-sky-950 dark:text-sky-200">
+                {governance.approvalLabel}
+            </span>
+            <span
+                className={`rounded-full px-2.5 py-1 font-medium ${riskClass(
+                    governance.risk,
+                )}`}
+            >
+                {governance.riskLabel}
+            </span>
+        </div>
+    );
+}
+
 export default function AccessScopesIndex({
     accessScopes,
     stats,
@@ -208,6 +252,38 @@ export default function AccessScopesIndex({
                         <AlertDescription>{flash.success}</AlertDescription>
                     </Alert>
                 ) : null}
+
+                <section className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
+                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <AlertTriangle className="size-4 text-muted-foreground" />
+                                <h2 className="font-semibold">
+                                    قاعده تغییر اکانت و نقش
+                                </h2>
+                            </div>
+                            <p className="mt-2 max-w-4xl text-sm leading-7 text-muted-foreground">
+                                اکانت ورود، فقط نوع ورود کاربر را مشخص می‌کند؛
+                                نقش عملیاتی و محدوده کار از همین صفحه تعیین
+                                می‌شود. نقش‌های حساس مثل ادمین مرکزی، مدیر
+                                منطقه‌ای، مدیر پروژه، اسپانسر بیرونی و مدیر
+                                نمایشگر باید با تایید بالادست و ثبت دلیل تغییر
+                                کنند.
+                            </p>
+                        </div>
+                        <div className="grid min-w-[260px] gap-2 text-sm">
+                            <div className="rounded-md bg-muted/40 p-3">
+                                ادمین مرکزی: تغییر نقش‌های حساس و سراسری
+                            </div>
+                            <div className="rounded-md bg-muted/40 p-3">
+                                مدیر پروژه: تغییر نقش‌های اجرایی همان پروژه
+                            </div>
+                            <div className="rounded-md bg-muted/40 p-3">
+                                شرکا: فقط نقش و محدوده خودشان را دریافت می‌کنند
+                            </div>
+                        </div>
+                    </div>
+                </section>
 
                 {writable && assignmentTemplates.length > 0 ? (
                     <section className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
@@ -285,6 +361,30 @@ export default function AccessScopesIndex({
                                                         'global'}
                                                 </p>
                                             </div>
+
+                                            {(() => {
+                                                const role = roleOptions.find(
+                                                    (item) =>
+                                                        item.key ===
+                                                        template.roleKey,
+                                                );
+
+                                                return role ? (
+                                                    <div className="rounded-md bg-muted/25 p-2">
+                                                        <GovernancePill
+                                                            governance={
+                                                                role.governance
+                                                            }
+                                                        />
+                                                        <p className="mt-2 text-xs leading-6 text-muted-foreground">
+                                                            {
+                                                                role.governance
+                                                                    .policy
+                                                            }
+                                                        </p>
+                                                    </div>
+                                                ) : null;
+                                            })()}
 
                                             <input
                                                 type="hidden"
@@ -490,6 +590,45 @@ export default function AccessScopesIndex({
                                             ثبت دسترسی
                                         </Button>
                                     </div>
+
+                                    <div className="lg:col-span-5">
+                                        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                                            {roleOptions
+                                                .filter((role) =>
+                                                    [
+                                                        'super_admin',
+                                                        'project_admin',
+                                                        'field_operator',
+                                                        'display_ads_manager',
+                                                        'shop_manager',
+                                                        'external_sponsor',
+                                                    ].includes(role.key),
+                                                )
+                                                .map((role) => (
+                                                    <div
+                                                        key={role.key}
+                                                        className="rounded-md border border-sidebar-border/70 p-3 dark:border-sidebar-border"
+                                                    >
+                                                        <p className="font-medium">
+                                                            {role.label}
+                                                        </p>
+                                                        <div className="mt-2">
+                                                            <GovernancePill
+                                                                governance={
+                                                                    role.governance
+                                                                }
+                                                            />
+                                                        </div>
+                                                        <p className="mt-2 text-xs leading-6 text-muted-foreground">
+                                                            {
+                                                                role.governance
+                                                                    .policy
+                                                            }
+                                                        </p>
+                                                    </div>
+                                                ))}
+                                        </div>
+                                    </div>
                                 </>
                             )}
                         </Form>
@@ -511,9 +650,10 @@ export default function AccessScopesIndex({
                     </div>
 
                     <div className="min-w-[980px]">
-                        <div className="grid grid-cols-[1.2fr_1.1fr_0.8fr_1.2fr_0.7fr_0.8fr] gap-3 border-b border-sidebar-border/70 px-4 py-3 text-xs font-medium text-muted-foreground dark:border-sidebar-border">
+                        <div className="grid grid-cols-[1.2fr_1.1fr_1.1fr_0.8fr_1.2fr_0.7fr_0.8fr] gap-3 border-b border-sidebar-border/70 px-4 py-3 text-xs font-medium text-muted-foreground dark:border-sidebar-border">
                             <span>کاربر</span>
                             <span>نقش عملیاتی</span>
+                            <span>حکمرانی تغییر</span>
                             <span>دامنه</span>
                             <span>محدوده</span>
                             <span>وضعیت</span>
@@ -523,7 +663,7 @@ export default function AccessScopesIndex({
                             {accessScopes.map((scope) => (
                                 <div
                                     key={scope.id}
-                                    className="grid grid-cols-[1.2fr_1.1fr_0.8fr_1.2fr_0.7fr_0.8fr] items-center gap-3 px-4 py-3 text-sm"
+                                    className="grid grid-cols-[1.2fr_1.1fr_1.1fr_0.8fr_1.2fr_0.7fr_0.8fr] items-center gap-3 px-4 py-3 text-sm"
                                 >
                                     <div className="min-w-0">
                                         <p className="truncate font-medium">
@@ -544,6 +684,14 @@ export default function AccessScopesIndex({
                                         </p>
                                     </div>
                                     <span>{scope.roleLabel}</span>
+                                    <div className="grid gap-2">
+                                        <GovernancePill
+                                            governance={scope.roleGovernance}
+                                        />
+                                        <p className="text-xs leading-6 text-muted-foreground">
+                                            {scope.roleGovernance.policy}
+                                        </p>
+                                    </div>
                                     <span>{scope.scopeTypeLabel}</span>
                                     <div className="min-w-0">
                                         <p className="truncate">

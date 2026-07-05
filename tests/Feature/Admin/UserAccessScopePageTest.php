@@ -35,8 +35,11 @@ class UserAccessScopePageTest extends TestCase
                 ->where('stats.total', 5)
                 ->where('stats.active', 5)
                 ->has('accessScopes', 5)
+                ->has('accessScopes.0.roleGovernance')
                 ->has('userOptions')
                 ->has('roleOptions')
+                ->where('roleOptions.0.governance.accountRole', 'admin')
+                ->where('roleOptions.0.governance.approvalLevel', 'central_admin')
                 ->has('scopeOptions.hub'));
     }
 

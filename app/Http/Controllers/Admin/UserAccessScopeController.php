@@ -74,6 +74,7 @@ class UserAccessScopeController extends Controller
                 'id' => $scope->id,
                 'roleKey' => $scope->role_key,
                 'roleLabel' => $this->roleLabel($scope->role_key),
+                'roleGovernance' => $this->roleGovernance($scope->role_key),
                 'scopeType' => $scope->scope_type,
                 'scopeTypeLabel' => $this->scopeTypeLabel($scope->scope_type),
                 'scopeId' => $scope->scope_id,
@@ -124,6 +125,7 @@ class UserAccessScopeController extends Controller
                 'key' => $key,
                 'label' => $this->roleLabel($key),
                 'defaultScope' => $role['scope'],
+                'governance' => $this->roleGovernance($key),
             ])
             ->values()
             ->all();
@@ -269,5 +271,103 @@ class UserAccessScopeController extends Controller
             'team' => 'تیم یا خانواده',
             default => $scopeType,
         };
+    }
+
+    /** @return array{accountRole: string, accountRoleLabel: string, approvalLevel: string, approvalLabel: string, risk: string, riskLabel: string, policy: string} */
+    private function roleGovernance(string $roleKey): array
+    {
+        $accountRole = match ($roleKey) {
+            'super_admin' => 'admin',
+            'regional_admin', 'project_admin', 'field_operator', 'display_ads_manager' => 'operator',
+            'treasure_assistant' => 'viewer',
+            'venue_executive' => 'viewer',
+            'ravaq_manager', 'hub_manager' => 'hub_manager',
+            'shop_manager' => 'shop_partner',
+            'internal_sponsor', 'external_sponsor' => 'sponsor',
+            'participant' => 'visitor',
+            default => 'viewer',
+        };
+
+        $approvalLevel = match ($roleKey) {
+            'super_admin', 'regional_admin', 'project_admin', 'external_sponsor' => 'central_admin',
+            'display_ads_manager', 'venue_executive', 'ravaq_manager', 'hub_manager' => 'project_or_central_admin',
+            'field_operator', 'treasure_assistant', 'shop_manager', 'internal_sponsor' => 'project_admin',
+            'participant' => 'system',
+            default => 'project_admin',
+        };
+
+        $risk = match ($roleKey) {
+            'super_admin', 'regional_admin', 'project_admin' => 'critical',
+            'external_sponsor', 'display_ads_manager', 'venue_executive' => 'high',
+            'ravaq_manager', 'hub_manager', 'shop_manager', 'internal_sponsor' => 'medium',
+            default => 'low',
+        };
+
+        return [
+            'accountRole' => $accountRole,
+            'accountRoleLabel' => $this->accountRoleLabel($accountRole),
+            'approvalLevel' => $approvalLevel,
+            'approvalLabel' => $this->approvalLabel($approvalLevel),
+            'risk' => $risk,
+            'riskLabel' => $this->riskLabel($risk),
+            'policy' => $this->mutationPolicy($roleKey, $approvalLevel, $risk),
+        ];
+    }
+
+    private function accountRoleLabel(string $role): string
+    {
+        return match ($role) {
+            'admin' => 'ادمین',
+            'operator' => 'اپراتور داخلی',
+            'viewer' => 'مشاهده‌گر محدود',
+            'visitor' => 'بازدیدکننده',
+            'shop_partner' => 'اکانت فروشگاه/شریک',
+            'hub_manager' => 'اکانت مدیر هاب/رواق',
+            'sponsor' => 'اکانت اسپانسر',
+            default => $role,
+        };
+    }
+
+    private function approvalLabel(string $approvalLevel): string
+    {
+        return match ($approvalLevel) {
+            'central_admin' => 'تایید ادمین مرکزی',
+            'project_or_central_admin' => 'تایید مدیر پروژه یا ادمین مرکزی',
+            'project_admin' => 'تایید مدیر پروژه',
+            'system' => 'ثبت سیستمی/کاربر عمومی',
+            default => $approvalLevel,
+        };
+    }
+
+    private function riskLabel(string $risk): string
+    {
+        return match ($risk) {
+            'critical' => 'حساس بسیار بالا',
+            'high' => 'حساس بالا',
+            'medium' => 'حساس متوسط',
+            'low' => 'حساس پایین',
+            default => $risk,
+        };
+    }
+
+    private function mutationPolicy(string $roleKey, string $approvalLevel, string $risk): string
+    {
+        if ($roleKey === 'participant') {
+            return 'این نقش برای کاربر عمومی است و نباید از صفحه ادمین برای عملیات داخلی یا تجاری استفاده شود.';
+        }
+
+        if ($risk === 'critical') {
+            return 'تغییر این نقش باید فقط با تایید ادمین مرکزی و ثبت دلیل انجام شود.';
+        }
+
+        if ($approvalLevel === 'project_or_central_admin') {
+            return 'مدیر پروژه می‌تواند پیشنهاد یا تایید عملیاتی بدهد؛ موارد حساس به ادمین مرکزی ارجاع می‌شود.';
+        }
+
+        if ($approvalLevel === 'project_admin') {
+            return 'تغییر این نقش در محدوده پروژه با تایید مدیر پروژه مجاز است.';
+        }
+
+        return 'تغییر این نقش باید با مالک محدوده و قواعد دسترسی اکسپلوریا هماهنگ باشد.';
     }
 }

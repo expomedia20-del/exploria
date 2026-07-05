@@ -1,6 +1,20 @@
 # Exploria Current Handoff
 
-Last synced commit:
+Latest working commits:
+
+- `888c974 feat: add internal team supervision panel`
+- `811df21 feat: add internal operations team panel`
+- `2c7a66e feat: expand role authority model`
+
+Local session start:
+
+- Use `C:\Users\HPRAN\Documents\New project\exploria-start-here.bat` at the start of each local session.
+- The local server must run from `E:\exploria-codebase-current`, not from `C:\Users\HPRAN\Documents\New project\exploria-runtime-copy`.
+- Main local URL: `http://127.0.0.1:8004`
+- Internal operations panel: `http://127.0.0.1:8004/admin/internal-operations`
+- Role structure panel: `http://127.0.0.1:8004/admin/role-operations`
+
+Previous synced commit:
 
 - `263c9e8 feat: expose ravaq manager panel`
 
@@ -34,13 +48,17 @@ Startup prompt for the next Codex session:
 ```text
 This is the Exploria project.
 Repository: https://github.com/expomedia20-del/exploria
-Continue from commit 263c9e8.
+Continue from the latest pushed main commit.
 
 Read AGENTS.md and docs 20, 21, 24, and 25.
 Check git status.
-Start the site on http://127.0.0.1:8004.
+Start the site on http://127.0.0.1:8004 using:
+C:\Users\HPRAN\Documents\New project\exploria-start-here.bat
+Make sure the server runs from E:\exploria-codebase-current.
 Continue from the role/panel work:
 - /venue/dashboard is the read-only venue manager panel.
 - /ravaq/dashboard is the ravaq / zone manager panel.
-Next recommended work: controlled venue readiness comments, then dedicated ravaq UI hardening.
+- /admin/internal-operations is the internal Exploria supervision panel.
+- /admin/access-scopes should show account/role governance, approval sensitivity, and scope boundaries.
+Next recommended work: controlled access-change workflow, then visitor/participant panel completion.
 ```
