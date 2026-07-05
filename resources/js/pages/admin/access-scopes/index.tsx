@@ -359,6 +359,11 @@ export default function AccessScopesIndex({
                                 </p>
                             </div>
                         </div>
+                        <div className="mb-4 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm leading-7 text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-100">
+                            برای سناریوهای رایج اکوپارک، از همین قالب‌های آماده استفاده کنید؛
+                            نقش، دامنه و محدوده از قبل تنظیم شده‌اند و فقط باید کاربر مناسب را انتخاب کنید.
+                            بخش «ثبت دسترسی جدید» برای موارد خاص، موقت یا محدوده‌هایی است که هنوز قالب آماده ندارند.
+                        </div>
                         <div className="grid gap-3 xl:grid-cols-3">
                             {assignmentTemplates.map((template) => {
                                 const templateRole = roleOptions.find(
@@ -534,6 +539,10 @@ export default function AccessScopesIndex({
                             <Plus className="size-4 text-muted-foreground" />
                             <h2 className="font-semibold">ثبت دسترسی جدید</h2>
                         </div>
+                        <p className="mb-4 text-sm leading-7 text-muted-foreground">
+                            این بخش برای دسترسی‌های خاص، موقت یا محدوده‌هایی است که هنوز در قالب‌های آماده بالا تعریف نشده‌اند.
+                            برای کارهای روزمره اکوپارک، اول قالب‌های آماده را استفاده کنید.
+                        </p>
                         <Form
                             action="/admin/access-scopes"
                             method="post"

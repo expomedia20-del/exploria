@@ -47,6 +47,26 @@ class UserAccessScopePageTest extends TestCase
                 ->has('scopeOptions.hub'));
     }
 
+    public function test_pilot_seed_includes_multiple_assignable_accounts_for_busy_roles(): void
+    {
+        $this->assertDatabaseHas('users', [
+            'email' => 'ravaq.manager.ops@example.test',
+            'role' => UserRole::HubManager->value,
+        ]);
+        $this->assertDatabaseHas('users', [
+            'email' => 'ravaq.zone.manager@example.test',
+            'role' => UserRole::HubManager->value,
+        ]);
+        $this->assertDatabaseHas('users', [
+            'email' => 'cafe.eco.morning@example.test',
+            'role' => UserRole::ShopPartner->value,
+        ]);
+        $this->assertDatabaseHas('users', [
+            'email' => 'cafe.eco.evening@example.test',
+            'role' => UserRole::ShopPartner->value,
+        ]);
+    }
+
     public function test_admin_can_create_hub_access_scope(): void
     {
         $admin = User::factory()->create(['role' => UserRole::Admin]);
