@@ -63,6 +63,7 @@ const mainNavItems: RoleAwareNavItem[] = [
         href: dashboard(),
         icon: LayoutGrid,
         group: '۰. نمای کلی',
+        roles: ['admin', 'operator', 'viewer'],
     },
     {
         title: 'ارزیابی مکان',
@@ -218,6 +219,26 @@ function isVisibleForRole(item: RoleAwareNavItem, role?: UserRole) {
     return !item.roles || (role !== undefined && item.roles.includes(role));
 }
 
+function homeHrefForRole(role?: UserRole) {
+    if (role === 'visitor') {
+        return '/participant/dashboard';
+    }
+
+    if (role === 'shop_partner') {
+        return '/partner/dashboard';
+    }
+
+    if (role === 'sponsor') {
+        return '/sponsor/dashboard';
+    }
+
+    if (role === 'hub_manager') {
+        return '/ravaq/dashboard';
+    }
+
+    return dashboard();
+}
+
 export function AppSidebar() {
     const { auth } = usePage<SharedProps>().props;
     const role = auth?.user?.role;
@@ -231,7 +252,7 @@ export function AppSidebar() {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href={dashboard()} prefetch>
+                            <Link href={homeHrefForRole(role)} prefetch>
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>

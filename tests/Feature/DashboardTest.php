@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\UserRole;
 use App\Models\ConsentVersion;
 use App\Models\MissionInstance;
 use App\Models\User;
@@ -22,13 +23,22 @@ class DashboardTest extends TestCase
         $response->assertRedirect(route('login'));
     }
 
-    public function test_authenticated_users_can_visit_the_dashboard()
+    public function test_internal_users_can_visit_the_dashboard()
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['role' => UserRole::Admin]);
         $this->actingAs($user);
 
         $response = $this->get(route('dashboard'));
         $response->assertOk();
+    }
+
+    public function test_visitor_is_redirected_to_participant_dashboard(): void
+    {
+        $visitor = User::factory()->create(['role' => UserRole::Visitor]);
+
+        $this->actingAs($visitor)
+            ->get(route('dashboard'))
+            ->assertRedirect(route('participant.dashboard'));
     }
 
     public function test_dashboard_shows_pilot_operational_stats(): void
@@ -36,7 +46,7 @@ class DashboardTest extends TestCase
         $this->withoutVite();
         $this->seed([ConsentVersionSeeder::class, PilotLocationSeeder::class]);
 
-        $user = User::factory()->create();
+        $user = User::factory()->create(['role' => UserRole::Admin]);
         $version = ConsentVersion::query()->where('is_active', true)->firstOrFail();
 
         $this->actingAs($user)->postJson('/api/v1/consents/accept', [

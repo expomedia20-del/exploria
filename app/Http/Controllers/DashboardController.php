@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\UserRole;
 use App\Models\Campaign;
 use App\Models\ConsentLog;
 use App\Models\MissionInstance;
@@ -12,13 +13,35 @@ use App\Models\UserMissionProgress;
 use App\Models\UserReward;
 use App\Models\Venue;
 use App\Models\Visit;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function __invoke(): Response
+    public function __invoke(Request $request): Response|RedirectResponse
     {
+        $user = $request->user();
+
+        if ($user?->role === UserRole::Visitor) {
+            return redirect()->route('participant.dashboard');
+        }
+
+        if ($user?->role === UserRole::ShopPartner) {
+            return redirect()->route('partner.dashboard');
+        }
+
+        if ($user?->role === UserRole::Sponsor) {
+            return redirect()->route('sponsor.dashboard');
+        }
+
+        if ($user?->role === UserRole::HubManager) {
+            return redirect()->route('ravaq.dashboard');
+        }
+
+        abort_unless(in_array($user?->role, [UserRole::Admin, UserRole::Operator, UserRole::Viewer], true), 403);
+
         $latestVisits = Visit::query()
             ->with(['venue', 'touchpoint', 'campaign', 'user'])
             ->latest('occurred_at')

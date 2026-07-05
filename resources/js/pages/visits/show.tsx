@@ -428,7 +428,7 @@ export default function VisitShow({ visit, missionFlow }: Props) {
 
                 <div className="mt-6 grid gap-3 sm:grid-cols-2">
                     <Button asChild className="h-11">
-                        <Link href="/dashboard">مشاهده داشبورد</Link>
+                        <Link href="/participant/dashboard">پنل مشارکت‌کننده</Link>
                     </Button>
                     <Button asChild variant="outline" className="h-11">
                         <Link href={`/scan/${visit.qrCode ?? ''}`}>
