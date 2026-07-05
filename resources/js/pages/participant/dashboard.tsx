@@ -105,6 +105,12 @@ type Journey = {
         venueName: string | null;
         city: string | null;
         scanUrl: string | null;
+        hasVisit: boolean;
+        latestVisitId: string | null;
+        lastVisitedAt: string | null;
+        completedMissions: number;
+        totalMissions: number;
+        progressPercent: number;
     }[];
     history: {
         id: string;
@@ -284,7 +290,7 @@ export default function ParticipantDashboard({
             <section className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
                 <div className="flex items-center gap-2">
                     <QrCode className="size-5 text-sky-600" />
-                    <h2 className="font-semibold">انتخاب مکان و کمپین</h2>
+                    <h2 className="font-semibold">کمپین‌های فعال و مسیرهای قابل شروع</h2>
                 </div>
                 <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                     {journey.activeCampaigns.length === 0 ? (
@@ -292,20 +298,47 @@ export default function ParticipantDashboard({
                     ) : (
                         journey.activeCampaigns.map((campaign) => (
                             <article key={campaign.id} className="rounded-md border border-sidebar-border/70 p-3 text-sm dark:border-sidebar-border">
-                                <p className="font-medium">{campaign.name}</p>
-                                <p className="mt-1 text-xs text-muted-foreground">
-                                    {campaign.venueName ?? 'مکان پروژه'} · {campaign.city ?? 'شهر'} · {campaign.code}
-                                </p>
+                                <div className="flex flex-wrap items-start justify-between gap-2">
+                                    <div>
+                                        <p className="font-medium">{campaign.name}</p>
+                                        <p className="mt-1 text-xs text-muted-foreground">
+                                            {campaign.venueName ?? 'مکان پروژه'} - {campaign.city ?? 'شهر'} - {campaign.code}
+                                        </p>
+                                    </div>
+                                    <span className={`rounded-full px-2.5 py-1 text-xs ${campaign.hasVisit ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-100' : 'bg-sky-50 text-sky-800 dark:bg-sky-950 dark:text-sky-100'}`}>
+                                        {campaign.hasVisit ? 'قبلا شروع شده' : 'شروع جدید'}
+                                    </span>
+                                </div>
                                 <p className="mt-3 text-xs leading-6 text-muted-foreground">
-                                    قبل از شروع، راهنمای QR را ببینید؛ مسیر، ماموریت‌ها، پاداش‌ها و فروشگاه‌های مرتبط در همان کمپین مشخص می‌شود.
+                                    {campaign.hasVisit
+                                        ? 'این کمپین در سابقه شما وجود دارد؛ می‌توانید از همان مسیر ادامه دهید و امتیازها، ماموریت‌ها و پاداش‌های باقی‌مانده را دنبال کنید.'
+                                        : 'برای شروع از صفر، راهنمای QR را ببینید؛ مسیر، ماموریت‌ها، پاداش‌ها و واحدهای تجاری همان کمپین مشخص می‌شود.'}
                                 </p>
-                                {campaign.scanUrl ? (
-                                    <Button asChild variant="outline" size="sm" className="mt-3">
-                                        <Link href={campaign.scanUrl}>مشاهده راهنمای کمپین</Link>
-                                    </Button>
-                                ) : (
-                                    <p className="mt-3 rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">QR فعال برای شروع مستقیم ندارد.</p>
-                                )}
+                                {campaign.hasVisit ? (
+                                    <div className="mt-3">
+                                        <div className="h-2 overflow-hidden rounded-full bg-muted">
+                                            <div className="h-full rounded-full bg-emerald-600" style={{ width: `${campaign.progressPercent}%` }} />
+                                        </div>
+                                        <p className="mt-2 text-xs text-muted-foreground">
+                                            {campaign.completedMissions.toLocaleString('fa-IR')} از {campaign.totalMissions.toLocaleString('fa-IR')} ماموریت تکمیل شده
+                                            {campaign.lastVisitedAt ? ` - آخرین مراجعه: ${formatDate(campaign.lastVisitedAt)}` : ''}
+                                        </p>
+                                    </div>
+                                ) : null}
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                    {campaign.hasVisit && campaign.latestVisitId ? (
+                                        <Button asChild size="sm">
+                                            <Link href={`/visits/${campaign.latestVisitId}`}>ادامه مشارکت</Link>
+                                        </Button>
+                                    ) : null}
+                                    {campaign.scanUrl ? (
+                                        <Button asChild variant={campaign.hasVisit ? 'outline' : 'default'} size="sm">
+                                            <Link href={campaign.scanUrl}>{campaign.hasVisit ? 'راهنمای QR' : 'شروع با راهنمای QR'}</Link>
+                                        </Button>
+                                    ) : (
+                                        <p className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">QR فعال برای شروع مستقیم ندارد.</p>
+                                    )}
+                                </div>
                             </article>
                         ))
                     )}
@@ -441,15 +474,18 @@ export default function ParticipantDashboard({
             )}
 
             <section className="grid gap-4 xl:grid-cols-3">
-                <InfoPanel icon={<History className="size-5 text-slate-600" />} title="سوابق مهر مکان و کمپین">
+                <InfoPanel icon={<History className="size-5 text-slate-600" />} title="سوابق مراجعه، مکان و کمپین">
                     {journey.history.length === 0 ? (
                         <EmptyBox text="هنوز سابقه‌ای ثبت نشده است." />
                     ) : (
                         journey.history.map((visit) => (
                             <Link key={visit.id} href={`/visits/${visit.id}`} className="rounded-md border border-sidebar-border/70 p-3 text-sm hover:bg-muted/40 dark:border-sidebar-border">
-                                <p className="font-medium">{visit.campaignName ?? 'کمپین'} · {visit.venueName ?? 'مکان'}</p>
+                                <div className="flex items-start justify-between gap-2">
+                                    <p className="font-medium">{visit.campaignName ?? 'کمپین'} - {visit.venueName ?? 'مکان'}</p>
+                                    <span className="shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">ادامه</span>
+                                </div>
                                 <p className="mt-1 text-xs text-muted-foreground">
-                                    {visit.hubName ?? 'مسیر عمومی'} · {formatDate(visit.occurredAt)} · {visit.points.toLocaleString('fa-IR')} امتیاز
+                                    {visit.hubName ?? 'مسیر عمومی'} - {formatDate(visit.occurredAt)} - {visit.points.toLocaleString('fa-IR')} امتیاز
                                 </p>
                             </Link>
                         ))

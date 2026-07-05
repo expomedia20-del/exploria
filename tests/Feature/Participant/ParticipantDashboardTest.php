@@ -58,6 +58,23 @@ class ParticipantDashboardTest extends TestCase
                 ->where('participant.teamName', 'تیم خانواده کاشف')
                 ->has('participant.members', 3)
                 ->where('latestVisit.id', $visit->id)
+                ->has('journey.activeCampaigns.0', fn (Assert $campaign) => $campaign
+                    ->hasAll([
+                        'id',
+                        'name',
+                        'code',
+                        'venueName',
+                        'city',
+                        'scanUrl',
+                        'hasVisit',
+                        'latestVisitId',
+                        'lastVisitedAt',
+                        'completedMissions',
+                        'totalMissions',
+                        'progressPercent',
+                    ])
+                    ->etc())
+                ->where('journey.history.0.id', $visit->id)
                 ->has('missionFlow.missions', 4));
     }
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\UserRole;
 use App\Enums\RecordStatus;
 use App\Models\Campaign;
+use App\Models\MissionInstance;
 use App\Models\RewardRedemption;
 use App\Models\Treasure;
 use App\Models\User;
@@ -118,14 +119,41 @@ class ParticipantDashboardController extends Controller
             ])
             ->values();
 
-        $activeCampaigns = Campaign::query()
+        $activeCampaignModels = Campaign::query()
             ->with(['venue:id,name,city', 'qrCodes' => fn ($query) => $query->with(['venue', 'touchpoint', 'campaign'])->orderBy('created_at')])
             ->where('status', RecordStatus::Active)
             ->orderByDesc('start_at')
             ->limit(6)
+            ->get();
+        $activeCampaignIds = $activeCampaignModels->pluck('id');
+        $latestVisitsByCampaign = Visit::query()
+            ->where('user_id', $user->id)
+            ->whereIn('campaign_id', $activeCampaignIds)
+            ->latest('occurred_at')
             ->get()
-            ->map(function (Campaign $campaign): array {
+            ->unique('campaign_id')
+            ->keyBy('campaign_id');
+        $missionTotalsByCampaign = MissionInstance::query()
+            ->whereIn('campaign_id', $activeCampaignIds)
+            ->where('status', RecordStatus::Active)
+            ->selectRaw('campaign_id, count(*) as total')
+            ->groupBy('campaign_id')
+            ->pluck('total', 'campaign_id');
+        $completedMissionsByCampaign = UserMissionProgress::query()
+            ->join('mission_instances', 'mission_instances.id', '=', 'user_mission_progress.mission_instance_id')
+            ->where('user_mission_progress.user_id', $user->id)
+            ->where('user_mission_progress.status', 'completed')
+            ->whereIn('mission_instances.campaign_id', $activeCampaignIds)
+            ->selectRaw('mission_instances.campaign_id, count(*) as completed')
+            ->groupBy('mission_instances.campaign_id')
+            ->pluck('completed', 'mission_instances.campaign_id');
+
+        $activeCampaigns = $activeCampaignModels
+            ->map(function (Campaign $campaign) use ($latestVisitsByCampaign, $missionTotalsByCampaign, $completedMissionsByCampaign): array {
                 $qr = $campaign->qrCodes->first(fn ($qr): bool => $qr->isAvailableForLanding());
+                $visit = $latestVisitsByCampaign->get($campaign->id);
+                $totalMissions = (int) ($missionTotalsByCampaign[$campaign->id] ?? 0);
+                $completedMissions = (int) ($completedMissionsByCampaign[$campaign->id] ?? 0);
 
                 return [
                     'id' => $campaign->id,
@@ -134,6 +162,14 @@ class ParticipantDashboardController extends Controller
                     'venueName' => $campaign->venue?->name,
                     'city' => $campaign->venue?->city,
                     'scanUrl' => $qr ? route('scan.landing', ['code' => $qr->code]) : null,
+                    'hasVisit' => $visit !== null,
+                    'latestVisitId' => $visit?->id,
+                    'lastVisitedAt' => $visit?->occurred_at?->toIso8601String(),
+                    'completedMissions' => $completedMissions,
+                    'totalMissions' => $totalMissions,
+                    'progressPercent' => $totalMissions > 0
+                        ? min(100, (int) round(($completedMissions / $totalMissions) * 100))
+                        : 0,
                 ];
             })
             ->values();
