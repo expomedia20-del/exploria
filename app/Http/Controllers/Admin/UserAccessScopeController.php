@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\RecordStatus;
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\Hub;
 use App\Models\PartnerAccount;
@@ -23,6 +24,7 @@ class UserAccessScopeController extends Controller
             'accessScopes' => $this->accessScopes(),
             'stats' => $this->stats(),
             'userOptions' => $this->userOptions(),
+            'accountRoleOptions' => $this->accountRoleOptions(),
             'roleOptions' => $this->roleOptions(),
             'scopeOptions' => $this->scopeOptions(),
             'assignmentTemplates' => $this->assignmentTemplates(),
@@ -61,6 +63,24 @@ class UserAccessScopeController extends Controller
         $accessScope->update(['status' => RecordStatus::Inactive]);
 
         return back()->with('success', 'دامنه دسترسی غیرفعال شد.');
+    }
+
+    public function storeAccount(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:120'],
+            'email' => ['required', 'email', 'max:180', Rule::unique('users', 'email')],
+            'role' => ['required', 'string', Rule::enum(UserRole::class)],
+        ]);
+
+        User::query()->create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => 'password',
+            'role' => UserRole::from($data['role']),
+        ]);
+
+        return back()->with('success', 'اکانت جدید ساخته شد و حالا می‌توانید برای آن دسترسی تعریف کنید.');
     }
 
     /** @return array<int, array<string, mixed>> */
@@ -135,6 +155,18 @@ class UserAccessScopeController extends Controller
                 'label' => $this->roleLabel($key),
                 'defaultScope' => $role['scope'],
                 'governance' => $this->roleGovernance($key),
+            ])
+            ->values()
+            ->all();
+    }
+
+    /** @return array<int, array<string, string>> */
+    private function accountRoleOptions(): array
+    {
+        return collect(UserRole::cases())
+            ->map(fn (UserRole $role): array => [
+                'key' => $role->value,
+                'label' => $this->accountRoleLabel($role->value),
             ])
             ->values()
             ->all();

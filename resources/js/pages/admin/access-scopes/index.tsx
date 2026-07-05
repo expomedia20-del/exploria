@@ -92,6 +92,10 @@ type Props = {
         global: number;
     };
     userOptions: UserOption[];
+    accountRoleOptions: {
+        key: string;
+        label: string;
+    }[];
     roleOptions: RoleOption[];
     scopeOptions: Record<string, ScopeOption[]>;
     assignmentTemplates: AssignmentTemplate[];
@@ -235,6 +239,7 @@ export default function AccessScopesIndex({
     accessScopes,
     stats,
     userOptions,
+    accountRoleOptions,
     roleOptions,
     scopeOptions,
     assignmentTemplates,
@@ -530,6 +535,99 @@ export default function AccessScopesIndex({
                                 );
                             })}
                         </div>
+                    </section>
+                ) : null}
+
+                {writable ? (
+                    <section className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
+                        <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <UserCog className="size-4 text-muted-foreground" />
+                                    <h2 className="font-semibold">
+                                        ساخت اکانت عملیاتی یا شریک
+                                    </h2>
+                                </div>
+                                <p className="mt-1 text-sm leading-7 text-muted-foreground">
+                                    اگر چند نفر در یک سطح هستند، برای هر نفر یا شیفت یک اکانت جدا با نام روشن بسازید؛
+                                    مثل «مدیر رواق اکوپارک - عملیات روز» یا «مدیر کافه اکو - شیفت عصر».
+                                    بعد از ساخت، اکانت در انتخاب‌های قالب آماده و ثبت دستی ظاهر می‌شود.
+                                </p>
+                            </div>
+                        </div>
+                        <Form
+                            action="/admin/access-scopes/accounts"
+                            method="post"
+                            options={{ preserveScroll: true }}
+                            className="grid gap-4 lg:grid-cols-4"
+                        >
+                            {({ processing, errors }) => (
+                                <>
+                                    <div className="grid gap-2 lg:col-span-1">
+                                        <Label htmlFor="account-name">
+                                            نام اکانت
+                                        </Label>
+                                        <input
+                                            id="account-name"
+                                            name="name"
+                                            type="text"
+                                            required
+                                            placeholder="مثلا مدیر کافه اکو - شیفت عصر"
+                                            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                        />
+                                        <InputError message={errors.name} />
+                                    </div>
+                                    <div className="grid gap-2 lg:col-span-1">
+                                        <Label htmlFor="account-email">
+                                            ایمیل ورود
+                                        </Label>
+                                        <input
+                                            id="account-email"
+                                            name="email"
+                                            type="email"
+                                            required
+                                            placeholder="name@example.test"
+                                            dir="ltr"
+                                            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                        />
+                                        <InputError message={errors.email} />
+                                    </div>
+                                    <div className="grid gap-2 lg:col-span-1">
+                                        <Label htmlFor="account-role">
+                                            نوع اکانت
+                                        </Label>
+                                        <select
+                                            id="account-role"
+                                            name="role"
+                                            required
+                                            defaultValue="hub_manager"
+                                            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                        >
+                                            {accountRoleOptions.map((role) => (
+                                                <option
+                                                    key={role.key}
+                                                    value={role.key}
+                                                >
+                                                    {role.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <InputError message={errors.role} />
+                                    </div>
+                                    <div className="flex flex-col justify-end gap-2 lg:col-span-1">
+                                        <Button
+                                            type="submit"
+                                            disabled={processing}
+                                        >
+                                            ساخت اکانت
+                                        </Button>
+                                        <p className="text-xs leading-6 text-muted-foreground">
+                                            رمز اولیه نسخه دمو: password
+                                        </p>
+                                    </div>
+                                </>
+                            )}
+                        </Form>
                     </section>
                 ) : null}
 

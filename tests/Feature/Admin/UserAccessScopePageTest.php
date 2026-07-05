@@ -41,26 +41,25 @@ class UserAccessScopePageTest extends TestCase
                 ->has('userOptions.0.kind')
                 ->has('userOptions.0.kindLabel')
                 ->has('userOptions.0.isStressDemo')
+                ->has('accountRoleOptions')
                 ->has('roleOptions')
                 ->where('roleOptions.0.governance.accountRole', 'admin')
                 ->where('roleOptions.0.governance.approvalLevel', 'central_admin')
                 ->has('scopeOptions.hub'));
     }
 
-    public function test_pilot_seed_includes_multiple_assignable_accounts_for_busy_roles(): void
+    public function test_admin_can_create_assignable_account(): void
     {
-        $this->assertDatabaseHas('users', [
-            'email' => 'ravaq.manager.ops@example.test',
-            'role' => UserRole::HubManager->value,
-        ]);
-        $this->assertDatabaseHas('users', [
-            'email' => 'ravaq.zone.manager@example.test',
-            'role' => UserRole::HubManager->value,
-        ]);
-        $this->assertDatabaseHas('users', [
-            'email' => 'cafe.eco.morning@example.test',
-            'role' => UserRole::ShopPartner->value,
-        ]);
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.access-scopes.accounts.store'), [
+                'name' => 'مدیر کافه اکو - شیفت عصر',
+                'email' => 'cafe.eco.evening@example.test',
+                'role' => UserRole::ShopPartner->value,
+            ])
+            ->assertRedirect();
+
         $this->assertDatabaseHas('users', [
             'email' => 'cafe.eco.evening@example.test',
             'role' => UserRole::ShopPartner->value,

@@ -252,49 +252,17 @@ class PilotLocationSeeder extends Seeder
             );
         }
 
-        $additionalRoleUsers = [
-            [
-                'email' => 'ravaq.manager.ops@example.test',
-                'name' => 'مدیر رواق اکوپارک - عملیات روز',
-                'role' => UserRole::HubManager,
-            ],
-            [
-                'email' => 'ravaq.zone.manager@example.test',
-                'name' => 'مدیر زون تجاری رواق - هماهنگی واحدها',
-                'role' => UserRole::HubManager,
-            ],
-            [
-                'email' => 'cafe.eco.morning@example.test',
-                'name' => 'مدیر کافه اکو - شیفت صبح',
-                'role' => UserRole::ShopPartner,
-            ],
-            [
-                'email' => 'cafe.eco.evening@example.test',
-                'name' => 'مدیر کافه اکو - شیفت عصر',
-                'role' => UserRole::ShopPartner,
-            ],
-            [
-                'email' => 'ravaq.store.backup@example.test',
-                'name' => 'مدیر فروشگاه X - جانشین',
-                'role' => UserRole::ShopPartner,
-            ],
-            [
-                'email' => 'family.sponsor.backup@example.test',
-                'name' => 'نماینده دوم اسپانسر خانوادگی',
-                'role' => UserRole::Sponsor,
-            ],
-        ];
-
-        foreach ($additionalRoleUsers as $roleUser) {
-            User::query()->updateOrCreate(
-                ['email' => $roleUser['email']],
-                [
-                    'name' => $roleUser['name'],
-                    'password' => 'password',
-                    'role' => $roleUser['role'],
-                ],
-            );
-        }
+        User::query()
+            ->whereIn('email', [
+                'ravaq.manager.ops@example.test',
+                'ravaq.zone.manager@example.test',
+                'cafe.eco.morning@example.test',
+                'cafe.eco.evening@example.test',
+                'ravaq.store.backup@example.test',
+                'family.sponsor.backup@example.test',
+            ])
+            ->whereDoesntHave('accessScopes')
+            ->delete();
 
         $campaign = Campaign::query()->updateOrCreate(
             ['venue_id' => $ecoPark->id, 'code' => 'ecopark-pilot-1405'],

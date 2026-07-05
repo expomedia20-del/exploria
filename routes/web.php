@@ -272,6 +272,10 @@ Route::post('/admin/access-scopes', [UserAccessScopeController::class, 'store'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.access-scopes.store');
 
+Route::post('/admin/access-scopes/accounts', [UserAccessScopeController::class, 'storeAccount'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.access-scopes.accounts.store');
+
 Route::post('/admin/access-scopes/{accessScope}/deactivate', [UserAccessScopeController::class, 'deactivate'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.access-scopes.deactivate');
