@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import { dashboard } from '@/routes';
+import { Activity, BarChart3, Gauge } from 'lucide-react';
 
 type Stats = {
     venues: number;
@@ -84,6 +85,42 @@ const statLabels: Array<[keyof Stats, string, string]> = [
     ['confirmedRedemptions', 'تحویل‌شده', 'پاداش‌هایی که شریک تحویل آن‌ها را تایید کرده است'],
 ];
 
+const dashboardChartItems: Array<[keyof Stats, string, string]> = [
+    ['venues', 'مکان پایلوت', '#0f766e'],
+    ['activeCampaigns', 'کمپین فعال', '#0891b2'],
+    ['activeQrCodes', 'QR فعال', '#d97706'],
+    ['visits', 'بازدید', '#e11d48'],
+    ['activeMissions', 'ماموریت فعال', '#4f46e5'],
+    ['missionCompletions', 'تکمیل ماموریت', '#16a34a'],
+    ['issuedRewards', 'پاداش صادرشده', '#ea580c'],
+    ['confirmedRedemptions', 'تحویل‌شده', '#7c3aed'],
+];
+
+const flowChartItems: Array<[keyof Stats, string, string]> = [
+    ['visits', 'بازدید'],
+    ['missionCompletions', 'ماموریت'],
+    ['issuedRewards', 'پاداش'],
+    ['confirmedRedemptions', 'تحویل'],
+];
+
+const flowColors = ['#0891b2', '#16a34a', '#f59e0b', '#e11d48'];
+
+function chartHeight(value: number, max: number) {
+    if (value === 0) {
+        return '10px';
+    }
+
+    return `${Math.max(22, Math.round((value / max) * 150))}px`;
+}
+
+function shareWidth(value: number, total: number) {
+    if (total === 0) {
+        return '25%';
+    }
+
+    return `${Math.max(8, (value / total) * 100)}%`;
+}
+
 const redemptionStatusLabels: Record<string, string> = {
     pending: 'در انتظار تحویل',
     confirmed: 'تحویل‌شده',
@@ -99,6 +136,19 @@ function formatDate(value: string) {
 }
 
 export default function Dashboard({ stats, latestVisits, latestRedemptions, operationalAlerts, campaignPerformance }: Props) {
+    const chartMax = Math.max(...dashboardChartItems.map(([key]) => stats[key]), 1);
+    const flowTotal = flowChartItems.reduce((total, [key]) => total + stats[key], 0);
+    const readinessScore = Math.min(
+        100,
+        Math.round(
+            ((stats.activeCampaigns > 0 ? 20 : 0)
+                + (stats.activeQrCodes > 0 ? 20 : 0)
+                + (stats.visits > 0 ? 20 : 0)
+                + (stats.missionCompletions > 0 ? 20 : 0)
+                + (stats.issuedRewards > 0 ? 20 : 0)),
+        ),
+    );
+
     return (
         <>
             <Head title="داشبورد پایلوت" />
@@ -130,6 +180,87 @@ export default function Dashboard({ stats, latestVisits, latestRedemptions, oper
                             </p>
                         </Link>
                     ))}
+                </section>
+
+                <section className="grid gap-4 xl:grid-cols-[1.55fr_0.9fr]">
+                    <article className="rounded-lg border border-cyan-200 bg-cyan-50/70 p-4 dark:border-cyan-900/60 dark:bg-cyan-950/20">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div className="flex items-center gap-2">
+                                <span className="inline-flex size-9 items-center justify-center rounded-md bg-cyan-600 text-white">
+                                    <BarChart3 className="size-5" />
+                                </span>
+                                <div>
+                                    <h2 className="text-lg font-semibold">نمودار وضعیت عملیاتی پایلوت</h2>
+                                    <p className="mt-1 text-sm text-muted-foreground">
+                                        همین اعداد بالای داشبورد، اینجا برای تصمیم سریع‌تر به شکل نمودار دیده می‌شوند.
+                                    </p>
+                                </div>
+                            </div>
+                            <span className="rounded-full bg-white px-3 py-1 text-sm font-medium text-cyan-900 dark:bg-background dark:text-cyan-200">
+                                امتیاز آمادگی {readinessScore.toLocaleString('fa-IR')}٪
+                            </span>
+                        </div>
+
+                        <div className="mt-6 flex h-56 items-end gap-3 overflow-x-auto rounded-md bg-white/70 p-4 dark:bg-background/40">
+                            {dashboardChartItems.map(([key, label, color]) => (
+                                <div key={key} className="flex min-w-20 flex-1 flex-col items-center gap-2 text-center">
+                                    <div className="flex h-40 items-end">
+                                        <div
+                                            className="w-9 rounded-t-md shadow-sm"
+                                            style={{ height: chartHeight(stats[key], chartMax), backgroundColor: color }}
+                                        />
+                                    </div>
+                                    <strong className="text-lg">{stats[key].toLocaleString('fa-IR')}</strong>
+                                    <span className="text-xs leading-5 text-muted-foreground">{label}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </article>
+
+                    <article className="rounded-lg border border-amber-200 bg-amber-50/80 p-4 dark:border-amber-900/60 dark:bg-amber-950/20">
+                        <div className="flex items-center gap-2">
+                            <span className="inline-flex size-9 items-center justify-center rounded-md bg-amber-500 text-zinc-950">
+                                <Gauge className="size-5" />
+                            </span>
+                            <div>
+                                <h2 className="text-lg font-semibold">جریان مشارکت تا تحویل</h2>
+                                <p className="mt-1 text-sm text-muted-foreground">
+                                    مسیر کلیدی از ورود کاربر تا تحویل پاداش.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="mt-5 overflow-hidden rounded-full bg-white shadow-inner dark:bg-background/60">
+                            <div className="flex h-5">
+                                {flowChartItems.map(([key], index) => (
+                                    <div
+                                        key={key}
+                                        style={{
+                                            width: shareWidth(stats[key], flowTotal),
+                                            backgroundColor: flowColors[index],
+                                        }}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="mt-5 grid gap-2">
+                            {flowChartItems.map(([key, label], index) => (
+                                <div key={key} className="flex items-center justify-between gap-3 rounded-md bg-white/70 p-3 text-sm dark:bg-background/40">
+                                    <span className="flex items-center gap-2">
+                                        <span className="size-3 rounded-full" style={{ backgroundColor: flowColors[index] }} />
+                                        {label}
+                                    </span>
+                                    <strong>{stats[key].toLocaleString('fa-IR')}</strong>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="mt-4 rounded-md border border-amber-200 bg-white/70 p-3 text-sm leading-7 text-muted-foreground dark:border-amber-900/60 dark:bg-background/40">
+                            <Activity className="ml-2 inline size-4 text-amber-700" />
+                            اگر بازدید بالا باشد اما مصرف پاداش پایین بماند، گلوگاه فروش در مسیر فروشگاه یا مشوق‌هاست.
+                        </div>
+                    </article>
                 </section>
 
                 <div className="grid auto-rows-min gap-4 md:grid-cols-3 xl:grid-cols-5">
