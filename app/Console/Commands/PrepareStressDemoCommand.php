@@ -22,6 +22,7 @@ use App\Models\SponsorProposalPartnerAccount;
 use App\Models\Touchpoint;
 use App\Models\Treasure;
 use App\Models\User;
+use App\Models\UserAccessScope;
 use App\Models\UserMissionProgress;
 use App\Models\UserReward;
 use App\Models\Venue;
@@ -64,6 +65,7 @@ class PrepareStressDemoCommand extends Command
             $touchpoint = $this->touchpoint($entryHub);
 
             $this->completeVenueProfile($venue);
+            $this->venueExecutiveScope($venue);
 
             $campaign = $this->campaign($venue, $campaignCode);
             $this->displayDevice($venue, $entryHub, $touchpoint);
@@ -136,6 +138,30 @@ class PrepareStressDemoCommand extends Command
                 'status' => RecordStatus::Active,
                 'profile_status' => RecordStatus::Active,
                 'metadata' => ['is_demo' => true, 'stress_demo' => true],
+            ],
+        );
+    }
+
+    private function venueExecutiveScope(Venue $venue): void
+    {
+        $manager = User::query()->updateOrCreate(
+            ['email' => 'venue.manager.ecopark@example.test'],
+            ['name' => 'مدیر اجرایی مکان اکوپارک', 'password' => 'password', 'role' => UserRole::Viewer],
+        );
+
+        UserAccessScope::query()->updateOrCreate(
+            [
+                'user_id' => $manager->id,
+                'role_key' => 'venue_executive',
+                'scope_type' => 'venue',
+                'scope_id' => $venue->id,
+            ],
+            [
+                'status' => RecordStatus::Active,
+                'metadata' => [
+                    'source' => 'stress_demo_cycle',
+                    'purpose' => 'venue_manager_readiness',
+                ],
             ],
         );
     }

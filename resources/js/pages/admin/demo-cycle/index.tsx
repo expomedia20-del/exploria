@@ -74,6 +74,8 @@ export default function DemoCycleIndex({
     stageHealth,
     commercialPackages,
 }: Props) {
+    const healthByStage = new Map(stageHealth.map((item) => [item.stage, item]));
+
     return (
         <>
             <Head title="چرخه دمو اکوپارک" />
@@ -110,24 +112,32 @@ export default function DemoCycleIndex({
                 </section>
 
                 <section className="grid gap-3 md:grid-cols-5">
-                    {stages.map((stage, index) => (
-                        <article
-                            key={stage.title}
-                            className="rounded-lg border border-sidebar-border/70 bg-card p-3 dark:border-sidebar-border"
-                        >
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <Flag className="size-4 text-primary" />
-                                مرحله {index + 1}
-                            </div>
-                            <h2 className="mt-2 font-semibold">{stage.title}</h2>
-                            <p className="mt-2 text-sm leading-7 text-muted-foreground">
-                                {stage.goal}
-                            </p>
-                            <div className="mt-3 inline-flex rounded-full bg-cyan-50 px-3 py-1 text-xs font-medium text-cyan-900">
-                                {stage.status}
-                            </div>
-                        </article>
-                    ))}
+                    {stages.map((stage, index) => {
+                        const stageNumber = index + 1;
+                        const currentStatus =
+                            healthByStage.get(stageNumber)?.status ?? 'ready';
+
+                        return (
+                            <article
+                                key={stage.title}
+                                className="rounded-lg border border-sidebar-border/70 bg-card p-3 dark:border-sidebar-border"
+                            >
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <Flag className="size-4 text-primary" />
+                                    مرحله {stageNumber}
+                                </div>
+                                <h2 className="mt-2 font-semibold">{stage.title}</h2>
+                                <p className="mt-2 text-sm leading-7 text-muted-foreground">
+                                    {stage.goal}
+                                </p>
+                                <div
+                                    className={`mt-3 inline-flex rounded-full px-3 py-1 text-xs font-medium ${statusClassName[currentStatus]}`}
+                                >
+                                    {statusLabel[currentStatus]}
+                                </div>
+                            </article>
+                        );
+                    })}
                 </section>
 
                 <section className="grid gap-3 xl:grid-cols-2">
