@@ -34,10 +34,38 @@ class UserManagementPageTest extends TestCase
                 ->component('admin/users/index')
                 ->has('users')
                 ->has('stats.total')
+                ->has('stats.publicRegistered')
+                ->has('stats.publicParticipants')
                 ->has('stats.activeScopedUsers')
                 ->has('roleOptions')
                 ->has('filters')
             );
+    }
+
+    public function test_user_management_page_separates_registered_and_participant_visitors(): void
+    {
+        $this->withoutVite();
+
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        User::factory()->create([
+            'role' => UserRole::Visitor,
+            'public_participation_status' => 'registered',
+        ]);
+        User::factory()->create([
+            'role' => UserRole::Visitor,
+            'public_participation_status' => 'participant',
+            'public_participation_mode' => 'family',
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.users.page'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('admin/users/index')
+                ->where('stats.publicRegistered', fn (int $count): bool => $count >= 1)
+                ->where('stats.publicParticipants', fn (int $count): bool => $count >= 1)
+                ->has('users.0.publicStatus')
+                ->has('users.0.publicStatusLabel'));
     }
 
     public function test_admin_can_change_base_user_role(): void

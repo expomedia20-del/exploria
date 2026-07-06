@@ -39,6 +39,9 @@ type ManagedUser = {
     kind: string;
     kindLabel: string;
     statusLabel: string;
+    publicStatus: string;
+    publicStatusLabel: string;
+    publicParticipationMode: string;
     isStressDemo: boolean;
     counts: {
         accessScopes: number;
@@ -61,6 +64,8 @@ type Props = {
         internal: number;
         partners: number;
         visitors: number;
+        publicRegistered: number;
+        publicParticipants: number;
         activeScopedUsers: number;
     };
     roleOptions: RoleOption[];
@@ -130,13 +135,21 @@ export default function AdminUsersIndex({
 
         return users.filter((user) => {
             const matchesFilter =
-                activeFilter === 'all' || user.kind === activeFilter;
+                activeFilter === 'all' ||
+                user.kind === activeFilter ||
+                (activeFilter === 'public_registered' &&
+                    user.role === 'visitor' &&
+                    user.publicStatus === 'registered') ||
+                (activeFilter === 'public_participant' &&
+                    user.role === 'visitor' &&
+                    user.publicStatus === 'participant');
             const matchesQuery =
                 normalizedQuery.length === 0 ||
                 user.name.toLowerCase().includes(normalizedQuery) ||
                 user.email.toLowerCase().includes(normalizedQuery) ||
                 user.roleLabel.toLowerCase().includes(normalizedQuery) ||
-                user.kindLabel.toLowerCase().includes(normalizedQuery);
+                user.kindLabel.toLowerCase().includes(normalizedQuery) ||
+                user.publicStatusLabel.toLowerCase().includes(normalizedQuery);
 
             return matchesFilter && matchesQuery;
         });
@@ -173,11 +186,13 @@ export default function AdminUsersIndex({
                     </div>
                 )}
 
-                <section className="grid gap-3 md:grid-cols-5">
+                <section className="grid gap-3 md:grid-cols-7">
                     <Stat icon={UsersRound} label="کل کاربران" value={stats.total} />
                     <Stat icon={UserCog} label="تیم داخلی" value={stats.internal} />
                     <Stat icon={ShieldCheck} label="واحدها و اسپانسرها" value={stats.partners} />
                     <Stat icon={UsersRound} label="بازدیدکنندگان" value={stats.visitors} />
+                    <Stat icon={UsersRound} label="کاربر عادی" value={stats.publicRegistered} />
+                    <Stat icon={CheckCircle2} label="مشارکت‌کننده" value={stats.publicParticipants} />
                     <Stat icon={CheckCircle2} label="دارای دسترسی فعال" value={stats.activeScopedUsers} />
                 </section>
 
@@ -222,6 +237,11 @@ export default function AdminUsersIndex({
                                         <span className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
                                             {user.kindLabel}
                                         </span>
+                                        {user.role === 'visitor' && (
+                                            <span className="rounded-full bg-cyan-100 px-2.5 py-1 text-xs text-cyan-800 dark:bg-cyan-950 dark:text-cyan-200">
+                                                {user.publicStatusLabel}
+                                            </span>
+                                        )}
                                         {user.isStressDemo && (
                                             <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs text-amber-800 dark:bg-amber-950 dark:text-amber-200">
                                                 اکانت دموی فشار
@@ -237,6 +257,11 @@ export default function AdminUsersIndex({
                                     <p className="mt-2 text-sm">
                                         نقش پایه: <strong>{user.roleLabel}</strong>
                                     </p>
+                                    {user.role === 'visitor' && (
+                                        <p className="mt-1 text-sm text-muted-foreground">
+                                            مسیر عمومی: {user.publicStatusLabel}
+                                        </p>
+                                    )}
                                     <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
                                         <span>{countLabel(user.counts.visits, 'بازدید')}</span>
                                         <span>{countLabel(user.counts.rewards, 'پاداش')}</span>

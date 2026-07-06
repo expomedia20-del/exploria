@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Form, Head, Link, usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 import {
     CheckCircle2,
@@ -23,6 +23,8 @@ type Participant = {
     modeLabel: string;
     members: string[];
     teamName: string | null;
+    publicStatus: string;
+    publicStatusLabel: string;
 };
 
 type LatestVisit = {
@@ -187,6 +189,12 @@ type Props = {
     viewerMode: ViewerMode;
 };
 
+type SharedProps = {
+    flash?: {
+        success?: string;
+    };
+};
+
 const missionStatusLabels: Record<MissionItem['status'], string> = {
     available: 'آماده شروع',
     started: 'در حال انجام',
@@ -224,6 +232,7 @@ export default function ParticipantDashboard({
     journey,
     viewerMode,
 }: Props) {
+    const { flash } = usePage<SharedProps>().props;
     const progress = progressPercent(missionFlow);
     const nextMission =
         missionFlow?.missions.find((mission) => mission.status === 'started') ??
@@ -234,6 +243,12 @@ export default function ParticipantDashboard({
     return (
         <main dir="rtl" className="flex h-full flex-1 flex-col gap-5 overflow-x-auto p-4">
             <Head title="پنل مشارکت‌کننده" />
+
+            {flash?.success && (
+                <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">
+                    {flash.success}
+                </div>
+            )}
 
             <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>
@@ -249,6 +264,72 @@ export default function ParticipantDashboard({
                     <StatCard label="پاداش" value={missionFlow?.stats.rewards ?? 0} />
                 </div>
             </header>
+
+            <section className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
+                <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
+                    <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                            <span className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
+                                وضعیت عمومی
+                            </span>
+                            <span className="rounded-full bg-cyan-100 px-2.5 py-1 text-xs font-medium text-cyan-800 dark:bg-cyan-950 dark:text-cyan-200">
+                                {participant.publicStatusLabel}
+                            </span>
+                        </div>
+                        <h2 className="mt-3 font-semibold">
+                            شروع مشارکت در کمپین
+                        </h2>
+                        <p className="mt-1 text-sm leading-7 text-muted-foreground">
+                            ورود با موبایل شما را به کاربر عادی تبدیل می‌کند.
+                            برای دریافت ماموریت، امتیاز، گنج و پاداش، نوع
+                            مشارکت را انتخاب و تایید کنید. این کار نیازی به
+                            تایید ادمین ندارد.
+                        </p>
+                    </div>
+
+                    {participant.publicStatus === 'participant' ? (
+                        <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-100">
+                            مشارکت فعال است. حالا می‌توانید کمپین را انتخاب
+                            کنید یا QR همان کمپین را اسکن کنید.
+                        </div>
+                    ) : (
+                        <Form
+                            action="/participant/participation"
+                            method="post"
+                            options={{ preserveScroll: true }}
+                            className="grid min-w-72 gap-3"
+                        >
+                            {({ processing, errors }) => (
+                                <>
+                                    <select
+                                        name="mode"
+                                        defaultValue="individual"
+                                        className="min-h-10 rounded-md border border-input bg-background px-3 text-sm"
+                                    >
+                                        <option value="individual">
+                                            مشارکت فردی
+                                        </option>
+                                        <option value="family">
+                                            مشارکت خانوادگی
+                                        </option>
+                                        <option value="team">
+                                            مشارکت تیمی / گروهی
+                                        </option>
+                                    </select>
+                                    {errors.mode && (
+                                        <p className="text-xs text-destructive">
+                                            {errors.mode}
+                                        </p>
+                                    )}
+                                    <Button type="submit" disabled={processing}>
+                                        تایید و شروع مشارکت
+                                    </Button>
+                                </>
+                            )}
+                        </Form>
+                    )}
+                </div>
+            </section>
 
             {viewerMode.canPreviewVisitors ? (
                 <section className="rounded-lg border border-sidebar-border/70 bg-background p-4 text-sm dark:border-sidebar-border">

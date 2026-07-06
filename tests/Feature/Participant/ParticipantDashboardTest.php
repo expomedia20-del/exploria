@@ -55,6 +55,7 @@ class ParticipantDashboardTest extends TestCase
                 ->component('participant/dashboard')
                 ->where('participant.mode', 'family')
                 ->where('participant.modeLabel', 'خانوادگی')
+                ->where('participant.publicStatus', 'participant')
                 ->where('participant.teamName', 'تیم خانواده کاشف')
                 ->has('participant.members', 3)
                 ->where('latestVisit.id', $visit->id)
@@ -107,7 +108,25 @@ class ParticipantDashboardTest extends TestCase
                 ->component('participant/dashboard')
                 ->where('latestVisit', null)
                 ->where('missionFlow', null)
-                ->where('participant.mode', 'individual'));
+                ->where('participant.mode', 'individual')
+                ->where('participant.publicStatus', 'registered')
+                ->where('participant.publicStatusLabel', 'کاربر عادی'));
+    }
+
+    public function test_visitor_can_start_participation_without_admin_approval(): void
+    {
+        $visitor = User::factory()->create(['role' => UserRole::Visitor]);
+
+        $this->actingAs($visitor)
+            ->post(route('participant.participation.start'), [
+                'mode' => 'team',
+            ])
+            ->assertRedirect();
+
+        $visitor->refresh();
+
+        $this->assertSame('participant', $visitor->public_participation_status);
+        $this->assertSame('team', $visitor->public_participation_mode);
     }
 
     public function test_admin_can_preview_a_real_participant_dashboard(): void

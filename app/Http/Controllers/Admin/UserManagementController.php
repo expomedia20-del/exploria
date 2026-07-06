@@ -120,6 +120,9 @@ class UserManagementController extends Controller
                     'kind' => $kind,
                     'kindLabel' => $this->userKindLabel($kind),
                     'statusLabel' => $this->statusLabel($user),
+                    'publicStatus' => $this->publicStatus($user),
+                    'publicStatusLabel' => $this->publicStatusLabel($user),
+                    'publicParticipationMode' => (string) ($user->public_participation_mode ?? 'individual'),
                     'isStressDemo' => str_contains((string) $user->email, 'stress-demo'),
                     'counts' => [
                         'accessScopes' => (int) $user->access_scopes_count,
@@ -168,6 +171,17 @@ class UserManagementController extends Controller
                 UserRole::Sponsor,
             ])->count(),
             'visitors' => User::query()->where('role', UserRole::Visitor)->count(),
+            'publicRegistered' => User::query()
+                ->where('role', UserRole::Visitor)
+                ->where('public_participation_status', 'registered')
+                ->doesntHave('visits')
+                ->count(),
+            'publicParticipants' => User::query()
+                ->where('role', UserRole::Visitor)
+                ->where(fn ($query) => $query
+                    ->where('public_participation_status', 'participant')
+                    ->orHas('visits'))
+                ->count(),
             'activeScopedUsers' => UserAccessScope::query()
                 ->where('status', RecordStatus::Active)
                 ->distinct('user_id')
@@ -196,6 +210,8 @@ class UserManagementController extends Controller
             ['key' => 'venue_management', 'label' => 'مدیریت مکان و زون'],
             ['key' => 'commercial_partner', 'label' => 'واحدها و اسپانسرها'],
             ['key' => 'public', 'label' => 'بازدیدکنندگان'],
+            ['key' => 'public_registered', 'label' => 'کاربران عادی'],
+            ['key' => 'public_participant', 'label' => 'مشارکت‌کنندگان'],
         ];
     }
 
@@ -284,15 +300,43 @@ class UserManagementController extends Controller
 
     private function statusLabel(User $user): string
     {
+        if ($user->role === UserRole::Visitor) {
+            return $this->publicStatusLabel($user);
+        }
+
         if ((int) $user->active_access_scopes_count > 0) {
             return 'دارای دسترسی فعال';
         }
 
-        if ($user->role === UserRole::Visitor && (int) $user->visits_count > 0) {
-            return 'مشارکت‌کننده ثبت‌شده';
+        return 'بدون دسترسی فعال';
+    }
+
+    private function publicStatus(User $user): string
+    {
+        if ($user->role !== UserRole::Visitor) {
+            return 'not_public';
         }
 
-        return 'بدون دسترسی فعال';
+        if ((int) ($user->visits_count ?? $user->visits()->count()) > 0) {
+            return 'participant';
+        }
+
+        return (string) ($user->public_participation_status ?? 'registered');
+    }
+
+    private function publicStatusLabel(User $user): string
+    {
+        $status = $this->publicStatus($user);
+
+        if ($status !== 'participant') {
+            return $user->role === UserRole::Visitor ? 'کاربر عادی' : '-';
+        }
+
+        return match ((string) ($user->public_participation_mode ?? 'individual')) {
+            'family' => 'مشارکت‌کننده خانوادگی',
+            'team' => 'مشارکت‌کننده تیمی',
+            default => 'مشارکت‌کننده فردی',
+        };
     }
 
     /** @return array<int, string> */

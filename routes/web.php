@@ -54,6 +54,9 @@ Route::middleware('auth')->group(function () {
         ->name('visits.missions.complete');
     Route::get('/participant/dashboard', ParticipantDashboardController::class)
         ->name('participant.dashboard');
+    Route::post('/participant/participation', [ParticipantDashboardController::class, 'startParticipation'])
+        ->middleware('role:visitor')
+        ->name('participant.participation.start');
     Route::get('/partner/dashboard', [PartnerDashboardController::class, 'page'])
         ->middleware('role:admin,shop_partner,sponsor')
         ->name('partner.dashboard');

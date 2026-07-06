@@ -15,7 +15,9 @@ use App\Models\UserReward;
 use App\Models\Visit;
 use App\Services\MissionFlowService;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -46,6 +48,8 @@ class ParticipantDashboardController extends Controller
                 'modeLabel' => $participation['modeLabel'],
                 'members' => $participation['members'],
                 'teamName' => $participation['teamName'],
+                'publicStatus' => $this->publicParticipationStatus($user, $latestVisit),
+                'publicStatusLabel' => $this->publicParticipationStatusLabel($user, $latestVisit),
             ],
             'latestVisit' => $latestVisit ? [
                 'id' => $latestVisit->id,
@@ -72,6 +76,25 @@ class ParticipantDashboardController extends Controller
                 'previewOptions' => $this->visitorPreviewOptions($viewer),
             ],
         ]);
+    }
+
+    public function startParticipation(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        abort_unless($user instanceof User, 401);
+        abort_unless($user->role === UserRole::Visitor, 403);
+
+        $data = $request->validate([
+            'mode' => ['required', 'string', Rule::in(['individual', 'family', 'team'])],
+        ]);
+
+        $user->update([
+            'public_participation_status' => 'participant',
+            'public_participation_mode' => $data['mode'],
+        ]);
+
+        return back()->with('success', 'وضعیت شما به مشارکت‌کننده فعال تغییر کرد. حالا می‌توانید کمپین را انتخاب یا QR را اسکن کنید.');
     }
 
     /** @param array<string, mixed>|null $flow */
@@ -381,5 +404,30 @@ class ParticipantDashboardController extends Controller
             'teamName' => data_get($visit?->metadata, 'team_name'),
             'members' => array_values(array_map('strval', $members)),
         ];
+    }
+
+    private function publicParticipationStatus(User $user, ?Visit $visit): string
+    {
+        if ($visit || $user->visits()->exists()) {
+            return 'participant';
+        }
+
+        return (string) ($user->public_participation_status ?? 'registered');
+    }
+
+    private function publicParticipationStatusLabel(User $user, ?Visit $visit): string
+    {
+        $status = $this->publicParticipationStatus($user, $visit);
+        $mode = (string) data_get($visit?->metadata, 'participation_mode', $user->public_participation_mode ?? 'individual');
+
+        if ($status !== 'participant') {
+            return 'کاربر عادی';
+        }
+
+        return match ($mode) {
+            'family' => 'مشارکت‌کننده خانوادگی',
+            'team' => 'مشارکت‌کننده تیمی',
+            default => 'مشارکت‌کننده فردی',
+        };
     }
 }
