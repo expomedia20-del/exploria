@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\RewardApprovalController;
 use App\Http\Controllers\Admin\RoleOperationsController;
 use App\Http\Controllers\Admin\SponsorActivationController;
 use App\Http\Controllers\Admin\UserAccessScopeController;
+use App\Http\Controllers\Admin\UserManagementGuideController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Admin\VenueRegistryController;
 use App\Http\Controllers\Auth\OtpController;
@@ -146,6 +147,9 @@ Route::get('/admin/internal-operations', [InternalOperationsController::class, '
 Route::get('/admin/users', [UserManagementController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer'])
     ->name('admin.users.page');
+Route::get('/admin/users/guide', [UserManagementGuideController::class, 'page'])
+    ->middleware(['auth', 'role:admin,operator,viewer'])
+    ->name('admin.users.guide');
 Route::patch('/admin/users/{user}/role', [UserManagementController::class, 'updateRole'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.users.role');

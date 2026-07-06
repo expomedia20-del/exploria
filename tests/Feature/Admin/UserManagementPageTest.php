@@ -68,6 +68,18 @@ class UserManagementPageTest extends TestCase
                 ->has('users.0.publicStatusLabel'));
     }
 
+    public function test_admin_can_open_user_management_guide_page(): void
+    {
+        $this->withoutVite();
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.users.guide'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('admin/users/guide'));
+    }
+
     public function test_admin_can_change_base_user_role(): void
     {
         $admin = User::factory()->create(['role' => UserRole::Admin]);

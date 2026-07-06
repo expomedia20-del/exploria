@@ -181,6 +181,14 @@ export default function AdminUsersIndex({
                         می‌شود. محدوده و مسئولیت واقعی هر پروژه همچنان از صفحه
                         تخصیص دسترسی تعریف می‌شود.
                     </p>
+                    <div className="mt-4">
+                        <Link
+                            href="/admin/users/guide"
+                            className="inline-flex rounded-md border border-input bg-background px-3 py-2 text-sm font-medium"
+                        >
+                            مشاهده دستورالعمل مدیریت کاربران
+                        </Link>
+                    </div>
                 </section>
 
                 {flash?.success && (
