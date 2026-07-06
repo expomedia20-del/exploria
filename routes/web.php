@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\QrRegistryController;
 use App\Http\Controllers\Admin\RewardApprovalController;
 use App\Http\Controllers\Admin\RoleOperationsController;
 use App\Http\Controllers\Admin\SponsorActivationController;
+use App\Http\Controllers\Admin\SupportCenterController;
 use App\Http\Controllers\Admin\UserAccessScopeController;
 use App\Http\Controllers\Admin\UserManagementGuideController;
 use App\Http\Controllers\Admin\UserManagementController;
@@ -143,6 +144,10 @@ Route::get('/admin/qr-codes', [QrRegistryController::class, 'page'])
 Route::get('/admin/internal-operations', [InternalOperationsController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer'])
     ->name('admin.internal-operations.page');
+
+Route::get('/admin/support', [SupportCenterController::class, 'page'])
+    ->middleware(['auth', 'role:admin,operator,viewer,hub_manager,shop_partner,sponsor'])
+    ->name('admin.support.page');
 
 Route::get('/admin/users', [UserManagementController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer'])

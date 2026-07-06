@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import {
     Building2,
     MapPinned,
@@ -132,6 +132,36 @@ export default function PartnerRegistryIndex({ partners }: Props) {
                         </div>
                     </div>
                 </header>
+
+                <section className="grid gap-3 md:grid-cols-3">
+                    <Link
+                        href="/admin/access-scopes"
+                        className="rounded-lg border border-sidebar-border/70 bg-background p-3 text-sm dark:border-sidebar-border"
+                    >
+                        <p className="font-semibold">اتصال اکانت به شریک</p>
+                        <p className="mt-2 leading-6 text-muted-foreground">
+                            بعد از ثبت فروشگاه یا اسپانسر، دسترسی عملیاتی اکانت مسئول را تعیین کنید.
+                        </p>
+                    </Link>
+                    <Link
+                        href="/partner/dashboard"
+                        className="rounded-lg border border-sidebar-border/70 bg-background p-3 text-sm dark:border-sidebar-border"
+                    >
+                        <p className="font-semibold">پنل فروشگاه/شریک</p>
+                        <p className="mt-2 leading-6 text-muted-foreground">
+                            پیشنهاد پاداش، مصرف کد و گزارش عملکرد از پنل شریک پیگیری می‌شود.
+                        </p>
+                    </Link>
+                    <Link
+                        href="/admin/ads"
+                        className="rounded-lg border border-sidebar-border/70 bg-background p-3 text-sm dark:border-sidebar-border"
+                    >
+                        <p className="font-semibold">تبلیغات مستقل شریک</p>
+                        <p className="mt-2 leading-6 text-muted-foreground">
+                            تبلیغات فروشگاه یا اسپانسر بعد از ثبت، از صف تایید تبلیغات عبور می‌کند.
+                        </p>
+                    </Link>
+                </section>
 
                 <section className="rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border">
                     <div className="grid min-w-[980px] grid-cols-[1.15fr_0.85fr_1fr_1fr_1fr_0.9fr] gap-3 border-b border-sidebar-border/70 px-4 py-3 text-xs font-medium text-muted-foreground dark:border-sidebar-border">

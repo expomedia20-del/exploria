@@ -3,6 +3,7 @@ import {
     BadgeDollarSign,
     BookOpen,
     Building2,
+    BotMessageSquare,
     ClipboardCheck,
     FolderGit2,
     LayoutGrid,
@@ -125,7 +126,7 @@ const mainNavItems: RoleAwareNavItem[] = [
         title: 'مدیریت شرکا',
         href: '/admin/partners',
         icon: Store,
-        group: '۱. تیم داخلی اکسپلوریا',
+        group: '۳. واحدهای تجاری و اسپانسرها',
         roles: ['admin', 'operator', 'viewer', 'hub_manager'],
     },
     {
@@ -218,6 +219,13 @@ const mainNavItems: RoleAwareNavItem[] = [
         icon: PlayCircle,
         group: '۵. پنل کاربر',
         roles: ['admin', 'visitor'],
+    },
+    {
+        title: 'پشتیبانی و چت‌بات',
+        href: '/admin/support',
+        icon: BotMessageSquare,
+        group: '۶. پشتیبانی',
+        roles: ['admin', 'operator', 'viewer', 'hub_manager', 'shop_partner', 'sponsor'],
     },
 ];
 

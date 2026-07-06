@@ -112,6 +112,26 @@ export default function Dashboard({ stats, latestVisits, latestRedemptions, oper
                     </h1>
                 </header>
 
+                <section className="grid gap-3 md:grid-cols-4">
+                    {[
+                        ['مدیریت شرکا', '/admin/partners', 'وضعیت فروشگاه‌ها، اسپانسرها و اتصال اکانت‌ها'],
+                        ['تبلیغات مستقل', '/admin/ads', 'صف تایید تبلیغات و درخواست‌های آماده انتشار'],
+                        ['عملیات نمایشگرها', '/admin/display-operations', 'سلامت نمایشگرها و زمان‌بندی پخش'],
+                        ['پشتیبانی و چت‌بات', '/admin/support', 'مسیر سریع عیب‌یابی و سوالات عملیاتی'],
+                    ].map(([title, href, body]) => (
+                        <Link
+                            key={href}
+                            href={href}
+                            className="rounded-lg border border-sidebar-border/70 bg-background p-4 transition hover:border-primary/50 dark:border-sidebar-border"
+                        >
+                            <p className="font-semibold">{title}</p>
+                            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                                {body}
+                            </p>
+                        </Link>
+                    ))}
+                </section>
+
                 <div className="grid auto-rows-min gap-4 md:grid-cols-3 xl:grid-cols-5">
                     {statLabels.map(([key, label, description]) => (
                         <section

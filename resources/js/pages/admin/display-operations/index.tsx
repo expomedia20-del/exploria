@@ -1,4 +1,4 @@
-import { Form, Head, usePage } from '@inertiajs/react';
+import { Form, Head, Link, usePage } from '@inertiajs/react';
 import {
     Activity,
     CalendarClock,
@@ -237,6 +237,36 @@ export default function AdminDisplayOperationsIndex({
                         />
                     </div>
                 </header>
+
+                <section className="grid gap-3 md:grid-cols-3">
+                    <Link
+                        href="/admin/ads"
+                        className="rounded-lg border border-sidebar-border/70 bg-background p-3 text-sm dark:border-sidebar-border"
+                    >
+                        <p className="font-semibold">تبلیغات آماده انتشار</p>
+                        <p className="mt-2 leading-6 text-muted-foreground">
+                            تبلیغ ابتدا باید تایید شود، سپس در این صفحه روی نمایشگر زمان‌بندی شود.
+                        </p>
+                    </Link>
+                    <Link
+                        href="/admin/campaign-operations"
+                        className="rounded-lg border border-sidebar-border/70 bg-background p-3 text-sm dark:border-sidebar-border"
+                    >
+                        <p className="font-semibold">هماهنگی با روز اجرا</p>
+                        <p className="mt-2 leading-6 text-muted-foreground">
+                            زمان پخش نمایشگر باید با نقشه عملیات کمپین و نقاط QR هماهنگ باشد.
+                        </p>
+                    </Link>
+                    <Link
+                        href="/admin/support"
+                        className="rounded-lg border border-sidebar-border/70 bg-background p-3 text-sm dark:border-sidebar-border"
+                    >
+                        <p className="font-semibold">عیب‌یابی نمایشگر</p>
+                        <p className="mt-2 leading-6 text-muted-foreground">
+                            آفلاین بودن، خطای پخش یا heartbeat نامنظم را از مسیر پشتیبانی پیگیری کنید.
+                        </p>
+                    </Link>
+                </section>
 
                 {flash?.success ? (
                     <Alert>
