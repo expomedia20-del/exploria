@@ -1,134 +1,175 @@
 import { Head, Link } from '@inertiajs/react';
 import {
     ArrowLeft,
+    BadgeDollarSign,
     BarChart3,
     Building2,
     CheckCircle2,
     ClipboardCheck,
-    Fingerprint,
-    Layers3,
+    Gift,
+    Handshake,
     LayoutDashboard,
-    MapPin,
-    Medal,
+    MapPinned,
+    MonitorPlay,
     QrCode,
-    RadioTower,
     ShieldCheck,
-    Smartphone,
+    Sparkles,
+    Store,
+    TicketCheck,
+    UsersRound,
 } from 'lucide-react';
-import { dashboard } from '@/routes';
+import type { LucideIcon } from 'lucide-react';
 
 const demoQrCode = 'ep1405-a7f3k9m2q8x4';
 
-const liveLinks = [
-    {
-        title: 'ورود رسمی هیئت‌مدیره',
-        description: 'ورود شکیل به نسخه جلسه و مسیر کامل ارائه محصول',
-        href: '/board',
-        icon: Building2,
-        tone: 'bg-slate-50 text-slate-950 border-slate-200',
-    },
-    {
-        title: 'دموی اکوسیستم کامل',
-        description: 'پنل کاربر، فروشگاه، مدیر رواق، گنج، پاداش و تخفیف',
-        href: '/demo/ecosystem',
-        icon: RadioTower,
-        tone: 'bg-teal-50 text-teal-950 border-teal-200',
-    },
+const primaryRoutes: Array<{
+    title: string;
+    body: string;
+    href: string;
+    icon: LucideIcon;
+    tone: string;
+}> = [
     {
         title: 'شروع تجربه بازدیدکننده',
-        description: 'اسکن QR، ورود موبایلی، رضایت نامه و ثبت بازدید',
+        body: 'ورود با QR، موبایل، رضایت‌نامه و مسیر مشارکت.',
         href: `/scan/${demoQrCode}`,
-        icon: Smartphone,
-        tone: 'bg-emerald-50 text-emerald-900 border-emerald-200',
-    },
-    {
-        title: 'مأموریت‌ها و پاداش‌ها',
-        description: 'تکمیل ماموریت، امتیاز، پاداش، سطح و لایه های بعدی',
-        href: '/demo/missions',
-        icon: Medal,
-        tone: 'bg-rose-50 text-rose-950 border-rose-200',
-    },
-    {
-        title: 'پوشش پروپوزال',
-        description:
-            'تطبیق دمو با سفر، کمپین، touchpoint، KPI و مدل ارزش اقتصادی',
-        href: '/demo/proposal',
-        icon: Layers3,
-        tone: 'bg-violet-50 text-violet-950 border-violet-200',
-    },
-    {
-        title: 'داشبورد عملیاتی',
-        description: 'آمار مکان ها، QR فعال، رضایت ها و بازدیدهای ثبت شده',
-        href: dashboard(),
-        icon: LayoutDashboard,
-        tone: 'bg-sky-50 text-sky-900 border-sky-200',
-    },
-    {
-        title: 'مدیریت QR',
-        description: 'رجیستری کدها، وضعیت، مکان، نقطه تماس و کمپین',
-        href: '/admin/qr-codes',
         icon: QrCode,
-        tone: 'bg-amber-50 text-amber-950 border-amber-200',
+        tone: 'border-emerald-200 bg-emerald-50 text-emerald-950',
+    },
+    {
+        title: 'ورود مدیریتی',
+        body: 'ورود ادمین، تیم داخلی، مدیر مکان، رواق، فروشگاه یا اسپانسر.',
+        href: '/login',
+        icon: ShieldCheck,
+        tone: 'border-cyan-200 bg-cyan-50 text-cyan-950',
+    },
+    {
+        title: 'چرخه دمو و فروش',
+        body: 'مشاهده آمادگی دمو، بسته‌های فروش و مسیر مذاکره.',
+        href: '/admin/commercialization',
+        icon: BadgeDollarSign,
+        tone: 'border-amber-200 bg-amber-50 text-amber-950',
     },
 ];
 
-const modules = [
+const valueLoop = [
+    ['۱', 'ورود', 'کاربر از QR یا صفحه کمپین وارد تجربه می‌شود.'],
+    ['۲', 'مشارکت', 'ماموریت، مسیر، گنج، امتیاز و پاداش را دنبال می‌کند.'],
+    ['۳', 'تعامل تجاری', 'به واحد عضو، فروشگاه، رستوران یا پیشنهاد اسپانسر وصل می‌شود.'],
+    ['۴', 'گزارش', 'مدیر مکان، اسپانسر و واحد عضو خروجی عددی می‌گیرند.'],
+];
+
+const audiences = [
     {
-        title: 'QR Landing',
-        body: 'ورود از کد نصب شده در مکان پایلوت و نمایش زمینه بازدید.',
-        icon: QrCode,
+        title: 'برای مدیر مکان',
+        body: 'یک پایلوت قابل اجرا با QR، ماموریت، پاداش، کنترل ریسک و گزارش پایان اجرا.',
+        icon: Building2,
+        items: ['نمای کل مکان', 'هماهنگی زون‌ها', 'گزارش ROI'],
     },
     {
-        title: 'Mobile OTP',
-        body: 'ورود سریع با موبایل و کد آزمایشی محلی برای دمو.',
-        icon: Fingerprint,
+        title: 'برای رواق، هاب و واحدها',
+        body: 'مدیریت پیشنهاد، کد مصرف، حضور در کمپین و مشاهده اثر مراجعه کاربران.',
+        icon: Store,
+        items: ['پاداش و تخفیف', 'مصرف کد', 'گزارش مراجعه'],
     },
     {
-        title: 'Consent Gate',
-        body: 'ثبت رضایت نامه فارسی قبل از ایجاد رخداد بازدید.',
-        icon: ClipboardCheck,
+        title: 'برای اسپانسر',
+        body: 'اتصال برند به جایزه، گنج، مسیر خانوادگی، تبلیغ و گزارش تعامل قابل ارائه.',
+        icon: Handshake,
+        items: ['جایزه برنددار', 'نمایش و تعامل', 'گزارش claim'],
     },
     {
-        title: 'Visit Experience',
-        body: 'صفحه نتیجه بعد از ثبت بازدید تایید شده از مسیر QR.',
-        icon: CheckCircle2,
-    },
-    {
-        title: 'Operations Dashboard',
-        body: 'شاخص های واقعی از دیتابیس محلی، نه محتوای ثابت نمایشی.',
-        icon: BarChart3,
-    },
-    {
-        title: 'QR Registry',
-        body: 'کنترل وضعیت کد، اتصال به مکان، touchpoint و campaign.',
-        icon: RadioTower,
+        title: 'برای بازدیدکننده',
+        body: 'تجربه ساده، قابل فهم و سرگرم‌کننده برای مشارکت فردی، خانوادگی یا تیمی.',
+        icon: UsersRound,
+        items: ['مسیر کمپین', 'کیف پاداش', 'ادامه مشارکت'],
     },
 ];
 
-const flow = ['QR', 'OTP', 'رضایت نامه', 'ثبت بازدید', 'داشبورد'];
+const capabilities: Array<[string, string, LucideIcon]> = [
+    ['مدیریت کمپین', 'ثبت، ساخت، انتخاب الگو و نقشه عملیات کمپین.', LayoutDashboard],
+    ['QR و ورود', 'کدهای ورودی، نقاط تماس، رضایت‌نامه و ثبت بازدید.', QrCode],
+    ['ماموریت و پاداش', 'تعریف ماموریت، گنج، امتیاز، کوپن، هدیه و مصرف پاداش.', Gift],
+    ['تبلیغات و نمایشگر', 'تبلیغ مستقل، زمان‌بندی نمایشگر و کنترل محتوای میدانی.', MonitorPlay],
+    ['پنل‌های نقش‌محور', 'ادمین، مدیر مکان، رواق، فروشگاه، اسپانسر و مشارکت‌کننده.', ShieldCheck],
+    ['داشبورد فروش', 'ROI، بسته قیمت، مدارک مذاکره و قیف تبدیل دمو به قرارداد.', BarChart3],
+];
 
-function QrVisual() {
-    const cells = [
-        1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1,
-        0, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0,
-        1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1,
-    ];
+const revenuePacks = [
+    {
+        title: 'پکیج پایلوت مکان',
+        buyer: 'مدیر اجرایی مکان',
+        price: '۱۲۰ تا ۲۵۰ میلیون تومان',
+    },
+    {
+        title: 'پکیج اسپانسر کمپین',
+        buyer: 'اسپانسر داخلی یا بیرونی',
+        price: '۸۰ تا ۳۰۰ میلیون تومان',
+    },
+    {
+        title: 'پکیج واحد عضو',
+        buyer: 'فروشگاه، فودکورت، رستوران یا واحد فرهنگی',
+        price: 'اشتراک ماهانه + کارمزد مصرف پاداش',
+    },
+];
 
+function HeroScene() {
     return (
-        <div
-            aria-hidden="true"
-            className="grid size-28 grid-cols-8 gap-1 rounded-lg bg-white p-3 shadow-sm"
-        >
-            {cells.map((cell, index) => (
-                <span
-                    key={index}
-                    className={
-                        cell
-                            ? 'rounded-sm bg-slate-950'
-                            : 'rounded-sm bg-slate-100'
-                    }
-                />
-            ))}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+            <div className="absolute inset-0 bg-zinc-950" />
+            <div className="absolute left-0 top-12 hidden w-[52rem] max-w-[58vw] rounded-r-lg border border-white/10 bg-white/10 p-5 shadow-2xl backdrop-blur-sm lg:block">
+                <div className="grid gap-3">
+                    <div className="flex items-center justify-between gap-3">
+                        <span className="rounded-full bg-emerald-400 px-3 py-1 text-xs font-semibold text-zinc-950">
+                            EcoPark pilot ready
+                        </span>
+                        <span className="font-mono text-xs text-zinc-300" dir="ltr">
+                            {demoQrCode}
+                        </span>
+                    </div>
+                    <div className="grid grid-cols-[1.1fr_0.9fr] gap-3">
+                        <div className="rounded-md bg-white p-4 text-zinc-950">
+                            <div className="flex items-center gap-2">
+                                <MapPinned className="size-5 text-emerald-700" />
+                                <strong>مسیر کمپین</strong>
+                            </div>
+                            <div className="mt-4 grid gap-2">
+                                {['QR ورودی', 'ماموریت خانوادگی', 'گنج اسپانسری', 'مصرف پاداش'].map((item) => (
+                                    <div key={item} className="flex items-center justify-between rounded-md bg-zinc-100 p-2 text-sm">
+                                        <span>{item}</span>
+                                        <CheckCircle2 className="size-4 text-emerald-700" />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="rounded-md bg-zinc-900 p-4 text-white">
+                            <div className="flex items-center gap-2">
+                                <BarChart3 className="size-5 text-amber-300" />
+                                <strong>گزارش فروش</strong>
+                            </div>
+                            <div className="mt-5 flex h-28 items-end gap-3">
+                                {[64, 92, 48, 76, 58].map((height, index) => (
+                                    <span
+                                        key={index}
+                                        className="flex-1 rounded-t-md"
+                                        style={{
+                                            height: `${height}%`,
+                                            backgroundColor: ['#10b981', '#06b6d4', '#f59e0b', '#f43f5e', '#8b5cf6'][index],
+                                        }}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3 text-sm text-white">
+                        {['مدیر مکان', 'واحد عضو', 'اسپانسر'].map((item) => (
+                            <div key={item} className="rounded-md border border-white/10 bg-white/10 p-3">
+                                {item}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }
@@ -136,207 +177,180 @@ function QrVisual() {
 export default function Welcome() {
     return (
         <>
-            <Head title="دموی کارفرمایی اکسپلوریا" />
-            <main
-                dir="rtl"
-                className="min-h-screen bg-stone-50 text-slate-950"
-            >
-                <section className="border-b border-emerald-100 bg-gradient-to-br from-white via-emerald-50 to-sky-50 text-slate-950">
-                    <div className="mx-auto flex min-h-[84vh] max-w-7xl flex-col justify-between px-5 py-5 sm:px-8 lg:px-10">
+            <Head title="اکسپلوریا | پلتفرم تجربه، کمپین و درآمد مکان" />
+
+            <main dir="rtl" className="min-h-screen bg-stone-50 text-zinc-950">
+                <section className="relative min-h-[92vh] overflow-hidden text-white">
+                    <HeroScene />
+                    <div className="relative z-10 mx-auto flex min-h-[92vh] max-w-7xl flex-col px-5 py-5 sm:px-8 lg:px-10">
                         <header className="flex flex-wrap items-center justify-between gap-3">
-                            <div>
-                                <p className="text-sm text-emerald-700">
-                                    EXPLORIA
-                                </p>
-                                <p className="mt-1 text-lg font-semibold">
-                                    پایلوت اکوپارک عباس آباد
-                                </p>
-                            </div>
+                            <Link href="/" className="flex items-center gap-3">
+                                <span className="inline-flex size-10 items-center justify-center rounded-md bg-emerald-500 text-zinc-950">
+                                    <Sparkles className="size-5" />
+                                </span>
+                                <span>
+                                    <span className="block text-lg font-semibold">EXPLORIA</span>
+                                    <span className="block text-xs text-zinc-300">تجربه، کمپین، پاداش و گزارش</span>
+                                </span>
+                            </Link>
                             <nav className="flex flex-wrap gap-2 text-sm">
-                                <Link
-                                    href="/board"
-                                    className="inline-flex h-9 items-center gap-2 rounded-md bg-white px-3 text-slate-950"
-                                >
-                                    <Building2 className="size-4" />
-                                    ورود جلسه
+                                <Link href="/login" className="inline-flex h-10 items-center rounded-md border border-white/20 px-4 hover:bg-white/10">
+                                    ورود مدیریتی
                                 </Link>
-                                <Link
-                                    href="/admin/qr-codes"
-                                    className="inline-flex h-9 items-center gap-2 rounded-md border border-emerald-200 bg-white/70 px-3 text-emerald-900 hover:bg-white"
-                                >
-                                    <QrCode className="size-4" />
-                                    QR
+                                <Link href={`/scan/${demoQrCode}`} className="inline-flex h-10 items-center gap-2 rounded-md bg-emerald-400 px-4 font-semibold text-zinc-950 hover:bg-emerald-300">
+                                    شروع دمو
+                                    <ArrowLeft className="size-4" />
                                 </Link>
                             </nav>
                         </header>
 
-                        <div className="grid gap-8 py-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
-                            <div>
-                                <p className="text-sm font-medium text-emerald-700">
-                                    دموی قابل ارائه به کارفرما
+                        <div className="flex flex-1 items-center py-12">
+                            <div className="max-w-3xl">
+                                <p className="inline-flex rounded-full border border-emerald-300/40 bg-emerald-300/10 px-4 py-2 text-sm text-emerald-200">
+                                    آماده برای دمو، پایلوت و مذاکره تجاری
                                 </p>
-                                <h1 className="mt-4 max-w-3xl text-4xl leading-tight font-semibold sm:text-5xl">
-                                    مسیر کامل بازدیدکننده، از اسکن QR تا داشبورد
-                                    عملیات
+                                <h1 className="mt-6 text-4xl font-semibold leading-tight sm:text-6xl">
+                                    اکسپلوریا، مکان را به تجربه قابل فروش تبدیل می‌کند.
                                 </h1>
-                                <p className="mt-5 max-w-2xl text-base leading-8 text-slate-700">
-                                    این نسخه، حلقه اصلی محصول را زنده نشان می
-                                    دهد: ورود از QR، احراز سریع موبایلی، رضایت
-                                    نامه فارسی، ثبت بازدید و مشاهده خروجی در پنل
-                                    مدیریتی.
+                                <p className="mt-6 max-w-2xl text-base leading-8 text-zinc-300">
+                                    از اسکن QR و ورود موبایلی تا ماموریت، گنج، پاداش، مصرف کد، تبلیغ اسپانسر و گزارش ROI؛
+                                    یک چرخه اجرایی برای مکان‌های گردشگری، فرهنگی، تجاری و تفریحی.
                                 </p>
-                                <div className="mt-7 flex flex-wrap gap-3">
-                                    <Link
-                                        href="/board"
-                                        className="inline-flex h-11 items-center gap-2 rounded-md bg-emerald-600 px-4 text-sm font-semibold text-white hover:bg-emerald-500"
-                                    >
-                                        ورود رسمی هیئت‌مدیره
-                                        <ArrowLeft className="size-4" />
+                                <div className="mt-8 flex flex-wrap gap-3">
+                                    <Link href={`/scan/${demoQrCode}`} className="inline-flex h-12 items-center gap-2 rounded-md bg-emerald-400 px-5 text-sm font-semibold text-zinc-950 hover:bg-emerald-300">
+                                        تجربه بازدیدکننده
+                                        <QrCode className="size-4" />
                                     </Link>
-                                    <Link
-                                        href={dashboard()}
-                                        className="inline-flex h-11 items-center gap-2 rounded-md border border-slate-300 bg-white/70 px-4 text-sm font-semibold text-slate-800 hover:bg-white"
-                                    >
-                                        مشاهده داشبورد
+                                    <Link href="/admin/commercialization" className="inline-flex h-12 items-center gap-2 rounded-md bg-white px-5 text-sm font-semibold text-zinc-950 hover:bg-zinc-100">
+                                        صفحه تجاری‌سازی
+                                        <BadgeDollarSign className="size-4" />
                                     </Link>
-                                </div>
-                            </div>
-
-                            <div className="rounded-lg border border-emerald-100 bg-white/80 p-4 shadow-sm backdrop-blur">
-                                <div className="grid gap-4 sm:grid-cols-[auto_1fr] sm:items-center">
-                                    <QrVisual />
-                                    <div>
-                                        <p className="text-sm text-slate-500">
-                                            کد دمو
-                                        </p>
-                                        <p
-                                            className="mt-1 font-mono text-lg"
-                                            dir="ltr"
-                                        >
-                                            {demoQrCode}
-                                        </p>
-                                        <p className="mt-3 flex items-center gap-2 text-sm text-emerald-700">
-                                            <MapPin className="size-4" />
-                                            متصل به اکوپارک عباس آباد
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="mt-6 grid gap-2 sm:grid-cols-5">
-                                    {flow.map((item, index) => (
-                                        <div
-                                            key={item}
-                                            className="rounded-md border border-emerald-100 bg-emerald-50 px-3 py-3 text-center text-xs text-slate-700"
-                                        >
-                                            <span className="block text-emerald-700">
-                                                {(index + 1).toLocaleString(
-                                                    'fa-IR',
-                                                )}
-                                            </span>
-                                            {item}
-                                        </div>
-                                    ))}
+                                    <Link href="/dashboard" className="inline-flex h-12 items-center gap-2 rounded-md border border-white/25 px-5 text-sm font-semibold hover:bg-white/10">
+                                        داشبورد عملیاتی
+                                        <BarChart3 className="size-4" />
+                                    </Link>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="grid gap-3 pb-4 sm:grid-cols-2 lg:grid-cols-7">
-                            {liveLinks.map((item) => (
-                                <Link
-                                    key={item.title}
-                                    href={item.href}
-                                    className={`rounded-lg border p-4 transition hover:-translate-y-0.5 ${item.tone}`}
-                                >
-                                    <item.icon className="size-5" />
-                                    <p className="mt-3 font-semibold">
-                                        {item.title}
-                                    </p>
-                                    <p className="mt-2 text-sm leading-6 opacity-80">
-                                        {item.description}
-                                    </p>
-                                </Link>
+                        <div className="grid gap-3 pb-4 sm:grid-cols-2 lg:grid-cols-4">
+                            {valueLoop.map(([number, title, body]) => (
+                                <article key={title} className="rounded-lg border border-white/10 bg-white/10 p-4 backdrop-blur-sm">
+                                    <span className="text-sm text-emerald-300">{number}</span>
+                                    <h2 className="mt-2 font-semibold">{title}</h2>
+                                    <p className="mt-2 text-sm leading-6 text-zinc-300">{body}</p>
+                                </article>
                             ))}
                         </div>
                     </div>
                 </section>
 
-                <section className="border-b border-slate-200 bg-white">
-                    <div className="mx-auto grid max-w-7xl gap-4 px-5 py-8 sm:grid-cols-4 sm:px-8 lg:px-10">
-                        {[
-                            ['۳', 'مکان پایلوت'],
-                            ['۱', 'QR فعال دمو'],
-                            ['OTP', 'ورود سریع محلی'],
-                            ['RTL', 'رابط فارسی'],
-                        ].map(([value, label]) => (
-                            <div
-                                key={label}
-                                className="rounded-lg border border-slate-200 p-4 dark:border-slate-800"
-                            >
-                                <p className="text-2xl font-semibold">
-                                    {value}
-                                </p>
-                                <p className="mt-1 text-sm text-slate-500">
-                                    {label}
-                                </p>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-
                 <section className="mx-auto max-w-7xl px-5 py-10 sm:px-8 lg:px-10">
-                    <div className="flex flex-col gap-2">
-                        <p className="text-sm font-medium text-emerald-700">
-                            بخش های قابل نمایش
-                        </p>
-                        <h2 className="text-2xl font-semibold">
-                            همه اجزای آماده شده برای ارائه
-                        </h2>
-                    </div>
-
-                    <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                        {modules.map((module) => (
-                            <article
-                                key={module.title}
-                                className="rounded-lg border border-slate-200 bg-white p-5"
-                            >
-                                <module.icon className="size-5 text-slate-600" />
-                                <h3 className="mt-4 font-semibold">
-                                    {module.title}
-                                </h3>
-                                <p className="mt-2 text-sm leading-7 text-slate-600">
-                                    {module.body}
-                                </p>
-                            </article>
+                    <div className="grid gap-4 md:grid-cols-3">
+                        {primaryRoutes.map((route) => (
+                            <Link key={route.title} href={route.href} className={`rounded-lg border p-5 transition hover:-translate-y-0.5 hover:shadow-md ${route.tone}`}>
+                                <route.icon className="size-6" />
+                                <h2 className="mt-4 text-lg font-semibold">{route.title}</h2>
+                                <p className="mt-2 text-sm leading-7 opacity-80">{route.body}</p>
+                            </Link>
                         ))}
                     </div>
                 </section>
 
                 <section className="bg-white">
-                    <div className="mx-auto grid max-w-7xl gap-6 px-5 py-10 sm:px-8 lg:grid-cols-[0.8fr_1.2fr] lg:px-10">
-                        <div>
-                            <p className="text-sm font-medium text-sky-700">
-                                آمادگی پایلوت
+                    <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:px-10">
+                        <div className="max-w-3xl">
+                            <p className="text-sm font-medium text-emerald-700">معماری محصول</p>
+                            <h2 className="mt-2 text-3xl font-semibold">یک پلتفرم، چند نقش، یک چرخه درآمدی</h2>
+                            <p className="mt-3 text-sm leading-7 text-zinc-600">
+                                اکسپلوریا برای هر نقش، سطح دسترسی و خروجی خودش را جدا می‌کند؛ مدیر مکان فقط نمای کل و ریسک‌ها را می‌بیند، رواق هماهنگی محدوده را مدیریت می‌کند، فروشگاه پیشنهاد و مصرف کد را می‌بیند، و اسپانسر گزارش تعامل برند را دریافت می‌کند.
                             </p>
-                            <h2 className="mt-2 text-2xl font-semibold">
-                                پیام های اصلی برای جلسه
-                            </h2>
                         </div>
-                        <div className="grid gap-3">
-                            {[
-                                'این نسخه دمو/پایلوت محلی است و هنوز محیط production نیست.',
-                                'مسیر ارزش اصلی محصول اکنون زنده و قابل اجراست.',
-                                'داشبورد و رجیستری QR به داده های دیتابیس محلی وصل هستند.',
-                                'گام بعدی برای پایلوت واقعی، چاپ QR و اتصال OTP واقعی در staging است.',
-                            ].map((item) => (
-                                <div
-                                    key={item}
-                                    className="flex gap-3 rounded-lg border border-slate-200 p-4"
-                                >
-                                    <ShieldCheck className="mt-0.5 size-5 shrink-0 text-emerald-600" />
-                                    <p className="text-sm leading-7 text-slate-700">
-                                        {item}
-                                    </p>
-                                </div>
+
+                        <div className="mt-7 grid gap-4 lg:grid-cols-4">
+                            {audiences.map((item) => (
+                                <article key={item.title} className="rounded-lg border border-zinc-200 bg-stone-50 p-5">
+                                    <item.icon className="size-6 text-emerald-700" />
+                                    <h3 className="mt-4 text-lg font-semibold">{item.title}</h3>
+                                    <p className="mt-2 text-sm leading-7 text-zinc-600">{item.body}</p>
+                                    <div className="mt-4 flex flex-wrap gap-2">
+                                        {item.items.map((tag) => (
+                                            <span key={tag} className="rounded-full bg-white px-3 py-1 text-xs text-zinc-700">
+                                                {tag}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </article>
                             ))}
+                        </div>
+                    </div>
+                </section>
+
+                <section className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:px-10">
+                    <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
+                        <div>
+                            <p className="text-sm font-medium text-cyan-700">قابلیت‌ها</p>
+                            <h2 className="mt-2 text-3xl font-semibold">از دمو تا اجرای واقعی</h2>
+                            <p className="mt-3 text-sm leading-7 text-zinc-600">
+                                صفحه ورودی باید نشان دهد که اکسپلوریا فقط یک بازی یا یک پنل نیست؛ یک جریان کامل اجرایی و تجاری است که می‌تواند برای مکان، واحد عضو و اسپانسر عدد بسازد.
+                            </p>
+                        </div>
+                        <div className="grid gap-3 md:grid-cols-2">
+                            {capabilities.map(([title, body, Icon]) => (
+                                <article key={title} className="rounded-lg border border-zinc-200 bg-white p-4">
+                                    <Icon className="size-5 text-cyan-700" />
+                                    <h3 className="mt-3 font-semibold">{title}</h3>
+                                    <p className="mt-2 text-sm leading-7 text-zinc-600">{body}</p>
+                                </article>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                <section className="bg-zinc-950 text-white">
+                    <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:px-10">
+                        <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
+                            <div>
+                                <p className="text-sm font-medium text-amber-300">مدل درآمدی</p>
+                                <h2 className="mt-2 text-3xl font-semibold">سه پیشنهاد ساده برای شروع فروش</h2>
+                                <p className="mt-3 text-sm leading-7 text-zinc-300">
+                                    برای مذاکره واقعی، همه قابلیت‌ها یکجا فروخته نمی‌شوند. محصول به سه بسته قابل فهم تبدیل شده است.
+                                </p>
+                            </div>
+                            <div className="grid gap-3 md:grid-cols-3">
+                                {revenuePacks.map((pack) => (
+                                    <article key={pack.title} className="rounded-lg border border-white/10 bg-white/10 p-4">
+                                        <TicketCheck className="size-5 text-amber-300" />
+                                        <h3 className="mt-4 font-semibold">{pack.title}</h3>
+                                        <p className="mt-2 text-sm text-zinc-300">{pack.buyer}</p>
+                                        <p className="mt-4 rounded-md bg-amber-300 px-3 py-2 text-sm font-semibold text-zinc-950">
+                                            {pack.price}
+                                        </p>
+                                    </article>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section className="bg-white">
+                    <div className="mx-auto grid max-w-7xl gap-5 px-5 py-10 sm:px-8 lg:grid-cols-[1fr_auto] lg:items-center lg:px-10">
+                        <div>
+                            <p className="text-sm font-medium text-emerald-700">قدم بعدی</p>
+                            <h2 className="mt-2 text-3xl font-semibold">اکسپلوریا آماده نمایش، پایلوت و مذاکره است.</h2>
+                            <p className="mt-3 text-sm leading-7 text-zinc-600">
+                                برای جلسه فروش از صفحه تجاری‌سازی شروع کنید؛ برای تست تجربه کاربر، QR دمو را باز کنید؛ و برای تیم داخلی، ورود مدیریتی را استفاده کنید.
+                            </p>
+                        </div>
+                        <div className="flex flex-wrap gap-3">
+                            <Link href="/admin/commercialization" className="inline-flex h-11 items-center gap-2 rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white hover:bg-zinc-800">
+                                تجاری‌سازی
+                                <ArrowLeft className="size-4" />
+                            </Link>
+                            <Link href={`/scan/${demoQrCode}`} className="inline-flex h-11 items-center gap-2 rounded-md border border-zinc-300 px-4 text-sm font-semibold hover:bg-zinc-50">
+                                QR دمو
+                                <QrCode className="size-4" />
+                            </Link>
                         </div>
                     </div>
                 </section>
