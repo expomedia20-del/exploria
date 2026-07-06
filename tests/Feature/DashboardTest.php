@@ -79,6 +79,9 @@ class DashboardTest extends TestCase
                 ->has('roiCards', 3)
                 ->has('salesPipeline', 5)
                 ->has('documents', 5)
+                ->has('pricingTiers', 3)
+                ->has('salesAssets', 5)
+                ->has('leadTargets', 4)
                 ->has('nextActions', 5));
     }
 

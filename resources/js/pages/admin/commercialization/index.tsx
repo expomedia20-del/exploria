@@ -42,6 +42,25 @@ type DocumentItem = {
     status: string;
 };
 
+type PricingTier = {
+    title: string;
+    price: string;
+    bestFor: string;
+    items: string[];
+};
+
+type SalesAsset = {
+    title: string;
+    owner: string;
+    status: string;
+};
+
+type LeadTarget = {
+    segment: string;
+    target: string;
+    firstOffer: string;
+};
+
 type Props = {
     summary: {
         title: string;
@@ -55,6 +74,9 @@ type Props = {
     roiCards: RoiCard[];
     salesPipeline: PipelineStep[];
     documents: DocumentItem[];
+    pricingTiers: PricingTier[];
+    salesAssets: SalesAsset[];
+    leadTargets: LeadTarget[];
     nextActions: string[];
 };
 
@@ -109,6 +131,9 @@ export default function CommercializationIndex({
     roiCards,
     salesPipeline,
     documents,
+    pricingTiers,
+    salesAssets,
+    leadTargets,
     nextActions,
 }: Props) {
     const maxMetric = Math.max(...salesMetrics.map((metric) => metric.value), 1);
@@ -294,6 +319,81 @@ export default function CommercializationIndex({
                             </div>
                         </article>
                     ))}
+                </section>
+
+                <section className="rounded-lg border border-orange-200 bg-orange-50/70 p-4 dark:border-orange-900/60 dark:bg-orange-950/20">
+                    <div className="mb-4 flex items-center gap-2">
+                        <BadgeDollarSign className="size-5 text-orange-700 dark:text-orange-300" />
+                        <h2 className="text-lg font-semibold">جدول قیمت قابل مذاکره</h2>
+                    </div>
+                    <div className="grid gap-3 xl:grid-cols-3">
+                        {pricingTiers.map((tier, index) => (
+                            <article key={tier.title} className="rounded-lg border border-white/70 bg-background/80 p-4 shadow-sm">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div>
+                                        <h3 className="text-lg font-semibold">{tier.title}</h3>
+                                        <p className="mt-2 text-2xl font-semibold text-orange-700 dark:text-orange-300">
+                                            {tier.price}
+                                        </p>
+                                    </div>
+                                    <span className="inline-flex size-9 items-center justify-center rounded-md bg-orange-500 text-sm font-semibold text-zinc-950">
+                                        {index + 1}
+                                    </span>
+                                </div>
+                                <p className="mt-3 rounded-md bg-orange-100/80 p-3 text-sm leading-7 text-orange-950 dark:bg-orange-900/40 dark:text-orange-100">
+                                    {tier.bestFor}
+                                </p>
+                                <ul className="mt-4 space-y-2 text-sm leading-7 text-muted-foreground">
+                                    {tier.items.map((item) => (
+                                        <li key={item} className="flex gap-2">
+                                            <CheckCircle2 className="mt-1 size-4 shrink-0 text-orange-700" />
+                                            <span>{item}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </article>
+                        ))}
+                    </div>
+                </section>
+
+                <section className="grid gap-3 xl:grid-cols-[1fr_0.9fr]">
+                    <article className="rounded-lg border border-violet-200 bg-violet-50/70 p-4 dark:border-violet-900/60 dark:bg-violet-950/20">
+                        <div className="flex items-center gap-2">
+                            <FileText className="size-5 text-violet-700 dark:text-violet-300" />
+                            <h2 className="text-lg font-semibold">مدارک آماده مذاکره</h2>
+                        </div>
+                        <div className="mt-4 grid gap-2">
+                            {salesAssets.map((asset) => (
+                                <div key={asset.title} className="rounded-md border border-border/70 bg-background/80 p-3">
+                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                        <h3 className="font-medium">{asset.title}</h3>
+                                        <span className="rounded-full bg-violet-100 px-3 py-1 text-xs text-violet-900 dark:bg-violet-900/40 dark:text-violet-100">
+                                            {asset.owner}
+                                        </span>
+                                    </div>
+                                    <p className="mt-2 text-sm leading-7 text-muted-foreground">{asset.status}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </article>
+
+                    <article className="rounded-lg border border-lime-200 bg-lime-50/70 p-4 dark:border-lime-900/60 dark:bg-lime-950/20">
+                        <div className="flex items-center gap-2">
+                            <Target className="size-5 text-lime-700 dark:text-lime-300" />
+                            <h2 className="text-lg font-semibold">مشتریان هدف جلسه اول</h2>
+                        </div>
+                        <div className="mt-4 space-y-3">
+                            {leadTargets.map((lead) => (
+                                <div key={lead.segment} className="rounded-md border border-border/70 bg-background/80 p-3">
+                                    <h3 className="font-medium">{lead.segment}</h3>
+                                    <p className="mt-2 text-sm leading-7 text-muted-foreground">{lead.target}</p>
+                                    <div className="mt-2 rounded-md bg-lime-100/80 p-2 text-sm leading-7 text-lime-950 dark:bg-lime-900/40 dark:text-lime-100">
+                                        پیشنهاد شروع: {lead.firstOffer}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </article>
                 </section>
 
                 <section className="grid gap-3 xl:grid-cols-2">
