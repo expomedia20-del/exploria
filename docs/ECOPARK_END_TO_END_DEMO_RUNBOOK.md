@@ -27,6 +27,10 @@ Pass criteria:
 - Internal Exploria team accounts are managed manually.
 - Public visitors are created automatically through mobile entry and become participants by choice.
 
+Operational page:
+
+- `/admin/demo-cycle` now reads the EcoPark readiness checks and shows the status of campaign, QR, missions, partners, rewards, access scopes, and the Ravaq hub.
+
 ## Stage 3: Participant Journey
 
 Pass criteria:
@@ -35,6 +39,11 @@ Pass criteria:
 - Participant can see next step, QR guidance, missions, wallet, rewards, visit history, and incentives.
 - Individual, family, and team participation states are understandable.
 - No admin dashboard or internal control is reachable by a normal visitor.
+
+Operational page:
+
+- `/admin/demo-cycle` shows visits, completed missions, issued rewards, and participant count.
+- `/participant/dashboard` is the participant's main page after mobile entry and consent.
 
 ## Stage 4: Reward, Partner, Ad, And Display Execution
 
@@ -45,6 +54,11 @@ Pass criteria:
 - Ravaq/hub manager can coordinate readiness but cannot manage shop finances.
 - Approved ads and displays have a clear status or schedule.
 
+Operational page:
+
+- `/admin/demo-cycle` shows pending rewards, confirmed/redeemed rewards, and active displays.
+- `/partner/dashboard`, `/admin/ads`, and `/admin/display-operations` are the execution pages for this stage.
+
 ## Stage 5: Commercial Report
 
 Pass criteria:
@@ -52,6 +66,11 @@ Pass criteria:
 - Final report shows visits, missions, rewards, redemptions, sponsor interactions, partner contribution, and display exposure.
 - Pilot venue package, campaign sponsor package, and member unit package are ready for pricing.
 - The demo can be explained in less than 10 minutes with a live site and a short ROI summary.
+
+Operational page:
+
+- `/admin/demo-cycle` shows the commercial readiness metrics and the three package directions.
+- `/dashboard` remains the operational report page until the dedicated ROI report is built.
 
 ## Next Build Order
 

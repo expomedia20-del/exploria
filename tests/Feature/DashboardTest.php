@@ -57,7 +57,9 @@ class DashboardTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('admin/demo-cycle/index')
                 ->where('summary.stagesCount', 5)
-                ->has('stages', 5));
+                ->has('stages', 5)
+                ->has('stageHealth', 4)
+                ->has('commercialPackages', 3));
     }
 
     public function test_visitor_is_redirected_to_participant_dashboard(): void

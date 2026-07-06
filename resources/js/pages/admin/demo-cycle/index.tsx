@@ -29,12 +29,51 @@ type DemoSummary = {
     stagesCount: number;
 };
 
+type StageMetric = {
+    label: string;
+    value: number;
+};
+
+type StageHealth = {
+    stage: number;
+    title: string;
+    status: 'ready' | 'warning' | 'needs_work';
+    metrics: StageMetric[];
+    nextActions: string[];
+    links: DemoLink[];
+};
+
+type CommercialPackage = {
+    title: string;
+    buyer: string;
+    deliverable: string;
+};
+
 type Props = {
     summary: DemoSummary;
     stages: DemoStage[];
+    stageHealth: StageHealth[];
+    commercialPackages: CommercialPackage[];
 };
 
-export default function DemoCycleIndex({ summary, stages }: Props) {
+const statusLabel = {
+    ready: 'آماده',
+    warning: 'نیازمند کنترل',
+    needs_work: 'نیازمند تکمیل',
+};
+
+const statusClassName = {
+    ready: 'bg-emerald-50 text-emerald-900',
+    warning: 'bg-amber-50 text-amber-900',
+    needs_work: 'bg-rose-50 text-rose-900',
+};
+
+export default function DemoCycleIndex({
+    summary,
+    stages,
+    stageHealth,
+    commercialPackages,
+}: Props) {
     return (
         <>
             <Head title="چرخه دمو اکوپارک" />
@@ -86,6 +125,75 @@ export default function DemoCycleIndex({ summary, stages }: Props) {
                             </p>
                             <div className="mt-3 inline-flex rounded-full bg-cyan-50 px-3 py-1 text-xs font-medium text-cyan-900">
                                 {stage.status}
+                            </div>
+                        </article>
+                    ))}
+                </section>
+
+                <section className="grid gap-3 xl:grid-cols-2">
+                    {stageHealth.map((stage) => (
+                        <article
+                            key={stage.stage}
+                            className="rounded-lg border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border"
+                        >
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                                <div>
+                                    <p className="text-sm text-muted-foreground">
+                                        مرحله {stage.stage}
+                                    </p>
+                                    <h2 className="mt-1 text-lg font-semibold">
+                                        {stage.title}
+                                    </h2>
+                                </div>
+                                <span
+                                    className={`rounded-full px-3 py-1 text-xs font-medium ${statusClassName[stage.status]}`}
+                                >
+                                    {statusLabel[stage.status]}
+                                </span>
+                            </div>
+
+                            <div className="mt-4 grid gap-2 md:grid-cols-3">
+                                {stage.metrics.map((metric) => (
+                                    <div
+                                        key={metric.label}
+                                        className="rounded-md border border-border/70 bg-background p-3"
+                                    >
+                                        <p className="text-xs text-muted-foreground">
+                                            {metric.label}
+                                        </p>
+                                        <p className="mt-1 text-xl font-semibold">
+                                            {metric.value.toLocaleString('fa-IR')}
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="mt-4 rounded-md bg-muted/40 p-3">
+                                <h3 className="text-sm font-semibold">اقدام بعدی</h3>
+                                {stage.nextActions.length > 0 ? (
+                                    <ul className="mt-2 space-y-2 text-sm leading-7 text-muted-foreground">
+                                        {stage.nextActions.map((action) => (
+                                            <li key={action}>• {action}</li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <p className="mt-2 text-sm text-muted-foreground">
+                                        مورد بحرانی ثبت نشده است؛ این مرحله برای دمو قابل عبور است.
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="mt-4 flex flex-wrap gap-2">
+                                {stage.links.map((link) => (
+                                    <Link
+                                        key={link.href}
+                                        href={link.href}
+                                        className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium"
+                                    >
+                                        {link.label}
+                                        <ArrowLeft className="size-4" />
+                                    </Link>
+                                ))}
                             </div>
                         </article>
                     ))}
@@ -148,6 +256,23 @@ export default function DemoCycleIndex({ summary, stages }: Props) {
                         اکسپلوریا از حالت «پلتفرم جذاب» به «پایلوت قابل فروش» می رسد. بعد از آن باید
                         بسته قیمت گذاری، قرارداد کوتاه و گزارش ROI را برای مذاکره آماده کنیم.
                     </p>
+                </section>
+
+                <section className="grid gap-3 md:grid-cols-3">
+                    {commercialPackages.map((item) => (
+                        <article
+                            key={item.title}
+                            className="rounded-lg border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border"
+                        >
+                            <h2 className="font-semibold">{item.title}</h2>
+                            <p className="mt-2 text-sm text-muted-foreground">
+                                خریدار هدف: {item.buyer}
+                            </p>
+                            <p className="mt-3 text-sm leading-7 text-muted-foreground">
+                                {item.deliverable}
+                            </p>
+                        </article>
+                    ))}
                 </section>
             </main>
         </>
