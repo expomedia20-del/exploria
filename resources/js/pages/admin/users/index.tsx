@@ -109,6 +109,14 @@ function statusClass(user: ManagedUser) {
         return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200';
     }
 
+    if (user.role === 'visitor' && user.publicStatus === 'participant') {
+        return 'bg-cyan-100 text-cyan-800 dark:bg-cyan-950 dark:text-cyan-200';
+    }
+
+    if (user.role === 'visitor' && user.publicStatus === 'registered') {
+        return 'bg-slate-100 text-slate-700 dark:bg-slate-900 dark:text-slate-200';
+    }
+
     if (user.counts.visits > 0) {
         return 'bg-cyan-100 text-cyan-800 dark:bg-cyan-950 dark:text-cyan-200';
     }
@@ -237,11 +245,6 @@ export default function AdminUsersIndex({
                                         <span className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
                                             {user.kindLabel}
                                         </span>
-                                        {user.role === 'visitor' && (
-                                            <span className="rounded-full bg-cyan-100 px-2.5 py-1 text-xs text-cyan-800 dark:bg-cyan-950 dark:text-cyan-200">
-                                                {user.publicStatusLabel}
-                                            </span>
-                                        )}
                                         {user.isStressDemo && (
                                             <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs text-amber-800 dark:bg-amber-950 dark:text-amber-200">
                                                 اکانت دموی فشار
@@ -284,8 +287,9 @@ export default function AdminUsersIndex({
                                     </div>
                                     {user.scopes.length === 0 ? (
                                         <p className="mt-3 text-sm text-muted-foreground">
-                                            هنوز دسترسی عملیاتی برای این کاربر
-                                            ثبت نشده است.
+                                            {user.role === 'visitor'
+                                                ? 'کاربر عمومی نیازی به دسترسی عملیاتی ندارد؛ مشارکت او از پنل کاربر و انتخاب کمپین فعال می‌شود.'
+                                                : 'هنوز دسترسی عملیاتی برای این کاربر ثبت نشده است.'}
                                         </p>
                                     ) : (
                                         <div className="mt-3 space-y-2">
@@ -338,6 +342,11 @@ export default function AdminUsersIndex({
                                                     ))}
                                                 </select>
                                                 <InputError message={errors.role} />
+                                                {user.role === 'visitor' && (
+                                                    <p className="text-xs leading-6 text-muted-foreground">
+                                                        تغییر نقش پایه برای کاربر عمومی فقط برای اصلاح اکانت است؛ شروع مشارکت از پنل کاربر انجام می‌شود.
+                                                    </p>
+                                                )}
                                                 <Button
                                                     type="submit"
                                                     disabled={processing}
@@ -379,14 +388,20 @@ export default function AdminUsersIndex({
                                             <div className="space-y-2">
                                                 <Button
                                                     type="submit"
-                                                    variant="destructive"
+                                                    variant={
+                                                        user.canDelete
+                                                            ? 'destructive'
+                                                            : 'outline'
+                                                    }
                                                     disabled={
                                                         processing || !user.canDelete
                                                     }
                                                     className="w-full gap-2"
                                                 >
                                                     <Trash2 className="size-4" />
-                                                    حذف ایمن
+                                                    {user.canDelete
+                                                        ? 'حذف ایمن'
+                                                        : 'حذف بسته است'}
                                                 </Button>
                                                 {!user.canDelete && (
                                                     <p className="text-xs leading-6 text-muted-foreground">
