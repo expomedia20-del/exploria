@@ -45,6 +45,21 @@ class DashboardTest extends TestCase
                 ->component('admin/support/index'));
     }
 
+    public function test_internal_users_can_open_demo_cycle_page(): void
+    {
+        $this->withoutVite();
+
+        $user = User::factory()->create(['role' => UserRole::Admin]);
+
+        $this->actingAs($user)
+            ->get(route('admin.demo-cycle.page'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('admin/demo-cycle/index')
+                ->where('summary.stagesCount', 5)
+                ->has('stages', 5));
+    }
+
     public function test_visitor_is_redirected_to_participant_dashboard(): void
     {
         $visitor = User::factory()->create(['role' => UserRole::Visitor]);

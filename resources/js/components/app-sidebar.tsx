@@ -81,6 +81,13 @@ const mainNavItems: RoleAwareNavItem[] = [
         roles: ['admin', 'operator', 'viewer'],
     },
     {
+        title: 'چرخه دمو اکوپارک',
+        href: '/admin/demo-cycle',
+        icon: Route,
+        group: '۱. تیم داخلی اکسپلوریا',
+        roles: ['admin', 'operator', 'viewer'],
+    },
+    {
         title: 'گنجینه الگوها',
         href: '/admin/mission-blueprints',
         icon: BookOpen,

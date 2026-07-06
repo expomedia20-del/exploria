@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\CampaignBuilderController;
 use App\Http\Controllers\Admin\CampaignOperationsController;
 use App\Http\Controllers\Admin\CampaignParticipantController;
 use App\Http\Controllers\Admin\CampaignRegistryController;
+use App\Http\Controllers\Admin\DemoCycleController;
 use App\Http\Controllers\Admin\DisplayOperationsController;
 use App\Http\Controllers\Admin\InternalOperationsController;
 use App\Http\Controllers\Admin\MissionRewardBlueprintController;
@@ -144,6 +145,10 @@ Route::get('/admin/qr-codes', [QrRegistryController::class, 'page'])
 Route::get('/admin/internal-operations', [InternalOperationsController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer'])
     ->name('admin.internal-operations.page');
+
+Route::get('/admin/demo-cycle', [DemoCycleController::class, 'page'])
+    ->middleware(['auth', 'role:admin,operator,viewer'])
+    ->name('admin.demo-cycle.page');
 
 Route::get('/admin/support', [SupportCenterController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer,hub_manager,shop_partner,sponsor'])
