@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\CampaignBuilderController;
 use App\Http\Controllers\Admin\CampaignOperationsController;
 use App\Http\Controllers\Admin\CampaignParticipantController;
 use App\Http\Controllers\Admin\CampaignRegistryController;
+use App\Http\Controllers\Admin\CommercializationController;
 use App\Http\Controllers\Admin\DemoCycleController;
 use App\Http\Controllers\Admin\DisplayOperationsController;
 use App\Http\Controllers\Admin\InternalOperationsController;
@@ -149,6 +150,10 @@ Route::get('/admin/internal-operations', [InternalOperationsController::class, '
 Route::get('/admin/demo-cycle', [DemoCycleController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer'])
     ->name('admin.demo-cycle.page');
+
+Route::get('/admin/commercialization', [CommercializationController::class, 'page'])
+    ->middleware(['auth', 'role:admin,operator,viewer'])
+    ->name('admin.commercialization.page');
 
 Route::get('/admin/support', [SupportCenterController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer,hub_manager,shop_partner,sponsor'])

@@ -62,6 +62,26 @@ class DashboardTest extends TestCase
                 ->has('commercialPackages', 3));
     }
 
+    public function test_internal_users_can_open_commercialization_page(): void
+    {
+        $this->withoutVite();
+
+        $user = User::factory()->create(['role' => UserRole::Admin]);
+
+        $this->actingAs($user)
+            ->get(route('admin.commercialization.page'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('admin/commercialization/index')
+                ->where('summary.status', 'آماده تبدیل دمو به بسته فروش')
+                ->has('salesMetrics', 9)
+                ->has('packages', 3)
+                ->has('roiCards', 3)
+                ->has('salesPipeline', 5)
+                ->has('documents', 5)
+                ->has('nextActions', 5));
+    }
+
     public function test_visitor_is_redirected_to_participant_dashboard(): void
     {
         $visitor = User::factory()->create(['role' => UserRole::Visitor]);

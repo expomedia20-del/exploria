@@ -2,6 +2,7 @@ import { Link, usePage } from '@inertiajs/react';
 import {
     BadgeDollarSign,
     BookOpen,
+    BriefcaseBusiness,
     Building2,
     BotMessageSquare,
     ClipboardCheck,
@@ -84,6 +85,13 @@ const mainNavItems: RoleAwareNavItem[] = [
         title: 'چرخه دمو اکوپارک',
         href: '/admin/demo-cycle',
         icon: Route,
+        group: '۱. تیم داخلی اکسپلوریا',
+        roles: ['admin', 'operator', 'viewer'],
+    },
+    {
+        title: 'تجاری‌سازی و فروش',
+        href: '/admin/commercialization',
+        icon: BriefcaseBusiness,
         group: '۱. تیم داخلی اکسپلوریا',
         roles: ['admin', 'operator', 'viewer'],
     },
