@@ -265,7 +265,7 @@ export default function Welcome() {
                     </div>
                 </section>
 
-                <section className="mx-auto max-w-7xl px-5 py-10 sm:px-8 lg:px-10">
+                <section className="mx-auto max-w-7xl px-5 py-8 sm:px-8 lg:px-10">
                     <div className="grid gap-4 md:grid-cols-3">
                         {primaryRoutes.map((route) => (
                             <Link key={route.title} href={route.href} className={`rounded-lg border p-5 transition hover:-translate-y-0.5 hover:shadow-md ${route.tone}`}>
@@ -278,16 +278,18 @@ export default function Welcome() {
                 </section>
 
                 <section className="bg-white">
-                    <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:px-10">
-                        <div className="max-w-3xl">
-                            <p className="text-sm font-medium text-emerald-700">معماری محصول</p>
-                            <h2 className="mt-2 text-3xl font-semibold">یک پلتفرم، چند نقش، یک چرخه درآمدی</h2>
-                            <p className="mt-3 text-sm leading-7 text-zinc-600">
+                    <div className="mx-auto max-w-7xl px-5 py-10 sm:px-8 lg:px-10">
+                        <div className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
+                            <div>
+                                <p className="text-sm font-medium text-emerald-700">معماری محصول</p>
+                                <h2 className="mt-2 text-3xl font-semibold">یک پلتفرم، چند نقش، یک چرخه درآمدی</h2>
+                            </div>
+                            <p className="text-sm leading-7 text-zinc-600">
                                 اکسپلوریا برای هر نقش، سطح دسترسی و خروجی خودش را جدا می‌کند؛ مدیر مکان فقط نمای کل و ریسک‌ها را می‌بیند، رواق هماهنگی محدوده را مدیریت می‌کند، فروشگاه پیشنهاد و مصرف کد را می‌بیند، و اسپانسر گزارش تعامل برند را دریافت می‌کند.
                             </p>
                         </div>
 
-                        <div className="mt-7 grid gap-4 lg:grid-cols-4">
+                        <div className="mt-6 grid gap-4 lg:grid-cols-4">
                             {audiences.map((item) => (
                                 <article key={item.title} className="rounded-lg border border-zinc-200 bg-stone-50 p-5">
                                     <item.icon className="size-6 text-emerald-700" />
@@ -306,8 +308,8 @@ export default function Welcome() {
                     </div>
                 </section>
 
-                <section className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:px-10">
-                    <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
+                <section className="mx-auto max-w-7xl px-5 py-10 sm:px-8 lg:px-10">
+                    <div className="grid gap-7 lg:grid-cols-[0.82fr_1.18fr] lg:items-center">
                         <div>
                             <p className="text-sm font-medium text-cyan-700">قابلیت‌ها</p>
                             <h2 className="mt-2 text-3xl font-semibold">از دمو تا اجرای واقعی</h2>
@@ -328,8 +330,8 @@ export default function Welcome() {
                 </section>
 
                 <section className="bg-zinc-950 text-white">
-                    <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:px-10">
-                        <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
+                    <div className="mx-auto max-w-7xl px-5 py-10 sm:px-8 lg:px-10">
+                        <div className="grid gap-7 lg:grid-cols-[0.74fr_1.26fr] lg:items-center">
                             <div>
                                 <p className="text-sm font-medium text-amber-300">مدل درآمدی</p>
                                 <h2 className="mt-2 text-3xl font-semibold">سه پیشنهاد ساده برای شروع فروش</h2>
@@ -339,11 +341,11 @@ export default function Welcome() {
                             </div>
                             <div className="grid gap-3 md:grid-cols-3">
                                 {revenuePacks.map((pack) => (
-                                    <article key={pack.title} className="rounded-lg border border-white/10 bg-white/10 p-4">
+                                    <article key={pack.title} className="flex min-h-44 flex-col rounded-lg border border-white/10 bg-white/10 p-4">
                                         <TicketCheck className="size-5 text-amber-300" />
                                         <h3 className="mt-4 font-semibold">{pack.title}</h3>
-                                        <p className="mt-2 text-sm text-zinc-300">{pack.buyer}</p>
-                                        <p className="mt-4 rounded-md bg-amber-300 px-3 py-2 text-sm font-semibold text-zinc-950">
+                                        <p className="mt-2 text-sm leading-6 text-zinc-300">{pack.buyer}</p>
+                                        <p className="mt-auto rounded-md bg-amber-300 px-3 py-2 text-sm font-semibold text-zinc-950">
                                             {pack.price}
                                         </p>
                                     </article>
@@ -354,7 +356,7 @@ export default function Welcome() {
                 </section>
 
                 <section className="bg-white">
-                    <div className="mx-auto grid max-w-7xl gap-5 px-5 py-10 sm:px-8 lg:grid-cols-[1fr_auto] lg:items-center lg:px-10">
+                    <div className="mx-auto grid max-w-7xl gap-5 px-5 py-9 sm:px-8 lg:grid-cols-[1fr_auto] lg:items-center lg:px-10">
                         <div>
                             <p className="text-sm font-medium text-emerald-700">قدم بعدی</p>
                             <h2 className="mt-2 text-3xl font-semibold">اکسپلوریا آماده نمایش، پایلوت و مذاکره است.</h2>
