@@ -5,7 +5,6 @@ import {
     BarChart3,
     Building2,
     CheckCircle2,
-    ClipboardCheck,
     Gift,
     Handshake,
     LayoutDashboard,
@@ -115,59 +114,69 @@ const revenuePacks = [
 
 function HeroScene() {
     return (
-        <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-            <div className="absolute inset-0 bg-zinc-950" />
-            <div className="absolute left-0 top-12 hidden w-[52rem] max-w-[58vw] rounded-r-lg border border-white/10 bg-white/10 p-5 shadow-2xl backdrop-blur-sm lg:block">
-                <div className="grid gap-3">
-                    <div className="flex items-center justify-between gap-3">
-                        <span className="rounded-full bg-emerald-400 px-3 py-1 text-xs font-semibold text-zinc-950">
-                            EcoPark pilot ready
-                        </span>
-                        <span className="font-mono text-xs text-zinc-300" dir="ltr">
+        <div className="rounded-lg border border-white/12 bg-white/[0.06] p-3 shadow-2xl shadow-black/30 backdrop-blur-sm">
+            <div className="rounded-md border border-white/10 bg-zinc-900 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
+                    <div>
+                        <p className="text-xs text-zinc-400">نمونه دمو اکوپارک</p>
+                        <p className="mt-1 font-mono text-xs text-zinc-200" dir="ltr">
                             {demoQrCode}
-                        </span>
+                        </p>
                     </div>
-                    <div className="grid grid-cols-[1.1fr_0.9fr] gap-3">
-                        <div className="rounded-md bg-white p-4 text-zinc-950">
-                            <div className="flex items-center gap-2">
-                                <MapPinned className="size-5 text-emerald-700" />
-                                <strong>مسیر کمپین</strong>
-                            </div>
-                            <div className="mt-4 grid gap-2">
-                                {['QR ورودی', 'ماموریت خانوادگی', 'گنج اسپانسری', 'مصرف پاداش'].map((item) => (
-                                    <div key={item} className="flex items-center justify-between rounded-md bg-zinc-100 p-2 text-sm">
-                                        <span>{item}</span>
-                                        <CheckCircle2 className="size-4 text-emerald-700" />
-                                    </div>
-                                ))}
-                            </div>
+                    <span className="rounded-full bg-emerald-400 px-3 py-1 text-xs font-semibold text-zinc-950">
+                        آماده اجرا
+                    </span>
+                </div>
+
+                <div className="mt-4 grid gap-3 md:grid-cols-[1fr_0.82fr]">
+                    <div className="rounded-md bg-white p-4 text-zinc-950">
+                        <div className="flex items-center justify-between gap-2">
+                            <strong>مسیر کمپین</strong>
+                            <MapPinned className="size-5 text-emerald-700" />
                         </div>
-                        <div className="rounded-md bg-zinc-900 p-4 text-white">
-                            <div className="flex items-center gap-2">
-                                <BarChart3 className="size-5 text-amber-300" />
-                                <strong>گزارش فروش</strong>
-                            </div>
-                            <div className="mt-5 flex h-28 items-end gap-3">
-                                {[64, 92, 48, 76, 58].map((height, index) => (
-                                    <span
-                                        key={index}
-                                        className="flex-1 rounded-t-md"
-                                        style={{
-                                            height: `${height}%`,
-                                            backgroundColor: ['#10b981', '#06b6d4', '#f59e0b', '#f43f5e', '#8b5cf6'][index],
-                                        }}
-                                    />
-                                ))}
-                            </div>
+                        <div className="mt-4 grid gap-2">
+                            {['QR ورودی', 'ماموریت خانوادگی', 'گنج اسپانسری', 'مصرف پاداش'].map((item) => (
+                                <div key={item} className="flex items-center justify-between rounded-md bg-zinc-100 p-2 text-sm">
+                                    <span>{item}</span>
+                                    <CheckCircle2 className="size-4 text-emerald-700" />
+                                </div>
+                            ))}
                         </div>
                     </div>
-                    <div className="grid grid-cols-3 gap-3 text-sm text-white">
-                        {['مدیر مکان', 'واحد عضو', 'اسپانسر'].map((item) => (
-                            <div key={item} className="rounded-md border border-white/10 bg-white/10 p-3">
-                                {item}
-                            </div>
-                        ))}
+
+                    <div className="rounded-md border border-white/10 bg-zinc-950 p-4">
+                        <div className="flex items-center justify-between gap-2">
+                            <strong>گزارش فروش</strong>
+                            <BarChart3 className="size-5 text-amber-300" />
+                        </div>
+                        <div className="mt-5 flex h-28 items-end gap-3">
+                            {[64, 92, 48, 76, 58].map((height, index) => (
+                                <span
+                                    key={index}
+                                    className="flex-1 rounded-t-md"
+                                    style={{
+                                        height: `${height}%`,
+                                        backgroundColor: ['#10b981', '#06b6d4', '#f59e0b', '#f43f5e', '#8b5cf6'][index],
+                                    }}
+                                />
+                            ))}
+                        </div>
+                        <p className="mt-4 text-xs leading-6 text-zinc-400">تعامل، مصرف کد، مراجعه و خروجی قابل ارائه به اسپانسر.</p>
                     </div>
+                </div>
+
+                <div className="mt-3 grid grid-cols-2 gap-3 text-sm text-white sm:grid-cols-4">
+                    {[
+                        ['مدیر مکان', 'نمای کل و ریسک'],
+                        ['رواق / واحد', 'پیشنهاد و مصرف'],
+                        ['اسپانسر', 'جایزه و ROI'],
+                        ['بازدیدکننده', 'مسیر و پاداش'],
+                    ].map(([title, body]) => (
+                        <div key={title} className="rounded-md border border-white/10 bg-white/10 p-3">
+                            <p className="font-semibold">{title}</p>
+                            <p className="mt-1 text-xs text-zinc-400">{body}</p>
+                        </div>
+                    ))}
                 </div>
             </div>
         </div>
@@ -180,9 +189,8 @@ export default function Welcome() {
             <Head title="اکسپلوریا | پلتفرم تجربه، کمپین و درآمد مکان" />
 
             <main dir="rtl" className="min-h-screen bg-stone-50 text-zinc-950">
-                <section className="relative min-h-[92vh] overflow-hidden text-white">
-                    <HeroScene />
-                    <div className="relative z-10 mx-auto flex min-h-[92vh] max-w-7xl flex-col px-5 py-5 sm:px-8 lg:px-10">
+                <section className="bg-zinc-950 text-white">
+                    <div className="mx-auto flex min-h-[88vh] max-w-7xl flex-col px-5 py-5 sm:px-8 lg:px-10">
                         <header className="flex flex-wrap items-center justify-between gap-3">
                             <Link href="/" className="flex items-center gap-3">
                                 <span className="inline-flex size-10 items-center justify-center rounded-md bg-emerald-500 text-zinc-950">
@@ -204,21 +212,33 @@ export default function Welcome() {
                             </nav>
                         </header>
 
-                        <div className="flex flex-1 items-center py-12">
-                            <div className="max-w-3xl">
+                        <div className="grid flex-1 gap-10 py-12 lg:grid-cols-[0.92fr_1.08fr] lg:items-center">
+                            <div className="order-2 lg:order-1">
+                                <HeroScene />
+                            </div>
+
+                            <div className="order-1 lg:order-2">
                                 <p className="inline-flex rounded-full border border-emerald-300/40 bg-emerald-300/10 px-4 py-2 text-sm text-emerald-200">
                                     آماده برای دمو، پایلوت و مذاکره تجاری
                                 </p>
-                                <h1 className="mt-6 text-4xl font-semibold leading-tight sm:text-6xl">
-                                    اکسپلوریا، مکان را به تجربه قابل فروش تبدیل می‌کند.
+                                <h1 className="mt-6 max-w-3xl text-4xl font-semibold leading-tight sm:text-6xl">
+                                    اکسپلوریا مکان را به تجربه، فروش و گزارش تبدیل می‌کند.
                                 </h1>
                                 <p className="mt-6 max-w-2xl text-base leading-8 text-zinc-300">
                                     از اسکن QR و ورود موبایلی تا ماموریت، گنج، پاداش، مصرف کد، تبلیغ اسپانسر و گزارش ROI؛
                                     یک چرخه اجرایی برای مکان‌های گردشگری، فرهنگی، تجاری و تفریحی.
                                 </p>
+                                <div className="mt-7 grid gap-2 sm:grid-cols-2">
+                                    {['بازدیدکننده مسیر و پاداش می‌گیرد', 'واحد عضو پیشنهاد و مصرف را می‌بیند', 'اسپانسر جایزه و ROI دریافت می‌کند', 'مدیر مکان نمای کل اجرا را دارد'].map((item) => (
+                                        <div key={item} className="flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-zinc-200">
+                                            <CheckCircle2 className="size-4 text-emerald-300" />
+                                            <span>{item}</span>
+                                        </div>
+                                    ))}
+                                </div>
                                 <div className="mt-8 flex flex-wrap gap-3">
                                     <Link href={`/scan/${demoQrCode}`} className="inline-flex h-12 items-center gap-2 rounded-md bg-emerald-400 px-5 text-sm font-semibold text-zinc-950 hover:bg-emerald-300">
-                                        تجربه بازدیدکننده
+                                        شروع دموی اکوپارک
                                         <QrCode className="size-4" />
                                     </Link>
                                     <Link href="/admin/commercialization" className="inline-flex h-12 items-center gap-2 rounded-md bg-white px-5 text-sm font-semibold text-zinc-950 hover:bg-zinc-100">
