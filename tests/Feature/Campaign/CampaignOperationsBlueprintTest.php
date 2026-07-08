@@ -87,10 +87,12 @@ class CampaignOperationsBlueprintTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('admin/campaign-operations/index')
                 ->where('stats.campaigns', 1)
-                ->where('stats.participants', 1)
+                ->where('stats.participants', 2)
                 ->where('stats.internalSponsors', 0)
                 ->where('campaigns.0.participantsByHub.0.hub.code', 'ravaq-commercial-hub')
-                ->where('campaigns.0.journey.commercial.items.0.partner.name', 'فروشگاه X'));
+                ->where('campaigns.0.participantsByHub.1.hub.code', 'foodcourt-family-hub')
+                ->where('campaigns.0.journey.commercial.items.0.partner.name', 'فروشگاه X')
+                ->where('campaigns.0.journey.commercial.items.1.partner.name', 'کافه اکو'));
     }
 
     public function test_guest_cannot_read_campaign_operations(): void

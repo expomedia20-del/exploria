@@ -36,7 +36,7 @@ class VenueRegistryTest extends TestCase
             ->assertOk()
             ->assertJsonCount(3, 'data')
             ->assertJsonPath('data.0.code', 'ecopark-abbasabad')
-            ->assertJsonPath('data.0.zonesCount', 1)
+            ->assertJsonPath('data.0.zonesCount', 2)
             ->assertJsonPath('data.0.hubsCount', 4)
             ->assertJsonPath('data.0.touchpointsCount', 1)
             ->assertJsonPath('data.0.partnerAccountsCount', 3)
@@ -186,8 +186,8 @@ class VenueRegistryTest extends TestCase
                 ->component('admin/venues/index')
                 ->has('venues', 1)
                 ->where('venues.0.code', 'ecopark-abbasabad')
-                ->where('venues.0.hubsCount', 1)
-                ->has('venues.0.zones.0.hubs', 1));
+                ->where('venues.0.hubsCount', 2)
+                ->has('venues.0.zones.0.hubs', 2));
     }
 
     /** @param array<int, array<int, string>> $rows */

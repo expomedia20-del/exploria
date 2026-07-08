@@ -129,7 +129,7 @@ class MissionRewardFoundationTest extends TestCase
                 ->component('admin/missions/index')
                 ->where('stats.missions', 1)
                 ->has('missions', 1)
-                ->has('rewards', 0)
+                ->has('rewards', 1)
                 ->has('treasures', 0));
     }
 }

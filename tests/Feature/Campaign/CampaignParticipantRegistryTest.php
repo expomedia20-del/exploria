@@ -53,11 +53,13 @@ class CampaignParticipantRegistryTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('admin/campaign-participants/index')
-                ->where('stats.participants', 1)
-                ->where('stats.hubs', 1)
-                ->has('participants', 1)
-                ->where('participants.0.partner.name', 'فروشگاه X')
-                ->where('participants.0.hub.code', 'ravaq-commercial-hub'));
+                ->where('stats.participants', 2)
+                ->where('stats.hubs', 2)
+                ->has('participants', 2)
+                ->where('participants.0.partner.name', 'کافه اکو')
+                ->where('participants.0.hub.code', 'foodcourt-family-hub')
+                ->where('participants.1.partner.name', 'فروشگاه X')
+                ->where('participants.1.hub.code', 'ravaq-commercial-hub'));
     }
 
     public function test_registering_same_partner_for_campaign_updates_existing_participant(): void

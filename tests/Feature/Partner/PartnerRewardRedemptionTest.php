@@ -486,7 +486,7 @@ class PartnerRewardRedemptionTest extends TestCase
 
     public function test_hub_manager_cannot_review_offer_outside_managed_hub(): void
     {
-        $offer = $this->submitPartnerOffer();
+        $offer = $this->submitPartnerOffer('family.sponsor@example.test', 'Science hub sponsor offer');
         $manager = User::query()->where('email', 'ravaq.manager@example.test')->firstOrFail();
 
         $this->actingAs($manager)

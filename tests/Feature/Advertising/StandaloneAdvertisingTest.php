@@ -220,7 +220,7 @@ class StandaloneAdvertisingTest extends TestCase
 
     public function test_hub_manager_cannot_review_foreign_ad_request(): void
     {
-        $adRequest = $this->submitAdRequest();
+        $adRequest = $this->submitAdRequest('family.sponsor@example.test', 'Science hub sponsor ad request');
         $manager = User::query()->where('email', 'ravaq.manager@example.test')->firstOrFail();
 
         $this->actingAs($manager)

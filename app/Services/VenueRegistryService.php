@@ -90,7 +90,7 @@ class VenueRegistryService
             ->orderBy('created_at')
             ->get()
             ->toBase()
-            ->map(fn (Venue $venue): array => $this->serializeVenue($venue));
+            ->map(fn (Venue $venue): array => $this->serializeVenue($venue, $isGlobal));
     }
 
     /** @param array<string, mixed> $data */
@@ -118,7 +118,7 @@ class VenueRegistryService
     }
 
     /** @return array<string, mixed> */
-    private function serializeVenue(Venue $venue): array
+    private function serializeVenue(Venue $venue, bool $isGlobal = true): array
     {
         $zones = $venue->zones->map(fn (Zone $zone): array => [
             'id' => $zone->id,
@@ -138,7 +138,9 @@ class VenueRegistryService
                     ->filter()
                     ->values(),
             ])->values(),
-        ])->values();
+        ])
+            ->when(! $isGlobal, fn (Collection $zones): Collection => $zones->filter(fn (array $zone): bool => count($zone['hubs']) > 0))
+            ->values();
 
         $hubsCount = $zones->sum(fn (array $zone): int => count($zone['hubs']));
         $touchpointsCount = $zones->sum(
