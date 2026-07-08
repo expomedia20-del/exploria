@@ -6,17 +6,17 @@ $port = 8004
 $url = "http://$hostName`:$port"
 $hotFile = Join-Path $projectRoot 'public\hot'
 $manifestFile = Join-Path $projectRoot 'public\build\manifest.json'
+$externalPhp = 'E:\exploria-toolchain-local\php\php.exe'
 $localPhp = Join-Path $projectRoot '.codex-runtime\exploria-toolchain-local\php\php.exe'
-$fallbackPhp = 'E:\exploria-toolchain-local\php\php.exe'
 $localNpm = Join-Path $projectRoot '.codex-runtime\node\npm.cmd'
 $fallbackNpm = 'npm.cmd'
 
-if (Test-Path $localPhp) {
+if (Test-Path $externalPhp) {
+    $php = $externalPhp
+} elseif (Test-Path $localPhp) {
     $php = $localPhp
-} elseif (Test-Path $fallbackPhp) {
-    $php = $fallbackPhp
 } else {
-    throw 'PHP executable was not found. Expected .codex-runtime\exploria-toolchain-local\php\php.exe.'
+    throw 'PHP executable was not found. Expected E:\exploria-toolchain-local\php\php.exe or .codex-runtime\exploria-toolchain-local\php\php.exe.'
 }
 
 if (Test-Path $localNpm) {
