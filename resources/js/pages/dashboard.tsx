@@ -96,7 +96,7 @@ const dashboardChartItems: Array<[keyof Stats, string, string]> = [
     ['confirmedRedemptions', 'تحویل‌شده', '#7c3aed'],
 ];
 
-const flowChartItems: Array<[keyof Stats, string, string]> = [
+const flowChartItems: Array<[keyof Stats, string]> = [
     ['visits', 'بازدید'],
     ['missionCompletions', 'ماموریت'],
     ['issuedRewards', 'پاداش'],
