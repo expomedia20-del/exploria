@@ -128,7 +128,39 @@ class DashboardTest extends TestCase
                 ->has('pricingTiers', 3)
                 ->has('salesAssets', 5)
                 ->has('leadTargets', 4)
+                ->where('finalDemoReport.isExecuted', false)
+                ->has('finalDemoReport.audiences', 3)
                 ->has('nextActions', 5));
+    }
+
+    public function test_commercialization_page_surfaces_final_demo_report_after_full_demo_run(): void
+    {
+        $this->withoutVite();
+        $this->seed(PilotLocationSeeder::class);
+
+        $user = User::factory()->create(['role' => UserRole::Admin]);
+
+        $this->actingAs($user)
+            ->post(route('admin.demo-cycle.run-stress-demo'))
+            ->assertRedirect();
+
+        $this->actingAs($user)
+            ->get(route('admin.commercialization.page'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('admin/commercialization/index')
+                ->where('finalDemoReport.isExecuted', true)
+                ->where('finalDemoReport.campaignCode', 'ecopark-online-treasure-map-game-campaign')
+                ->where('finalDemoReport.summary.0.label', 'بازدید ثبت‌شده')
+                ->where('finalDemoReport.summary.0.value', 1)
+                ->where('finalDemoReport.summary.3.label', 'مصرف تاییدشده')
+                ->where('finalDemoReport.summary.3.value', 1)
+                ->where('finalDemoReport.roi.roiPercent', 71)
+                ->where('finalDemoReport.roi.redemptionRate', 100)
+                ->has('finalDemoReport.audiences', 3)
+                ->where('finalDemoReport.audiences.0.title', 'خلاصه مدیر مکان')
+                ->where('finalDemoReport.audiences.1.title', 'خلاصه اسپانسر')
+                ->where('finalDemoReport.audiences.2.title', 'خلاصه فروشگاه'));
     }
 
     public function test_visitor_is_redirected_to_participant_dashboard(): void

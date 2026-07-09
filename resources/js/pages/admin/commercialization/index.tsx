@@ -61,6 +61,30 @@ type LeadTarget = {
     firstOffer: string;
 };
 
+type FinalDemoReport = {
+    isExecuted: boolean;
+    title: string;
+    campaignName: string | null;
+    campaignCode: string | null;
+    summary: Metric[];
+    roi: {
+        investment: number;
+        estimatedValue: number;
+        roiPercent: number;
+        redemptionRate: number;
+    };
+    audiences: {
+        title: string;
+        audience: string;
+        headline: string;
+        proofPoints: string[];
+        offer: string;
+        nextStep: string;
+    }[];
+    recommendation: string;
+    actionHref: string;
+};
+
 type Props = {
     summary: {
         title: string;
@@ -77,6 +101,7 @@ type Props = {
     pricingTiers: PricingTier[];
     salesAssets: SalesAsset[];
     leadTargets: LeadTarget[];
+    finalDemoReport: FinalDemoReport;
     nextActions: string[];
 };
 
@@ -134,9 +159,13 @@ export default function CommercializationIndex({
     pricingTiers,
     salesAssets,
     leadTargets,
+    finalDemoReport,
     nextActions,
 }: Props) {
-    const maxMetric = Math.max(...salesMetrics.map((metric) => metric.value), 1);
+    const maxMetric = Math.max(
+        ...salesMetrics.map((metric) => metric.value),
+        1,
+    );
 
     return (
         <>
@@ -149,7 +178,9 @@ export default function CommercializationIndex({
                             <p className="text-sm text-emerald-300">
                                 تبدیل دمو به فروش، قرارداد و درآمد
                             </p>
-                            <h1 className="mt-2 text-3xl font-semibold">{summary.title}</h1>
+                            <h1 className="mt-2 text-3xl font-semibold">
+                                {summary.title}
+                            </h1>
                             <p className="mt-3 max-w-4xl text-sm leading-7 text-zinc-300">
                                 {summary.positioning}
                             </p>
@@ -166,7 +197,9 @@ export default function CommercializationIndex({
                             </div>
                             <div className="flex justify-between gap-3">
                                 <span className="text-zinc-300">وضعیت</span>
-                                <strong className="text-amber-200">{summary.status}</strong>
+                                <strong className="text-amber-200">
+                                    {summary.status}
+                                </strong>
                             </div>
                         </div>
                     </div>
@@ -176,19 +209,27 @@ export default function CommercializationIndex({
                     <article className="rounded-lg border border-cyan-200 bg-cyan-50/70 p-4 dark:border-cyan-900/60 dark:bg-cyan-950/20">
                         <div className="flex items-center gap-2">
                             <BarChart3 className="size-5 text-cyan-700 dark:text-cyan-300" />
-                            <h2 className="text-lg font-semibold">نمودار آمادگی درآمدزایی</h2>
+                            <h2 className="text-lg font-semibold">
+                                نمودار آمادگی درآمدزایی
+                            </h2>
                         </div>
                         <div className="mt-4 space-y-3">
                             {salesMetrics.map((metric, index) => (
                                 <div key={metric.label} className="grid gap-2">
                                     <div className="flex items-center justify-between gap-3 text-sm">
                                         <span>{metric.label}</span>
-                                        <strong>{metric.value.toLocaleString('fa-IR')}</strong>
+                                        <strong>
+                                            {metric.value.toLocaleString(
+                                                'fa-IR',
+                                            )}
+                                        </strong>
                                     </div>
                                     <div className="h-3 overflow-hidden rounded-full bg-white/80 dark:bg-background/60">
                                         <div
                                             className={`h-full rounded-full ${metricColors[index % metricColors.length]}`}
-                                            style={{ width: `${Math.max(8, (metric.value / maxMetric) * 100)}%` }}
+                                            style={{
+                                                width: `${Math.max(8, (metric.value / maxMetric) * 100)}%`,
+                                            }}
                                         />
                                     </div>
                                 </div>
@@ -199,7 +240,9 @@ export default function CommercializationIndex({
                     <article className="rounded-lg border border-amber-200 bg-amber-50/80 p-4 dark:border-amber-900/60 dark:bg-amber-950/20">
                         <div className="flex items-center gap-2">
                             <Handshake className="size-5 text-amber-700 dark:text-amber-300" />
-                            <h2 className="text-lg font-semibold">قیف تبدیل دمو به قرارداد</h2>
+                            <h2 className="text-lg font-semibold">
+                                قیف تبدیل دمو به قرارداد
+                            </h2>
                         </div>
                         <div className="mt-4 space-y-2">
                             {salesPipeline.map((item, index) => (
@@ -210,14 +253,18 @@ export default function CommercializationIndex({
                                         width: `${100 - index * 8}%`,
                                     }}
                                 >
-                                    <div className={`rounded-md ${funnelThemes[index % funnelThemes.length]} p-3`}>
+                                    <div
+                                        className={`rounded-md ${funnelThemes[index % funnelThemes.length]} p-3`}
+                                    >
                                         <div className="flex items-center justify-between gap-3">
                                             <strong>{item.title}</strong>
                                             <span className="inline-flex size-7 items-center justify-center rounded-full bg-white/20 text-sm">
                                                 {item.step}
                                             </span>
                                         </div>
-                                        <p className="mt-1 text-xs leading-6 text-white/90">{item.output}</p>
+                                        <p className="mt-1 text-xs leading-6 text-white/90">
+                                            {item.output}
+                                        </p>
                                     </div>
                                 </div>
                             ))}
@@ -231,7 +278,9 @@ export default function CommercializationIndex({
                             key={metric.label}
                             className="rounded-lg border border-sidebar-border/70 bg-card p-3 dark:border-sidebar-border"
                         >
-                            <span className={`inline-flex h-1 w-14 rounded-full ${metricColors[index % metricColors.length]}`} />
+                            <span
+                                className={`inline-flex h-1 w-14 rounded-full ${metricColors[index % metricColors.length]}`}
+                            />
                             <p className="mt-3 text-sm text-muted-foreground">
                                 {metric.label}
                             </p>
@@ -242,14 +291,184 @@ export default function CommercializationIndex({
                     ))}
                 </section>
 
+                <section className="rounded-lg border border-zinc-800 bg-zinc-950 p-4 text-white shadow-sm">
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                        <div>
+                            <p className="text-sm text-emerald-300">
+                                خروجی قابل ارائه جلسه فروش
+                            </p>
+                            <h2 className="mt-1 text-2xl font-semibold">
+                                {finalDemoReport.title}
+                            </h2>
+                            <p className="mt-2 max-w-4xl text-sm leading-7 text-zinc-300">
+                                {finalDemoReport.recommendation}
+                            </p>
+                        </div>
+                        <Link
+                            href={finalDemoReport.actionHref}
+                            className="inline-flex items-center gap-2 rounded-md bg-white px-3 py-2 text-sm font-medium text-zinc-950"
+                        >
+                            چرخه دمو
+                            <ArrowLeft className="size-4" />
+                        </Link>
+                    </div>
+
+                    <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_0.8fr]">
+                        <div className="rounded-lg border border-white/15 bg-white/10 p-3">
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                <div>
+                                    <p className="text-sm text-zinc-300">
+                                        کمپین گزارش
+                                    </p>
+                                    <h3 className="mt-1 font-semibold">
+                                        {finalDemoReport.campaignName ??
+                                            'منتظر اجرای دمو'}
+                                    </h3>
+                                    {finalDemoReport.campaignCode ? (
+                                        <p
+                                            className="mt-1 text-xs text-zinc-400"
+                                            dir="ltr"
+                                        >
+                                            {finalDemoReport.campaignCode}
+                                        </p>
+                                    ) : null}
+                                </div>
+                                <span
+                                    className={`rounded-full px-3 py-1 text-xs font-medium ${
+                                        finalDemoReport.isExecuted
+                                            ? 'bg-emerald-300 text-emerald-950'
+                                            : 'bg-amber-300 text-amber-950'
+                                    }`}
+                                >
+                                    {finalDemoReport.isExecuted
+                                        ? 'آماده ارائه'
+                                        : 'نیازمند اجرا'}
+                                </span>
+                            </div>
+
+                            <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                                {finalDemoReport.summary.map((metric) => (
+                                    <div
+                                        key={metric.label}
+                                        className="rounded-md bg-white/10 p-3"
+                                    >
+                                        <p className="text-xs text-zinc-300">
+                                            {metric.label}
+                                        </p>
+                                        <p className="mt-1 text-xl font-semibold">
+                                            {metric.value.toLocaleString(
+                                                'fa-IR',
+                                            )}
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="rounded-lg border border-white/15 bg-white/10 p-3">
+                            <div className="flex items-center gap-2">
+                                <LineChart className="size-5 text-emerald-300" />
+                                <h3 className="font-semibold">
+                                    عددهای مذاکره ROI
+                                </h3>
+                            </div>
+                            <div className="mt-4 grid gap-3 text-sm">
+                                <div className="flex justify-between gap-3">
+                                    <span className="text-zinc-300">
+                                        سرمایه‌گذاری
+                                    </span>
+                                    <strong>
+                                        {finalDemoReport.roi.investment.toLocaleString(
+                                            'fa-IR',
+                                        )}{' '}
+                                        ریال
+                                    </strong>
+                                </div>
+                                <div className="flex justify-between gap-3">
+                                    <span className="text-zinc-300">
+                                        ارزش تخمینی
+                                    </span>
+                                    <strong>
+                                        {finalDemoReport.roi.estimatedValue.toLocaleString(
+                                            'fa-IR',
+                                        )}{' '}
+                                        ریال
+                                    </strong>
+                                </div>
+                                <div className="flex justify-between gap-3">
+                                    <span className="text-zinc-300">ROI</span>
+                                    <strong className="text-emerald-300">
+                                        {finalDemoReport.roi.roiPercent.toLocaleString(
+                                            'fa-IR',
+                                        )}
+                                        ٪
+                                    </strong>
+                                </div>
+                                <div className="flex justify-between gap-3">
+                                    <span className="text-zinc-300">
+                                        نرخ مصرف پاداش
+                                    </span>
+                                    <strong className="text-amber-200">
+                                        {finalDemoReport.roi.redemptionRate.toLocaleString(
+                                            'fa-IR',
+                                        )}
+                                        ٪
+                                    </strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="mt-4 grid gap-3 xl:grid-cols-3">
+                        {finalDemoReport.audiences.map((audience) => (
+                            <article
+                                key={audience.title}
+                                className="rounded-lg border border-white/15 bg-white/10 p-4"
+                            >
+                                <p className="text-xs text-emerald-300">
+                                    {audience.audience}
+                                </p>
+                                <h3 className="mt-1 font-semibold">
+                                    {audience.title}
+                                </h3>
+                                <p className="mt-3 text-sm leading-7 text-zinc-300">
+                                    {audience.headline}
+                                </p>
+                                <ul className="mt-3 space-y-2 text-sm leading-7 text-zinc-300">
+                                    {audience.proofPoints.map((point) => (
+                                        <li key={point} className="flex gap-2">
+                                            <CheckCircle2 className="mt-1 size-4 shrink-0 text-emerald-300" />
+                                            <span>{point}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                                <div className="mt-4 rounded-md bg-white/10 p-3 text-sm leading-7">
+                                    <strong className="text-white">
+                                        پیشنهاد فروش:{' '}
+                                    </strong>
+                                    <span className="text-zinc-300">
+                                        {audience.offer}
+                                    </span>
+                                </div>
+                                <p className="mt-3 text-sm leading-7 text-zinc-300">
+                                    قدم بعدی: {audience.nextStep}
+                                </p>
+                            </article>
+                        ))}
+                    </div>
+                </section>
+
                 <section className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-4 dark:border-emerald-900/60 dark:bg-emerald-950/20">
                     <div className="mb-4 flex items-center gap-2">
                         <BriefcaseBusiness className="size-5 text-emerald-700 dark:text-emerald-300" />
-                        <h2 className="text-lg font-semibold">بسته‌های قابل فروش</h2>
+                        <h2 className="text-lg font-semibold">
+                            بسته‌های قابل فروش
+                        </h2>
                     </div>
                     <div className="grid gap-3 xl:grid-cols-3">
                         {packages.map((item, index) => {
-                            const theme = packageThemes[index % packageThemes.length];
+                            const theme =
+                                packageThemes[index % packageThemes.length];
 
                             return (
                                 <article
@@ -259,7 +478,9 @@ export default function CommercializationIndex({
                                     <div className="flex items-start justify-between gap-3">
                                         <div>
                                             <div className="flex items-center gap-2">
-                                                <span className={`inline-flex size-9 items-center justify-center rounded-md ${theme.icon}`}>
+                                                <span
+                                                    className={`inline-flex size-9 items-center justify-center rounded-md ${theme.icon}`}
+                                                >
                                                     <BriefcaseBusiness className="size-5" />
                                                 </span>
                                                 <h3 className="text-lg font-semibold">
@@ -273,17 +494,24 @@ export default function CommercializationIndex({
                                         <BadgeDollarSign className="size-5 text-emerald-700" />
                                     </div>
 
-                                    <div className={`mt-4 rounded-md p-3 text-sm font-medium leading-7 ${theme.strip}`}>
+                                    <div
+                                        className={`mt-4 rounded-md p-3 text-sm leading-7 font-medium ${theme.strip}`}
+                                    >
                                         {item.priceRange}
                                     </div>
 
                                     <ul className="mt-4 space-y-2 text-sm leading-7 text-muted-foreground">
-                                        {item.deliverables.map((deliverable) => (
-                                            <li key={deliverable} className="flex gap-2">
-                                                <CheckCircle2 className="mt-1 size-4 shrink-0 text-emerald-700" />
-                                                <span>{deliverable}</span>
-                                            </li>
-                                        ))}
+                                        {item.deliverables.map(
+                                            (deliverable) => (
+                                                <li
+                                                    key={deliverable}
+                                                    className="flex gap-2"
+                                                >
+                                                    <CheckCircle2 className="mt-1 size-4 shrink-0 text-emerald-700" />
+                                                    <span>{deliverable}</span>
+                                                </li>
+                                            ),
+                                        )}
                                     </ul>
 
                                     <div className="mt-4 rounded-md border border-border/70 bg-background/80 p-3 text-sm">
@@ -324,14 +552,21 @@ export default function CommercializationIndex({
                 <section className="rounded-lg border border-orange-200 bg-orange-50/70 p-4 dark:border-orange-900/60 dark:bg-orange-950/20">
                     <div className="mb-4 flex items-center gap-2">
                         <BadgeDollarSign className="size-5 text-orange-700 dark:text-orange-300" />
-                        <h2 className="text-lg font-semibold">جدول قیمت قابل مذاکره</h2>
+                        <h2 className="text-lg font-semibold">
+                            جدول قیمت قابل مذاکره
+                        </h2>
                     </div>
                     <div className="grid gap-3 xl:grid-cols-3">
                         {pricingTiers.map((tier, index) => (
-                            <article key={tier.title} className="rounded-lg border border-white/70 bg-background/80 p-4 shadow-sm">
+                            <article
+                                key={tier.title}
+                                className="rounded-lg border border-white/70 bg-background/80 p-4 shadow-sm"
+                            >
                                 <div className="flex items-start justify-between gap-3">
                                     <div>
-                                        <h3 className="text-lg font-semibold">{tier.title}</h3>
+                                        <h3 className="text-lg font-semibold">
+                                            {tier.title}
+                                        </h3>
                                         <p className="mt-2 text-2xl font-semibold text-orange-700 dark:text-orange-300">
                                             {tier.price}
                                         </p>
@@ -360,18 +595,27 @@ export default function CommercializationIndex({
                     <article className="rounded-lg border border-violet-200 bg-violet-50/70 p-4 dark:border-violet-900/60 dark:bg-violet-950/20">
                         <div className="flex items-center gap-2">
                             <FileText className="size-5 text-violet-700 dark:text-violet-300" />
-                            <h2 className="text-lg font-semibold">مدارک آماده مذاکره</h2>
+                            <h2 className="text-lg font-semibold">
+                                مدارک آماده مذاکره
+                            </h2>
                         </div>
                         <div className="mt-4 grid gap-2">
                             {salesAssets.map((asset) => (
-                                <div key={asset.title} className="rounded-md border border-border/70 bg-background/80 p-3">
+                                <div
+                                    key={asset.title}
+                                    className="rounded-md border border-border/70 bg-background/80 p-3"
+                                >
                                     <div className="flex flex-wrap items-center justify-between gap-2">
-                                        <h3 className="font-medium">{asset.title}</h3>
+                                        <h3 className="font-medium">
+                                            {asset.title}
+                                        </h3>
                                         <span className="rounded-full bg-violet-100 px-3 py-1 text-xs text-violet-900 dark:bg-violet-900/40 dark:text-violet-100">
                                             {asset.owner}
                                         </span>
                                     </div>
-                                    <p className="mt-2 text-sm leading-7 text-muted-foreground">{asset.status}</p>
+                                    <p className="mt-2 text-sm leading-7 text-muted-foreground">
+                                        {asset.status}
+                                    </p>
                                 </div>
                             ))}
                         </div>
@@ -380,13 +624,22 @@ export default function CommercializationIndex({
                     <article className="rounded-lg border border-lime-200 bg-lime-50/70 p-4 dark:border-lime-900/60 dark:bg-lime-950/20">
                         <div className="flex items-center gap-2">
                             <Target className="size-5 text-lime-700 dark:text-lime-300" />
-                            <h2 className="text-lg font-semibold">مشتریان هدف جلسه اول</h2>
+                            <h2 className="text-lg font-semibold">
+                                مشتریان هدف جلسه اول
+                            </h2>
                         </div>
                         <div className="mt-4 space-y-3">
                             {leadTargets.map((lead) => (
-                                <div key={lead.segment} className="rounded-md border border-border/70 bg-background/80 p-3">
-                                    <h3 className="font-medium">{lead.segment}</h3>
-                                    <p className="mt-2 text-sm leading-7 text-muted-foreground">{lead.target}</p>
+                                <div
+                                    key={lead.segment}
+                                    className="rounded-md border border-border/70 bg-background/80 p-3"
+                                >
+                                    <h3 className="font-medium">
+                                        {lead.segment}
+                                    </h3>
+                                    <p className="mt-2 text-sm leading-7 text-muted-foreground">
+                                        {lead.target}
+                                    </p>
                                     <div className="mt-2 rounded-md bg-lime-100/80 p-2 text-sm leading-7 text-lime-950 dark:bg-lime-900/40 dark:text-lime-100">
                                         پیشنهاد شروع: {lead.firstOffer}
                                     </div>
@@ -400,7 +653,9 @@ export default function CommercializationIndex({
                     <article className="rounded-lg border border-sky-200 bg-sky-50/70 p-4 dark:border-sky-900/60 dark:bg-sky-950/20">
                         <div className="flex items-center gap-2">
                             <FileText className="size-5 text-sky-700 dark:text-sky-300" />
-                            <h2 className="text-lg font-semibold">مدارک مذاکره</h2>
+                            <h2 className="text-lg font-semibold">
+                                مدارک مذاکره
+                            </h2>
                         </div>
                         <div className="mt-4 space-y-2">
                             {documents.map((item) => (
@@ -408,7 +663,9 @@ export default function CommercializationIndex({
                                     key={item.title}
                                     className="rounded-md border border-border/70 bg-background/80 p-3"
                                 >
-                                    <h3 className="font-medium">{item.title}</h3>
+                                    <h3 className="font-medium">
+                                        {item.title}
+                                    </h3>
                                     <p className="mt-1 text-sm leading-7 text-muted-foreground">
                                         {item.status}
                                     </p>
@@ -420,7 +677,9 @@ export default function CommercializationIndex({
                     <article className="rounded-lg border border-rose-200 bg-rose-50/70 p-4 dark:border-rose-900/60 dark:bg-rose-950/20">
                         <div className="flex items-center gap-2">
                             <Target className="size-5 text-rose-700 dark:text-rose-300" />
-                            <h2 className="text-lg font-semibold">اقدام‌های بعدی</h2>
+                            <h2 className="text-lg font-semibold">
+                                اقدام‌های بعدی
+                            </h2>
                         </div>
                         <ul className="mt-4 space-y-2 text-sm leading-7 text-muted-foreground">
                             {nextActions.map((action) => (

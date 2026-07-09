@@ -6,8 +6,11 @@ use App\Enums\RecordStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Campaign;
 use App\Models\CampaignParticipant;
+use App\Models\CampaignSponsorship;
 use App\Models\DisplayDevice;
 use App\Models\PartnerAccount;
+use App\Models\RewardDefinition;
+use App\Models\RewardInventoryAllocation;
 use App\Models\RewardRedemption;
 use App\Models\SponsorProposal;
 use App\Models\UserMissionProgress;
@@ -19,12 +22,12 @@ use Inertia\Response;
 
 class CommercializationController extends Controller
 {
+    private const STRESS_DEMO_CAMPAIGN_CODE = 'ecopark-online-treasure-map-game-campaign';
+
     public function page(): Response
     {
         $venue = Venue::query()->where('code', 'ecopark-abbasabad')->first();
-        $campaign = Campaign::query()
-            ->where('code', 'ecopark-pilot-1405')
-            ->first();
+        $campaign = $this->commercialCampaign();
 
         return Inertia::render('admin/commercialization/index', [
             'summary' => [
@@ -42,8 +45,19 @@ class CommercializationController extends Controller
             'pricingTiers' => $this->pricingTiers(),
             'salesAssets' => $this->salesAssets(),
             'leadTargets' => $this->leadTargets(),
+            'finalDemoReport' => $this->finalDemoReport($campaign),
             'nextActions' => $this->nextActions(),
         ]);
+    }
+
+    private function commercialCampaign(): ?Campaign
+    {
+        return Campaign::query()
+            ->where('code', self::STRESS_DEMO_CAMPAIGN_CODE)
+            ->first()
+            ?? Campaign::query()
+                ->where('code', 'ecopark-pilot-1405')
+                ->first();
     }
 
     /**
@@ -259,6 +273,205 @@ class CommercializationController extends Controller
                 'segment' => 'اسپانسر بیرونی',
                 'target' => 'برند خانوادگی، غذا، نوشیدنی، بانک، بیمه یا اپلیکیشن شهری',
                 'firstOffer' => 'حضور برنددار در کمپین با گزارش تعامل و claim',
+            ],
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function finalDemoReport(?Campaign $campaign): array
+    {
+        if (! $campaign) {
+            return [
+                'isExecuted' => false,
+                'title' => 'گزارش نهایی دمو هنوز ساخته نشده است',
+                'campaignName' => null,
+                'campaignCode' => null,
+                'summary' => [],
+                'roi' => $this->emptyRoi(),
+                'audiences' => $this->emptyAudienceReports(),
+                'recommendation' => 'ابتدا دموی کامل اکوپارک را از صفحه چرخه دمو اجرا کنید.',
+                'actionHref' => '/admin/demo-cycle',
+            ];
+        }
+
+        $campaignId = $campaign->id;
+        $rewardIds = RewardDefinition::query()
+            ->where('campaign_id', $campaignId)
+            ->pluck('id');
+        $userRewardIds = UserReward::query()
+            ->where('campaign_id', $campaignId)
+            ->pluck('id');
+        $visits = Visit::query()->where('campaign_id', $campaignId)->count();
+        $completedMissions = UserMissionProgress::query()
+            ->whereHas('missionInstance', fn ($query) => $query->where('campaign_id', $campaignId))
+            ->where('status', 'completed')
+            ->count();
+        $issuedRewards = $userRewardIds->count();
+        $confirmedRedemptions = RewardRedemption::query()
+            ->whereIn('user_reward_id', $userRewardIds)
+            ->whereIn('status', ['confirmed', 'redeemed'])
+            ->count();
+        $participants = CampaignParticipant::query()
+            ->where('campaign_id', $campaignId)
+            ->count();
+        $activeInventory = RewardInventoryAllocation::query()
+            ->whereIn('reward_definition_id', $rewardIds)
+            ->where('status', RecordStatus::Active->value)
+            ->count();
+        $investment = $this->campaignInvestment($campaign);
+        $estimatedValue = $this->campaignEstimatedValue($campaign);
+        $roiPercent = $investment > 0 ? (int) round((($estimatedValue - $investment) / $investment) * 100) : 0;
+        $redemptionRate = $visits > 0 ? (int) round(($confirmedRedemptions / $visits) * 100) : 0;
+        $isExecuted = $visits > 0 && $completedMissions > 0 && $confirmedRedemptions > 0;
+
+        return [
+            'isExecuted' => $isExecuted,
+            'title' => $isExecuted ? 'گزارش نهایی قابل ارائه دمو' : 'گزارش نهایی دمو نیازمند اجراست',
+            'campaignName' => $campaign->name,
+            'campaignCode' => $campaign->code,
+            'summary' => [
+                ['label' => 'بازدید ثبت‌شده', 'value' => $visits],
+                ['label' => 'ماموریت تکمیل‌شده', 'value' => $completedMissions],
+                ['label' => 'پاداش صادرشده', 'value' => $issuedRewards],
+                ['label' => 'مصرف تاییدشده', 'value' => $confirmedRedemptions],
+                ['label' => 'واحد/اسپانسر عضو', 'value' => $participants],
+                ['label' => 'سهم موجودی فعال', 'value' => $activeInventory],
+            ],
+            'roi' => [
+                'investment' => $investment,
+                'estimatedValue' => $estimatedValue,
+                'roiPercent' => $roiPercent,
+                'redemptionRate' => $redemptionRate,
+            ],
+            'audiences' => $this->audienceReports($campaign, [
+                'visits' => $visits,
+                'completedMissions' => $completedMissions,
+                'issuedRewards' => $issuedRewards,
+                'confirmedRedemptions' => $confirmedRedemptions,
+                'participants' => $participants,
+                'roiPercent' => $roiPercent,
+                'redemptionRate' => $redemptionRate,
+            ]),
+            'recommendation' => $isExecuted
+                ? 'پیشنهاد بعدی: نسخه استاندارد ۳۰ روزه برای همین مکان با یک اسپانسر و ۵ تا ۱۰ واحد عضو ارائه شود.'
+                : 'برای فعال شدن متن فروش نهایی، دموی کامل را اجرا و مصرف پاداش را ثبت کنید.',
+            'actionHref' => $isExecuted ? '/admin/demo-cycle' : '/admin/demo-cycle',
+        ];
+    }
+
+    private function campaignInvestment(Campaign $campaign): int
+    {
+        return (int) CampaignSponsorship::query()
+            ->where('campaign_id', $campaign->id)
+            ->sum('budget_amount')
+            + (int) SponsorProposal::query()
+                ->where('campaign_id', $campaign->id)
+                ->where('status', 'approved')
+                ->sum('proposed_budget_amount');
+    }
+
+    private function campaignEstimatedValue(Campaign $campaign): int
+    {
+        return (int) CampaignSponsorship::query()
+            ->where('campaign_id', $campaign->id)
+            ->sum('contract_value')
+            + (int) SponsorProposal::query()
+                ->where('campaign_id', $campaign->id)
+                ->where('status', 'approved')
+                ->sum('estimated_value_amount');
+    }
+
+    /** @param array<string, int> $stats */
+    private function audienceReports(Campaign $campaign, array $stats): array
+    {
+        $proposal = SponsorProposal::query()
+            ->where('campaign_id', $campaign->id)
+            ->where('status', 'approved')
+            ->latest('created_at')
+            ->first();
+        $partnerReward = RewardDefinition::query()
+            ->with('partnerAccount:id,name')
+            ->where('campaign_id', $campaign->id)
+            ->whereNotNull('partner_account_id')
+            ->whereHas('partnerAccount', fn ($query) => $query->where('partner_type', '!=', 'sponsor'))
+            ->first();
+
+        return [
+            [
+                'title' => 'خلاصه مدیر مکان',
+                'audience' => 'مدیر اجرایی مکان',
+                'headline' => 'دمو نشان می‌دهد اکسپلوریا می‌تواند بازدید را به مشارکت، مسیر، پاداش و گزارش مدیریتی تبدیل کند.',
+                'proofPoints' => [
+                    $stats['visits'].' ورود/بازدید ثبت‌شده',
+                    $stats['completedMissions'].' ماموریت تکمیل‌شده در مسیر',
+                    $stats['participants'].' واحد یا اسپانسر عضو کمپین',
+                ],
+                'offer' => 'پکیج استاندارد ۳۰ روزه مکان',
+                'nextStep' => 'جلسه تصمیم برای محدوده اجرا، تعداد واحدها و تاریخ شروع پایلوت.',
+            ],
+            [
+                'title' => 'خلاصه اسپانسر',
+                'audience' => 'اسپانسر کمپین',
+                'headline' => 'حضور برند به ماموریت، گنج، جایزه و گزارش ROI وصل شده است.',
+                'proofPoints' => [
+                    'پیشنهاد اسپانسر: '.($proposal?->title ?? 'آماده تعریف'),
+                    'ROI تخمینی '.$stats['roiPercent'].'٪',
+                    'نرخ مصرف پاداش '.$stats['redemptionRate'].'٪',
+                ],
+                'offer' => 'بسته اسپانسر کمپین با جایزه/گنج و گزارش تعامل',
+                'nextStep' => 'انتخاب سطح جایزه، پیام برند و شاخص‌های گزارش تمدید.',
+            ],
+            [
+                'title' => 'خلاصه فروشگاه',
+                'audience' => 'واحد عضو یا فروشگاه',
+                'headline' => 'فروشگاه می‌تواند پیشنهاد بدهد، کد مصرف کند و اثر مراجعه را در پنل ببیند.',
+                'proofPoints' => [
+                    $stats['issuedRewards'].' پاداش صادرشده',
+                    $stats['confirmedRedemptions'].' مصرف تاییدشده',
+                    'نمونه واحد: '.($partnerReward?->partnerAccount?->name ?? 'واحد عضو دمو'),
+                ],
+                'offer' => 'عضویت واحد با پاداش قابل مصرف و گزارش مراجعه',
+                'nextStep' => 'ثبت پیشنهاد واقعی واحد و تعریف سهم موجودی قابل مصرف.',
+            ],
+        ];
+    }
+
+    private function emptyRoi(): array
+    {
+        return [
+            'investment' => 0,
+            'estimatedValue' => 0,
+            'roiPercent' => 0,
+            'redemptionRate' => 0,
+        ];
+    }
+
+    private function emptyAudienceReports(): array
+    {
+        return [
+            [
+                'title' => 'خلاصه مدیر مکان',
+                'audience' => 'مدیر اجرایی مکان',
+                'headline' => 'پس از اجرای دمو، خروجی مدیریتی مکان اینجا آماده می‌شود.',
+                'proofPoints' => [],
+                'offer' => 'پکیج پایلوت مکان',
+                'nextStep' => 'اجرای دموی کامل اکوپارک.',
+            ],
+            [
+                'title' => 'خلاصه اسپانسر',
+                'audience' => 'اسپانسر کمپین',
+                'headline' => 'پس از اجرای دمو، ROI اسپانسر و مصرف پاداش اینجا نمایش داده می‌شود.',
+                'proofPoints' => [],
+                'offer' => 'پکیج اسپانسر کمپین',
+                'nextStep' => 'فعال‌سازی پیشنهاد اسپانسر و پاداش.',
+            ],
+            [
+                'title' => 'خلاصه فروشگاه',
+                'audience' => 'واحد عضو یا فروشگاه',
+                'headline' => 'پس از اجرای دمو، اثر پاداش و مصرف کد فروشگاه اینجا نمایش داده می‌شود.',
+                'proofPoints' => [],
+                'offer' => 'پکیج واحد عضو',
+                'nextStep' => 'ثبت مصرف پاداش توسط فروشگاه.',
             ],
         ];
     }
