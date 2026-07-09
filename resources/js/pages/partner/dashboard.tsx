@@ -227,10 +227,10 @@ function Stat({
     value: number;
 }) {
     return (
-        <div className="rounded-lg border border-sidebar-border/70 px-3 py-2 dark:border-sidebar-border">
-            <div className="flex items-center gap-2 text-muted-foreground">
-                <Icon className="size-4" />
-                <p>{label}</p>
+        <div className="min-w-0 rounded-lg border border-sidebar-border/70 bg-background px-3 py-2 dark:border-sidebar-border">
+            <div className="flex min-w-0 items-center gap-2 text-muted-foreground">
+                <Icon className="size-4 shrink-0" />
+                <p className="min-w-0 text-xs leading-5">{label}</p>
             </div>
             <p className="mt-1 font-semibold">
                 {value.toLocaleString('fa-IR')}
@@ -316,21 +316,21 @@ export default function PartnerDashboard({
             <Head title="پنل فروشگاه" />
             <div
                 dir="rtl"
-                className="flex h-full flex-1 flex-col gap-5 overflow-x-auto p-4"
+                className="flex h-full min-w-0 flex-1 flex-col gap-5 overflow-x-hidden p-3 sm:p-4"
             >
                 <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-                    <div>
+                    <div className="min-w-0">
                         <p className="text-sm text-muted-foreground">
                             پنل شریک تجاری
                         </p>
-                        <h1 className="mt-1 text-2xl font-semibold">
+                        <h1 className="mt-1 text-2xl font-semibold leading-tight">
                             {partner.name}
                         </h1>
                         <p className="mt-1 text-sm text-muted-foreground">
                             {partner.venueName} · {partner.partnerType}
                         </p>
                     </div>
-                    <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3 xl:grid-cols-6">
+                    <div className="grid w-full grid-cols-2 gap-2 text-sm sm:grid-cols-3 md:w-auto xl:grid-cols-6">
                         <Stat
                             icon={Gift}
                             label="پاداش‌ها"
@@ -912,7 +912,7 @@ export default function PartnerDashboard({
                                         key={reward.id}
                                         className="grid gap-2 px-4 py-3 text-sm"
                                     >
-                                        <div className="flex items-center justify-between gap-3">
+                                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                                             <div className="min-w-0">
                                                 <p className="truncate font-medium">
                                                     {reward.name}
@@ -925,7 +925,7 @@ export default function PartnerDashboard({
                                                     {reward.rewardType}
                                                 </p>
                                             </div>
-                                            <span className="shrink-0 text-xs text-muted-foreground">
+                                            <span className="w-fit shrink-0 text-xs text-muted-foreground">
                                                 {statusLabels[
                                                     reward.approvalStatus
                                                 ] ??
@@ -1079,7 +1079,7 @@ export default function PartnerDashboard({
                                         key={redemption.id}
                                         className="grid gap-2 px-4 py-3 text-sm"
                                     >
-                                        <div className="flex items-center justify-between gap-3">
+                                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                                             <div className="min-w-0">
                                                 <p className="truncate font-medium">
                                                     {redemption.rewardName}
@@ -1094,7 +1094,7 @@ export default function PartnerDashboard({
                                                         : ''}
                                                 </p>
                                             </div>
-                                            <span className="shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
+                                            <span className="w-fit shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
                                                 {statusLabels[
                                                     redemption.status
                                                 ] ?? redemption.status}

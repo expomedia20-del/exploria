@@ -192,12 +192,12 @@ function Stat({
     value: number;
 }) {
     return (
-        <div className="rounded-lg border border-sidebar-border/70 px-3 py-2 dark:border-sidebar-border">
-            <div className="flex items-center gap-2 text-muted-foreground">
-                <Icon className="size-4" />
-                <span className="text-sm">{label}</span>
+        <div className="min-w-0 rounded-lg border border-sidebar-border/70 bg-background px-3 py-2 dark:border-sidebar-border">
+            <div className="flex min-w-0 items-center gap-2 text-muted-foreground">
+                <Icon className="size-4 shrink-0" />
+                <span className="min-w-0 text-xs leading-5">{label}</span>
             </div>
-            <p className="mt-2 text-xl font-semibold">{formatNumber(value)}</p>
+            <p className="mt-2 text-lg font-semibold">{formatNumber(value)}</p>
         </div>
     );
 }
@@ -214,7 +214,7 @@ function Panel({
     isEmpty?: boolean;
 }) {
     return (
-        <section className="rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border">
+        <section className="overflow-hidden rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border">
             <div className="border-b border-sidebar-border/70 px-4 py-3 dark:border-sidebar-border">
                 <h2 className="font-semibold">{title}</h2>
                 {description ? (
@@ -263,19 +263,19 @@ export default function VenueDashboard({
             <Head title="پنل مدیر اجرایی مکان" />
             <div
                 dir="rtl"
-                className="flex h-full flex-1 flex-col gap-5 overflow-x-auto p-4"
+                className="flex h-full min-w-0 flex-1 flex-col gap-5 overflow-x-hidden p-3 sm:p-4"
             >
                 <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                    <div>
+                    <div className="min-w-0">
                         <p className="text-sm text-muted-foreground">
                             نمای مدیریتی و read-only برای آمادگی مکان، هماهنگی
                             ذی‌نفعان و ریسک‌های روز اجرا
                         </p>
-                        <h1 className="mt-1 text-2xl font-semibold">
+                        <h1 className="mt-1 text-2xl font-semibold leading-tight">
                             پنل مدیر اجرایی مکان
                         </h1>
                     </div>
-                    <div className="grid grid-cols-2 gap-3 text-sm md:grid-cols-3 xl:grid-cols-9">
+                    <div className="grid w-full grid-cols-2 gap-2 text-sm sm:grid-cols-3 lg:w-auto xl:grid-cols-5 2xl:grid-cols-9">
                         <Stat icon={Building2} label="مکان" value={stats.venues} />
                         <Stat
                             icon={Trophy}
@@ -350,7 +350,7 @@ export default function VenueDashboard({
                     >
                         {campaigns.map((campaign) => (
                             <article key={campaign.id} className="grid gap-2 px-4 py-3 text-sm">
-                                <div className="flex items-center justify-between gap-3">
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                                     <div className="min-w-0">
                                         <p className="truncate font-medium">
                                             {campaign.name}
@@ -362,7 +362,7 @@ export default function VenueDashboard({
                                             {campaign.code} · {campaign.campaignType}
                                         </p>
                                     </div>
-                                    <span className="shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
+                                    <span className="w-fit shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
                                         {labelForStatus(campaign.status)}
                                     </span>
                                 </div>
@@ -387,7 +387,7 @@ export default function VenueDashboard({
                     >
                         {hubs.map((hub) => (
                             <article key={hub.id} className="grid gap-2 px-4 py-3 text-sm">
-                                <div className="flex items-center justify-between gap-3">
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                                     <div className="min-w-0">
                                         <p className="truncate font-medium">{hub.name}</p>
                                         <p
@@ -397,7 +397,7 @@ export default function VenueDashboard({
                                             {hub.code} · {hub.hubType}
                                         </p>
                                     </div>
-                                    <span className="shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
+                                    <span className="w-fit shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
                                         {labelForStatus(hub.status)}
                                     </span>
                                 </div>
@@ -420,7 +420,7 @@ export default function VenueDashboard({
                     >
                         {partners.map((partner) => (
                             <article key={partner.id} className="grid gap-2 px-4 py-3 text-sm">
-                                <div className="flex items-center justify-between gap-3">
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                                     <div className="min-w-0">
                                         <p className="truncate font-medium">{partner.name}</p>
                                         <p
@@ -430,7 +430,7 @@ export default function VenueDashboard({
                                             {partner.code} · {partner.partnerType}
                                         </p>
                                     </div>
-                                    <span className="shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
+                                    <span className="w-fit shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
                                         {labelForStatus(partner.status)}
                                     </span>
                                 </div>
@@ -451,7 +451,7 @@ export default function VenueDashboard({
                     >
                         {displayDevices.map((device) => (
                             <article key={device.id} className="grid gap-2 px-4 py-3 text-sm">
-                                <div className="flex items-center justify-between gap-3">
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                                     <div className="min-w-0">
                                         <p className="truncate font-medium">{device.name}</p>
                                         <p
@@ -461,7 +461,7 @@ export default function VenueDashboard({
                                             {device.code} · {device.deviceType}
                                         </p>
                                     </div>
-                                    <span className="shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
+                                    <span className="w-fit shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
                                         {labelForStatus(device.status)}
                                     </span>
                                 </div>
@@ -486,7 +486,7 @@ export default function VenueDashboard({
                     >
                         {adRequests.map((adRequest) => (
                             <article key={adRequest.id} className="grid gap-2 px-4 py-3 text-sm">
-                                <div className="flex items-center justify-between gap-3">
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                                     <div className="min-w-0">
                                         <p className="truncate font-medium">
                                             {adRequest.hubName ?? 'تبلیغ مکان'}
@@ -498,7 +498,7 @@ export default function VenueDashboard({
                                             {adRequest.adType} · {adRequest.advertiserType}
                                         </p>
                                     </div>
-                                    <span className="shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
+                                    <span className="w-fit shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
                                         {labelForStatus(adRequest.status)}
                                     </span>
                                 </div>
@@ -532,7 +532,7 @@ export default function VenueDashboard({
                     >
                         {rewards.map((reward) => (
                             <article key={reward.id} className="grid gap-2 px-4 py-3 text-sm">
-                                <div className="flex items-center justify-between gap-3">
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                                     <div className="min-w-0">
                                         <p className="truncate font-medium">
                                             {reward.campaignName ?? 'پاداش کمپین'}
@@ -544,7 +544,7 @@ export default function VenueDashboard({
                                             {reward.rewardType} · {reward.status}
                                         </p>
                                     </div>
-                                    <span className="shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
+                                    <span className="w-fit shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
                                         {labelForStatus(reward.approvalStatus)}
                                     </span>
                                 </div>
@@ -557,7 +557,7 @@ export default function VenueDashboard({
                         ))}
                         {treasures.map((treasure) => (
                             <article key={treasure.id} className="grid gap-2 px-4 py-3 text-sm">
-                                <div className="flex items-center justify-between gap-3">
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                                     <div className="min-w-0">
                                         <p className="truncate font-medium">
                                             {treasure.campaignName ?? 'گنج کمپین'}
@@ -569,7 +569,7 @@ export default function VenueDashboard({
                                             {treasure.treasureType} · {treasure.missionCode ?? '-'}
                                         </p>
                                     </div>
-                                    <span className="shrink-0 rounded-full bg-amber-100 px-2.5 py-1 text-xs text-amber-800 dark:bg-amber-950 dark:text-amber-200">
+                                    <span className="w-fit shrink-0 rounded-full bg-amber-100 px-2.5 py-1 text-xs text-amber-800 dark:bg-amber-950 dark:text-amber-200">
                                         گنج
                                     </span>
                                 </div>
