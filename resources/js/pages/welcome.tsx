@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
     BadgeDollarSign,
@@ -20,6 +20,28 @@ import {
 import type { LucideIcon } from 'lucide-react';
 
 const demoQrCode = 'ep1405-a7f3k9m2q8x4';
+const internalRoles = ['admin', 'operator', 'viewer'];
+
+type SharedProps = {
+    auth?: {
+        user?: {
+            role?: string;
+        } | null;
+    };
+};
+
+function roleAwareHref(path: string, role?: string) {
+    if (!role || internalRoles.includes(role)) {
+        return path;
+    }
+
+    return {
+        visitor: '/participant/dashboard',
+        shop_partner: '/partner/dashboard',
+        sponsor: '/sponsor/dashboard',
+        hub_manager: '/ravaq/dashboard',
+    }[role] ?? '/dashboard';
+}
 
 const primaryRoutes: Array<{
     title: string;
@@ -43,8 +65,8 @@ const primaryRoutes: Array<{
         tone: 'border-cyan-200 bg-cyan-50 text-cyan-950',
     },
     {
-        title: 'چرخه دمو و فروش',
-        body: 'مشاهده آمادگی دمو، بسته‌های فروش و مسیر مذاکره.',
+        title: 'چرخه دمو و فروش داخلی',
+        body: 'مشاهده آمادگی دمو، بسته‌های فروش و مسیر مذاکره با حساب داخلی.',
         href: '/admin/commercialization',
         icon: BadgeDollarSign,
         tone: 'border-amber-200 bg-amber-50 text-amber-950',
@@ -184,6 +206,10 @@ function HeroScene() {
 }
 
 export default function Welcome() {
+    const { auth } = usePage<SharedProps>().props;
+    const userRole = auth?.user?.role;
+    const commercializationHref = roleAwareHref('/admin/commercialization', userRole);
+
     return (
         <>
             <Head title="اکسپلوریا | پلتفرم تجربه، کمپین و درآمد مکان" />
@@ -241,7 +267,7 @@ export default function Welcome() {
                                         شروع دموی اکوپارک
                                         <QrCode className="size-4" />
                                     </Link>
-                                    <Link href="/admin/commercialization" className="inline-flex h-12 items-center gap-2 rounded-md bg-white px-5 text-sm font-semibold text-zinc-950 hover:bg-zinc-100">
+                                    <Link href={commercializationHref} className="inline-flex h-12 items-center gap-2 rounded-md bg-white px-5 text-sm font-semibold text-zinc-950 hover:bg-zinc-100">
                                         صفحه تجاری‌سازی
                                         <BadgeDollarSign className="size-4" />
                                     </Link>
@@ -250,6 +276,9 @@ export default function Welcome() {
                                         <BarChart3 className="size-4" />
                                     </Link>
                                 </div>
+                                <p className="mt-3 text-xs leading-6 text-zinc-400">
+                                    صفحه تجاری‌سازی و چرخه دمو با حساب داخلی باز می‌شوند؛ حساب بازدیدکننده به تجربه QR و داشبورد خودش هدایت می‌شود.
+                                </p>
                             </div>
                         </div>
 
@@ -268,7 +297,7 @@ export default function Welcome() {
                 <section className="mx-auto max-w-7xl px-5 py-8 sm:px-8 lg:px-10">
                     <div className="grid gap-4 md:grid-cols-3">
                         {primaryRoutes.map((route) => (
-                            <Link key={route.title} href={route.href} className={`rounded-lg border p-5 transition hover:-translate-y-0.5 hover:shadow-md ${route.tone}`}>
+                            <Link key={route.title} href={roleAwareHref(route.href, userRole)} className={`rounded-lg border p-5 transition hover:-translate-y-0.5 hover:shadow-md ${route.tone}`}>
                                 <route.icon className="size-6" />
                                 <h2 className="mt-4 text-lg font-semibold">{route.title}</h2>
                                 <p className="mt-2 text-sm leading-7 opacity-80">{route.body}</p>
@@ -361,11 +390,11 @@ export default function Welcome() {
                             <p className="text-sm font-medium text-emerald-700">قدم بعدی</p>
                             <h2 className="mt-2 text-3xl font-semibold">اکسپلوریا آماده نمایش، پایلوت و مذاکره است.</h2>
                             <p className="mt-3 text-sm leading-7 text-zinc-600">
-                                برای جلسه فروش از صفحه تجاری‌سازی شروع کنید؛ برای تست تجربه کاربر، QR دمو را باز کنید؛ و برای تیم داخلی، ورود مدیریتی را استفاده کنید.
+                                برای جلسه فروش با حساب داخلی از صفحه تجاری‌سازی شروع کنید؛ برای تست تجربه کاربر، QR دمو را باز کنید.
                             </p>
                         </div>
                         <div className="flex flex-wrap gap-3">
-                            <Link href="/admin/commercialization" className="inline-flex h-11 items-center gap-2 rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white hover:bg-zinc-800">
+                            <Link href={commercializationHref} className="inline-flex h-11 items-center gap-2 rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white hover:bg-zinc-800">
                                 تجاری‌سازی
                                 <ArrowLeft className="size-4" />
                             </Link>

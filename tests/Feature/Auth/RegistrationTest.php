@@ -36,7 +36,7 @@ class RegistrationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect(route('participant.dashboard', absolute: false));
 
         $user = User::query()->where('email', 'test@example.com')->firstOrFail();
 
@@ -50,7 +50,7 @@ class RegistrationTest extends TestCase
             'email' => 'visitor@example.com',
             'password' => 'password',
             'password_confirmation' => 'password',
-        ])->assertRedirect(route('dashboard', absolute: false));
+        ])->assertRedirect(route('participant.dashboard', absolute: false));
 
         $this->get(route('dashboard'))
             ->assertRedirect(route('participant.dashboard'));

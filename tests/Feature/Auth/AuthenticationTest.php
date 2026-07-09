@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Enums\UserRole;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\RateLimiter;
@@ -29,7 +30,37 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect(route('participant.dashboard', absolute: false));
+    }
+
+    public function test_internal_users_can_continue_to_intended_internal_page_after_login(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::Admin]);
+
+        $response = $this
+            ->withSession(['url.intended' => route('admin.commercialization.page', absolute: false)])
+            ->post(route('login.store'), [
+                'email' => $user->email,
+                'password' => 'password',
+            ]);
+
+        $this->assertAuthenticated();
+        $response->assertRedirect(route('admin.commercialization.page', absolute: false));
+    }
+
+    public function test_public_visitors_do_not_continue_to_intended_internal_page_after_login(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::Visitor]);
+
+        $response = $this
+            ->withSession(['url.intended' => route('admin.commercialization.page', absolute: false)])
+            ->post(route('login.store'), [
+                'email' => $user->email,
+                'password' => 'password',
+            ]);
+
+        $this->assertAuthenticated();
+        $response->assertRedirect(route('participant.dashboard', absolute: false));
     }
 
     public function test_users_with_two_factor_enabled_are_redirected_to_two_factor_challenge()
