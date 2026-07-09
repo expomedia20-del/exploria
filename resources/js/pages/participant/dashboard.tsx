@@ -210,6 +210,8 @@ const rewardStatusLabels: Record<string, string> = {
     expired: 'منقضی شده',
 };
 
+const participantHeroImage = '/images/ecopark/proposal/qr-backpack-route.jpg';
+
 function formatDate(value: string) {
     return new Intl.DateTimeFormat('fa-IR', {
         dateStyle: 'medium',
@@ -371,30 +373,38 @@ export default function ParticipantDashboard({
             ) : null}
 
             <section className="grid gap-4 xl:grid-cols-[1fr_1.2fr]">
-                <div className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
-                    <div className="flex items-center gap-2">
-                        <Compass className="size-5 text-emerald-600" />
-                        <h2 className="font-semibold">قدم بعدی شما</h2>
-                    </div>
-                    <p className="mt-3 text-sm font-medium">{journey.nextAction.label}</p>
-                    <p className="mt-2 text-sm leading-7 text-muted-foreground">{journey.nextAction.description}</p>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                        {journey.nextAction.href ? (
-                            <Button asChild>
-                                <Link href={journey.nextAction.href}>
-                                    <Play className="size-4" />
-                                    ادامه مسیر
-                                </Link>
-                            </Button>
-                        ) : null}
-                        {latestVisit?.qrLandingUrl ? (
-                            <Button asChild variant="outline">
-                                <Link href={latestVisit.qrLandingUrl}>
-                                    <QrCode className="size-4" />
-                                    راهنمای QR کمپین
-                                </Link>
-                            </Button>
-                        ) : null}
+                <div className="overflow-hidden rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border">
+                    <div className="grid gap-0 lg:grid-cols-[0.95fr_1.05fr]">
+                        <div className="relative min-h-44">
+                            <img src={participantHeroImage} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                            <div className="absolute inset-0 bg-gradient-to-l from-background via-background/30 to-transparent" />
+                        </div>
+                        <div className="p-4">
+                            <div className="flex items-center gap-2">
+                                <Compass className="size-5 text-emerald-600" />
+                                <h2 className="font-semibold">قدم بعدی شما</h2>
+                            </div>
+                            <p className="mt-3 text-sm font-medium">{journey.nextAction.label}</p>
+                            <p className="mt-2 text-sm leading-7 text-muted-foreground">{journey.nextAction.description}</p>
+                            <div className="mt-4 flex flex-wrap gap-2">
+                                {journey.nextAction.href ? (
+                                    <Button asChild>
+                                        <Link href={journey.nextAction.href}>
+                                            <Play className="size-4" />
+                                            ادامه مسیر
+                                        </Link>
+                                    </Button>
+                                ) : null}
+                                {latestVisit?.qrLandingUrl ? (
+                                    <Button asChild variant="outline">
+                                        <Link href={latestVisit.qrLandingUrl}>
+                                            <QrCode className="size-4" />
+                                            راهنمای QR کمپین
+                                        </Link>
+                                    </Button>
+                                ) : null}
+                            </div>
+                        </div>
                     </div>
                 </div>
 

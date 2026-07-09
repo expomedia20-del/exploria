@@ -43,12 +43,19 @@ const rewardTierLabels: Record<string, string> = {
     custom: 'سفارشی',
 };
 
+const scanHeroImage = '/images/ecopark/proposal/qr-backpack-route.jpg';
+
 export default function ScanLanding({ qr, missionPreview, rewardOptions }: Props) {
     return (
         <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10 text-slate-950 dark:bg-slate-950 dark:text-slate-50">
             <Head title={`بازدید ${qr.venueName}`} />
 
-            <section className="w-full max-w-2xl rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900">
+            <section className="w-full max-w-2xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                <div className="relative h-48 sm:h-56">
+                    <img src={scanHeroImage} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-white via-white/15 to-transparent dark:from-slate-900 dark:via-slate-900/20" />
+                </div>
+                <div className="p-6 sm:p-8">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800 dark:bg-blue-950 dark:text-blue-200">
                         پایلوت اکسپلوریا
@@ -183,6 +190,7 @@ export default function ScanLanding({ qr, missionPreview, rewardOptions }: Props
                 >
                     شروع تجربه
                 </Button>
+                </div>
             </section>
         </main>
     );

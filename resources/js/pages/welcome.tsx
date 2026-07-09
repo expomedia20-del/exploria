@@ -20,6 +20,11 @@ import {
 import type { LucideIcon } from 'lucide-react';
 
 const demoQrCode = 'ep1405-a7f3k9m2q8x4';
+const proposalImages = {
+    hero: '/images/ecopark/proposal/ecopark-night-path.jpg',
+    qr: '/images/ecopark/proposal/qr-backpack-route.jpg',
+    roadmap: '/images/ecopark/proposal/ecopark-roadmap-night.jpg',
+};
 const internalRoles = ['admin', 'operator', 'viewer'];
 
 type SharedProps = {
@@ -136,8 +141,10 @@ const revenuePacks = [
 
 function HeroScene() {
     return (
-        <div className="rounded-lg border border-white/12 bg-white/[0.06] p-3 shadow-2xl shadow-black/30 backdrop-blur-sm">
-            <div className="rounded-md border border-white/10 bg-zinc-900 p-4">
+        <div className="relative overflow-hidden rounded-lg border border-white/12 bg-white/[0.06] p-3 shadow-2xl shadow-black/30 backdrop-blur-sm">
+            <img src={proposalImages.hero} alt="" className="absolute inset-0 h-full w-full object-cover opacity-45" />
+            <div className="absolute inset-0 bg-zinc-950/55" />
+            <div className="relative rounded-md border border-white/10 bg-zinc-900/80 p-4 backdrop-blur-sm">
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
                     <div>
                         <p className="text-xs text-zinc-400">نمونه دمو اکوپارک</p>
@@ -334,6 +341,13 @@ export default function Welcome() {
                                 </article>
                             ))}
                         </div>
+                    </div>
+                </section>
+
+                <section className="bg-white">
+                    <div className="mx-auto grid max-w-7xl gap-4 px-5 pb-10 sm:px-8 lg:grid-cols-2 lg:px-10">
+                        <img src={proposalImages.qr} alt="" className="h-64 w-full rounded-lg object-cover shadow-sm" />
+                        <img src={proposalImages.roadmap} alt="" className="h-64 w-full rounded-lg object-cover shadow-sm" />
                     </div>
                 </section>
 

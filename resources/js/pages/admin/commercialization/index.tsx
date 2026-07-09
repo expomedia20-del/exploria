@@ -149,6 +149,8 @@ const funnelThemes = [
     'bg-indigo-600',
 ];
 
+const commercializationHeroImage = '/images/ecopark/proposal/roi-night-plaza.jpg';
+
 export default function CommercializationIndex({
     summary,
     salesMetrics,
@@ -173,7 +175,8 @@ export default function CommercializationIndex({
 
             <main className="space-y-5 p-4" dir="rtl">
                 <section className="overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950 text-white shadow-sm">
-                    <div className="grid gap-5 p-5 lg:grid-cols-[1.7fr_0.8fr]">
+                    <div className="grid gap-0 lg:grid-cols-[1.55fr_0.75fr]">
+                        <div className="p-5">
                         <div>
                             <p className="text-sm text-emerald-300">
                                 تبدیل دمو به فروش، قرارداد و درآمد
@@ -185,8 +188,12 @@ export default function CommercializationIndex({
                                 {summary.positioning}
                             </p>
                         </div>
-
-                        <div className="grid gap-2 rounded-lg border border-white/15 bg-white/10 p-4 text-sm">
+                        </div>
+                        <div className="relative min-h-56 lg:order-last">
+                            <img src={commercializationHeroImage} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                            <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/25 to-transparent" />
+                        </div>
+                        <div className="m-5 grid gap-2 rounded-lg border border-white/15 bg-white/10 p-4 text-sm lg:col-span-2">
                             <div className="flex justify-between gap-3">
                                 <span className="text-zinc-300">مکان</span>
                                 <strong>{summary.venue}</strong>

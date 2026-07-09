@@ -152,6 +152,8 @@ const riskLabel = {
     high: 'ریسک بالا',
 };
 
+const demoCycleHeroImage = '/images/ecopark/proposal/ecopark-roadmap-night.jpg';
+
 export default function DemoCycleIndex({
     summary,
     stages,
@@ -169,16 +171,19 @@ export default function DemoCycleIndex({
             <Head title="چرخه دمو اکوپارک" />
 
             <main className="space-y-4 p-4" dir="rtl">
-                <section className="rounded-lg border border-sidebar-border/70 bg-gradient-to-l from-cyan-50 to-background p-4 dark:border-sidebar-border dark:from-cyan-950/30">
-                    <p className="text-sm text-muted-foreground">
-                        نقشه اجرای دمو از صفر تا گزارش فروش
-                    </p>
-                    <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
-                        <div>
+                <section className="relative overflow-hidden rounded-lg border border-sidebar-border/70 bg-zinc-950 p-4 text-white dark:border-sidebar-border">
+                    <img src={demoCycleHeroImage} alt="" className="absolute inset-0 h-full w-full object-cover opacity-45" />
+                    <div className="absolute inset-0 bg-gradient-to-l from-zinc-950 via-zinc-950/80 to-zinc-950/55" />
+                    <div className="relative">
+                        <p className="text-sm text-cyan-200">
+                            نقشه اجرای دمو از صفر تا گزارش فروش
+                        </p>
+                        <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
+                            <div>
                             <h1 className="text-2xl font-semibold">
                                 {summary.title}
                             </h1>
-                            <p className="mt-2 max-w-4xl text-sm leading-7 text-muted-foreground">
+                            <p className="mt-2 max-w-4xl text-sm leading-7 text-zinc-200">
                                 این صفحه، چرخه کامل دمو را به ۵ مرحله قابل اجرا
                                 تبدیل می کند: آماده سازی سناریو، داده و دسترسی،
                                 اجرای کاربر، مصرف پاداش و تبلیغ، سپس گزارش
@@ -186,26 +191,27 @@ export default function DemoCycleIndex({
                                 اصلی جدا نگه داشته شده است.
                             </p>
                         </div>
-                        <div className="grid min-w-64 gap-2 rounded-lg border border-sidebar-border/70 bg-card p-3 text-sm">
+                            <div className="grid min-w-64 gap-2 rounded-lg border border-white/15 bg-white/10 p-3 text-sm backdrop-blur-sm">
                             <div className="flex justify-between gap-3">
-                                <span className="text-muted-foreground">
+                                <span className="text-zinc-300">
                                     کمپین
                                 </span>
                                 <strong>{summary.campaign}</strong>
                             </div>
                             <div className="flex justify-between gap-3">
-                                <span className="text-muted-foreground">
+                                <span className="text-zinc-300">
                                     مکان
                                 </span>
                                 <strong>{summary.venue}</strong>
                             </div>
                             <div className="flex justify-between gap-3">
-                                <span className="text-muted-foreground">
+                                <span className="text-zinc-300">
                                     وضعیت
                                 </span>
                                 <strong>{summary.status}</strong>
                             </div>
                         </div>
+                    </div>
                     </div>
                 </section>
 
