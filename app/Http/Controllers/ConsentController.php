@@ -30,7 +30,14 @@ class ConsentController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'data' => $version->only(['id', 'version', 'language', 'title', 'body', 'is_demo']),
+            'data' => [
+                ...$version->only(['id', 'version', 'language', 'title', 'body', 'is_demo']),
+                'accepted' => $request->user()
+                    ? $request->user()->consentLogs()
+                        ->where('consent_version_id', $version->id)
+                        ->exists()
+                    : false,
+            ],
         ]);
     }
 

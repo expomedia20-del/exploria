@@ -26,7 +26,27 @@ class ConsentFlowTest extends TestCase
             ->assertOk()
             ->assertJsonPath('status', 'success')
             ->assertJsonPath('data.language', 'fa')
-            ->assertJsonPath('data.is_demo', true);
+            ->assertJsonPath('data.is_demo', true)
+            ->assertJsonPath('data.accepted', false);
+    }
+
+    public function test_current_consent_reports_when_authenticated_user_already_accepted_active_version(): void
+    {
+        $user = User::factory()->create();
+        $version = ConsentVersion::query()->where('is_active', true)->firstOrFail();
+
+        $this->actingAs($user)
+            ->postJson('/api/v1/consents/accept', [
+                'consentVersionId' => $version->id,
+                'source' => 'pwa',
+            ])
+            ->assertCreated();
+
+        $this->actingAs($user)
+            ->getJson('/api/v1/consents/current?language=fa')
+            ->assertOk()
+            ->assertJsonPath('data.id', $version->id)
+            ->assertJsonPath('data.accepted', true);
     }
 
     public function test_consent_page_requires_authentication(): void

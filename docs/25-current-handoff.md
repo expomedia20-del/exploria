@@ -99,11 +99,29 @@ Known unrelated issue:
 
 ## Recommended Next Slice
 
-1. Fix the unrelated TypeScript tuple issue in `resources/js/pages/dashboard.tsx` so full typecheck becomes clean again.
-2. Continue public landing polish only if the current visual direction is approved.
-3. Add controlled venue manager comments / readiness confirmations.
-4. Harden ravaq / zone panel as a dedicated UI while keeping hub scope behind the scenes.
-5. Review partner ads, standalone ads, and display operations after role panels settle.
+1. Visual identity and UX polish:
+   - Design an Exploria logo and replace the default Laravel-style mark across the app shell, auth pages, favicon, and any remaining brand surfaces.
+   - Make participant, shop partner, sponsor, venue manager, ravaq/hub manager, and admin pages more mobile-friendly, warmer, and more visually varied.
+   - Use place-specific imagery or generated/curated venue visuals in empty spaces and hero/summary areas, especially for participant and partner flows.
+   - Add more expressive color treatment to buttons, icons, status chips, mission/reward cards, and role dashboards while preserving operational clarity.
+2. Participant onboarding and consent:
+   - After OTP verification, route the participant directly to the consent flow or next destination without an extra "view consent" button.
+   - Show active consent only once per user/version; returning users who already accepted the active version should skip consent and continue to the visit/dashboard.
+3. Participant experience redesign:
+   - Add a participant-first Exploria home/dashboard that feels playful and place-aware before the user enters the operational visit screen.
+   - Surface venue attractions and game value clearly: map-like journey, missions, treasures, rewards, and highlights such as Gonbad Mina, Ocean Park, and Tabiat Bridge.
+   - Keep the online game optional but prominent for younger audiences, and use it to teach the full Exploria cycle through a map/game experience.
+4. Demo presentation backlog to keep for later:
+   - Build a Demo Presenter Mode that walks through venue evaluation, blueprint, campaign, QR, user journey, reward, redemption, and ROI.
+   - Polish `/admin/commercialization` as a concise final report for venue managers, sponsors, and shops.
+   - Add a pre-meeting readiness checklist with demo accounts, links, QR code, and redemption code.
+   - Write a 5-7 minute demo script for sales/investor presentation.
+5. Suggested additions:
+   - Add role-specific welcome panels with one clear next action for each role.
+   - Add skeleton/empty states with visual context instead of plain text-only blanks.
+   - Add responsive QA checkpoints for 390px, 430px, tablet, and desktop on the main demo flow.
+   - Add a small venue media library abstraction so future locations can provide images without hard-coding EcoPark everywhere.
+   - Add a visual style guide page or component story area for cards, chips, buttons, reward badges, and mission states.
 
 ## Startup Prompt For Next Codex Session
 
