@@ -3,6 +3,7 @@
 namespace Tests\Feature\Participant;
 
 use App\Enums\UserRole;
+use App\Models\Campaign;
 use App\Models\QrCode;
 use App\Models\User;
 use App\Models\Visit;
@@ -111,6 +112,84 @@ class ParticipantDashboardTest extends TestCase
                 ->where('participant.mode', 'individual')
                 ->where('participant.publicStatus', 'registered')
                 ->where('participant.publicStatusLabel', 'کاربر عادی'));
+    }
+
+    public function test_participant_dashboard_collapses_internal_stress_demo_duplicates(): void
+    {
+        $this->withoutVite();
+
+        $baseCampaign = Campaign::query()->where('code', 'ecopark-pilot-1405')->firstOrFail();
+        $baseCampaign->update([
+            'metadata' => [
+                'is_demo' => true,
+                'stress_demo' => true,
+                'blueprint_code' => 'ecopark-online-treasure-map-game',
+            ],
+        ]);
+        Campaign::query()->create([
+            'venue_id' => $baseCampaign->venue_id,
+            'code' => 'ecopark-online-treasure-map-game-campaign',
+            'name' => $baseCampaign->name,
+            'campaign_type' => 'treasure_route',
+            'status' => 'active',
+            'start_at' => now(),
+            'end_at' => now()->addMonths(6),
+            'metadata' => [
+                'is_demo' => true,
+                'stress_demo' => true,
+            ],
+        ]);
+        $visitor = User::factory()->create(['role' => UserRole::Visitor]);
+
+        $this->actingAs($visitor)
+            ->get(route('participant.dashboard'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('participant/dashboard')
+                ->has('journey.activeCampaigns', 1)
+                ->where('journey.activeCampaigns.0.code', 'ecopark-pilot-1405'));
+    }
+
+    public function test_participant_dashboard_keeps_latest_stress_demo_when_user_started_it(): void
+    {
+        $this->withoutVite();
+
+        $baseCampaign = Campaign::query()->where('code', 'ecopark-pilot-1405')->firstOrFail();
+        $stressCampaign = Campaign::query()->create([
+            'venue_id' => $baseCampaign->venue_id,
+            'code' => 'ecopark-online-treasure-map-game-campaign',
+            'name' => $baseCampaign->name,
+            'campaign_type' => 'treasure_route',
+            'status' => 'active',
+            'start_at' => now(),
+            'end_at' => now()->addMonths(6),
+            'metadata' => [
+                'is_demo' => true,
+                'stress_demo' => true,
+            ],
+        ]);
+        $visitor = User::factory()->create(['role' => UserRole::Visitor]);
+        $qr = QrCode::query()->firstOrFail();
+        $visit = Visit::query()->create([
+            'user_id' => $visitor->id,
+            'qr_code_id' => $qr->id,
+            'venue_id' => $stressCampaign->venue_id,
+            'touchpoint_id' => $qr->touchpoint_id,
+            'campaign_id' => $stressCampaign->id,
+            'source' => 'qr_landing',
+            'status' => 'confirmed',
+            'occurred_at' => now(),
+            'metadata' => ['stress_demo' => true],
+        ]);
+
+        $this->actingAs($visitor)
+            ->get(route('participant.dashboard'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('participant/dashboard')
+                ->has('journey.activeCampaigns', 1)
+                ->where('journey.activeCampaigns.0.code', $stressCampaign->code)
+                ->where('journey.activeCampaigns.0.latestVisitId', $visit->id));
     }
 
     public function test_visitor_can_start_participation_without_admin_approval(): void

@@ -421,7 +421,7 @@ export default function ParticipantDashboard({
                                     <div>
                                         <p className="font-medium">{campaign.name}</p>
                                         <p className="mt-1 text-xs text-muted-foreground">
-                                            {campaign.venueName ?? 'مکان پروژه'} - {campaign.city ?? 'شهر'} - {campaign.code}
+                                            {campaign.venueName ?? 'مکان پروژه'} - {campaign.city ?? 'شهر'}
                                         </p>
                                     </div>
                                     <span className={`rounded-full px-2.5 py-1 text-xs ${campaign.hasVisit ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-100' : 'bg-sky-50 text-sky-800 dark:bg-sky-950 dark:text-sky-100'}`}>

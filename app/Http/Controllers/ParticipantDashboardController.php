@@ -17,6 +17,7 @@ use App\Services\MissionFlowService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -152,12 +153,7 @@ class ParticipantDashboardController extends Controller
             ])
             ->values();
 
-        $activeCampaignModels = Campaign::query()
-            ->with(['venue:id,name,city', 'qrCodes' => fn ($query) => $query->with(['venue', 'touchpoint', 'campaign'])->orderBy('created_at')])
-            ->where('status', RecordStatus::Active)
-            ->orderByDesc('start_at')
-            ->limit(6)
-            ->get();
+        $activeCampaignModels = $this->publicActiveCampaigns($latestVisit);
         $activeCampaignIds = $activeCampaignModels->pluck('id');
         $latestVisitsByCampaign = Visit::query()
             ->where('user_id', $user->id)
@@ -317,6 +313,57 @@ class ParticipantDashboardController extends Controller
                 'href' => $latestVisit ? route('visits.show', ['visit' => $latestVisit->id]) : null,
             ],
         ];
+    }
+
+    /** @return Collection<int, Campaign> */
+    private function publicActiveCampaigns(?Visit $latestVisit): Collection
+    {
+        return Campaign::query()
+            ->with(['venue:id,name,city', 'qrCodes' => fn ($query) => $query->with(['venue', 'touchpoint', 'campaign'])->orderBy('created_at')])
+            ->where('status', RecordStatus::Active)
+            ->orderByDesc('start_at')
+            ->orderByDesc('created_at')
+            ->get()
+            ->groupBy(fn (Campaign $campaign): string => $this->publicCampaignGroupKey($campaign))
+            ->map(function (Collection $campaigns) use ($latestVisit): Campaign {
+                $latestVisitCampaign = $latestVisit
+                    ? $campaigns->first(fn (Campaign $campaign): bool => $campaign->id === $latestVisit->campaign_id)
+                    : null;
+
+                if ($latestVisitCampaign instanceof Campaign) {
+                    return $latestVisitCampaign;
+                }
+
+                return $campaigns
+                    ->sortBy(fn (Campaign $campaign): int => $this->publicCampaignPriority($campaign))
+                    ->first();
+            })
+            ->values()
+            ->take(6);
+    }
+
+    private function publicCampaignGroupKey(Campaign $campaign): string
+    {
+        return implode('|', [
+            $campaign->venue_id,
+            trim($campaign->name),
+        ]);
+    }
+
+    private function isStressDemoCampaign(Campaign $campaign): bool
+    {
+        return (bool) data_get($campaign->metadata, 'stress_demo', false)
+            || $campaign->code === 'ecopark-online-treasure-map-game-campaign'
+            || str_contains($campaign->code, 'stress-demo');
+    }
+
+    private function publicCampaignPriority(Campaign $campaign): int
+    {
+        if ($campaign->code === 'ecopark-pilot-1405') {
+            return 0;
+        }
+
+        return $this->isStressDemoCampaign($campaign) ? 2 : 1;
     }
 
     private function rewardTypeLabel(?string $type): string
