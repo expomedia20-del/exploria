@@ -40,6 +40,10 @@ type RewardDefinition = {
     stockQuantity: number | null;
     userRewardsCount: number;
     awardedCount: number;
+    inventoryAllocated: number;
+    inventoryReserved: number;
+    inventoryRedeemed: number;
+    inventoryRemaining: number;
     campaignName: string | null;
     approvalStatus: string;
     availabilityStatus: string;
@@ -77,7 +81,10 @@ type Redemption = {
     createdAt: string | null;
     visitorName: string | null;
     rewardName: string | null;
+    rewardCode: string | null;
     rewardType: string | null;
+    campaignName: string | null;
+    campaignCode: string | null;
 };
 
 type PartnerAdRequest = {
@@ -104,6 +111,10 @@ type Props = {
         issuedRewards: number;
         pendingRedemptions: number;
         confirmedRedemptions: number;
+        allocatedInventory: number;
+        reservedInventory: number;
+        redeemedInventory: number;
+        remainingInventory: number;
         adRequests: number;
         pendingAds: number;
         scheduledAds: number;
@@ -166,6 +177,10 @@ function formatDateTimeLocal(value: string | null) {
     }
 
     return date.toISOString().slice(0, 16);
+}
+
+function formatCount(value: number | null | undefined) {
+    return (value ?? 0).toLocaleString('fa-IR');
 }
 
 function describeRewardOption(option: string, step: MissionPlanStep | null) {
@@ -315,7 +330,7 @@ export default function PartnerDashboard({
                             {partner.venueName} · {partner.partnerType}
                         </p>
                     </div>
-                    <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+                    <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3 xl:grid-cols-6">
                         <Stat
                             icon={Gift}
                             label="پاداش‌ها"
@@ -335,6 +350,16 @@ export default function PartnerDashboard({
                             icon={CheckCircle2}
                             label="تایید شده"
                             value={stats.confirmedRedemptions}
+                        />
+                        <Stat
+                            icon={ReceiptText}
+                            label="رزرو موجودی"
+                            value={stats.reservedInventory}
+                        />
+                        <Stat
+                            icon={Store}
+                            label="مانده تحویل"
+                            value={stats.remainingInventory}
                         />
                     </div>
                 </header>
@@ -922,13 +947,21 @@ export default function PartnerDashboard({
                                         </p>
                                         <p className="text-xs text-muted-foreground">
                                             صادر شده:{' '}
-                                            {reward.userRewardsCount.toLocaleString(
-                                                'fa-IR',
-                                            )}{' '}
+                                            {formatCount(reward.userRewardsCount)}{' '}
                                             · موجودی:{' '}
                                             {reward.stockQuantity?.toLocaleString(
                                                 'fa-IR',
                                             ) ?? 'نامحدود'}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                            تخصیص:{' '}
+                                            {formatCount(reward.inventoryAllocated)}
+                                            {' '}· رزرو:{' '}
+                                            {formatCount(reward.inventoryReserved)}
+                                            {' '}· مصرف:{' '}
+                                            {formatCount(reward.inventoryRedeemed)}
+                                            {' '}· مانده:{' '}
+                                            {formatCount(reward.inventoryRemaining)}
                                         </p>
                                         <Form
                                             action={`/partner/offers/${reward.id}`}
@@ -1056,6 +1089,9 @@ export default function PartnerDashboard({
                                                     dir="ltr"
                                                 >
                                                     {redemption.redemptionCode}
+                                                    {redemption.rewardCode
+                                                        ? ` · ${redemption.rewardCode}`
+                                                        : ''}
                                                 </p>
                                             </div>
                                             <span className="shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
@@ -1096,6 +1132,11 @@ export default function PartnerDashboard({
                                         <p className="text-xs text-muted-foreground">
                                             مشتری:{' '}
                                             {redemption.visitorName ?? '-'} ·{' '}
+                                            کمپین:{' '}
+                                            {redemption.campaignName ??
+                                                redemption.campaignCode ??
+                                                '-'}{' '}
+                                            ·{' '}
                                             {formatDate(
                                                 redemption.redeemedAt ??
                                                     redemption.createdAt,

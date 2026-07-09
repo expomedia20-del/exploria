@@ -115,6 +115,14 @@ class PartnerRewardRedemptionTest extends TestCase
 
         $this->assertSame('confirmed', $redemption->status);
         $this->assertSame('redeemed', $redemption->userReward->status);
+
+        $this->actingAs($partnerUser)
+            ->postJson(route('partner.redemptions.api.confirm'), [
+                'redemption_code' => $redemption->redemption_code,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('redemption_code')
+            ->assertJsonPath('errors.redemption_code.0', 'این کد قبلا مصرف شده است.');
     }
 
     public function test_sponsor_inventory_is_reserved_and_redeemed_through_partner_code(): void
@@ -187,6 +195,14 @@ class PartnerRewardRedemptionTest extends TestCase
 
         $partnerUser = User::query()->where('email', 'cafe.eco@example.test')->firstOrFail();
         $this->actingAs($partnerUser)
+            ->getJson(route('partner.dashboard.index'))
+            ->assertOk()
+            ->assertJsonPath('data.stats.allocatedInventory', 3)
+            ->assertJsonPath('data.stats.reservedInventory', 1)
+            ->assertJsonPath('data.stats.redeemedInventory', 0)
+            ->assertJsonPath('data.stats.remainingInventory', 2);
+
+        $this->actingAs($partnerUser)
             ->postJson(route('partner.redemptions.api.confirm'), [
                 'redemption_code' => $redemption->redemption_code,
             ])
@@ -197,6 +213,14 @@ class PartnerRewardRedemptionTest extends TestCase
         $this->assertSame(0, $allocation->reserved_quantity);
         $this->assertSame(1, $allocation->redeemed_quantity);
         $this->assertSame('redeemed', $redemption->fresh()->userReward->status);
+
+        $this->actingAs($partnerUser)
+            ->getJson(route('partner.dashboard.index'))
+            ->assertOk()
+            ->assertJsonPath('data.stats.allocatedInventory', 3)
+            ->assertJsonPath('data.stats.reservedInventory', 0)
+            ->assertJsonPath('data.stats.redeemedInventory', 1)
+            ->assertJsonPath('data.stats.remainingInventory', 2);
     }
 
     public function test_other_partner_cannot_confirm_foreign_redemption_code(): void
@@ -229,7 +253,9 @@ class PartnerRewardRedemptionTest extends TestCase
             ->getJson(route('partner.dashboard.index'))
             ->assertOk()
             ->assertJsonPath('data.stats.pendingRedemptions', 1)
-            ->assertJsonPath('data.redemptions.0.redemptionCode', $redemption->redemption_code);
+            ->assertJsonPath('data.redemptions.0.redemptionCode', $redemption->redemption_code)
+            ->assertJsonPath('data.redemptions.0.rewardCode', 'small-drink-coupon')
+            ->assertJsonPath('data.redemptions.0.campaignCode', 'ecopark-pilot-1405');
 
         $this->actingAs($partnerUser)
             ->postJson(route('partner.redemptions.api.confirm'), [

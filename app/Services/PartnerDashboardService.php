@@ -77,26 +77,54 @@ class PartnerDashboardService
         $missionPlan = $blueprint['missionPlan'] ?? [];
         $rewardTiers = $blueprint['rewardDesign']['tiers'] ?? [];
         $rewardDefinitions = $partner->rewardDefinitions()
-            ->with(['campaign:id,code,name'])
+            ->with([
+                'campaign:id,code,name',
+                'inventoryAllocations' => fn ($query) => $query->where('partner_account_id', $partner->id),
+            ])
             ->withCount(['userRewards', 'userRewards as awarded_count' => fn ($query) => $query->where('status', 'awarded')])
             ->latest('created_at')
             ->get()
             ->map(fn (RewardDefinition $reward): array => $this->serializeRewardDefinition($reward));
+        $redemptionStatusCounts = $partner->rewardRedemptions()
+            ->select('status', DB::raw('count(*) as aggregate'))
+            ->groupBy('status')
+            ->pluck('aggregate', 'status');
+        $inventoryAllocations = RewardInventoryAllocation::query()
+            ->where('partner_account_id', $partner->id)
+            ->get();
+        $inventorySummary = [
+            'allocated' => (int) $inventoryAllocations->sum('allocated_quantity'),
+            'reserved' => (int) $inventoryAllocations->sum('reserved_quantity'),
+            'redeemed' => (int) $inventoryAllocations->sum('redeemed_quantity'),
+            'remaining' => (int) $inventoryAllocations->sum(
+                fn (RewardInventoryAllocation $allocation): int => max(
+                    0,
+                    $allocation->allocated_quantity - $allocation->reserved_quantity - $allocation->redeemed_quantity,
+                ),
+            ),
+        ];
         $redemptions = $partner->rewardRedemptions()
-            ->with(['user:id,name,email', 'userReward.rewardDefinition:id,code,name,reward_type'])
+            ->with(['user:id,name,email', 'userReward.rewardDefinition.campaign:id,code,name'])
             ->latest('created_at')
             ->limit(20)
             ->get()
-            ->map(fn (RewardRedemption $redemption): array => [
-                'id' => $redemption->id,
-                'redemptionCode' => $redemption->redemption_code,
-                'status' => $redemption->status,
-                'redeemedAt' => $redemption->redeemed_at?->toIso8601String(),
-                'createdAt' => $redemption->created_at?->toIso8601String(),
-                'visitorName' => $redemption->user?->name,
-                'rewardName' => $redemption->userReward?->rewardDefinition?->name,
-                'rewardType' => $redemption->userReward?->rewardDefinition?->reward_type,
-            ]);
+            ->map(function (RewardRedemption $redemption): array {
+                $reward = $redemption->userReward?->rewardDefinition;
+
+                return [
+                    'id' => $redemption->id,
+                    'redemptionCode' => $redemption->redemption_code,
+                    'status' => $redemption->status,
+                    'redeemedAt' => $redemption->redeemed_at?->toIso8601String(),
+                    'createdAt' => $redemption->created_at?->toIso8601String(),
+                    'visitorName' => $redemption->user?->name,
+                    'rewardName' => $reward?->name,
+                    'rewardCode' => $reward?->code,
+                    'rewardType' => $reward?->reward_type,
+                    'campaignName' => $reward?->campaign?->name,
+                    'campaignCode' => $reward?->campaign?->code,
+                ];
+            });
         $adRequests = $partner->adRequests()
             ->with(['hub:id,code,name', 'placements.displayDevice:id,code,name,device_type', 'creatives:id,ad_request_id,creative_type,status'])
             ->withCount([
@@ -144,8 +172,12 @@ class PartnerDashboardService
             'stats' => [
                 'rewardDefinitions' => $rewardDefinitions->count(),
                 'issuedRewards' => $rewardDefinitions->sum('userRewardsCount'),
-                'pendingRedemptions' => $redemptions->where('status', 'pending')->count(),
-                'confirmedRedemptions' => $redemptions->where('status', 'confirmed')->count(),
+                'pendingRedemptions' => (int) ($redemptionStatusCounts->get('pending') ?? 0),
+                'confirmedRedemptions' => (int) ($redemptionStatusCounts->get('confirmed') ?? 0),
+                'allocatedInventory' => $inventorySummary['allocated'],
+                'reservedInventory' => $inventorySummary['reserved'],
+                'redeemedInventory' => $inventorySummary['redeemed'],
+                'remainingInventory' => $inventorySummary['remaining'],
                 'adRequests' => $adRequests->count(),
                 'pendingAds' => $adRequests->where('status', 'pending_review')->count(),
                 'scheduledAds' => $adRequests->where('placementStatus', 'scheduled')->count(),
@@ -271,6 +303,17 @@ class PartnerDashboardService
     /** @return array<string, mixed> */
     public function serializeRewardDefinition(RewardDefinition $reward): array
     {
+        $inventoryAllocations = $reward->inventoryAllocations;
+        $inventoryAllocated = (int) $inventoryAllocations->sum('allocated_quantity');
+        $inventoryReserved = (int) $inventoryAllocations->sum('reserved_quantity');
+        $inventoryRedeemed = (int) $inventoryAllocations->sum('redeemed_quantity');
+        $inventoryRemaining = (int) $inventoryAllocations->sum(
+            fn (RewardInventoryAllocation $allocation): int => max(
+                0,
+                $allocation->allocated_quantity - $allocation->reserved_quantity - $allocation->redeemed_quantity,
+            ),
+        );
+
         return [
             'id' => $reward->id,
             'code' => $reward->code,
@@ -281,6 +324,10 @@ class PartnerDashboardService
             'stockQuantity' => $reward->stock_quantity,
             'userRewardsCount' => (int) $reward->getAttribute('user_rewards_count'),
             'awardedCount' => (int) $reward->getAttribute('awarded_count'),
+            'inventoryAllocated' => $inventoryAllocated,
+            'inventoryReserved' => $inventoryReserved,
+            'inventoryRedeemed' => $inventoryRedeemed,
+            'inventoryRemaining' => $inventoryRemaining,
             'campaignName' => $reward->campaign?->name,
             'approvalStatus' => $reward->metadata['approval_status'] ?? $reward->status->value,
             'availabilityStatus' => $reward->metadata['availability_status'] ?? ($reward->status === RecordStatus::Inactive ? 'paused' : 'active'),
@@ -339,10 +386,12 @@ class PartnerDashboardService
     {
         $partner = $this->partnerForUser($partnerUser);
 
-        return DB::transaction(function () use ($partner, $redemptionCode): RewardRedemption {
+        $normalizedCode = Str::upper(trim($redemptionCode));
+
+        return DB::transaction(function () use ($partner, $normalizedCode): RewardRedemption {
             $redemption = RewardRedemption::query()
                 ->with('userReward.rewardDefinition')
-                ->where('redemption_code', Str::upper($redemptionCode))
+                ->where('redemption_code', $normalizedCode)
                 ->lockForUpdate()
                 ->first();
 
@@ -353,7 +402,9 @@ class PartnerDashboardService
             }
 
             if ($redemption->status === 'confirmed') {
-                return $redemption;
+                throw ValidationException::withMessages([
+                    'redemption_code' => 'این کد قبلا مصرف شده است.',
+                ]);
             }
 
             if ($redemption->status !== 'pending') {
