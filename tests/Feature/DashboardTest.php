@@ -172,6 +172,21 @@ class DashboardTest extends TestCase
             ->assertRedirect(route('participant.dashboard'));
     }
 
+    public function test_default_users_do_not_get_internal_dashboard_access(): void
+    {
+        $user = User::factory()->create();
+
+        $this->assertSame(UserRole::Visitor, $user->role);
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertRedirect(route('participant.dashboard'));
+
+        $this->actingAs($user)
+            ->get(route('admin.demo-cycle.page'))
+            ->assertForbidden();
+    }
+
     public function test_dashboard_shows_pilot_operational_stats(): void
     {
         $this->withoutVite();

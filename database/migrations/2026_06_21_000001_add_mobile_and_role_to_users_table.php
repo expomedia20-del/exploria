@@ -12,7 +12,7 @@ return new class extends Migration
         Schema::table('users', function (Blueprint $table) {
             $table->text('mobile')->nullable()->after('name');
             $table->char('mobile_hash', 64)->nullable()->unique()->after('mobile');
-            $table->string('role', 20)->default(UserRole::Viewer->value)->index()->after('password');
+            $table->string('role', 20)->default(UserRole::Visitor->value)->index()->after('password');
         });
     }
 

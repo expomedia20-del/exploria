@@ -37,6 +37,13 @@ class User extends Authenticatable implements PasskeyUser
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
 
+    protected static function booted(): void
+    {
+        static::creating(function (User $user): void {
+            $user->role ??= UserRole::Visitor;
+        });
+    }
+
     /**
      * Get the attributes that should be cast.
      *
