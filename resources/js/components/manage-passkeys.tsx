@@ -17,9 +17,9 @@ const EmptyState = () => {
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-muted">
                 <KeyRound className="h-7 w-7 text-muted-foreground" />
             </div>
-            <p className="font-medium">No passkeys yet</p>
+            <p className="font-medium">هنوز کلید عبوری ثبت نشده است</p>
             <p className="mt-1 text-sm text-muted-foreground">
-                Add a passkey to sign in without a password
+                برای ورود بدون رمز عبور، یک کلید عبور اضافه کنید.
             </p>
         </div>
     );
@@ -47,8 +47,8 @@ export default function ManagePasskeys(props: Props) {
         <div className="space-y-6">
             <Heading
                 variant="small"
-                title="Passkeys"
-                description="Manage your passkeys for passwordless sign-in"
+                title="کلیدهای عبور"
+                description="کلیدهای عبور حساب را برای ورود بدون رمز مدیریت کنید."
             />
 
             <div className="overflow-hidden rounded-lg border border-border">

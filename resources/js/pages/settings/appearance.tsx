@@ -6,15 +6,15 @@ import { edit as editAppearance } from '@/routes/appearance';
 export default function Appearance() {
     return (
         <>
-            <Head title="Appearance settings" />
+            <Head title="تنظیمات نمایش" />
 
-            <h1 className="sr-only">Appearance settings</h1>
+            <h1 className="sr-only">تنظیمات نمایش</h1>
 
             <div className="space-y-6">
                 <Heading
                     variant="small"
-                    title="Appearance settings"
-                    description="Update the appearance settings for your account"
+                    title="تنظیمات نمایش"
+                    description="حالت روشن، تاریک یا هماهنگ با سیستم را انتخاب کنید."
                 />
                 <AppearanceTabs />
             </div>
@@ -25,7 +25,7 @@ export default function Appearance() {
 Appearance.layout = {
     breadcrumbs: [
         {
-            title: 'Appearance settings',
+            title: 'تنظیمات نمایش',
             href: editAppearance(),
         },
     ],
