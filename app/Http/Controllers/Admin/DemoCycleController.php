@@ -12,15 +12,19 @@ use App\Models\UserMissionProgress;
 use App\Models\UserReward;
 use App\Models\Visit;
 use App\Services\EcoParkDemoReadinessService;
+use App\Services\VenueRegistryService;
 use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class DemoCycleController extends Controller
 {
-    public function page(EcoParkDemoReadinessService $readiness): Response
+    public function page(EcoParkDemoReadinessService $readiness, VenueRegistryService $venues): Response
     {
         $readinessReport = $readiness->report();
+        $demoStressPlan = $venues->list()
+            ->firstWhere('code', 'ecopark-abbasabad')['demoStressPlan']
+            ?? null;
 
         return Inertia::render('admin/demo-cycle/index', [
             'summary' => [
@@ -32,6 +36,7 @@ class DemoCycleController extends Controller
             ],
             'stages' => $this->stages(),
             'stageHealth' => $this->stageHealth($readinessReport),
+            'demoStressPlan' => $demoStressPlan,
             'commercialPackages' => $this->commercialPackages(),
         ]);
     }

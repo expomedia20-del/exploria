@@ -48,6 +48,7 @@ class DashboardTest extends TestCase
     public function test_internal_users_can_open_demo_cycle_page(): void
     {
         $this->withoutVite();
+        $this->seed(PilotLocationSeeder::class);
 
         $user = User::factory()->create(['role' => UserRole::Admin]);
 
@@ -59,6 +60,12 @@ class DashboardTest extends TestCase
                 ->where('summary.stagesCount', 5)
                 ->has('stages', 5)
                 ->has('stageHealth', 4)
+                ->where('demoStressPlan.title', 'دموی فشار از ارزیابی مکان تا اجرا')
+                ->where('demoStressPlan.summary.totalCount', 11)
+                ->where('demoStressPlan.items.0.key', 'venue')
+                ->where('demoStressPlan.items.1.key', 'blueprint')
+                ->where('demoStressPlan.items.9.key', 'redemption')
+                ->where('demoStressPlan.items.9.actionHref', '/partner/dashboard?campaign=ecopark-pilot-1405')
                 ->has('commercialPackages', 3));
     }
 
