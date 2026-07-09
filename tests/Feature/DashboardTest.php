@@ -4,8 +4,10 @@ namespace Tests\Feature;
 
 use App\Enums\UserRole;
 use App\Models\ConsentVersion;
+use App\Models\RewardRedemption;
 use App\Models\MissionInstance;
 use App\Models\User;
+use App\Models\UserReward;
 use App\Models\Visit;
 use Database\Seeders\ConsentVersionSeeder;
 use Database\Seeders\PilotLocationSeeder;
@@ -66,7 +68,44 @@ class DashboardTest extends TestCase
                 ->where('demoStressPlan.items.1.key', 'blueprint')
                 ->where('demoStressPlan.items.9.key', 'redemption')
                 ->where('demoStressPlan.items.9.actionHref', '/partner/dashboard?campaign=ecopark-pilot-1405')
+                ->where('executionReport.isExecuted', false)
+                ->where('executionReport.action.href', '/admin/demo-cycle/run-stress-demo')
+                ->has('executionReport.timeline', 9)
                 ->has('commercialPackages', 3));
+    }
+
+    public function test_admin_can_run_full_demo_cycle_from_demo_page(): void
+    {
+        $this->withoutVite();
+        $this->seed(PilotLocationSeeder::class);
+
+        $user = User::factory()->create(['role' => UserRole::Admin]);
+
+        $this->actingAs($user)
+            ->post(route('admin.demo-cycle.run-stress-demo'))
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertSame(1, UserReward::query()
+            ->whereHas('campaign', fn ($query) => $query->where('code', 'ecopark-online-treasure-map-game-campaign'))
+            ->count());
+        $this->assertSame(1, RewardRedemption::query()->where('status', 'confirmed')->count());
+
+        $this->actingAs($user)
+            ->get(route('admin.demo-cycle.page'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('admin/demo-cycle/index')
+                ->where('executionReport.isExecuted', true)
+                ->where('executionReport.campaign.code', 'ecopark-online-treasure-map-game-campaign')
+                ->where('executionReport.roi.roiPercent', 71)
+                ->where('executionReport.roi.redemptionRate', 100)
+                ->where('executionReport.metrics.5.label', 'مصرف تاییدشده')
+                ->where('executionReport.metrics.5.value', 1)
+                ->where('executionReport.latestRedemption.status', 'confirmed')
+                ->has('executionReport.timeline', 9)
+                ->where('executionReport.timeline.8.key', 'roi')
+                ->where('executionReport.timeline.8.status', 'complete'));
     }
 
     public function test_internal_users_can_open_commercialization_page(): void

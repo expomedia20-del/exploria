@@ -5,20 +5,31 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\Campaign;
+use App\Models\CampaignParticipant;
+use App\Models\CampaignSponsorship;
 use App\Models\DisplayDevice;
+use App\Models\QrCode;
+use App\Models\RewardDefinition;
+use App\Models\RewardInventoryAllocation;
 use App\Models\RewardRedemption;
+use App\Models\SponsorProposal;
+use App\Models\Treasure;
 use App\Models\User;
 use App\Models\UserMissionProgress;
 use App\Models\UserReward;
 use App\Models\Visit;
 use App\Services\EcoParkDemoReadinessService;
 use App\Services\VenueRegistryService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Artisan;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class DemoCycleController extends Controller
 {
+    private const STRESS_DEMO_CAMPAIGN_CODE = 'ecopark-online-treasure-map-game-campaign';
+
     public function page(EcoParkDemoReadinessService $readiness, VenueRegistryService $venues): Response
     {
         $readinessReport = $readiness->report();
@@ -37,8 +48,18 @@ class DemoCycleController extends Controller
             'stages' => $this->stages(),
             'stageHealth' => $this->stageHealth($readinessReport),
             'demoStressPlan' => $demoStressPlan,
+            'executionReport' => $this->executionReport(),
             'commercialPackages' => $this->commercialPackages(),
         ]);
+    }
+
+    public function runStressDemo(): RedirectResponse
+    {
+        Artisan::call('exploria:prepare-stress-demo', [
+            '--execute-visitor' => true,
+        ]);
+
+        return back()->with('success', 'دموی کامل اکوپارک اجرا شد؛ ورود، ماموریت، گنج، پاداش، مصرف فروشگاهی و گزارش ROI به‌روز شد.');
     }
 
     /**
@@ -276,6 +297,183 @@ class DemoCycleController extends Controller
                 'buyer' => 'فروشگاه، فودکورت، رستوران یا واحد فرهنگی',
                 'deliverable' => 'پنل واحد، پیشنهاد/پاداش، مصرف کد، گزارش مراجعه و مشوق خرید بعدی',
             ],
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function executionReport(): array
+    {
+        $campaign = Campaign::query()
+            ->where('code', self::STRESS_DEMO_CAMPAIGN_CODE)
+            ->first();
+
+        if (! $campaign) {
+            return [
+                'isExecuted' => false,
+                'campaign' => null,
+                'action' => [
+                    'label' => 'اجرای دموی کامل اکوپارک',
+                    'href' => '/admin/demo-cycle/run-stress-demo',
+                ],
+                'metrics' => [],
+                'timeline' => $this->executionTimeline(null),
+                'roi' => $this->emptyRoiSummary(),
+                'latestRedemption' => null,
+            ];
+        }
+
+        $campaignId = $campaign->id;
+        $rewardIds = RewardDefinition::query()
+            ->where('campaign_id', $campaignId)
+            ->pluck('id');
+        $userRewardIds = UserReward::query()
+            ->where('campaign_id', $campaignId)
+            ->pluck('id');
+        $confirmedRedemptions = RewardRedemption::query()
+            ->whereIn('user_reward_id', $userRewardIds)
+            ->whereIn('status', ['confirmed', 'redeemed'])
+            ->count();
+
+        return [
+            'isExecuted' => Visit::query()->where('campaign_id', $campaignId)->exists()
+                && UserMissionProgress::query()
+                    ->whereHas('missionInstance', fn ($query) => $query->where('campaign_id', $campaignId))
+                    ->where('status', 'completed')
+                    ->exists()
+                && $confirmedRedemptions > 0,
+            'campaign' => [
+                'id' => $campaign->id,
+                'code' => $campaign->code,
+                'name' => $campaign->name,
+                'blueprintCode' => $campaign->metadata['blueprint_code'] ?? null,
+            ],
+            'action' => [
+                'label' => 'اجرای دوباره دموی کامل',
+                'href' => '/admin/demo-cycle/run-stress-demo',
+            ],
+            'metrics' => [
+                $this->metric('QR فعال', QrCode::query()->where('campaign_id', $campaignId)->where('status', 'active')->count()),
+                $this->metric('بازدید ثبت‌شده', Visit::query()->where('campaign_id', $campaignId)->count()),
+                $this->metric('ماموریت تکمیل‌شده', UserMissionProgress::query()
+                    ->whereHas('missionInstance', fn ($query) => $query->where('campaign_id', $campaignId))
+                    ->where('status', 'completed')
+                    ->count()),
+                $this->metric('گنج متصل', Treasure::query()->where('campaign_id', $campaignId)->count()),
+                $this->metric('پاداش صادرشده', UserReward::query()->where('campaign_id', $campaignId)->count()),
+                $this->metric('مصرف تاییدشده', $confirmedRedemptions),
+                $this->metric('واحد عضو کمپین', CampaignParticipant::query()->where('campaign_id', $campaignId)->count()),
+                $this->metric('سهم موجودی فعال', RewardInventoryAllocation::query()->whereIn('reward_definition_id', $rewardIds)->where('status', 'active')->count()),
+            ],
+            'timeline' => $this->executionTimeline($campaign),
+            'roi' => $this->roiSummary($campaign, $confirmedRedemptions),
+            'latestRedemption' => $this->latestRedemption($userRewardIds),
+        ];
+    }
+
+    /** @return array<int, array<string, string>> */
+    private function executionTimeline(?Campaign $campaign): array
+    {
+        $campaignId = $campaign?->id;
+        $userRewardIds = $campaignId
+            ? UserReward::query()->where('campaign_id', $campaignId)->pluck('id')
+            : collect();
+
+        $items = [
+            ['key' => 'venue', 'title' => 'ارزیابی مکان', 'done' => $campaign !== null && ($campaign->metadata['design_venue_code'] ?? null) === 'ecopark-abbasabad'],
+            ['key' => 'blueprint', 'title' => 'انتخاب الگو', 'done' => $campaign !== null && ($campaign->metadata['blueprint_code'] ?? null) === 'ecopark-online-treasure-map-game'],
+            ['key' => 'campaign', 'title' => 'ساخت کمپین', 'done' => $campaign !== null],
+            ['key' => 'qr', 'title' => 'QR و ورود', 'done' => $campaignId && QrCode::query()->where('campaign_id', $campaignId)->where('status', 'active')->exists()],
+            ['key' => 'mission', 'title' => 'ماموریت کاربر', 'done' => $campaignId && UserMissionProgress::query()->whereHas('missionInstance', fn ($query) => $query->where('campaign_id', $campaignId))->where('status', 'completed')->exists()],
+            ['key' => 'treasure', 'title' => 'گنج پنهان', 'done' => $campaignId && Treasure::query()->where('campaign_id', $campaignId)->exists()],
+            ['key' => 'reward', 'title' => 'پاداش فروشگاهی/اسپانسری', 'done' => $campaignId && UserReward::query()->where('campaign_id', $campaignId)->exists()],
+            ['key' => 'redemption', 'title' => 'مصرف توسط فروشگاه', 'done' => $userRewardIds->isNotEmpty() && RewardRedemption::query()->whereIn('user_reward_id', $userRewardIds)->whereIn('status', ['confirmed', 'redeemed'])->exists()],
+            ['key' => 'roi', 'title' => 'گزارش ROI', 'done' => $campaignId && Visit::query()->where('campaign_id', $campaignId)->exists() && $userRewardIds->isNotEmpty()],
+        ];
+
+        return collect($items)
+            ->map(fn (array $item): array => [
+                'key' => $item['key'],
+                'title' => $item['title'],
+                'status' => $item['done'] ? 'complete' : 'pending',
+                'label' => $item['done'] ? 'انجام شد' : 'منتظر اجرا',
+            ])
+            ->values()
+            ->all();
+    }
+
+    /** @return array<string, mixed> */
+    private function roiSummary(Campaign $campaign, int $confirmedRedemptions): array
+    {
+        $investment = (int) CampaignSponsorship::query()
+            ->where('campaign_id', $campaign->id)
+            ->sum('budget_amount')
+            + (int) SponsorProposal::query()
+                ->where('campaign_id', $campaign->id)
+                ->where('status', 'approved')
+                ->sum('proposed_budget_amount');
+        $estimatedValue = (int) CampaignSponsorship::query()
+            ->where('campaign_id', $campaign->id)
+            ->sum('contract_value')
+            + (int) SponsorProposal::query()
+                ->where('campaign_id', $campaign->id)
+                ->where('status', 'approved')
+                ->sum('estimated_value_amount');
+        $visits = Visit::query()->where('campaign_id', $campaign->id)->count();
+        $completedMissions = UserMissionProgress::query()
+            ->whereHas('missionInstance', fn ($query) => $query->where('campaign_id', $campaign->id))
+            ->where('status', 'completed')
+            ->count();
+        $roiPercent = $investment > 0 ? (int) round((($estimatedValue - $investment) / $investment) * 100) : 0;
+        $redemptionRate = $visits > 0 ? (int) round(($confirmedRedemptions / $visits) * 100) : 0;
+
+        return [
+            'investment' => $investment,
+            'estimatedValue' => $estimatedValue,
+            'roiPercent' => $roiPercent,
+            'redemptionRate' => $redemptionRate,
+            'completedMissions' => $completedMissions,
+            'narrative' => $confirmedRedemptions > 0
+                ? 'مسیر دمو از ورود تا مصرف پاداش بسته شده و برای مذاکره فروش قابل عددگذاری است.'
+                : 'برای عددگذاری نهایی ROI، مصرف پاداش توسط فروشگاه را اجرا کنید.',
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function emptyRoiSummary(): array
+    {
+        return [
+            'investment' => 0,
+            'estimatedValue' => 0,
+            'roiPercent' => 0,
+            'redemptionRate' => 0,
+            'completedMissions' => 0,
+            'narrative' => 'برای ساخت گزارش ROI، ابتدا دموی کامل را اجرا کنید.',
+        ];
+    }
+
+    /** @param Collection<int, string> $userRewardIds */
+    private function latestRedemption(Collection $userRewardIds): ?array
+    {
+        if ($userRewardIds->isEmpty()) {
+            return null;
+        }
+
+        $redemption = RewardRedemption::query()
+            ->with(['partnerAccount:id,name', 'userReward.rewardDefinition:id,name,reward_type'])
+            ->whereIn('user_reward_id', $userRewardIds)
+            ->latest('created_at')
+            ->first();
+
+        if (! $redemption) {
+            return null;
+        }
+
+        return [
+            'code' => $redemption->redemption_code,
+            'status' => $redemption->status,
+            'partnerName' => $redemption->partnerAccount?->name,
+            'rewardName' => $redemption->userReward?->rewardDefinition?->name,
+            'redeemedAt' => $redemption->redeemed_at?->toIso8601String(),
         ];
     }
 

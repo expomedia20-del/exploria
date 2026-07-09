@@ -1,9 +1,11 @@
-import { Head, Link } from '@inertiajs/react';
+import { Form, Head, Link } from '@inertiajs/react';
+import { Button } from '@/components/ui/button';
 import {
     ArrowLeft,
     CheckCircle2,
     ClipboardCheck,
     Flag,
+    Play,
     Route,
 } from 'lucide-react';
 
@@ -77,11 +79,48 @@ type DemoStressPlan = {
     items: DemoStressItem[];
 };
 
+type ExecutionReport = {
+    isExecuted: boolean;
+    campaign: {
+        id: string;
+        code: string;
+        name: string;
+        blueprintCode: string | null;
+    } | null;
+    action: {
+        label: string;
+        href: string;
+    };
+    metrics: StageMetric[];
+    timeline: {
+        key: string;
+        title: string;
+        status: 'complete' | 'pending';
+        label: string;
+    }[];
+    roi: {
+        investment: number;
+        estimatedValue: number;
+        roiPercent: number;
+        redemptionRate: number;
+        completedMissions: number;
+        narrative: string;
+    };
+    latestRedemption: {
+        code: string;
+        status: string;
+        partnerName: string | null;
+        rewardName: string | null;
+        redeemedAt: string | null;
+    } | null;
+};
+
 type Props = {
     summary: DemoSummary;
     stages: DemoStage[];
     stageHealth: StageHealth[];
     demoStressPlan: DemoStressPlan | null;
+    executionReport: ExecutionReport;
     commercialPackages: CommercialPackage[];
 };
 
@@ -118,6 +157,7 @@ export default function DemoCycleIndex({
     stages,
     stageHealth,
     demoStressPlan,
+    executionReport,
     commercialPackages,
 }: Props) {
     const healthByStage = new Map(
@@ -198,6 +238,168 @@ export default function DemoCycleIndex({
                             </article>
                         );
                     })}
+                </section>
+
+                <section className="rounded-lg border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border">
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                        <div>
+                            <p className="text-sm text-muted-foreground">
+                                اجرای عملیاتی دمو
+                            </p>
+                            <h2 className="mt-1 text-xl font-semibold">
+                                از QR تا مصرف پاداش و ROI
+                            </h2>
+                            <p className="mt-2 max-w-4xl text-sm leading-7 text-muted-foreground">
+                                این اجرا داده‌های واقعی دمو را می‌سازد یا
+                                به‌روزرسانی می‌کند: مکان، الگو، کمپین، QR، مسیر
+                                کاربر، ماموریت‌ها، گنج، پاداش اسپانسری، مصرف
+                                فروشگاهی و گزارش عددی ROI.
+                            </p>
+                        </div>
+                        <Form
+                            action={executionReport.action.href}
+                            method="post"
+                            options={{ preserveScroll: true }}
+                        >
+                            {({ processing }) => (
+                                <Button disabled={processing}>
+                                    <Play className="size-4" />
+                                    {processing
+                                        ? 'در حال اجرا'
+                                        : executionReport.action.label}
+                                </Button>
+                            )}
+                        </Form>
+                    </div>
+
+                    <div className="mt-4 grid gap-3 lg:grid-cols-[1.2fr_0.8fr]">
+                        <div className="rounded-md border border-border/70 bg-background p-3">
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                <h3 className="font-semibold">
+                                    خط اجرای end-to-end
+                                </h3>
+                                <span
+                                    className={`rounded-full px-3 py-1 text-xs font-medium ${
+                                        executionReport.isExecuted
+                                            ? 'bg-emerald-50 text-emerald-900'
+                                            : 'bg-amber-50 text-amber-900'
+                                    }`}
+                                >
+                                    {executionReport.isExecuted
+                                        ? 'اجرا شده'
+                                        : 'منتظر اجرا'}
+                                </span>
+                            </div>
+                            <div className="mt-3 grid gap-2 md:grid-cols-3">
+                                {executionReport.timeline.map((item) => (
+                                    <div
+                                        key={item.key}
+                                        className="flex min-h-16 items-start gap-2 rounded-md bg-muted/40 p-3 text-sm"
+                                    >
+                                        <CheckCircle2
+                                            className={`mt-1 size-4 shrink-0 ${
+                                                item.status === 'complete'
+                                                    ? 'text-emerald-600'
+                                                    : 'text-muted-foreground'
+                                            }`}
+                                        />
+                                        <div>
+                                            <p className="font-medium">
+                                                {item.title}
+                                            </p>
+                                            <p className="mt-1 text-xs text-muted-foreground">
+                                                {item.label}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="rounded-md border border-border/70 bg-background p-3">
+                            <h3 className="font-semibold">گزارش ROI</h3>
+                            <p className="mt-2 text-sm leading-7 text-muted-foreground">
+                                {executionReport.roi.narrative}
+                            </p>
+                            <div className="mt-3 grid gap-2 text-sm">
+                                <div className="flex justify-between gap-3">
+                                    <span className="text-muted-foreground">
+                                        سرمایه‌گذاری
+                                    </span>
+                                    <strong>
+                                        {executionReport.roi.investment.toLocaleString(
+                                            'fa-IR',
+                                        )}{' '}
+                                        ریال
+                                    </strong>
+                                </div>
+                                <div className="flex justify-between gap-3">
+                                    <span className="text-muted-foreground">
+                                        ارزش تخمینی
+                                    </span>
+                                    <strong>
+                                        {executionReport.roi.estimatedValue.toLocaleString(
+                                            'fa-IR',
+                                        )}{' '}
+                                        ریال
+                                    </strong>
+                                </div>
+                                <div className="flex justify-between gap-3">
+                                    <span className="text-muted-foreground">
+                                        ROI
+                                    </span>
+                                    <strong>
+                                        {executionReport.roi.roiPercent.toLocaleString(
+                                            'fa-IR',
+                                        )}
+                                        ٪
+                                    </strong>
+                                </div>
+                                <div className="flex justify-between gap-3">
+                                    <span className="text-muted-foreground">
+                                        نرخ مصرف پاداش
+                                    </span>
+                                    <strong>
+                                        {executionReport.roi.redemptionRate.toLocaleString(
+                                            'fa-IR',
+                                        )}
+                                        ٪
+                                    </strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="mt-4 grid gap-2 md:grid-cols-4">
+                        {executionReport.metrics.map((metric) => (
+                            <div
+                                key={metric.label}
+                                className="rounded-md bg-muted/40 p-3"
+                            >
+                                <p className="text-xs text-muted-foreground">
+                                    {metric.label}
+                                </p>
+                                <p className="mt-1 text-xl font-semibold">
+                                    {metric.value.toLocaleString('fa-IR')}
+                                </p>
+                            </div>
+                        ))}
+                    </div>
+
+                    {executionReport.latestRedemption ? (
+                        <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm leading-7 text-emerald-950">
+                            آخرین مصرف پاداش:{' '}
+                            {executionReport.latestRedemption.rewardName ??
+                                'پاداش دمو'}{' '}
+                            در{' '}
+                            {executionReport.latestRedemption.partnerName ??
+                                'فروشگاه دمو'}{' '}
+                            با کد{' '}
+                            <span dir="ltr">
+                                {executionReport.latestRedemption.code}
+                            </span>
+                        </div>
+                    ) : null}
                 </section>
 
                 {demoStressPlan ? (

@@ -150,6 +150,9 @@ Route::get('/admin/internal-operations', [InternalOperationsController::class, '
 Route::get('/admin/demo-cycle', [DemoCycleController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer'])
     ->name('admin.demo-cycle.page');
+Route::post('/admin/demo-cycle/run-stress-demo', [DemoCycleController::class, 'runStressDemo'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.demo-cycle.run-stress-demo');
 
 Route::get('/admin/commercialization', [CommercializationController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer'])
