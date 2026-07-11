@@ -1,10 +1,12 @@
 import { Form, Head, Link } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import {
+    AlertTriangle,
     ArrowLeft,
     CheckCircle2,
     ClipboardCheck,
     Flag,
+    ListChecks,
     Play,
     Route,
 } from 'lucide-react';
@@ -49,6 +51,20 @@ type CommercialPackage = {
     title: string;
     buyer: string;
     deliverable: string;
+};
+
+type OperationalChecklistItem = {
+    label: string;
+    owner: string;
+    hint: string;
+    complete: boolean;
+    href?: string;
+};
+
+type OperationalChecklistGroup = {
+    title: string;
+    subtitle: string;
+    items: OperationalChecklistItem[];
 };
 
 type DemoStressItem = {
@@ -146,6 +162,16 @@ const stressStatusClassName = {
     needs_action: 'bg-rose-50 text-rose-900',
 };
 
+const operationalStatusLabel = {
+    complete: 'انجام شده',
+    needs_action: 'نیازمند اقدام',
+};
+
+const operationalStatusClassName = {
+    complete: 'bg-emerald-50 text-emerald-900',
+    needs_action: 'bg-amber-50 text-amber-950',
+};
+
 const riskLabel = {
     low: 'ریسک پایین',
     medium: 'ریسک متوسط',
@@ -169,6 +195,140 @@ export default function DemoCycleIndex({
     const readyStages = stageHealth.filter(
         (stage) => stage.status === 'ready',
     ).length;
+    const stressItemsByKey = new Map(
+        (demoStressPlan?.items ?? []).map((item) => [item.key, item]),
+    );
+    const stressComplete = (key: string) =>
+        stressItemsByKey.get(key)?.complete ?? false;
+    const allStagesReady =
+        summary.stagesCount > 0 && readyStages === summary.stagesCount;
+    const operationalChecklist: OperationalChecklistGroup[] = [
+        {
+            title: 'چک‌لیست ۷۲ ساعت قبل از اجرا',
+            subtitle: 'آماده‌سازی مکان، کمپین، QR، پاداش و نقش‌ها',
+            items: [
+                {
+                    label: 'پروفایل مکان، زون‌ها و مسیر پایلوت تایید شده‌اند',
+                    owner: 'مدیر پروژه / مدیر مکان',
+                    hint: 'مبنای اجرای میدانی و روایت دمو باید قبل از روز اجرا روشن باشد.',
+                    complete:
+                        stressComplete('venue') &&
+                        stressComplete('route_operations'),
+                    href: '/admin/venues',
+                },
+                {
+                    label: 'کمپین و الگوی متصل برای اکوپارک انتخاب شده‌اند',
+                    owner: 'ادمین عملیات',
+                    hint: 'کمپین باید هدف، روایت و blueprint قابل توضیح داشته باشد.',
+                    complete: stressComplete('blueprint'),
+                    href: demoStressPlan?.selectedCampaign
+                        ? `/admin/campaign-builder?campaign=${demoStressPlan.selectedCampaign.code}`
+                        : '/admin/campaigns',
+                },
+                {
+                    label: 'QR، ورود کاربر و صفحه فرود روی موبایل تست شده‌اند',
+                    owner: 'ادمین / اپراتور میدانی',
+                    hint: 'QR باید کاربر را به کمپین درست و شروع تجربه برساند.',
+                    complete: stressComplete('qr_entry'),
+                    href: '/admin/qr-codes',
+                },
+                {
+                    label: 'ماموریت، گنج، پاداش و موجودی قابل مصرف آماده‌اند',
+                    owner: 'ادمین / فروشگاه / اسپانسر',
+                    hint: 'حداقل یک مسیر کامل از ماموریت تا صدور پاداش باید قابل اجرا باشد.',
+                    complete:
+                        stressComplete('layered_incentives') &&
+                        stressComplete('inventory'),
+                    href: '/admin/missions',
+                },
+            ],
+        },
+        {
+            title: 'چک‌لیست روز اجرا',
+            subtitle: 'کنترل مسیر واقعی کاربر و مصرف پاداش',
+            items: [
+                {
+                    label: 'داده دمو و سناریوی stress-demo در دسترس است',
+                    owner: 'مدیر پروژه اکسپلوریا',
+                    hint: 'اگر داده ناقص باشد، اجرای end-to-end باید از همین صفحه دوباره ساخته شود.',
+                    complete: Boolean(demoStressPlan),
+                    href: '/admin/demo-cycle',
+                },
+                {
+                    label: 'اپراتور، شریک، رواق و پشتیبانی نقش خود را می‌دانند',
+                    owner: 'مدیر عملیات',
+                    hint: 'ابهام نقش در روز اجرا باید به عنوان ریسک عملیاتی دیده شود.',
+                    complete:
+                        allStagesReady &&
+                        stressComplete('partner_mix') &&
+                        stressComplete('sponsor_mix'),
+                    href: '/admin/access-scopes',
+                },
+                {
+                    label: 'کاربر از QR وارد شده و حداقل یک ماموریت را کامل کرده است',
+                    owner: 'اپراتور میدانی',
+                    hint: 'این آیتم نقطه اثبات تجربه واقعی بازدیدکننده است.',
+                    complete: stressComplete('visitor_execution'),
+                    href: '/admin/campaign-operations',
+                },
+                {
+                    label: 'مصرف پاداش توسط شریک تایید یا ثبت شده است',
+                    owner: 'فروشگاه / شریک',
+                    hint: 'بدون مصرف تاییدشده، گزارش فروش و ROI ناقص می‌ماند.',
+                    complete: stressComplete('redemption'),
+                    href: '/partner/dashboard',
+                },
+            ],
+        },
+        {
+            title: 'چک‌لیست خروجی فروش',
+            subtitle: 'ROI، شواهد تبلیغات، بسته قیمت‌گذاری و مرزهای Scope',
+            items: [
+                {
+                    label: 'گزارش ROI با اسکن، ماموریت و مصرف پاداش قابل نمایش است',
+                    owner: 'ادمین / تیم فروش',
+                    hint: 'گزارش باید ارزش مکان، شریک و اسپانسر را جداگانه توضیح دهد.',
+                    complete:
+                        executionReport.isExecuted &&
+                        executionReport.roi.roiPercent > 0,
+                    href: '/admin/commercialization',
+                },
+                {
+                    label: 'اثر اسپانسر، تبلیغات و نمایشگرها در گزارش دیده می‌شود',
+                    owner: 'ادمین / اسپانسر',
+                    hint: 'این بخش دمو را از ابزار داخلی به پیشنهاد درآمدی تبدیل می‌کند.',
+                    complete: stressComplete('reporting'),
+                    href: '/admin/commercialization',
+                },
+                {
+                    label: 'پکیج فروش برای مکان، اسپانسر و شریک آماده ارائه است',
+                    owner: 'تیم فروش',
+                    hint: 'خروجی تجاری باید بعد از اجرای دمو به پیشنهاد قابل مذاکره وصل شود.',
+                    complete: commercialPackages.length >= 3,
+                    href: '/admin/commercialization',
+                },
+                {
+                    label: 'موارد خارج از دامنه روز اجرا مشخص و کنترل شده‌اند',
+                    owner: 'مدیر پروژه',
+                    hint: 'تسویه پیچیده، چندمکانی همزمان، قرعه‌کشی عمومی و offline sync در MVP اجرا نمی‌شوند.',
+                    complete: true,
+                },
+            ],
+        },
+    ];
+    const operationalTotal = operationalChecklist.reduce(
+        (total, group) => total + group.items.length,
+        0,
+    );
+    const operationalComplete = operationalChecklist.reduce(
+        (total, group) =>
+            total + group.items.filter((item) => item.complete).length,
+        0,
+    );
+    const operationalProgress =
+        operationalTotal > 0
+            ? Math.round((operationalComplete / operationalTotal) * 100)
+            : 0;
 
     return (
         <>
@@ -285,6 +445,106 @@ export default function DemoCycleIndex({
                             </article>
                         );
                     })}
+                </section>
+
+                <section className="rounded-lg border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border">
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <ListChecks className="size-5 text-primary" />
+                                <h2 className="text-xl font-semibold">
+                                    چک‌لیست عملیاتی Playbook پایلوت
+                                </h2>
+                            </div>
+                            <p className="mt-2 max-w-4xl text-sm leading-7 text-muted-foreground">
+                                این بخش Playbook اجرایی اکوپارک را به آیتم‌های
+                                قابل مشاهده و قابل کنترل تبدیل می‌کند؛ از آمادگی
+                                ۷۲ ساعت قبل از اجرا تا روز اجرا و خروجی فروش.
+                            </p>
+                        </div>
+                        <div className="grid min-w-56 gap-1 rounded-md bg-muted/40 p-3 text-sm">
+                            <span className="text-muted-foreground">
+                                پیشرفت عملیاتی
+                            </span>
+                            <strong className="text-2xl">
+                                {operationalProgress.toLocaleString('fa-IR')}٪
+                            </strong>
+                            <span className="text-xs text-muted-foreground">
+                                {operationalComplete.toLocaleString('fa-IR')} از{' '}
+                                {operationalTotal.toLocaleString('fa-IR')} مورد
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="mt-4 grid gap-4 xl:grid-cols-3">
+                        {operationalChecklist.map((group) => (
+                            <div key={group.title} className="space-y-3">
+                                <div>
+                                    <h3 className="font-semibold">
+                                        {group.title}
+                                    </h3>
+                                    <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                                        {group.subtitle}
+                                    </p>
+                                </div>
+
+                                <div className="space-y-2">
+                                    {group.items.map((item) => {
+                                        const status = item.complete
+                                            ? 'complete'
+                                            : 'needs_action';
+
+                                        return (
+                                            <div
+                                                key={item.label}
+                                                className="rounded-md border border-border/70 bg-background p-3"
+                                            >
+                                                <div className="flex items-start justify-between gap-3">
+                                                    <div className="flex gap-2">
+                                                        {item.complete ? (
+                                                            <CheckCircle2 className="mt-1 size-4 shrink-0 text-emerald-600" />
+                                                        ) : (
+                                                            <AlertTriangle className="mt-1 size-4 shrink-0 text-amber-600" />
+                                                        )}
+                                                        <div>
+                                                            <p className="text-sm leading-6 font-medium">
+                                                                {item.label}
+                                                            </p>
+                                                            <p className="mt-1 text-xs text-muted-foreground">
+                                                                مسئول:{' '}
+                                                                {item.owner}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <span
+                                                        className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${operationalStatusClassName[status]}`}
+                                                    >
+                                                        {
+                                                            operationalStatusLabel[
+                                                                status
+                                                            ]
+                                                        }
+                                                    </span>
+                                                </div>
+                                                <p className="mt-3 text-sm leading-7 text-muted-foreground">
+                                                    {item.hint}
+                                                </p>
+                                                {item.href ? (
+                                                    <Link
+                                                        href={item.href}
+                                                        className="mt-3 inline-flex items-center gap-2 rounded-md border border-input bg-card px-3 py-2 text-sm font-medium"
+                                                    >
+                                                        مشاهده مسیر
+                                                        <ArrowLeft className="size-4" />
+                                                    </Link>
+                                                ) : null}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </section>
 
                 <section className="rounded-lg border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border">
