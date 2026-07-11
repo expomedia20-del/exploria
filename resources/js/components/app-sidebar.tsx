@@ -21,6 +21,7 @@ import {
     Trophy,
     UserCog,
     UsersRound,
+    WalletCards,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
@@ -248,6 +249,13 @@ const mainNavItems: RoleAwareNavItem[] = [
             'shop_partner',
             'sponsor',
         ],
+    },
+    {
+        title: 'اقتصاد و کیف پول‌ها',
+        href: '/admin/finance-wallets',
+        icon: WalletCards,
+        group: '۱. تیم داخلی اکسپلوریا',
+        roles: ['admin', 'operator', 'viewer'],
     },
 ];
 

@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\CampaignRegistryController;
 use App\Http\Controllers\Admin\CommercializationController;
 use App\Http\Controllers\Admin\DemoCycleController;
 use App\Http\Controllers\Admin\DisplayOperationsController;
+use App\Http\Controllers\Admin\FinanceWalletController;
 use App\Http\Controllers\Admin\InternalOperationsController;
 use App\Http\Controllers\Admin\MissionRewardBlueprintController;
 use App\Http\Controllers\Admin\MissionRewardRegistryController;
@@ -160,6 +161,13 @@ Route::post('/admin/demo-cycle/run-stress-demo', [DemoCycleController::class, 'r
 Route::get('/admin/commercialization', [CommercializationController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer'])
     ->name('admin.commercialization.page');
+
+Route::get('/admin/finance-wallets', [FinanceWalletController::class, 'page'])
+    ->middleware(['auth', 'role:admin,operator,viewer'])
+    ->name('admin.finance-wallets.page');
+Route::post('/admin/finance-wallets/ledger', [FinanceWalletController::class, 'store'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.finance-wallets.ledger.store');
 
 Route::get('/admin/support', [SupportCenterController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer,hub_manager,shop_partner,sponsor'])
