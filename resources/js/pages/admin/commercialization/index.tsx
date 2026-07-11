@@ -149,7 +149,8 @@ const funnelThemes = [
     'bg-indigo-600',
 ];
 
-const commercializationHeroImage = '/images/ecopark/proposal/roi-night-plaza.jpg';
+const commercializationHeroImage =
+    '/images/ecopark/proposal/roi-night-plaza-4-5.jpg';
 
 export default function CommercializationIndex({
     summary,
@@ -168,46 +169,63 @@ export default function CommercializationIndex({
         ...salesMetrics.map((metric) => metric.value),
         1,
     );
+    const headlineMetrics = salesMetrics.slice(0, 3);
 
     return (
         <>
             <Head title="تجاری‌سازی اکسپلوریا" />
 
             <main className="space-y-5 p-4" dir="rtl">
-                <section className="overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950 text-white shadow-sm">
-                    <div className="grid gap-0 lg:grid-cols-[1.55fr_0.75fr]">
-                        <div className="p-5">
-                        <div>
-                            <p className="text-sm text-emerald-300">
-                                تبدیل دمو به فروش، قرارداد و درآمد
-                            </p>
-                            <h1 className="mt-2 text-3xl font-semibold">
-                                {summary.title}
-                            </h1>
-                            <p className="mt-3 max-w-4xl text-sm leading-7 text-zinc-300">
-                                {summary.positioning}
-                            </p>
-                        </div>
-                        </div>
-                        <div className="relative min-h-56 lg:order-last">
-                            <img src={commercializationHeroImage} alt="" className="absolute inset-0 h-full w-full object-cover" />
-                            <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/25 to-transparent" />
-                        </div>
-                        <div className="m-5 grid gap-2 rounded-lg border border-white/15 bg-white/10 p-4 text-sm lg:col-span-2">
-                            <div className="flex justify-between gap-3">
-                                <span className="text-zinc-300">مکان</span>
-                                <strong>{summary.venue}</strong>
+                <section className="relative overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950 text-white shadow-sm">
+                    <img
+                        src={commercializationHeroImage}
+                        alt=""
+                        className="absolute inset-0 h-full w-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-zinc-950/75" />
+                    <div className="relative grid gap-6 p-5 lg:grid-cols-[1.1fr_0.9fr] lg:p-7">
+                        <div className="flex min-h-72 flex-col justify-between">
+                            <div>
+                                <p className="text-sm text-emerald-300">
+                                    تبدیل دمو به فروش، قرارداد و درآمد
+                                </p>
+                                <h1 className="mt-3 max-w-3xl text-3xl leading-tight font-semibold md:text-4xl">
+                                    {summary.title}
+                                </h1>
+                                <p className="mt-4 max-w-3xl text-sm leading-7 text-zinc-300">
+                                    {summary.positioning}
+                                </p>
                             </div>
-                            <div className="flex justify-between gap-3">
-                                <span className="text-zinc-300">کمپین</span>
-                                <strong>{summary.campaign}</strong>
-                            </div>
-                            <div className="flex justify-between gap-3">
-                                <span className="text-zinc-300">وضعیت</span>
-                                <strong className="text-amber-200">
+                            <div className="mt-6 flex flex-wrap gap-2 text-sm">
+                                <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-zinc-200">
+                                    {summary.venue}
+                                </span>
+                                <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-zinc-200">
+                                    {summary.campaign}
+                                </span>
+                                <span className="rounded-full bg-amber-300 px-3 py-1 font-medium text-amber-950">
                                     {summary.status}
-                                </strong>
+                                </span>
                             </div>
+                        </div>
+
+                        <div className="grid content-end gap-3 sm:grid-cols-3 lg:grid-cols-1">
+                            {headlineMetrics.map((metric, index) => (
+                                <article
+                                    key={metric.label}
+                                    className="rounded-lg border border-white/15 bg-white/10 p-4 backdrop-blur-sm"
+                                >
+                                    <span
+                                        className={`inline-flex h-1 w-12 rounded-full ${metricColors[index % metricColors.length]}`}
+                                    />
+                                    <p className="mt-3 text-xs text-zinc-300">
+                                        {metric.label}
+                                    </p>
+                                    <p className="mt-2 text-2xl font-semibold">
+                                        {metric.value.toLocaleString('fa-IR')}
+                                    </p>
+                                </article>
+                            ))}
                         </div>
                     </div>
                 </section>

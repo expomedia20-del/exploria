@@ -240,7 +240,14 @@ const mainNavItems: RoleAwareNavItem[] = [
         href: '/admin/support',
         icon: BotMessageSquare,
         group: '۶. پشتیبانی',
-        roles: ['admin', 'operator', 'viewer', 'hub_manager', 'shop_partner', 'sponsor'],
+        roles: [
+            'admin',
+            'operator',
+            'viewer',
+            'hub_manager',
+            'shop_partner',
+            'sponsor',
+        ],
     },
 ];
 
@@ -284,7 +291,7 @@ export function AppSidebar() {
     );
 
     return (
-        <Sidebar collapsible="icon" variant="inset" dir="rtl">
+        <Sidebar side="right" collapsible="icon" variant="inset" dir="rtl">
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>

@@ -18,7 +18,7 @@ export function AppShell({ children, variant = 'sidebar' }: Props) {
     }
 
     return (
-        <SidebarProvider defaultOpen={isOpen} dir="ltr">
+        <SidebarProvider defaultOpen={isOpen} dir="rtl">
             {children}
         </SidebarProvider>
     );

@@ -210,7 +210,8 @@ const rewardStatusLabels: Record<string, string> = {
     expired: 'منقضی شده',
 };
 
-const participantHeroImage = '/images/ecopark/proposal/qr-backpack-route.jpg';
+const participantHeroImage =
+    '/images/ecopark/proposal/participant-route-card-3-2.jpg';
 
 function formatDate(value: string) {
     return new Intl.DateTimeFormat('fa-IR', {
@@ -224,7 +225,9 @@ function progressPercent(flow: MissionFlow) {
         return 0;
     }
 
-    return Math.round((flow.stats.completedMissions / flow.missions.length) * 100);
+    return Math.round(
+        (flow.stats.completedMissions / flow.missions.length) * 100,
+    );
 }
 
 export default function ParticipantDashboard({
@@ -238,12 +241,17 @@ export default function ParticipantDashboard({
     const progress = progressPercent(missionFlow);
     const nextMission =
         missionFlow?.missions.find((mission) => mission.status === 'started') ??
-        missionFlow?.missions.find((mission) => mission.status === 'available') ??
+        missionFlow?.missions.find(
+            (mission) => mission.status === 'available',
+        ) ??
         missionFlow?.missions.find((mission) => mission.status === 'locked') ??
         null;
 
     return (
-        <main dir="rtl" className="flex h-full flex-1 flex-col gap-5 overflow-x-auto p-4">
+        <main
+            dir="rtl"
+            className="flex h-full flex-1 flex-col gap-5 overflow-x-auto p-4"
+        >
             <Head title="پنل مشارکت‌کننده" />
 
             {flash?.success && (
@@ -252,18 +260,47 @@ export default function ParticipantDashboard({
                 </div>
             )}
 
-            <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                <div>
-                    <p className="text-sm text-muted-foreground">پنل بازدیدکننده و مشارکت‌کننده کمپین</p>
-                    <h1 className="mt-1 text-2xl font-semibold">مسیر اکسپلوریا شما</h1>
-                    <p className="mt-2 max-w-3xl text-sm leading-7 text-muted-foreground">
-                        برای انتخاب کمپین، ادامه ماموریت‌ها، مشاهده امتیازها، پاداش‌ها، گنج‌ها و سابقه مشارکت فردی، خانوادگی یا تیمی.
-                    </p>
-                </div>
-                <div className="grid gap-3 text-sm sm:grid-cols-3">
-                    <StatCard label="امتیاز" value={missionFlow?.stats.totalPoints ?? 0} />
-                    <StatCard label="ماموریت کامل" value={missionFlow?.stats.completedMissions ?? 0} />
-                    <StatCard label="پاداش" value={missionFlow?.stats.rewards ?? 0} />
+            <header className="relative overflow-hidden rounded-lg border border-sidebar-border/70 bg-zinc-950 p-5 text-white sm:p-6 dark:border-sidebar-border">
+                <img
+                    src={participantHeroImage}
+                    alt=""
+                    className="absolute inset-0 h-full w-full object-cover opacity-45"
+                />
+                <div className="absolute inset-0 bg-gradient-to-l from-zinc-950 via-zinc-950/85 to-zinc-950/55" />
+                <div className="relative grid gap-5 lg:grid-cols-[1fr_0.82fr] lg:items-end">
+                    <div>
+                        <p className="text-sm text-emerald-200">
+                            پنل بازدیدکننده و مشارکت‌کننده کمپین
+                        </p>
+                        <h1 className="mt-2 text-3xl leading-tight font-semibold">
+                            مسیر اکسپلوریا شما
+                        </h1>
+                        <p className="mt-3 max-w-3xl text-sm leading-7 text-zinc-200">
+                            برای انتخاب کمپین، ادامه ماموریت‌ها، مشاهده
+                            امتیازها، پاداش‌ها، گنج‌ها و سابقه مشارکت فردی،
+                            خانوادگی یا تیمی.
+                        </p>
+                    </div>
+                    <div className="grid gap-3 text-sm sm:grid-cols-3">
+                        {[
+                            ['امتیاز', missionFlow?.stats.totalPoints ?? 0],
+                            [
+                                'ماموریت کامل',
+                                missionFlow?.stats.completedMissions ?? 0,
+                            ],
+                            ['پاداش', missionFlow?.stats.rewards ?? 0],
+                        ].map(([label, value]) => (
+                            <div
+                                key={label}
+                                className="rounded-lg border border-white/15 bg-white/10 p-3 backdrop-blur-sm"
+                            >
+                                <p className="text-zinc-300">{label}</p>
+                                <p className="mt-2 text-xl font-semibold">
+                                    {Number(value).toLocaleString('fa-IR')}
+                                </p>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </header>
 
@@ -283,16 +320,16 @@ export default function ParticipantDashboard({
                         </h2>
                         <p className="mt-1 text-sm leading-7 text-muted-foreground">
                             ورود با موبایل شما را به کاربر عادی تبدیل می‌کند.
-                            برای دریافت ماموریت، امتیاز، گنج و پاداش، نوع
-                            مشارکت را انتخاب و تایید کنید. این کار نیازی به
-                            تایید ادمین ندارد.
+                            برای دریافت ماموریت، امتیاز، گنج و پاداش، نوع مشارکت
+                            را انتخاب و تایید کنید. این کار نیازی به تایید ادمین
+                            ندارد.
                         </p>
                     </div>
 
                     {participant.publicStatus === 'participant' ? (
                         <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-100">
-                            مشارکت فعال است. حالا می‌توانید کمپین را انتخاب
-                            کنید یا QR همان کمپین را اسکن کنید.
+                            مشارکت فعال است. حالا می‌توانید کمپین را انتخاب کنید
+                            یا QR همان کمپین را اسکن کنید.
                         </div>
                     ) : (
                         <Form
@@ -337,9 +374,12 @@ export default function ParticipantDashboard({
                 <section className="rounded-lg border border-sidebar-border/70 bg-background p-4 text-sm dark:border-sidebar-border">
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                         <div>
-                            <h2 className="font-semibold">پیش‌نمایش پنل مشارکت‌کننده برای ادمین</h2>
+                            <h2 className="font-semibold">
+                                پیش‌نمایش پنل مشارکت‌کننده برای ادمین
+                            </h2>
                             <p className="mt-1 text-muted-foreground">
-                                برای پشتیبانی یا دمو، یک بازدیدکننده واقعی را انتخاب کنید؛ نیازی به خروج از اکانت ادمین نیست.
+                                برای پشتیبانی یا دمو، یک بازدیدکننده واقعی را
+                                انتخاب کنید؛ نیازی به خروج از اکانت ادمین نیست.
                             </p>
                         </div>
                         <select
@@ -353,20 +393,29 @@ export default function ParticipantDashboard({
                                 }
                             }}
                         >
-                            <option value="" disabled>انتخاب بازدیدکننده</option>
+                            <option value="" disabled>
+                                انتخاب بازدیدکننده
+                            </option>
                             {viewerMode.previewOptions.length === 0 ? (
-                                <option value="" disabled>هنوز بازدیدکننده دارای بازدید ثبت‌شده وجود ندارد</option>
+                                <option value="" disabled>
+                                    هنوز بازدیدکننده دارای بازدید ثبت‌شده وجود
+                                    ندارد
+                                </option>
                             ) : null}
                             {viewerMode.previewOptions.map((option) => (
                                 <option key={option.id} value={option.id}>
-                                    {option.name} - {option.email} ({option.visitsCount.toLocaleString('fa-IR')} بازدید)
+                                    {option.name} - {option.email} (
+                                    {option.visitsCount.toLocaleString('fa-IR')}{' '}
+                                    بازدید)
                                 </option>
                             ))}
                         </select>
                     </div>
                     {viewerMode.isAdminPreview ? (
                         <p className="mt-3 rounded-md bg-sky-50 px-3 py-2 text-xs text-sky-900 dark:bg-sky-950 dark:text-sky-100">
-                            این صفحه در حالت پیش‌نمایش ادمین نمایش داده می‌شود؛ عملیات واقعی همچنان متعلق به اکانت بازدیدکننده انتخاب‌شده است.
+                            این صفحه در حالت پیش‌نمایش ادمین نمایش داده می‌شود؛
+                            عملیات واقعی همچنان متعلق به اکانت بازدیدکننده
+                            انتخاب‌شده است.
                         </p>
                     ) : null}
                 </section>
@@ -376,7 +425,11 @@ export default function ParticipantDashboard({
                 <div className="overflow-hidden rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border">
                     <div className="grid gap-0 lg:grid-cols-[0.95fr_1.05fr]">
                         <div className="relative min-h-44">
-                            <img src={participantHeroImage} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                            <img
+                                src={participantHeroImage}
+                                alt=""
+                                className="absolute inset-0 h-full w-full object-cover"
+                            />
                             <div className="absolute inset-0 bg-gradient-to-l from-background via-background/30 to-transparent" />
                         </div>
                         <div className="p-4">
@@ -384,8 +437,12 @@ export default function ParticipantDashboard({
                                 <Compass className="size-5 text-emerald-600" />
                                 <h2 className="font-semibold">قدم بعدی شما</h2>
                             </div>
-                            <p className="mt-3 text-sm font-medium">{journey.nextAction.label}</p>
-                            <p className="mt-2 text-sm leading-7 text-muted-foreground">{journey.nextAction.description}</p>
+                            <p className="mt-3 text-sm font-medium">
+                                {journey.nextAction.label}
+                            </p>
+                            <p className="mt-2 text-sm leading-7 text-muted-foreground">
+                                {journey.nextAction.description}
+                            </p>
                             <div className="mt-4 flex flex-wrap gap-2">
                                 {journey.nextAction.href ? (
                                     <Button asChild>
@@ -411,31 +468,49 @@ export default function ParticipantDashboard({
                 <div className="grid gap-3 sm:grid-cols-4">
                     <StatCard label="کسب‌شده" value={journey.points.earned} />
                     <StatCard label="مصرف‌شده" value={journey.points.spent} />
-                    <StatCard label="ذخیره فعلی" value={journey.points.stored} />
-                    <StatCard label="قابل دریافت" value={journey.points.nextPotential} />
+                    <StatCard
+                        label="ذخیره فعلی"
+                        value={journey.points.stored}
+                    />
+                    <StatCard
+                        label="قابل دریافت"
+                        value={journey.points.nextPotential}
+                    />
                 </div>
             </section>
 
             <section className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
                 <div className="flex items-center gap-2">
                     <QrCode className="size-5 text-sky-600" />
-                    <h2 className="font-semibold">کمپین‌های فعال و مسیرهای قابل شروع</h2>
+                    <h2 className="font-semibold">
+                        کمپین‌های فعال و مسیرهای قابل شروع
+                    </h2>
                 </div>
                 <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                     {journey.activeCampaigns.length === 0 ? (
                         <EmptyBox text="کمپین فعالی برای انتخاب مستقیم ثبت نشده است؛ با اسکن QRهای محیطی، مسیر مشارکت فعال می‌شود." />
                     ) : (
                         journey.activeCampaigns.map((campaign) => (
-                            <article key={campaign.id} className="rounded-md border border-sidebar-border/70 p-3 text-sm dark:border-sidebar-border">
+                            <article
+                                key={campaign.id}
+                                className="rounded-md border border-sidebar-border/70 p-3 text-sm dark:border-sidebar-border"
+                            >
                                 <div className="flex flex-wrap items-start justify-between gap-2">
                                     <div>
-                                        <p className="font-medium">{campaign.name}</p>
+                                        <p className="font-medium">
+                                            {campaign.name}
+                                        </p>
                                         <p className="mt-1 text-xs text-muted-foreground">
-                                            {campaign.venueName ?? 'مکان پروژه'} - {campaign.city ?? 'شهر'}
+                                            {campaign.venueName ?? 'مکان پروژه'}{' '}
+                                            - {campaign.city ?? 'شهر'}
                                         </p>
                                     </div>
-                                    <span className={`rounded-full px-2.5 py-1 text-xs ${campaign.hasVisit ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-100' : 'bg-sky-50 text-sky-800 dark:bg-sky-950 dark:text-sky-100'}`}>
-                                        {campaign.hasVisit ? 'قبلا شروع شده' : 'شروع جدید'}
+                                    <span
+                                        className={`rounded-full px-2.5 py-1 text-xs ${campaign.hasVisit ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-100' : 'bg-sky-50 text-sky-800 dark:bg-sky-950 dark:text-sky-100'}`}
+                                    >
+                                        {campaign.hasVisit
+                                            ? 'قبلا شروع شده'
+                                            : 'شروع جدید'}
                                     </span>
                                 </div>
                                 <p className="mt-3 text-xs leading-6 text-muted-foreground">
@@ -446,26 +521,59 @@ export default function ParticipantDashboard({
                                 {campaign.hasVisit ? (
                                     <div className="mt-3">
                                         <div className="h-2 overflow-hidden rounded-full bg-muted">
-                                            <div className="h-full rounded-full bg-emerald-600" style={{ width: `${campaign.progressPercent}%` }} />
+                                            <div
+                                                className="h-full rounded-full bg-emerald-600"
+                                                style={{
+                                                    width: `${campaign.progressPercent}%`,
+                                                }}
+                                            />
                                         </div>
                                         <p className="mt-2 text-xs text-muted-foreground">
-                                            {campaign.completedMissions.toLocaleString('fa-IR')} از {campaign.totalMissions.toLocaleString('fa-IR')} ماموریت تکمیل شده
-                                            {campaign.lastVisitedAt ? ` - آخرین مراجعه: ${formatDate(campaign.lastVisitedAt)}` : ''}
+                                            {campaign.completedMissions.toLocaleString(
+                                                'fa-IR',
+                                            )}{' '}
+                                            از{' '}
+                                            {campaign.totalMissions.toLocaleString(
+                                                'fa-IR',
+                                            )}{' '}
+                                            ماموریت تکمیل شده
+                                            {campaign.lastVisitedAt
+                                                ? ` - آخرین مراجعه: ${formatDate(campaign.lastVisitedAt)}`
+                                                : ''}
                                         </p>
                                     </div>
                                 ) : null}
                                 <div className="mt-3 flex flex-wrap gap-2">
-                                    {campaign.hasVisit && campaign.latestVisitId ? (
+                                    {campaign.hasVisit &&
+                                    campaign.latestVisitId ? (
                                         <Button asChild size="sm">
-                                            <Link href={`/visits/${campaign.latestVisitId}`}>ادامه مشارکت</Link>
+                                            <Link
+                                                href={`/visits/${campaign.latestVisitId}`}
+                                            >
+                                                ادامه مشارکت
+                                            </Link>
                                         </Button>
                                     ) : null}
                                     {campaign.scanUrl ? (
-                                        <Button asChild variant={campaign.hasVisit ? 'outline' : 'default'} size="sm">
-                                            <Link href={campaign.scanUrl}>{campaign.hasVisit ? 'راهنمای QR' : 'شروع با راهنمای QR'}</Link>
+                                        <Button
+                                            asChild
+                                            variant={
+                                                campaign.hasVisit
+                                                    ? 'outline'
+                                                    : 'default'
+                                            }
+                                            size="sm"
+                                        >
+                                            <Link href={campaign.scanUrl}>
+                                                {campaign.hasVisit
+                                                    ? 'راهنمای QR'
+                                                    : 'شروع با راهنمای QR'}
+                                            </Link>
                                         </Button>
                                     ) : (
-                                        <p className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">QR فعال برای شروع مستقیم ندارد.</p>
+                                        <p className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
+                                            QR فعال برای شروع مستقیم ندارد.
+                                        </p>
                                     )}
                                 </div>
                             </article>
@@ -477,17 +585,24 @@ export default function ParticipantDashboard({
             <section className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
                 <div className="flex items-center gap-2">
                     <Gift className="size-5 text-rose-500" />
-                    <h2 className="font-semibold">پاداش‌ها و مشوق‌های قابل دریافت</h2>
+                    <h2 className="font-semibold">
+                        پاداش‌ها و مشوق‌های قابل دریافت
+                    </h2>
                 </div>
                 <p className="mt-2 text-sm leading-7 text-muted-foreground">
-                    این بخش نشان می‌دهد در کمپین‌های فعال چه نوع مشوقی ممکن است دریافت شود؛ کوپن فروشگاهی، تخفیف اسپانسری، هدیه محصولی یا جایزه.
+                    این بخش نشان می‌دهد در کمپین‌های فعال چه نوع مشوقی ممکن است
+                    دریافت شود؛ کوپن فروشگاهی، تخفیف اسپانسری، هدیه محصولی یا
+                    جایزه.
                 </p>
                 <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                     {journey.rewardCatalog.length === 0 ? (
                         <EmptyBox text="هنوز پاداش فعالی برای کمپین‌های قابل انتخاب ثبت نشده است." />
                     ) : (
                         journey.rewardCatalog.map((reward) => (
-                            <article key={reward.id} className="rounded-md border border-sidebar-border/70 p-3 text-sm dark:border-sidebar-border">
+                            <article
+                                key={reward.id}
+                                className="rounded-md border border-sidebar-border/70 p-3 text-sm dark:border-sidebar-border"
+                            >
                                 <div className="flex flex-wrap items-start justify-between gap-2">
                                     <p className="font-medium">{reward.name}</p>
                                     <span className="rounded-full bg-rose-50 px-2.5 py-1 text-xs text-rose-800 dark:bg-rose-950 dark:text-rose-100">
@@ -495,11 +610,16 @@ export default function ParticipantDashboard({
                                     </span>
                                 </div>
                                 <p className="mt-2 text-xs leading-6 text-muted-foreground">
-                                    {reward.campaignName ?? 'کمپین'} - {reward.partnerName ?? 'اکسپلوریا'}
+                                    {reward.campaignName ?? 'کمپین'} -{' '}
+                                    {reward.partnerName ?? 'اکسپلوریا'}
                                 </p>
                                 <p className="mt-2 text-xs text-muted-foreground">
-                                    {reward.pointCost !== null ? `${reward.pointCost.toLocaleString('fa-IR')} امتیاز` : 'بدون هزینه امتیازی'}
-                                    {reward.remainingStock !== null ? ` - موجودی قابل صدور: ${reward.remainingStock.toLocaleString('fa-IR')}` : ''}
+                                    {reward.pointCost !== null
+                                        ? `${reward.pointCost.toLocaleString('fa-IR')} امتیاز`
+                                        : 'بدون هزینه امتیازی'}
+                                    {reward.remainingStock !== null
+                                        ? ` - موجودی قابل صدور: ${reward.remainingStock.toLocaleString('fa-IR')}`
+                                        : ''}
                                 </p>
                             </article>
                         ))
@@ -514,7 +634,8 @@ export default function ParticipantDashboard({
                         هنوز بازدید فعالی ثبت نشده است
                     </div>
                     <p className="mt-2 text-muted-foreground">
-                        با اسکن QR کمپین، مسیر بازدید، ماموریت‌ها، کیف پاداش و امتیازهای شما در همین پنل فعال می‌شود.
+                        با اسکن QR کمپین، مسیر بازدید، ماموریت‌ها، کیف پاداش و
+                        امتیازهای شما در همین پنل فعال می‌شود.
                     </p>
                 </section>
             ) : (
@@ -523,16 +644,29 @@ export default function ParticipantDashboard({
                         <div className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
                             <div className="flex items-center gap-2">
                                 <UsersRound className="size-5 text-sky-600" />
-                                <h2 className="font-semibold">پروفایل مشارکت</h2>
+                                <h2 className="font-semibold">
+                                    پروفایل مشارکت
+                                </h2>
                             </div>
                             <dl className="mt-4 grid gap-3 text-sm">
                                 <InfoRow label="نام" value={participant.name} />
-                                <InfoRow label="نوع شرکت" value={participant.modeLabel} />
-                                <InfoRow label="تیم/خانواده" value={participant.teamName ?? 'ثبت نشده'} />
+                                <InfoRow
+                                    label="نوع شرکت"
+                                    value={participant.modeLabel}
+                                />
+                                <InfoRow
+                                    label="تیم/خانواده"
+                                    value={participant.teamName ?? 'ثبت نشده'}
+                                />
                             </dl>
                             <div className="mt-4 flex flex-wrap gap-2">
                                 {participant.members.map((member) => (
-                                    <span key={member} className="rounded-full bg-muted px-3 py-1 text-xs">{member}</span>
+                                    <span
+                                        key={member}
+                                        className="rounded-full bg-muted px-3 py-1 text-xs"
+                                    >
+                                        {member}
+                                    </span>
                                 ))}
                             </div>
                         </div>
@@ -540,27 +674,57 @@ export default function ParticipantDashboard({
                         <div className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
                             <div className="flex items-center gap-2">
                                 <MapPin className="size-5 text-emerald-600" />
-                                <h2 className="font-semibold">آخرین کمپین فعال</h2>
+                                <h2 className="font-semibold">
+                                    آخرین کمپین فعال
+                                </h2>
                             </div>
                             <div className="mt-4 grid gap-3 text-sm md:grid-cols-2">
-                                <p><span className="text-muted-foreground">مکان:</span> {latestVisit.venueName}</p>
-                                <p><span className="text-muted-foreground">کمپین:</span> {latestVisit.campaignName}</p>
-                                <p><span className="text-muted-foreground">هاب:</span> {latestVisit.hubName}</p>
-                                <p><span className="text-muted-foreground">زمان:</span> {formatDate(latestVisit.occurredAt)}</p>
+                                <p>
+                                    <span className="text-muted-foreground">
+                                        مکان:
+                                    </span>{' '}
+                                    {latestVisit.venueName}
+                                </p>
+                                <p>
+                                    <span className="text-muted-foreground">
+                                        کمپین:
+                                    </span>{' '}
+                                    {latestVisit.campaignName}
+                                </p>
+                                <p>
+                                    <span className="text-muted-foreground">
+                                        هاب:
+                                    </span>{' '}
+                                    {latestVisit.hubName}
+                                </p>
+                                <p>
+                                    <span className="text-muted-foreground">
+                                        زمان:
+                                    </span>{' '}
+                                    {formatDate(latestVisit.occurredAt)}
+                                </p>
                             </div>
                             <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted">
-                                <div className="h-full rounded-full bg-emerald-600" style={{ width: `${progress}%` }} />
+                                <div
+                                    className="h-full rounded-full bg-emerald-600"
+                                    style={{ width: `${progress}%` }}
+                                />
                             </div>
                             <p className="mt-2 text-xs text-muted-foreground">
-                                {progress.toLocaleString('fa-IR')}٪ از مسیر این بازدید تکمیل شده است.
+                                {progress.toLocaleString('fa-IR')}٪ از مسیر این
+                                بازدید تکمیل شده است.
                             </p>
                             <div className="mt-4 flex flex-wrap gap-2">
                                 <Button asChild>
-                                    <Link href={`/visits/${latestVisit.id}`}>ادامه ماموریت‌ها</Link>
+                                    <Link href={`/visits/${latestVisit.id}`}>
+                                        ادامه ماموریت‌ها
+                                    </Link>
                                 </Button>
                                 {latestVisit.qrLandingUrl ? (
                                     <Button asChild variant="outline">
-                                        <Link href={latestVisit.qrLandingUrl}>صفحه QR کمپین</Link>
+                                        <Link href={latestVisit.qrLandingUrl}>
+                                            صفحه QR کمپین
+                                        </Link>
                                     </Button>
                                 ) : null}
                             </div>
@@ -571,38 +735,67 @@ export default function ParticipantDashboard({
                         <div className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
                             <div className="flex items-center gap-2">
                                 <Trophy className="size-5 text-amber-500" />
-                                <h2 className="font-semibold">ماموریت‌ها و قدم بعدی</h2>
+                                <h2 className="font-semibold">
+                                    ماموریت‌ها و قدم بعدی
+                                </h2>
                             </div>
                             {nextMission ? (
                                 <div className="mt-4 rounded-md bg-muted/40 p-3 text-sm">
-                                    <p className="font-medium">قدم بعدی: {nextMission.title}</p>
+                                    <p className="font-medium">
+                                        قدم بعدی: {nextMission.title}
+                                    </p>
                                     <p className="mt-1 text-xs text-muted-foreground">
-                                        وضعیت: {missionStatusLabels[nextMission.status]} · امتیاز: {nextMission.points.toLocaleString('fa-IR')}
+                                        وضعیت:{' '}
+                                        {
+                                            missionStatusLabels[
+                                                nextMission.status
+                                            ]
+                                        }{' '}
+                                        · امتیاز:{' '}
+                                        {nextMission.points.toLocaleString(
+                                            'fa-IR',
+                                        )}
                                     </p>
                                 </div>
                             ) : null}
                             <div className="mt-4 grid gap-2">
-                                {(missionFlow?.missions ?? []).map((mission) => (
-                                    <div key={mission.id} className="flex items-center justify-between gap-3 rounded-md border border-sidebar-border/70 p-3 text-sm dark:border-sidebar-border">
-                                        <div className="min-w-0">
-                                            <div className="flex items-center gap-2">
-                                                {mission.status === 'completed' ? (
-                                                    <CheckCircle2 className="size-4 text-emerald-600" />
-                                                ) : (
-                                                    <Sparkles className="size-4 text-sky-600" />
-                                                )}
-                                                <p className="truncate font-medium">{mission.title}</p>
+                                {(missionFlow?.missions ?? []).map(
+                                    (mission) => (
+                                        <div
+                                            key={mission.id}
+                                            className="flex items-center justify-between gap-3 rounded-md border border-sidebar-border/70 p-3 text-sm dark:border-sidebar-border"
+                                        >
+                                            <div className="min-w-0">
+                                                <div className="flex items-center gap-2">
+                                                    {mission.status ===
+                                                    'completed' ? (
+                                                        <CheckCircle2 className="size-4 text-emerald-600" />
+                                                    ) : (
+                                                        <Sparkles className="size-4 text-sky-600" />
+                                                    )}
+                                                    <p className="truncate font-medium">
+                                                        {mission.title}
+                                                    </p>
+                                                </div>
+                                                <p className="mt-1 text-xs text-muted-foreground">
+                                                    {mission.cycleStep.label ??
+                                                        mission.hubName ??
+                                                        'مسیر اصلی'}
+                                                    {mission.treasureName
+                                                        ? ` · گنج: ${mission.treasureName}`
+                                                        : ''}
+                                                </p>
                                             </div>
-                                            <p className="mt-1 text-xs text-muted-foreground">
-                                                {mission.cycleStep.label ?? mission.hubName ?? 'مسیر اصلی'}
-                                                {mission.treasureName ? ` · گنج: ${mission.treasureName}` : ''}
-                                            </p>
+                                            <span className="rounded-full bg-muted px-2.5 py-1 text-xs">
+                                                {
+                                                    missionStatusLabels[
+                                                        mission.status
+                                                    ]
+                                                }
+                                            </span>
                                         </div>
-                                        <span className="rounded-full bg-muted px-2.5 py-1 text-xs">
-                                            {missionStatusLabels[mission.status]}
-                                        </span>
-                                    </div>
-                                ))}
+                                    ),
+                                )}
                             </div>
                         </div>
 
@@ -616,21 +809,48 @@ export default function ParticipantDashboard({
                             ) : (
                                 <div className="mt-4 grid gap-3">
                                     {journey.rewardWallet.map((reward) => (
-                                        <div key={reward.id} className="rounded-md border border-sidebar-border/70 p-3 text-sm dark:border-sidebar-border">
-                                            <p className="font-medium">{reward.rewardName ?? 'پاداش'}</p>
+                                        <div
+                                            key={reward.id}
+                                            className="rounded-md border border-sidebar-border/70 p-3 text-sm dark:border-sidebar-border"
+                                        >
+                                            <p className="font-medium">
+                                                {reward.rewardName ?? 'پاداش'}
+                                            </p>
                                             <p className="mt-1 text-xs text-muted-foreground">
-                                                شریک: {reward.redemption?.partnerName ?? reward.reward?.partnerName ?? 'پلتفرم'} · وضعیت: {rewardStatusLabels[reward.status] ?? reward.status}
+                                                شریک:{' '}
+                                                {reward.redemption
+                                                    ?.partnerName ??
+                                                    reward.reward
+                                                        ?.partnerName ??
+                                                    'پلتفرم'}{' '}
+                                                · وضعیت:{' '}
+                                                {rewardStatusLabels[
+                                                    reward.status
+                                                ] ?? reward.status}
                                             </p>
                                             {reward.redemptionCode ? (
-                                                <p className="mt-3 rounded-md bg-amber-50 px-3 py-2 font-mono text-base font-semibold text-amber-900 dark:bg-amber-950 dark:text-amber-100" dir="ltr">
+                                                <p
+                                                    className="mt-3 rounded-md bg-amber-50 px-3 py-2 font-mono text-base font-semibold text-amber-900 dark:bg-amber-950 dark:text-amber-100"
+                                                    dir="ltr"
+                                                >
                                                     {reward.redemptionCode}
                                                 </p>
                                             ) : null}
                                             <p className="mt-2 text-xs leading-6 text-muted-foreground">
-                                                {reward.rewardTypeLabel} - {reward.campaignName ?? 'کمپین'} - {reward.partnerName ?? 'اکسپلوریا'}
-                                                {reward.pointCost !== null ? ` - ${reward.pointCost.toLocaleString('fa-IR')} امتیاز` : ''}
-                                                {reward.awardedAt ? ` - صدور: ${formatDate(reward.awardedAt)}` : ''}
-                                                {reward.redeemedAt ? ` - مصرف: ${formatDate(reward.redeemedAt)}` : ''}
+                                                {reward.rewardTypeLabel} -{' '}
+                                                {reward.campaignName ?? 'کمپین'}{' '}
+                                                -{' '}
+                                                {reward.partnerName ??
+                                                    'اکسپلوریا'}
+                                                {reward.pointCost !== null
+                                                    ? ` - ${reward.pointCost.toLocaleString('fa-IR')} امتیاز`
+                                                    : ''}
+                                                {reward.awardedAt
+                                                    ? ` - صدور: ${formatDate(reward.awardedAt)}`
+                                                    : ''}
+                                                {reward.redeemedAt
+                                                    ? ` - مصرف: ${formatDate(reward.redeemedAt)}`
+                                                    : ''}
                                             </p>
                                         </div>
                                     ))}
@@ -642,57 +862,95 @@ export default function ParticipantDashboard({
             )}
 
             <section className="grid gap-4 xl:grid-cols-3">
-                <InfoPanel icon={<History className="size-5 text-slate-600" />} title="سوابق مراجعه، مکان و کمپین">
+                <InfoPanel
+                    icon={<History className="size-5 text-slate-600" />}
+                    title="سوابق مراجعه، مکان و کمپین"
+                >
                     {journey.history.length === 0 ? (
                         <EmptyBox text="هنوز سابقه‌ای ثبت نشده است." />
                     ) : (
                         journey.history.map((visit) => (
-                            <Link key={visit.id} href={`/visits/${visit.id}`} className="rounded-md border border-sidebar-border/70 p-3 text-sm hover:bg-muted/40 dark:border-sidebar-border">
+                            <Link
+                                key={visit.id}
+                                href={`/visits/${visit.id}`}
+                                className="rounded-md border border-sidebar-border/70 p-3 text-sm hover:bg-muted/40 dark:border-sidebar-border"
+                            >
                                 <div className="flex items-start justify-between gap-2">
-                                    <p className="font-medium">{visit.campaignName ?? 'کمپین'} - {visit.venueName ?? 'مکان'}</p>
-                                    <span className="shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">ادامه</span>
+                                    <p className="font-medium">
+                                        {visit.campaignName ?? 'کمپین'} -{' '}
+                                        {visit.venueName ?? 'مکان'}
+                                    </p>
+                                    <span className="shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
+                                        ادامه
+                                    </span>
                                 </div>
                                 <p className="mt-1 text-xs text-muted-foreground">
-                                    {visit.hubName ?? 'مسیر عمومی'} - {formatDate(visit.occurredAt)} - {visit.points.toLocaleString('fa-IR')} امتیاز
+                                    {visit.hubName ?? 'مسیر عمومی'} -{' '}
+                                    {formatDate(visit.occurredAt)} -{' '}
+                                    {visit.points.toLocaleString('fa-IR')}{' '}
+                                    امتیاز
                                 </p>
                             </Link>
                         ))
                     )}
                 </InfoPanel>
 
-                <InfoPanel icon={<Store className="size-5 text-emerald-700" />} title="واحدهای تجاری و مشوق‌ها">
+                <InfoPanel
+                    icon={<Store className="size-5 text-emerald-700" />}
+                    title="واحدهای تجاری و مشوق‌ها"
+                >
                     {journey.partners.length === 0 ? (
                         <EmptyBox text="هنوز مراجعه یا مصرف پاداش در واحد تجاری ثبت نشده است." />
                     ) : (
                         journey.partners.map((partner, index) => (
-                            <div key={`${partner.name}-${index}`} className="rounded-md border border-sidebar-border/70 p-3 text-sm dark:border-sidebar-border">
+                            <div
+                                key={`${partner.name}-${index}`}
+                                className="rounded-md border border-sidebar-border/70 p-3 text-sm dark:border-sidebar-border"
+                            >
                                 <p className="font-medium">{partner.name}</p>
                                 <p className="mt-1 text-xs text-muted-foreground">
                                     وضعیت مشوق: {partner.status}
-                                    {partner.redeemedAt ? ` · ${formatDate(partner.redeemedAt)}` : ''}
+                                    {partner.redeemedAt
+                                        ? ` · ${formatDate(partner.redeemedAt)}`
+                                        : ''}
                                 </p>
                                 <p className="mt-2 text-xs leading-6 text-muted-foreground">
-                                    {partner.rewardName ?? 'مشوق ثبت‌شده'} - {partner.rewardTypeLabel} - {partner.campaignName ?? 'کمپین'}
-                                    {partner.pointCost !== null ? ` - ${partner.pointCost.toLocaleString('fa-IR')} امتیاز` : ''}
+                                    {partner.rewardName ?? 'مشوق ثبت‌شده'} -{' '}
+                                    {partner.rewardTypeLabel} -{' '}
+                                    {partner.campaignName ?? 'کمپین'}
+                                    {partner.pointCost !== null
+                                        ? ` - ${partner.pointCost.toLocaleString('fa-IR')} امتیاز`
+                                        : ''}
                                 </p>
                             </div>
                         ))
                     )}
                 </InfoPanel>
 
-                <InfoPanel icon={<Gem className="size-5 text-rose-600" />} title="گنج‌ها و انگیزه ادامه">
+                <InfoPanel
+                    icon={<Gem className="size-5 text-rose-600" />}
+                    title="گنج‌ها و انگیزه ادامه"
+                >
                     {journey.treasures.length === 0 ? (
                         <EmptyBox text="هنوز گنجی کشف نشده است؛ با ادامه ماموریت‌ها گنج و پاداش‌های بعدی فعال می‌شوند." />
                     ) : (
                         journey.treasures.map((treasure, index) => (
-                            <div key={`${treasure.name}-${index}`} className="rounded-md border border-sidebar-border/70 p-3 text-sm dark:border-sidebar-border">
+                            <div
+                                key={`${treasure.name}-${index}`}
+                                className="rounded-md border border-sidebar-border/70 p-3 text-sm dark:border-sidebar-border"
+                            >
                                 <p className="font-medium">{treasure.name}</p>
-                                <p className="mt-1 text-xs text-muted-foreground">{treasure.campaignName ?? 'کمپین'} · {treasure.type}</p>
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                    {treasure.campaignName ?? 'کمپین'} ·{' '}
+                                    {treasure.type}
+                                </p>
                             </div>
                         ))
                     )}
                     <p className="rounded-md bg-muted/50 px-3 py-2 text-xs leading-6 text-muted-foreground">
-                        ادامه مشارکت فردی، خانوادگی یا تیمی می‌تواند امتیاز مرحله بعدی، پاداش فروشگاهی و گنج‌های اسپانسری بیشتری فعال کند.
+                        ادامه مشارکت فردی، خانوادگی یا تیمی می‌تواند امتیاز
+                        مرحله بعدی، پاداش فروشگاهی و گنج‌های اسپانسری بیشتری
+                        فعال کند.
                     </p>
                 </InfoPanel>
             </section>
@@ -704,7 +962,9 @@ function StatCard({ label, value }: { label: string; value: number }) {
     return (
         <div className="rounded-lg border border-sidebar-border/70 bg-background p-3 text-sm dark:border-sidebar-border">
             <p className="text-muted-foreground">{label}</p>
-            <p className="mt-2 text-xl font-semibold">{value.toLocaleString('fa-IR')}</p>
+            <p className="mt-2 text-xl font-semibold">
+                {value.toLocaleString('fa-IR')}
+            </p>
         </div>
     );
 }

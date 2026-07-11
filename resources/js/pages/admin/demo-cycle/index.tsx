@@ -152,7 +152,8 @@ const riskLabel = {
     high: 'ریسک بالا',
 };
 
-const demoCycleHeroImage = '/images/ecopark/proposal/ecopark-roadmap-night.jpg';
+const demoCycleHeroImage =
+    '/images/ecopark/proposal/ecopark-roadmap-night-21-9.jpg';
 
 export default function DemoCycleIndex({
     summary,
@@ -165,53 +166,93 @@ export default function DemoCycleIndex({
     const healthByStage = new Map(
         stageHealth.map((item) => [item.stage, item]),
     );
+    const readyStages = stageHealth.filter(
+        (stage) => stage.status === 'ready',
+    ).length;
 
     return (
         <>
             <Head title="چرخه دمو اکوپارک" />
 
             <main className="space-y-4 p-4" dir="rtl">
-                <section className="relative overflow-hidden rounded-lg border border-sidebar-border/70 bg-zinc-950 p-4 text-white dark:border-sidebar-border">
-                    <img src={demoCycleHeroImage} alt="" className="absolute inset-0 h-full w-full object-cover opacity-45" />
-                    <div className="absolute inset-0 bg-gradient-to-l from-zinc-950 via-zinc-950/80 to-zinc-950/55" />
-                    <div className="relative">
-                        <p className="text-sm text-cyan-200">
-                            نقشه اجرای دمو از صفر تا گزارش فروش
-                        </p>
-                        <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
-                            <div>
-                            <h1 className="text-2xl font-semibold">
+                <section className="relative overflow-hidden rounded-lg border border-sidebar-border/70 bg-zinc-950 text-white dark:border-sidebar-border">
+                    <img
+                        src={demoCycleHeroImage}
+                        alt=""
+                        className="absolute inset-0 h-full w-full object-cover opacity-45"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-l from-zinc-950 via-zinc-950/85 to-zinc-950/50" />
+                    <div className="relative grid gap-6 p-5 lg:grid-cols-[1fr_0.82fr] lg:p-7">
+                        <div>
+                            <p className="text-sm text-cyan-200">
+                                نقشه اجرای دمو از صفر تا گزارش فروش
+                            </p>
+                            <h1 className="mt-3 max-w-3xl text-3xl leading-tight font-semibold md:text-4xl">
                                 {summary.title}
                             </h1>
-                            <p className="mt-2 max-w-4xl text-sm leading-7 text-zinc-200">
+                            <p className="mt-4 max-w-4xl text-sm leading-7 text-zinc-200">
                                 این صفحه، چرخه کامل دمو را به ۵ مرحله قابل اجرا
-                                تبدیل می کند: آماده سازی سناریو، داده و دسترسی،
+                                تبدیل می‌کند: آماده‌سازی سناریو، داده و دسترسی،
                                 اجرای کاربر، مصرف پاداش و تبلیغ، سپس گزارش
                                 تجاری. بازی آنلاین در این نسخه عمدا از ارزیابی
                                 اصلی جدا نگه داشته شده است.
                             </p>
+                            <div className="mt-6 flex flex-wrap gap-3">
+                                <Form
+                                    action={executionReport.action.href}
+                                    method="post"
+                                    options={{ preserveScroll: true }}
+                                >
+                                    {({ processing }) => (
+                                        <Button
+                                            disabled={processing}
+                                            className="bg-cyan-300 text-zinc-950 hover:bg-cyan-200"
+                                        >
+                                            <Play className="size-4" />
+                                            {processing
+                                                ? 'در حال اجرا'
+                                                : executionReport.action.label}
+                                        </Button>
+                                    )}
+                                </Form>
+                                <Link
+                                    href="/admin/commercialization"
+                                    className="inline-flex h-10 items-center gap-2 rounded-md border border-white/25 px-3 text-sm font-medium hover:bg-white/10"
+                                >
+                                    خروجی فروش
+                                    <ArrowLeft className="size-4" />
+                                </Link>
+                            </div>
                         </div>
-                            <div className="grid min-w-64 gap-2 rounded-lg border border-white/15 bg-white/10 p-3 text-sm backdrop-blur-sm">
-                            <div className="flex justify-between gap-3">
-                                <span className="text-zinc-300">
-                                    کمپین
-                                </span>
-                                <strong>{summary.campaign}</strong>
-                            </div>
-                            <div className="flex justify-between gap-3">
-                                <span className="text-zinc-300">
-                                    مکان
-                                </span>
-                                <strong>{summary.venue}</strong>
-                            </div>
-                            <div className="flex justify-between gap-3">
-                                <span className="text-zinc-300">
-                                    وضعیت
-                                </span>
-                                <strong>{summary.status}</strong>
+
+                        <div className="grid content-end gap-3 sm:grid-cols-3 lg:grid-cols-1">
+                            {[
+                                ['کمپین', summary.campaign],
+                                ['مکان', summary.venue],
+                                [
+                                    'مرحله آماده',
+                                    `${readyStages.toLocaleString('fa-IR')} از ${summary.stagesCount.toLocaleString('fa-IR')}`,
+                                ],
+                            ].map(([label, value]) => (
+                                <div
+                                    key={label}
+                                    className="rounded-lg border border-white/15 bg-white/10 p-4 text-sm backdrop-blur-sm"
+                                >
+                                    <span className="text-zinc-300">
+                                        {label}
+                                    </span>
+                                    <strong className="mt-2 block text-base text-white">
+                                        {value}
+                                    </strong>
+                                </div>
+                            ))}
+                            <div className="rounded-lg border border-amber-300/35 bg-amber-300/15 p-4 text-sm text-amber-100 backdrop-blur-sm">
+                                <span>وضعیت کلی</span>
+                                <strong className="mt-2 block text-base">
+                                    {summary.status}
+                                </strong>
                             </div>
                         </div>
-                    </div>
                     </div>
                 </section>
 
