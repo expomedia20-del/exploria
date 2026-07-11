@@ -198,6 +198,46 @@ const riskLabel = {
 const demoCycleHeroImage =
     '/images/ecopark/proposal/ecopark-roadmap-night-21-9.jpg';
 
+const stageSurfaceClassName = [
+    'border-cyan-200 bg-cyan-50/70 text-cyan-950',
+    'border-emerald-200 bg-emerald-50/70 text-emerald-950',
+    'border-amber-200 bg-amber-50/70 text-amber-950',
+    'border-rose-200 bg-rose-50/70 text-rose-950',
+    'border-indigo-200 bg-indigo-50/70 text-indigo-950',
+];
+
+const operationalGroupSurfaceClassName = [
+    'border-cyan-200 bg-cyan-50/60',
+    'border-amber-200 bg-amber-50/60',
+    'border-emerald-200 bg-emerald-50/60',
+];
+
+const operationalItemToneClassName = {
+    done: 'border-r-emerald-400 bg-emerald-50/40',
+    needs_action: 'border-r-amber-400 bg-amber-50/45',
+    blocked: 'border-r-rose-400 bg-rose-50/45',
+};
+
+const stressItemSurfaceClassName = [
+    'border-sky-200 bg-sky-50/55',
+    'border-lime-200 bg-lime-50/55',
+    'border-amber-200 bg-amber-50/55',
+    'border-rose-200 bg-rose-50/55',
+];
+
+const reportMetricSurfaceClassName = [
+    'bg-cyan-50/70 text-cyan-950',
+    'bg-emerald-50/70 text-emerald-950',
+    'bg-amber-50/70 text-amber-950',
+    'bg-indigo-50/70 text-indigo-950',
+];
+
+const commercialPackageSurfaceClassName = [
+    'border-emerald-200 bg-emerald-50/60',
+    'border-amber-200 bg-amber-50/60',
+    'border-sky-200 bg-sky-50/60',
+];
+
 export default function DemoCycleIndex({
     summary,
     stages,
@@ -386,7 +426,10 @@ export default function DemoCycleIndex({
         <>
             <Head title="چرخه دمو اکوپارک" />
 
-            <main className="space-y-4 p-4" dir="rtl">
+            <main
+                className="space-y-4 bg-[linear-gradient(180deg,#f8fafc_0%,#f6f8f1_44%,#f8fafc_100%)] p-4 dark:bg-background"
+                dir="rtl"
+            >
                 <section className="relative overflow-hidden rounded-lg border border-sidebar-border/70 bg-zinc-950 text-white dark:border-sidebar-border">
                     <img
                         src={demoCycleHeroImage}
@@ -477,7 +520,7 @@ export default function DemoCycleIndex({
                         return (
                             <article
                                 key={stage.title}
-                                className="rounded-lg border border-sidebar-border/70 bg-card p-3 dark:border-sidebar-border"
+                                className={`rounded-lg border border-t-4 p-3 shadow-sm transition-shadow hover:shadow-md dark:border-sidebar-border ${stageSurfaceClassName[index % stageSurfaceClassName.length]}`}
                             >
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                     <Flag className="size-4 text-primary" />
@@ -499,7 +542,7 @@ export default function DemoCycleIndex({
                     })}
                 </section>
 
-                <section className="rounded-lg border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border">
+                <section className="rounded-lg border border-cyan-100 bg-gradient-to-br from-white via-cyan-50/60 to-emerald-50/45 p-4 shadow-sm dark:border-sidebar-border dark:from-card dark:via-card dark:to-card">
                     <div className="flex flex-wrap items-start justify-between gap-4">
                         <div>
                             <div className="flex items-center gap-2">
@@ -545,8 +588,11 @@ export default function DemoCycleIndex({
                     )}
 
                     <div className="mt-4 grid gap-4 xl:grid-cols-3">
-                        {operationalChecklist.map((group) => (
-                            <div key={group.title} className="space-y-3">
+                        {operationalChecklist.map((group, groupIndex) => (
+                            <div
+                                key={group.title}
+                                className={`space-y-3 rounded-lg border p-3 ${operationalGroupSurfaceClassName[groupIndex % operationalGroupSurfaceClassName.length]}`}
+                            >
                                 <div>
                                     <h3 className="font-semibold">
                                         {group.title}
@@ -573,7 +619,7 @@ export default function DemoCycleIndex({
                                         return (
                                             <div
                                                 key={item.label}
-                                                className="rounded-md border border-border/70 bg-background p-3"
+                                                className={`rounded-md border border-r-4 p-3 shadow-sm ${operationalItemToneClassName[status]}`}
                                             >
                                                 <div className="flex items-start justify-between gap-3">
                                                     <div className="flex gap-2">
@@ -738,7 +784,7 @@ export default function DemoCycleIndex({
                     </div>
                 </section>
 
-                <section className="rounded-lg border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border">
+                <section className="rounded-lg border border-sky-200 bg-gradient-to-br from-sky-50/80 via-white to-indigo-50/70 p-4 shadow-sm dark:border-sidebar-border dark:from-card dark:via-card dark:to-card">
                     <div className="flex flex-wrap items-start justify-between gap-4">
                         <div>
                             <p className="text-sm text-muted-foreground">
@@ -771,7 +817,7 @@ export default function DemoCycleIndex({
                     </div>
 
                     <div className="mt-4 grid gap-3 lg:grid-cols-[1.2fr_0.8fr]">
-                        <div className="rounded-md border border-border/70 bg-background p-3">
+                        <div className="rounded-md border border-sky-200 bg-white/85 p-3 shadow-sm">
                             <div className="flex flex-wrap items-center justify-between gap-3">
                                 <h3 className="font-semibold">
                                     خط اجرای end-to-end
@@ -792,7 +838,7 @@ export default function DemoCycleIndex({
                                 {executionReport.timeline.map((item) => (
                                     <div
                                         key={item.key}
-                                        className="flex min-h-16 items-start gap-2 rounded-md bg-muted/40 p-3 text-sm"
+                                        className={`flex min-h-16 items-start gap-2 rounded-md p-3 text-sm ${item.status === 'complete' ? 'bg-emerald-50/75' : 'bg-slate-100/80'}`}
                                     >
                                         <CheckCircle2
                                             className={`mt-1 size-4 shrink-0 ${
@@ -814,7 +860,7 @@ export default function DemoCycleIndex({
                             </div>
                         </div>
 
-                        <div className="rounded-md border border-border/70 bg-background p-3">
+                        <div className="rounded-md border border-indigo-200 bg-indigo-50/65 p-3 shadow-sm">
                             <h3 className="font-semibold">گزارش ROI</h3>
                             <p className="mt-2 text-sm leading-7 text-muted-foreground">
                                 {executionReport.roi.narrative}
@@ -869,10 +915,10 @@ export default function DemoCycleIndex({
                     </div>
 
                     <div className="mt-4 grid gap-2 md:grid-cols-4">
-                        {executionReport.metrics.map((metric) => (
+                        {executionReport.metrics.map((metric, index) => (
                             <div
                                 key={metric.label}
-                                className="rounded-md bg-muted/40 p-3"
+                                className={`rounded-md p-3 shadow-sm ${reportMetricSurfaceClassName[index % reportMetricSurfaceClassName.length]}`}
                             >
                                 <p className="text-xs text-muted-foreground">
                                     {metric.label}
@@ -901,7 +947,7 @@ export default function DemoCycleIndex({
                 </section>
 
                 {demoStressPlan ? (
-                    <section className="rounded-lg border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border">
+                    <section className="rounded-lg border border-amber-200 bg-gradient-to-br from-amber-50/80 via-white to-lime-50/65 p-4 shadow-sm dark:border-sidebar-border dark:from-card dark:via-card dark:to-card">
                         <div className="flex flex-wrap items-start justify-between gap-4">
                             <div>
                                 <p className="text-sm text-muted-foreground">
@@ -918,7 +964,7 @@ export default function DemoCycleIndex({
                                     اسپانسری، تایید مصرف فروشگاه و گزارش ROI.
                                 </p>
                             </div>
-                            <div className="grid min-w-64 gap-2 rounded-md border border-border/70 bg-background p-3 text-sm">
+                            <div className="grid min-w-64 gap-2 rounded-md border border-amber-200 bg-white/85 p-3 text-sm shadow-sm">
                                 <div className="flex justify-between gap-3">
                                     <span className="text-muted-foreground">
                                         پیشرفت
@@ -960,7 +1006,7 @@ export default function DemoCycleIndex({
                         </div>
 
                         {demoStressPlan.selectedCampaign ? (
-                            <div className="mt-4 grid gap-3 rounded-md bg-muted/40 p-3 text-sm md:grid-cols-3">
+                            <div className="mt-4 grid gap-3 rounded-md border border-lime-200 bg-lime-50/60 p-3 text-sm md:grid-cols-3">
                                 <div>
                                     <p className="text-muted-foreground">
                                         کمپین انتخاب‌شده
@@ -1005,7 +1051,7 @@ export default function DemoCycleIndex({
                             {demoStressPlan.items.map((item, index) => (
                                 <article
                                     key={item.key}
-                                    className="rounded-md border border-border/70 bg-background p-3"
+                                    className={`rounded-md border p-3 shadow-sm ${stressItemSurfaceClassName[index % stressItemSurfaceClassName.length]}`}
                                 >
                                     <div className="flex flex-wrap items-start justify-between gap-3">
                                         <div>
@@ -1049,10 +1095,10 @@ export default function DemoCycleIndex({
                 ) : null}
 
                 <section className="grid gap-3 xl:grid-cols-2">
-                    {stageHealth.map((stage) => (
+                    {stageHealth.map((stage, index) => (
                         <article
                             key={stage.stage}
-                            className="rounded-lg border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border"
+                            className={`rounded-lg border border-t-4 p-4 shadow-sm dark:border-sidebar-border ${stageSurfaceClassName[index % stageSurfaceClassName.length]}`}
                         >
                             <div className="flex flex-wrap items-start justify-between gap-3">
                                 <div>
@@ -1074,7 +1120,7 @@ export default function DemoCycleIndex({
                                 {stage.metrics.map((metric) => (
                                     <div
                                         key={metric.label}
-                                        className="rounded-md border border-border/70 bg-background p-3"
+                                        className="rounded-md border border-white/70 bg-white/70 p-3 shadow-sm"
                                     >
                                         <p className="text-xs text-muted-foreground">
                                             {metric.label}
@@ -1088,7 +1134,7 @@ export default function DemoCycleIndex({
                                 ))}
                             </div>
 
-                            <div className="mt-4 rounded-md bg-muted/40 p-3">
+                            <div className="mt-4 rounded-md bg-white/60 p-3">
                                 <h3 className="text-sm font-semibold">
                                     اقدام بعدی
                                 </h3>
@@ -1126,7 +1172,7 @@ export default function DemoCycleIndex({
                     {stages.map((stage, index) => (
                         <article
                             key={stage.title}
-                            className="rounded-lg border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border"
+                            className={`rounded-lg border border-r-4 p-4 shadow-sm dark:border-sidebar-border ${stageSurfaceClassName[index % stageSurfaceClassName.length]}`}
                         >
                             <div className="flex flex-wrap items-start justify-between gap-3">
                                 <div>
@@ -1158,7 +1204,7 @@ export default function DemoCycleIndex({
                                 {stage.checks.map((check) => (
                                     <div
                                         key={check}
-                                        className="flex min-h-20 gap-2 rounded-md bg-muted/40 p-3 text-sm leading-7"
+                                        className="flex min-h-20 gap-2 rounded-md bg-white/65 p-3 text-sm leading-7 shadow-sm"
                                     >
                                         <CheckCircle2 className="mt-1 size-4 shrink-0 text-primary" />
                                         <span>{check}</span>
@@ -1169,7 +1215,7 @@ export default function DemoCycleIndex({
                     ))}
                 </section>
 
-                <section className="rounded-lg border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border">
+                <section className="rounded-lg border border-emerald-200 bg-gradient-to-br from-emerald-50/85 via-white to-amber-50/70 p-4 shadow-sm dark:border-sidebar-border dark:from-card dark:via-card dark:to-card">
                     <div className="flex items-center gap-2">
                         <ClipboardCheck className="size-5 text-primary" />
                         <h2 className="font-semibold">
@@ -1186,10 +1232,10 @@ export default function DemoCycleIndex({
                 </section>
 
                 <section className="grid gap-3 md:grid-cols-3">
-                    {commercialPackages.map((item) => (
+                    {commercialPackages.map((item, index) => (
                         <article
                             key={item.title}
-                            className="rounded-lg border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border"
+                            className={`rounded-lg border border-t-4 p-4 shadow-sm dark:border-sidebar-border ${commercialPackageSurfaceClassName[index % commercialPackageSurfaceClassName.length]}`}
                         >
                             <h2 className="font-semibold">{item.title}</h2>
                             <p className="mt-2 text-sm text-muted-foreground">
