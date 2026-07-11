@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\UpdateDemoCycleChecklistItemRequest;
 use App\Models\Campaign;
 use App\Models\CampaignParticipant;
 use App\Models\CampaignSponsorship;
 use App\Models\DisplayDevice;
+use App\Models\OperationalChecklistEntry;
 use App\Models\QrCode;
 use App\Models\RewardDefinition;
 use App\Models\RewardInventoryAllocation;
@@ -21,6 +23,7 @@ use App\Models\Visit;
 use App\Services\EcoParkDemoReadinessService;
 use App\Services\VenueRegistryService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
 use Inertia\Inertia;
@@ -30,7 +33,7 @@ class DemoCycleController extends Controller
 {
     private const STRESS_DEMO_CAMPAIGN_CODE = 'ecopark-online-treasure-map-game-campaign';
 
-    public function page(EcoParkDemoReadinessService $readiness, VenueRegistryService $venues): Response
+    public function page(Request $request, EcoParkDemoReadinessService $readiness, VenueRegistryService $venues): Response
     {
         $readinessReport = $readiness->report();
         $demoStressPlan = $venues->list()
@@ -50,7 +53,29 @@ class DemoCycleController extends Controller
             'demoStressPlan' => $demoStressPlan,
             'executionReport' => $this->executionReport(),
             'commercialPackages' => $this->commercialPackages(),
+            'operationalChecklistEntries' => $this->operationalChecklistEntries(),
+            'canManageOperationalChecklist' => in_array($request->user()?->role, [UserRole::Admin, UserRole::Operator], true),
         ]);
+    }
+
+    public function updateChecklistItem(UpdateDemoCycleChecklistItemRequest $request): RedirectResponse
+    {
+        $validated = $request->validated();
+        $status = $validated['status'];
+
+        OperationalChecklistEntry::query()->updateOrCreate(
+            ['item_key' => $validated['item_key']],
+            [
+                'status' => $status,
+                'owner_name' => $validated['owner_name'] ?? null,
+                'note' => $validated['note'] ?? null,
+                'due_date' => $validated['due_date'] ?? null,
+                'completed_at' => $status === 'done' ? now() : null,
+                'updated_by' => $request->user()?->id,
+            ],
+        );
+
+        return back()->with('success', 'وضعیت چک‌لیست عملیاتی ذخیره شد.');
     }
 
     public function runStressDemo(): RedirectResponse
@@ -298,6 +323,27 @@ class DemoCycleController extends Controller
                 'deliverable' => 'پنل واحد، پیشنهاد/پاداش، مصرف کد، گزارش مراجعه و مشوق خرید بعدی',
             ],
         ];
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private function operationalChecklistEntries(): array
+    {
+        return OperationalChecklistEntry::query()
+            ->with('updatedBy:id,name')
+            ->orderBy('item_key')
+            ->get()
+            ->map(fn (OperationalChecklistEntry $entry): array => [
+                'itemKey' => $entry->item_key,
+                'status' => $entry->status,
+                'ownerName' => $entry->owner_name,
+                'note' => $entry->note,
+                'dueDate' => $entry->due_date?->toDateString(),
+                'completedAt' => $entry->completed_at?->toIso8601String(),
+                'updatedAt' => $entry->updated_at?->toIso8601String(),
+                'updatedBy' => $entry->updatedBy?->name,
+            ])
+            ->values()
+            ->all();
     }
 
     /** @return array<string, mixed> */

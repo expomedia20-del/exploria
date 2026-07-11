@@ -9,6 +9,7 @@ import {
     ListChecks,
     Play,
     Route,
+    Save,
 } from 'lucide-react';
 
 type DemoLink = {
@@ -54,6 +55,7 @@ type CommercialPackage = {
 };
 
 type OperationalChecklistItem = {
+    key: string;
     label: string;
     owner: string;
     hint: string;
@@ -65,6 +67,17 @@ type OperationalChecklistGroup = {
     title: string;
     subtitle: string;
     items: OperationalChecklistItem[];
+};
+
+type OperationalChecklistEntry = {
+    itemKey: string;
+    status: 'done' | 'needs_action' | 'blocked';
+    ownerName: string | null;
+    note: string | null;
+    dueDate: string | null;
+    completedAt: string | null;
+    updatedAt: string | null;
+    updatedBy: string | null;
 };
 
 type DemoStressItem = {
@@ -138,6 +151,8 @@ type Props = {
     demoStressPlan: DemoStressPlan | null;
     executionReport: ExecutionReport;
     commercialPackages: CommercialPackage[];
+    operationalChecklistEntries: OperationalChecklistEntry[];
+    canManageOperationalChecklist: boolean;
 };
 
 const statusLabel = {
@@ -163,13 +178,15 @@ const stressStatusClassName = {
 };
 
 const operationalStatusLabel = {
-    complete: 'انجام شده',
+    done: 'انجام شد',
     needs_action: 'نیازمند اقدام',
+    blocked: 'مسدود',
 };
 
 const operationalStatusClassName = {
-    complete: 'bg-emerald-50 text-emerald-900',
+    done: 'bg-emerald-50 text-emerald-900',
     needs_action: 'bg-amber-50 text-amber-950',
+    blocked: 'bg-rose-50 text-rose-900',
 };
 
 const riskLabel = {
@@ -188,6 +205,8 @@ export default function DemoCycleIndex({
     demoStressPlan,
     executionReport,
     commercialPackages,
+    operationalChecklistEntries,
+    canManageOperationalChecklist,
 }: Props) {
     const healthByStage = new Map(
         stageHealth.map((item) => [item.stage, item]),
@@ -197,6 +216,9 @@ export default function DemoCycleIndex({
     ).length;
     const stressItemsByKey = new Map(
         (demoStressPlan?.items ?? []).map((item) => [item.key, item]),
+    );
+    const operationalEntriesByKey = new Map(
+        operationalChecklistEntries.map((item) => [item.itemKey, item]),
     );
     const stressComplete = (key: string) =>
         stressItemsByKey.get(key)?.complete ?? false;
@@ -208,6 +230,7 @@ export default function DemoCycleIndex({
             subtitle: 'آماده‌سازی مکان، کمپین، QR، پاداش و نقش‌ها',
             items: [
                 {
+                    key: 'venue_route',
                     label: 'پروفایل مکان، زون‌ها و مسیر پایلوت تایید شده‌اند',
                     owner: 'مدیر پروژه / مدیر مکان',
                     hint: 'مبنای اجرای میدانی و روایت دمو باید قبل از روز اجرا روشن باشد.',
@@ -217,6 +240,7 @@ export default function DemoCycleIndex({
                     href: '/admin/venues',
                 },
                 {
+                    key: 'campaign_blueprint',
                     label: 'کمپین و الگوی متصل برای اکوپارک انتخاب شده‌اند',
                     owner: 'ادمین عملیات',
                     hint: 'کمپین باید هدف، روایت و blueprint قابل توضیح داشته باشد.',
@@ -226,6 +250,7 @@ export default function DemoCycleIndex({
                         : '/admin/campaigns',
                 },
                 {
+                    key: 'qr_entry',
                     label: 'QR، ورود کاربر و صفحه فرود روی موبایل تست شده‌اند',
                     owner: 'ادمین / اپراتور میدانی',
                     hint: 'QR باید کاربر را به کمپین درست و شروع تجربه برساند.',
@@ -233,6 +258,7 @@ export default function DemoCycleIndex({
                     href: '/admin/qr-codes',
                 },
                 {
+                    key: 'mission_reward_inventory',
                     label: 'ماموریت، گنج، پاداش و موجودی قابل مصرف آماده‌اند',
                     owner: 'ادمین / فروشگاه / اسپانسر',
                     hint: 'حداقل یک مسیر کامل از ماموریت تا صدور پاداش باید قابل اجرا باشد.',
@@ -248,6 +274,7 @@ export default function DemoCycleIndex({
             subtitle: 'کنترل مسیر واقعی کاربر و مصرف پاداش',
             items: [
                 {
+                    key: 'stress_data',
                     label: 'داده دمو و سناریوی stress-demo در دسترس است',
                     owner: 'مدیر پروژه اکسپلوریا',
                     hint: 'اگر داده ناقص باشد، اجرای end-to-end باید از همین صفحه دوباره ساخته شود.',
@@ -255,6 +282,7 @@ export default function DemoCycleIndex({
                     href: '/admin/demo-cycle',
                 },
                 {
+                    key: 'role_briefing',
                     label: 'اپراتور، شریک، رواق و پشتیبانی نقش خود را می‌دانند',
                     owner: 'مدیر عملیات',
                     hint: 'ابهام نقش در روز اجرا باید به عنوان ریسک عملیاتی دیده شود.',
@@ -265,6 +293,7 @@ export default function DemoCycleIndex({
                     href: '/admin/access-scopes',
                 },
                 {
+                    key: 'visitor_execution',
                     label: 'کاربر از QR وارد شده و حداقل یک ماموریت را کامل کرده است',
                     owner: 'اپراتور میدانی',
                     hint: 'این آیتم نقطه اثبات تجربه واقعی بازدیدکننده است.',
@@ -272,6 +301,7 @@ export default function DemoCycleIndex({
                     href: '/admin/campaign-operations',
                 },
                 {
+                    key: 'reward_redemption',
                     label: 'مصرف پاداش توسط شریک تایید یا ثبت شده است',
                     owner: 'فروشگاه / شریک',
                     hint: 'بدون مصرف تاییدشده، گزارش فروش و ROI ناقص می‌ماند.',
@@ -285,6 +315,7 @@ export default function DemoCycleIndex({
             subtitle: 'ROI، شواهد تبلیغات، بسته قیمت‌گذاری و مرزهای Scope',
             items: [
                 {
+                    key: 'roi_report',
                     label: 'گزارش ROI با اسکن، ماموریت و مصرف پاداش قابل نمایش است',
                     owner: 'ادمین / تیم فروش',
                     hint: 'گزارش باید ارزش مکان، شریک و اسپانسر را جداگانه توضیح دهد.',
@@ -294,6 +325,7 @@ export default function DemoCycleIndex({
                     href: '/admin/commercialization',
                 },
                 {
+                    key: 'sponsor_media_evidence',
                     label: 'اثر اسپانسر، تبلیغات و نمایشگرها در گزارش دیده می‌شود',
                     owner: 'ادمین / اسپانسر',
                     hint: 'این بخش دمو را از ابزار داخلی به پیشنهاد درآمدی تبدیل می‌کند.',
@@ -301,6 +333,7 @@ export default function DemoCycleIndex({
                     href: '/admin/commercialization',
                 },
                 {
+                    key: 'sales_package',
                     label: 'پکیج فروش برای مکان، اسپانسر و شریک آماده ارائه است',
                     owner: 'تیم فروش',
                     hint: 'خروجی تجاری باید بعد از اجرای دمو به پیشنهاد قابل مذاکره وصل شود.',
@@ -308,6 +341,7 @@ export default function DemoCycleIndex({
                     href: '/admin/commercialization',
                 },
                 {
+                    key: 'scope_guardrail',
                     label: 'موارد خارج از دامنه روز اجرا مشخص و کنترل شده‌اند',
                     owner: 'مدیر پروژه',
                     hint: 'تسویه پیچیده، چندمکانی همزمان، قرعه‌کشی عمومی و offline sync در MVP اجرا نمی‌شوند.',
@@ -320,15 +354,33 @@ export default function DemoCycleIndex({
         (total, group) => total + group.items.length,
         0,
     );
+    const operationalItems = operationalChecklist.flatMap((group) =>
+        group.items.map((item) => ({
+            ...item,
+            groupTitle: group.title,
+            entry: operationalEntriesByKey.get(item.key) ?? null,
+        })),
+    );
+    const operationalItemStatus = (item: OperationalChecklistItem) =>
+        operationalEntriesByKey.get(item.key)?.status ??
+        (item.complete ? 'done' : 'needs_action');
     const operationalComplete = operationalChecklist.reduce(
         (total, group) =>
-            total + group.items.filter((item) => item.complete).length,
+            total +
+            group.items.filter((item) => operationalItemStatus(item) === 'done')
+                .length,
         0,
     );
     const operationalProgress =
         operationalTotal > 0
             ? Math.round((operationalComplete / operationalTotal) * 100)
             : 0;
+    const immediateAction =
+        operationalItems.find((item) => item.entry?.status === 'blocked') ??
+        operationalItems.find(
+            (item) => operationalItemStatus(item) === 'needs_action',
+        ) ??
+        null;
 
     return (
         <>
@@ -476,6 +528,22 @@ export default function DemoCycleIndex({
                         </div>
                     </div>
 
+                    {immediateAction ? (
+                        <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm leading-7 text-amber-950">
+                            <strong>اقدام فوری بعدی:</strong>{' '}
+                            {immediateAction.label}
+                            <span className="mx-2 text-amber-700">·</span>
+                            {immediateAction.groupTitle}
+                            <span className="mx-2 text-amber-700">·</span>
+                            مسئول پیشنهادی: {immediateAction.owner}
+                        </div>
+                    ) : (
+                        <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm leading-7 text-emerald-950">
+                            همه آیتم‌های عملیاتی در وضعیت انجام‌شده هستند و مسیر
+                            پایلوت برای گزارش فروش آماده است.
+                        </div>
+                    )}
+
                     <div className="mt-4 grid gap-4 xl:grid-cols-3">
                         {operationalChecklist.map((group) => (
                             <div key={group.title} className="space-y-3">
@@ -490,9 +558,17 @@ export default function DemoCycleIndex({
 
                                 <div className="space-y-2">
                                     {group.items.map((item) => {
-                                        const status = item.complete
-                                            ? 'complete'
-                                            : 'needs_action';
+                                        const entry =
+                                            operationalEntriesByKey.get(
+                                                item.key,
+                                            );
+                                        const status =
+                                            entry?.status ??
+                                            (item.complete
+                                                ? 'done'
+                                                : 'needs_action');
+                                        const isDone = status === 'done';
+                                        const isBlocked = status === 'blocked';
 
                                         return (
                                             <div
@@ -501,10 +577,16 @@ export default function DemoCycleIndex({
                                             >
                                                 <div className="flex items-start justify-between gap-3">
                                                     <div className="flex gap-2">
-                                                        {item.complete ? (
+                                                        {isDone ? (
                                                             <CheckCircle2 className="mt-1 size-4 shrink-0 text-emerald-600" />
                                                         ) : (
-                                                            <AlertTriangle className="mt-1 size-4 shrink-0 text-amber-600" />
+                                                            <AlertTriangle
+                                                                className={`mt-1 size-4 shrink-0 ${
+                                                                    isBlocked
+                                                                        ? 'text-rose-600'
+                                                                        : 'text-amber-600'
+                                                                }`}
+                                                            />
                                                         )}
                                                         <div>
                                                             <p className="text-sm leading-6 font-medium">
@@ -529,6 +611,115 @@ export default function DemoCycleIndex({
                                                 <p className="mt-3 text-sm leading-7 text-muted-foreground">
                                                     {item.hint}
                                                 </p>
+                                                <div className="mt-3 rounded-md bg-muted/40 p-2 text-xs leading-6 text-muted-foreground">
+                                                    وضعیت سیستمی:{' '}
+                                                    {item.complete
+                                                        ? 'آماده'
+                                                        : 'نیازمند تکمیل'}
+                                                    {entry?.updatedBy ? (
+                                                        <>
+                                                            <span className="mx-2">
+                                                                ·
+                                                            </span>
+                                                            آخرین ثبت:{' '}
+                                                            {entry.updatedBy}
+                                                        </>
+                                                    ) : null}
+                                                </div>
+                                                {canManageOperationalChecklist ? (
+                                                    <Form
+                                                        action="/admin/demo-cycle/checklist"
+                                                        method="post"
+                                                        options={{
+                                                            preserveScroll: true,
+                                                        }}
+                                                    >
+                                                        {({ processing }) => (
+                                                            <div className="mt-3 grid gap-2">
+                                                                <input
+                                                                    type="hidden"
+                                                                    name="item_key"
+                                                                    value={
+                                                                        item.key
+                                                                    }
+                                                                />
+                                                                <div className="grid gap-2 sm:grid-cols-2">
+                                                                    <label className="grid gap-1 text-xs font-medium text-muted-foreground">
+                                                                        وضعیت
+                                                                        <select
+                                                                            name="status"
+                                                                            defaultValue={
+                                                                                status
+                                                                            }
+                                                                            className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground"
+                                                                        >
+                                                                            <option value="done">
+                                                                                انجام
+                                                                                شد
+                                                                            </option>
+                                                                            <option value="needs_action">
+                                                                                نیازمند
+                                                                                اقدام
+                                                                            </option>
+                                                                            <option value="blocked">
+                                                                                مسدود
+                                                                            </option>
+                                                                        </select>
+                                                                    </label>
+                                                                    <label className="grid gap-1 text-xs font-medium text-muted-foreground">
+                                                                        تاریخ
+                                                                        هدف
+                                                                        <input
+                                                                            type="date"
+                                                                            name="due_date"
+                                                                            defaultValue={
+                                                                                entry?.dueDate ??
+                                                                                ''
+                                                                            }
+                                                                            className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground"
+                                                                        />
+                                                                    </label>
+                                                                </div>
+                                                                <label className="grid gap-1 text-xs font-medium text-muted-foreground">
+                                                                    مسئول اجرا
+                                                                    <input
+                                                                        name="owner_name"
+                                                                        defaultValue={
+                                                                            entry?.ownerName ??
+                                                                            item.owner
+                                                                        }
+                                                                        className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground"
+                                                                    />
+                                                                </label>
+                                                                <label className="grid gap-1 text-xs font-medium text-muted-foreground">
+                                                                    یادداشت
+                                                                    عملیات
+                                                                    <textarea
+                                                                        name="note"
+                                                                        defaultValue={
+                                                                            entry?.note ??
+                                                                            ''
+                                                                        }
+                                                                        className="min-h-16 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+                                                                        placeholder="مانع، تصمیم، نتیجه تماس یا اقدام بعدی را ثبت کنید."
+                                                                    />
+                                                                </label>
+                                                                <Button
+                                                                    type="submit"
+                                                                    disabled={
+                                                                        processing
+                                                                    }
+                                                                    className="h-9 justify-self-start"
+                                                                >
+                                                                    <Save className="size-4" />
+                                                                    {processing
+                                                                        ? 'در حال ذخیره'
+                                                                        : 'ذخیره وضعیت'}
+                                                                </Button>
+                                                            </div>
+                                                        )}
+                                                    </Form>
+                                                ) : null}
                                                 {item.href ? (
                                                     <Link
                                                         href={item.href}
