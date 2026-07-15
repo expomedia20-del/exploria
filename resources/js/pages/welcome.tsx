@@ -11,7 +11,6 @@ import {
     MonitorPlay,
     QrCode,
     ShieldCheck,
-    Sparkles,
     Store,
     TicketCheck,
     UsersRound,
@@ -20,7 +19,7 @@ import type { LucideIcon } from 'lucide-react';
 
 const demoQrCode = 'ep1405-a7f3k9m2q8x4';
 const proposalImages = {
-    hero: '/images/ecopark/proposal/ecopark-night-path-21-9.jpg',
+    hero: '/images/ecopark/proposal/abbasabad-nature-bridge-demo.jpg',
     path: '/images/ecopark/proposal/ecopark-night-path-16-9.jpg',
     roadmap: '/images/ecopark/proposal/ecopark-roadmap-night-21-9.jpg',
 };
@@ -177,30 +176,44 @@ export default function Welcome() {
             <Head title="اکسپلوریا | پلتفرم تجربه، کمپین و درآمد مکان" />
 
             <main dir="rtl" className="min-h-screen bg-stone-50 text-zinc-950">
-                <section className="relative overflow-hidden bg-zinc-950 text-white">
+                <section className="relative overflow-hidden bg-[#061033] text-white">
                     <img
                         src={proposalImages.hero}
                         alt=""
-                        className="absolute inset-0 h-full w-full object-cover"
+                        className="absolute inset-0 h-full w-full object-cover object-[56%_center] sm:object-center"
                     />
-                    <div className="absolute inset-0 bg-zinc-950/68" />
+                    <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(6,16,51,0.18)_0%,rgba(6,16,51,0.38)_44%,rgba(6,16,51,0.86)_100%)]" />
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_64%_22%,rgba(221,82,255,0.22),transparent_34%),linear-gradient(180deg,rgba(6,16,51,0.18),rgba(6,16,51,0.72))]" />
                     <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-stone-50 to-transparent" />
-                    <div className="relative mx-auto flex min-h-[92vh] max-w-7xl flex-col px-5 py-5 sm:px-8 lg:px-10">
-                        <header className="flex flex-wrap items-center justify-between gap-3">
-                            <Link href="/" className="flex items-center gap-3">
-                                <span className="inline-flex size-10 items-center justify-center rounded-md bg-emerald-400 text-zinc-950">
-                                    <Sparkles className="size-5" />
-                                </span>
-                                <span>
-                                    <span className="block text-lg font-semibold">
-                                        EXPLORIA
+                    <div className="relative mx-auto flex min-h-[94vh] max-w-7xl flex-col px-5 py-5 sm:px-8 lg:px-10">
+                        <header className="flex flex-col items-center gap-4 pt-1">
+                            <Link
+                                href="/"
+                                aria-label="EXPLORIA"
+                                className="flex items-center"
+                            >
+                                <span
+                                    dir="ltr"
+                                    className="flex items-center text-4xl leading-none font-black tracking-[0.08em] text-white sm:text-5xl lg:text-6xl"
+                                    style={{
+                                        fontFamily:
+                                            '"Palatino Linotype", "Cinzel", "Trajan Pro", Georgia, serif',
+                                    }}
+                                >
+                                    <span>E</span>
+                                    <span
+                                        aria-hidden="true"
+                                        className="relative mx-1 inline-flex h-11 w-10 shrink-0 items-center justify-center sm:h-14 sm:w-12 lg:h-16 lg:w-14"
+                                    >
+                                        <span className="absolute top-1/2 left-1/2 h-[3.9rem] w-1 origin-center -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-full bg-gradient-to-b from-white via-emerald-200 to-emerald-500 shadow-[0_0_22px_rgba(16,185,129,0.95)] sm:h-[4.9rem] sm:w-1.5 lg:h-[5.6rem]" />
+                                        <span className="absolute top-1/2 left-1/2 h-[3.1rem] w-1 origin-center -translate-x-1/2 -translate-y-1/2 -rotate-45 rounded-full bg-gradient-to-b from-fuchsia-100 via-cyan-200 to-emerald-300 shadow-[0_0_16px_rgba(34,211,238,0.7)] sm:h-[3.9rem] sm:w-1.5 lg:h-[4.35rem]" />
+                                        <span className="absolute top-[12%] left-[15%] h-2 w-3 rotate-45 rounded-full bg-white/85 blur-[1px] sm:h-2.5 sm:w-4" />
                                     </span>
-                                    <span className="block text-xs text-zinc-300">
-                                        تجربه، کمپین، پاداش و گزارش
-                                    </span>
+                                    <span className="sr-only">X</span>
+                                    <span>PLORIA</span>
                                 </span>
                             </Link>
-                            <nav className="flex flex-wrap gap-2 text-sm">
+                            <nav className="flex flex-wrap justify-center gap-2 text-sm">
                                 <Link
                                     href="/login"
                                     className="inline-flex h-10 items-center rounded-md border border-white/20 px-4 hover:bg-white/10"
@@ -217,38 +230,46 @@ export default function Welcome() {
                             </nav>
                         </header>
 
-                        <div className="flex flex-1 items-center py-12">
-                            <div className="max-w-4xl">
-                                <p className="inline-flex rounded-full border border-emerald-300/40 bg-emerald-300/10 px-4 py-2 text-sm text-emerald-200">
-                                    آماده برای دمو، پایلوت و مذاکره تجاری
+                        <div className="flex flex-1 items-center justify-center py-10 text-center">
+                            <div className="mx-auto max-w-4xl">
+                                <p className="mx-auto flex w-fit rounded-full border border-fuchsia-200/50 bg-white/[0.07] px-5 py-2.5 text-center text-base font-semibold shadow-[0_0_24px_rgba(217,70,239,0.18)] sm:text-lg">
+                                    <span className="bg-gradient-to-l from-emerald-200 via-fuchsia-100 to-cyan-200 bg-clip-text text-transparent">
+                                        پلتفرم کمپین‌های تجربه‌سازی و درآمدزایی
+                                        مکان‌ها
+                                    </span>
                                 </p>
-                                <h1 className="mt-6 text-4xl leading-tight font-semibold sm:text-6xl">
-                                    اکسپلوریا مکان را به تجربه، فروش و گزارش
-                                    تبدیل می‌کند.
+                                <h1
+                                    aria-label="چالش و پاداش بازدیدها، فروش و درآمد مکان‌ها"
+                                    className="mt-6 text-4xl leading-tight font-semibold sm:text-6xl"
+                                >
+                                    <span className="block">
+                                        چالش و پاداش بازدیدها
+                                    </span>
+                                    <span className="block">
+                                        فروش و درآمد مکان‌ها
+                                    </span>
                                 </h1>
-                                <p className="mt-6 max-w-2xl text-base leading-8 text-zinc-300">
-                                    از اسکن QR و ورود موبایلی تا ماموریت، گنج،
-                                    پاداش، مصرف کد، تبلیغ اسپانسر و گزارش ROI؛
-                                    یک چرخه اجرایی برای مکان‌های گردشگری،
-                                    فرهنگی، تجاری و تفریحی.
+                                <p className="mx-auto mt-6 max-w-2xl text-base leading-8 text-zinc-300">
+                                    بازدیدکننده با QR وارد مسیر ماموریت، پاداش،
+                                    پیشنهاد واحدها و گزارش قابل ارائه می‌شود.
                                 </p>
-                                <div className="mt-7 grid gap-2 sm:grid-cols-2">
+                                <div className="mx-auto mt-7 grid max-w-3xl gap-2 sm:grid-cols-2">
                                     {[
-                                        'بازدیدکننده مسیر و پاداش می‌گیرد',
-                                        'واحد عضو پیشنهاد و مصرف را می‌بیند',
-                                        'اسپانسر جایزه و ROI دریافت می‌کند',
-                                        'مدیر مکان نمای کل اجرا را دارد',
+                                        'شروع تجربه با تصویر واقعی مکان',
+                                        'ورود بازدیدکننده از QR اکوپارک',
+                                        'مسیر، ماموریت و پاداش قابل نمایش',
+                                        'خروجی فروش و ROI برای مذاکره',
                                     ].map((item) => (
                                         <div
                                             key={item}
                                             className="flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-zinc-200"
                                         >
-                                            <CheckCircle2 className="size-4 text-emerald-300" />
+                                            <CheckCircle2 className="size-4 text-fuchsia-200" />
                                             <span>{item}</span>
                                         </div>
                                     ))}
                                 </div>
-                                <div className="mt-8 flex flex-wrap gap-3">
+                                <div className="mt-8 flex flex-wrap justify-center gap-3">
                                     <Link
                                         href={`/scan/${demoQrCode}`}
                                         className="inline-flex h-12 items-center gap-2 rounded-md bg-emerald-400 px-5 text-sm font-semibold text-zinc-950 hover:bg-emerald-300"
@@ -271,7 +292,7 @@ export default function Welcome() {
                                         <BarChart3 className="size-4" />
                                     </Link>
                                 </div>
-                                <p className="mt-3 text-xs leading-6 text-zinc-400">
+                                <p className="mx-auto mt-3 max-w-2xl text-xs leading-6 text-zinc-400">
                                     صفحه تجاری‌سازی و چرخه دمو با حساب داخلی باز
                                     می‌شوند؛ حساب بازدیدکننده به تجربه QR و
                                     داشبورد خودش هدایت می‌شود.

@@ -213,6 +213,33 @@ const rewardStatusLabels: Record<string, string> = {
 const participantHeroImage =
     '/images/ecopark/proposal/participant-route-card-3-2.jpg';
 
+const journeySegments = [
+    {
+        title: 'چالش',
+        body: 'ماموریت‌های مکان را مرحله‌به‌مرحله دنبال کنید.',
+        icon: Compass,
+        tone: 'border-cyan-200 bg-cyan-50 text-cyan-950 dark:border-cyan-900 dark:bg-cyan-950 dark:text-cyan-100',
+    },
+    {
+        title: 'گنج',
+        body: 'با پیشرفت در مسیر، گنج‌ها و نقاط ویژه باز می‌شوند.',
+        icon: Gem,
+        tone: 'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-950 dark:border-fuchsia-900 dark:bg-fuchsia-950 dark:text-fuchsia-100',
+    },
+    {
+        title: 'پاداش',
+        body: 'امتیازها به کوپن، هدیه یا تخفیف قابل استفاده تبدیل می‌شوند.',
+        icon: Gift,
+        tone: 'border-amber-200 bg-amber-50 text-amber-950 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-100',
+    },
+    {
+        title: 'فروشگاه',
+        body: 'پاداش در واحدهای عضو مصرف می‌شود و فرصت فروش می‌سازد.',
+        icon: Store,
+        tone: 'border-emerald-200 bg-emerald-50 text-emerald-950 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-100',
+    },
+];
+
 function formatDate(value: string) {
     return new Intl.DateTimeFormat('fa-IR', {
         dateStyle: 'medium',
@@ -239,6 +266,9 @@ export default function ParticipantDashboard({
 }: Props) {
     const { flash } = usePage<SharedProps>().props;
     const progress = progressPercent(missionFlow);
+    const activeCampaignsCount = journey.activeCampaigns.length;
+    const rewardCatalogCount = journey.rewardCatalog.length;
+    const discoveredTreasuresCount = journey.treasures.length;
     const nextMission =
         missionFlow?.missions.find((mission) => mission.status === 'started') ??
         missionFlow?.missions.find(
@@ -260,42 +290,62 @@ export default function ParticipantDashboard({
                 </div>
             )}
 
-            <header className="relative overflow-hidden rounded-lg border border-sidebar-border/70 bg-zinc-950 p-5 text-white sm:p-6 dark:border-sidebar-border">
+            <header className="relative overflow-hidden rounded-lg border border-white/10 bg-zinc-950 text-white shadow-sm dark:border-sidebar-border">
                 <img
                     src={participantHeroImage}
                     alt=""
-                    className="absolute inset-0 h-full w-full object-cover opacity-45"
+                    className="absolute inset-0 h-full w-full object-cover opacity-50"
                 />
-                <div className="absolute inset-0 bg-gradient-to-l from-zinc-950 via-zinc-950/85 to-zinc-950/55" />
-                <div className="relative grid gap-5 lg:grid-cols-[1fr_0.82fr] lg:items-end">
-                    <div>
-                        <p className="text-sm text-emerald-200">
-                            پنل بازدیدکننده و مشارکت‌کننده کمپین
+                <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(8,13,34,0.78),rgba(8,13,34,0.9)_48%,rgba(8,13,34,0.64))]" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_20%,rgba(16,185,129,0.26),transparent_28%),radial-gradient(circle_at_18%_70%,rgba(217,70,239,0.18),transparent_34%)]" />
+                <div className="relative grid gap-6 p-5 sm:p-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+                    <div className="max-w-3xl">
+                        <p className="inline-flex rounded-full border border-emerald-200/35 bg-white/10 px-4 py-2 text-sm font-medium text-emerald-100">
+                            خانه بازدیدکننده اکسپلوریا
                         </p>
-                        <h1 className="mt-2 text-3xl leading-tight font-semibold">
-                            مسیر اکسپلوریا شما
+                        <h1 className="mt-5 text-3xl leading-tight font-semibold sm:text-4xl">
+                            مسیر چالش، گنج و پاداش شما آماده است
                         </h1>
-                        <p className="mt-3 max-w-3xl text-sm leading-7 text-zinc-200">
-                            برای انتخاب کمپین، ادامه ماموریت‌ها، مشاهده
-                            امتیازها، پاداش‌ها، گنج‌ها و سابقه مشارکت فردی،
-                            خانوادگی یا تیمی.
+                        <p className="mt-3 text-sm leading-7 text-zinc-200 sm:text-base">
+                            اینجا ادامه تجربه مکان را می‌بینید: کمپین فعال، قدم
+                            بعدی، امتیازها، کیف پاداش، گنج‌های کشف‌شده و
+                            پیشنهادهایی که به فروش واحدهای عضو وصل می‌شوند.
                         </p>
+                        <div className="mt-5 flex flex-wrap gap-2">
+                            {journey.nextAction.href ? (
+                                <Button asChild>
+                                    <Link href={journey.nextAction.href}>
+                                        <Play className="size-4" />
+                                        ادامه تجربه
+                                    </Link>
+                                </Button>
+                            ) : null}
+                            {latestVisit?.qrLandingUrl ? (
+                                <Button asChild variant="secondary">
+                                    <Link href={latestVisit.qrLandingUrl}>
+                                        <QrCode className="size-4" />
+                                        صفحه QR کمپین
+                                    </Link>
+                                </Button>
+                            ) : null}
+                        </div>
                     </div>
-                    <div className="grid gap-3 text-sm sm:grid-cols-3">
+                    <div className="grid gap-3 text-sm sm:grid-cols-2">
                         {[
-                            ['امتیاز', missionFlow?.stats.totalPoints ?? 0],
+                            ['کمپین فعال', activeCampaignsCount],
                             [
                                 'ماموریت کامل',
                                 missionFlow?.stats.completedMissions ?? 0,
                             ],
-                            ['پاداش', missionFlow?.stats.rewards ?? 0],
+                            ['پاداش قابل انتخاب', rewardCatalogCount],
+                            ['گنج کشف‌شده', discoveredTreasuresCount],
                         ].map(([label, value]) => (
                             <div
                                 key={label}
-                                className="rounded-lg border border-white/15 bg-white/10 p-3 backdrop-blur-sm"
+                                className="rounded-lg border border-white/15 bg-white/10 p-4 backdrop-blur-sm"
                             >
                                 <p className="text-zinc-300">{label}</p>
-                                <p className="mt-2 text-xl font-semibold">
+                                <p className="mt-2 text-2xl font-semibold">
                                     {Number(value).toLocaleString('fa-IR')}
                                 </p>
                             </div>
@@ -368,6 +418,23 @@ export default function ParticipantDashboard({
                         </Form>
                     )}
                 </div>
+            </section>
+
+            <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                {journeySegments.map((segment) => (
+                    <article
+                        key={segment.title}
+                        className={`rounded-lg border p-4 text-sm ${segment.tone}`}
+                    >
+                        <div className="flex items-center gap-2">
+                            <segment.icon className="size-5" />
+                            <h2 className="font-semibold">{segment.title}</h2>
+                        </div>
+                        <p className="mt-3 leading-7 opacity-80">
+                            {segment.body}
+                        </p>
+                    </article>
+                ))}
             </section>
 
             {viewerMode.canPreviewVisitors ? (
