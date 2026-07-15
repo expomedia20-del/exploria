@@ -40,6 +40,16 @@ class DatabaseSeeder extends Seeder
                 'name' => 'کاربر نمایشی اکسپلوریا',
                 'email_verified_at' => now(),
                 'password' => Hash::make('password'),
+                'role' => UserRole::Visitor,
+            ],
+        );
+
+        User::query()->updateOrCreate(
+            ['email' => 'viewer@example.test'],
+            [
+                'name' => 'مشاهده‌گر نمایشی اکسپلوریا',
+                'email_verified_at' => now(),
+                'password' => Hash::make('password'),
                 'role' => UserRole::Viewer,
             ],
         );

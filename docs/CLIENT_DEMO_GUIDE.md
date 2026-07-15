@@ -67,6 +67,20 @@ Email: admin@example.test
 Password: password
 ```
 
+Read-only admin/demo viewer:
+
+```text
+Email: viewer@example.test
+Password: password
+```
+
+Visitor demo account:
+
+```text
+Email: demo@example.test
+Password: password
+```
+
 Shop partner panel:
 
 ```text
