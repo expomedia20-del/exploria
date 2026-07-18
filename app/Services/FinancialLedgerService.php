@@ -7,6 +7,7 @@ use App\Models\FinancialAccount;
 use App\Models\FinancialLedgerEntry;
 use App\Models\User;
 use Illuminate\Support\Collection;
+use Illuminate\Validation\ValidationException;
 
 class FinancialLedgerService
 {
@@ -58,7 +59,13 @@ class FinancialLedgerService
     /** @param array<string, mixed> $data */
     public function recordEntry(array $data, ?User $user): FinancialLedgerEntry
     {
-        $account = FinancialAccount::query()->findOrFail($data['financial_account_id']);
+        $accountId = $data['financial_account_id'] ?? null;
+
+        if (! is_int($accountId) && ! is_string($accountId)) {
+            throw ValidationException::withMessages(['financial_account_id' => 'شناسه حساب مالی معتبر نیست.']);
+        }
+
+        $account = FinancialAccount::query()->findOrFail($accountId);
 
         return FinancialLedgerEntry::query()->create([
             'financial_account_id' => $account->id,
@@ -205,7 +212,10 @@ class FinancialLedgerService
         ];
     }
 
-    /** @param Collection<int, FinancialAccount> $accounts @return array<string, mixed> */
+    /**
+     * @param  Collection<int, FinancialAccount>  $accounts
+     * @return array<string, int>
+     */
     private function summary(Collection $accounts): array
     {
         $entries = FinancialLedgerEntry::query()->where('status', 'posted')->get();

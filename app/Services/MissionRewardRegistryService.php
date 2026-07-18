@@ -203,10 +203,10 @@ class MissionRewardRegistryService
     /** @param array<string, mixed> $data */
     public function createMission(array $data): MissionInstance
     {
-        $campaign = Campaign::query()->findOrFail($data['campaign_id']);
+        $campaign = Campaign::query()->findOrFail($this->requiredId($data, 'campaign_id'));
 
-        $this->assertSameVenueHub($campaign, $data['hub_id'] ?? null);
-        $this->assertSameVenueTouchpoint($campaign, $data['touchpoint_id'] ?? null);
+        $this->assertSameVenueHub($campaign, $this->optionalString($data, 'hub_id'));
+        $this->assertSameVenueTouchpoint($campaign, $this->optionalString($data, 'touchpoint_id'));
         $this->blueprintConsistency->assertMissionInput($campaign, $data);
 
         $attributes = [
@@ -237,8 +237,8 @@ class MissionRewardRegistryService
     /** @param array<string, mixed> $data */
     public function createReward(array $data): RewardDefinition
     {
-        $campaign = Campaign::query()->findOrFail($data['campaign_id']);
-        $this->assertSameVenuePartner($campaign, $data['partner_account_id'] ?? null);
+        $campaign = Campaign::query()->findOrFail($this->requiredId($data, 'campaign_id'));
+        $this->assertSameVenuePartner($campaign, $this->optionalString($data, 'partner_account_id'));
         $this->blueprintConsistency->assertRewardInput($campaign, $data);
 
         $attributes = [
@@ -273,7 +273,7 @@ class MissionRewardRegistryService
     /** @param array<string, mixed> $data */
     public function createTreasure(array $data): Treasure
     {
-        $campaign = Campaign::query()->findOrFail($data['campaign_id']);
+        $campaign = Campaign::query()->findOrFail($this->requiredId($data, 'campaign_id'));
         $data['mission_instance_id'] ??= $this->missionIdForCycleStep($campaign, $data['cycle_step_index'] ?? null);
 
         $this->assertSameCampaignMission($campaign, $data['mission_instance_id'] ?? null);
@@ -328,7 +328,7 @@ class MissionRewardRegistryService
         $cycleStepIndex = $mission->metadata['cycle_step_index'] ?? null;
         $cycleStepLabel = $mission->metadata['cycle_step_label'] ?? null;
         $rewardTier = $data['reward_tier'];
-        $partnerAllocations = collect($data['partner_allocations'] ?? [])
+        $partnerAllocations = collect($this->arrayList($data['partner_allocations'] ?? null))
             ->map(fn (array $allocation): array => [
                 'partner_account_id' => (string) ($allocation['partner_account_id'] ?? ''),
                 'quantity' => (int) ($allocation['quantity'] ?? 0),
@@ -477,11 +477,11 @@ class MissionRewardRegistryService
             ->update(['status' => 'inactive']);
     }
 
-    /** @return Collection<int, array{partner_account_id: string, quantity: int}> */
+    /** @return Collection<int, covariant array{partner_account_id: string, quantity: int}> */
     private function inventoryPlanForReward(RewardDefinition $reward): Collection
     {
         $metadata = $reward->metadata ?? [];
-        $allocations = collect($metadata['partner_allocations'] ?? [])
+        $allocations = collect($this->arrayList($metadata['partner_allocations'] ?? null))
             ->map(fn (array $allocation): array => [
                 'partner_account_id' => (string) ($allocation['partner_account_id'] ?? ''),
                 'quantity' => (int) ($allocation['quantity'] ?? 0),
@@ -493,7 +493,7 @@ class MissionRewardRegistryService
             return $allocations;
         }
 
-        $partnerIds = collect($metadata['target_partner_account_ids'] ?? [])
+        $partnerIds = collect($this->stringList($metadata['target_partner_account_ids'] ?? null))
             ->when($reward->partner_account_id, fn (Collection $ids): Collection => $ids->push($reward->partner_account_id))
             ->filter()
             ->unique()
@@ -679,12 +679,12 @@ class MissionRewardRegistryService
     private function serializeReward(RewardDefinition $reward): array
     {
         $metadata = $reward->metadata ?? [];
-        $plannedAllocations = collect($metadata['partner_allocations'] ?? [])
+        $plannedAllocations = collect($this->arrayList($metadata['partner_allocations'] ?? null))
             ->mapWithKeys(fn (array $allocation): array => [
                 (string) ($allocation['partner_account_id'] ?? '') => (int) ($allocation['quantity'] ?? 0),
             ]);
         $inventoryAllocationsByPartner = $reward->inventoryAllocations->keyBy('partner_account_id');
-        $targetPartnerIds = collect($metadata['target_partner_account_ids'] ?? [])
+        $targetPartnerIds = collect($this->stringList($metadata['target_partner_account_ids'] ?? null))
             ->when($reward->partner_account_id, fn (Collection $ids): Collection => $ids->push($reward->partner_account_id))
             ->merge($plannedAllocations->keys())
             ->merge($inventoryAllocationsByPartner->keys())
@@ -708,7 +708,7 @@ class MissionRewardRegistryService
                     'code' => $partner->code,
                     'name' => $partner->name,
                     'partnerType' => $partner->partner_type,
-                    'plannedQuantity' => $inventoryAllocationsByPartner->get($partnerId)?->allocated_quantity ?? $plannedAllocations->get($partnerId),
+                    'plannedQuantity' => $inventoryAllocationsByPartner->get($partnerId)->allocated_quantity ?? $plannedAllocations->get($partnerId),
                 ];
             })
             ->filter()
@@ -851,5 +851,47 @@ class MissionRewardRegistryService
         if (! MissionInstance::query()->whereKey($missionId)->where('campaign_id', $campaign->id)->exists()) {
             throw ValidationException::withMessages(['mission_instance_id' => 'گنج فقط می‌تواند به مأموریت‌های همین کمپین وصل شود.']);
         }
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function requiredId(array $data, string $key): int|string
+    {
+        $value = $data[$key] ?? null;
+
+        if (! is_int($value) && ! is_string($value)) {
+            throw ValidationException::withMessages([$key => 'شناسه انتخاب‌شده معتبر نیست.']);
+        }
+
+        return $value;
+    }
+
+    /** @param array<string, mixed> $data */
+    private function optionalString(array $data, string $key): ?string
+    {
+        $value = $data[$key] ?? null;
+
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (! is_string($value)) {
+            throw ValidationException::withMessages([$key => 'شناسه انتخاب‌شده معتبر نیست.']);
+        }
+
+        return $value;
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function arrayList(mixed $value): array
+    {
+        return is_array($value) ? array_values(array_filter($value, is_array(...))) : [];
+    }
+
+    /** @return list<string> */
+    private function stringList(mixed $value): array
+    {
+        return is_array($value) ? array_values(array_filter($value, is_string(...))) : [];
     }
 }
