@@ -58,7 +58,7 @@ class CampaignOperationsBlueprintService
     public function markRouteReviewed(?User $user, array $data): Campaign
     {
         return DB::transaction(function () use ($user, $data): Campaign {
-            $campaign = Campaign::query()->findOrFail($data['campaign_id']);
+            $campaign = Campaign::query()->findOrFail($this->campaignId($data));
             $review = $this->blueprintConsistency->review($campaign);
             $stats = $this->routeStats($campaign, $this->scope($user));
             $operationalReview = $this->operationalReview($stats, $review);
@@ -88,7 +88,7 @@ class CampaignOperationsBlueprintService
     public function resetRouteReview(array $data): Campaign
     {
         return DB::transaction(function () use ($data): Campaign {
-            $campaign = Campaign::query()->findOrFail($data['campaign_id']);
+            $campaign = Campaign::query()->findOrFail($this->campaignId($data));
             $metadata = is_array($campaign->metadata) ? $campaign->metadata : [];
 
             unset($metadata['route_reviewed_at'], $metadata['route_reviewed_by_user_id'], $metadata['route_review_notes']);
@@ -98,7 +98,10 @@ class CampaignOperationsBlueprintService
         });
     }
 
-    /** @param array<string, mixed> $scope @return array<string, int> */
+    /**
+     * @param  array<string, mixed>  $scope
+     * @return array<string, int>
+     */
     private function routeStats(Campaign $campaign, array $scope): array
     {
         $participants = $this->participants($campaign, $scope);
@@ -127,13 +130,16 @@ class CampaignOperationsBlueprintService
      */
     private function operationalReview(array $stats, array $alignment): array
     {
+        $alignmentIssues = $alignment['issues'] ?? null;
+        $alignment['issues'] = is_array($alignmentIssues) ? $alignmentIssues : [];
+
         $checks = [
             $this->operationCheck('qr', 'QR ورودی', 'حداقل یک QR معتبر برای شروع مسیر ثبت شده باشد.', $stats['qrCodes'] > 0, $stats['qrCodes']),
             $this->operationCheck('missions', 'ماموریت', 'حداقل یک ماموریت به چرخه کاربر وصل شده باشد.', $stats['missions'] > 0, $stats['missions']),
             $this->operationCheck('incentives', 'مشوق و گنج', 'حداقل یک پاداش تاییدشده یا یک گنج برای کمپین ثبت شده باشد.', $stats['approvedRewards'] > 0 || $stats['treasures'] > 0, $stats['approvedRewards'] + $stats['treasures']),
             $this->operationCheck('participants', 'عضو آماده', 'حداقل یک فروشگاه، شریک یا اسپانسر آماده اجرا باشد.', $stats['readyParticipants'] > 0, $stats['readyParticipants']),
             $this->operationCheck('pending_rewards', 'پیشنهاد معلق', 'پیشنهاد پاداش در انتظار بررسی باقی نمانده باشد.', $stats['pendingRewards'] === 0, $stats['pendingRewards']),
-            $this->operationCheck('alignment', 'همخوانی الگو', 'چرخه، ماموریت، پاداش و گنج با الگوی مرجع همخوان باشند.', collect($alignment['issues'] ?? [])->where('level', 'error')->isEmpty(), (int) ($alignment['completedSteps'] ?? 0)),
+            $this->operationCheck('alignment', 'همخوانی الگو', 'چرخه، ماموریت، پاداش و گنج با الگوی مرجع همخوان باشند.', collect($alignment['issues'])->where('level', 'error')->isEmpty(), (int) ($alignment['completedSteps'] ?? 0)),
         ];
 
         if (($stats['adRequests'] + $stats['displayDevices']) === 0) {
@@ -183,7 +189,10 @@ class CampaignOperationsBlueprintService
         ];
     }
 
-    /** @param array<string, mixed> $scope @return array<string, mixed> */
+    /**
+     * @param  array<string, mixed>  $scope
+     * @return array<string, mixed>
+     */
     private function serializeCampaign(Campaign $campaign, array $scope): array
     {
         $participants = $this->participants($campaign, $scope);
@@ -246,12 +255,12 @@ class CampaignOperationsBlueprintService
     }
 
     /**
-     * @param  Collection<int, array<string, mixed>>  $qrCodes
-     * @param  Collection<int, array<string, mixed>>  $missions
-     * @param  Collection<int, array<string, mixed>>  $rewards
-     * @param  Collection<int, array<string, mixed>>  $treasures
-     * @param  Collection<int, array<string, mixed>>  $participants
-     * @return Collection<int, array<string, mixed>>
+     * @param  Collection<int, covariant array<string, mixed>>  $qrCodes
+     * @param  Collection<int, covariant array<string, mixed>>  $missions
+     * @param  Collection<int, covariant array<string, mixed>>  $rewards
+     * @param  Collection<int, covariant array<string, mixed>>  $treasures
+     * @param  Collection<int, covariant array<string, mixed>>  $participants
+     * @return Collection<int, covariant array<string, mixed>>
      */
     private function operationTimeline(Collection $qrCodes, Collection $missions, Collection $rewards, Collection $treasures, Collection $participants): Collection
     {
@@ -304,7 +313,10 @@ class CampaignOperationsBlueprintService
         })->values();
     }
 
-    /** @param array<string, mixed> $scope @return Collection<int, array<string, mixed>> */
+    /**
+     * @param  array<string, mixed>  $scope
+     * @return Collection<int, covariant array<string, mixed>>
+     */
     private function participants(Campaign $campaign, array $scope): Collection
     {
         return CampaignParticipant::query()
@@ -335,7 +347,10 @@ class CampaignOperationsBlueprintService
             ]);
     }
 
-    /** @param Collection<int, array<string, mixed>> $participants */
+    /**
+     * @param  Collection<int, covariant array<string, mixed>>  $participants
+     * @return Collection<int, covariant array<string, mixed>>
+     */
     private function participantsByHub(Collection $participants): Collection
     {
         return $participants
@@ -386,7 +401,10 @@ class CampaignOperationsBlueprintService
         ];
     }
 
-    /** @param array<string, mixed> $scope @return Collection<int, array<string, mixed>> */
+    /**
+     * @param  array<string, mixed>  $scope
+     * @return Collection<int, covariant array<string, mixed>>
+     */
     private function missions(Campaign $campaign, array $scope): Collection
     {
         return MissionInstance::query()
@@ -405,7 +423,7 @@ class CampaignOperationsBlueprintService
                 'title' => $mission->title_override ?? $mission->missionTemplate?->title,
                 'missionType' => $mission->missionTemplate?->mission_type,
                 'triggerType' => $mission->missionTemplate?->trigger_type,
-                'points' => $mission->missionTemplate?->point_value ?? 0,
+                'points' => $mission->missionTemplate->point_value ?? 0,
                 'status' => $mission->status->value,
                 'cycleStep' => [
                     'index' => $mission->metadata['cycle_step_index'] ?? null,
@@ -415,7 +433,10 @@ class CampaignOperationsBlueprintService
             ]);
     }
 
-    /** @param array<string, mixed> $scope @return Collection<int, array<string, mixed>> */
+    /**
+     * @param  array<string, mixed>  $scope
+     * @return Collection<int, covariant array<string, mixed>>
+     */
     private function rewards(Campaign $campaign, array $scope): Collection
     {
         return RewardDefinition::query()
@@ -448,7 +469,10 @@ class CampaignOperationsBlueprintService
             ]);
     }
 
-    /** @param array<string, mixed> $scope @return Collection<int, array<string, mixed>> */
+    /**
+     * @param  array<string, mixed>  $scope
+     * @return Collection<int, covariant array<string, mixed>>
+     */
     private function treasures(Campaign $campaign, array $scope): Collection
     {
         return Treasure::query()
@@ -473,7 +497,10 @@ class CampaignOperationsBlueprintService
             ]);
     }
 
-    /** @param array<string, mixed> $scope @return Collection<int, array<string, mixed>> */
+    /**
+     * @param  array<string, mixed>  $scope
+     * @return Collection<int, covariant array<string, mixed>>
+     */
     private function qrCodes(Campaign $campaign, array $scope): Collection
     {
         return QrCode::query()
@@ -493,7 +520,10 @@ class CampaignOperationsBlueprintService
             ]);
     }
 
-    /** @param array<string, mixed> $scope @return Collection<int, array<string, mixed>> */
+    /**
+     * @param  array<string, mixed>  $scope
+     * @return Collection<int, covariant array<string, mixed>>
+     */
     private function adRequests(Campaign $campaign, array $scope): Collection
     {
         return AdRequest::query()
@@ -517,7 +547,10 @@ class CampaignOperationsBlueprintService
             ]);
     }
 
-    /** @param array<string, mixed> $scope @return Collection<int, array<string, mixed>> */
+    /**
+     * @param  array<string, mixed>  $scope
+     * @return Collection<int, covariant array<string, mixed>>
+     */
     private function displayDevices(Campaign $campaign, array $scope): Collection
     {
         return DisplayDevice::query()
@@ -538,5 +571,21 @@ class CampaignOperationsBlueprintService
                 'status' => $device->status->value,
                 'hub' => $device->hub ? ['id' => $device->hub->id, 'code' => $device->hub->code, 'name' => $device->hub->name] : null,
             ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function campaignId(array $data): int|string
+    {
+        $campaignId = $data['campaign_id'] ?? null;
+
+        if (! is_int($campaignId) && ! is_string($campaignId)) {
+            throw ValidationException::withMessages([
+                'campaign_id' => 'شناسه کمپین معتبر نیست.',
+            ]);
+        }
+
+        return $campaignId;
     }
 }

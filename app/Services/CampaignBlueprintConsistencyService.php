@@ -36,7 +36,10 @@ class CampaignBlueprintConsistencyService
         }
 
         $step = $this->stepFromData($blueprint, $data);
-        $template = MissionTemplate::query()->find($data['mission_template_id']);
+        $templateId = $data['mission_template_id'] ?? null;
+        $template = is_string($templateId) || is_int($templateId)
+            ? MissionTemplate::query()->find($templateId)
+            : null;
 
         if (! $template || $template->code !== $step['recommendedTemplateCode']) {
             throw ValidationException::withMessages([
@@ -104,7 +107,7 @@ class CampaignBlueprintConsistencyService
             ]);
         }
 
-        if (! collect($blueprint['rewardDesign']['tiers'] ?? [])->firstWhere('tierKey', $tierKey)) {
+        if (! collect($this->arrayList(data_get($blueprint, 'rewardDesign.tiers')))->firstWhere('tierKey', $tierKey)) {
             throw ValidationException::withMessages([
                 'treasure_tier' => 'این سطح گنج در الگوی مرجع کمپین وجود ندارد.',
             ]);
@@ -117,7 +120,9 @@ class CampaignBlueprintConsistencyService
             ]);
         }
 
-        $mission = MissionInstance::query()->find($missionId);
+        $mission = is_string($missionId) || is_int($missionId)
+            ? MissionInstance::query()->find($missionId)
+            : null;
         if ((int) ($mission?->metadata['cycle_step_index'] ?? 0) !== (int) $step['index']) {
             throw ValidationException::withMessages([
                 'mission_instance_id' => 'گنج باید به مأموریت همان گام چرخه وصل شود.',
@@ -125,7 +130,7 @@ class CampaignBlueprintConsistencyService
         }
     }
 
-    /** @return array{status: string, issues: array<int, array<string, string>>, expectedSteps: int, completedSteps: int} */
+    /** @return array{status: string, issues: array<int, array<string, string>>, expectedSteps: int, completedSteps: int, treasureSteps?: list<int>} */
     public function review(Campaign $campaign): array
     {
         $blueprint = $this->blueprintForCampaign($campaign);
@@ -144,7 +149,7 @@ class CampaignBlueprintConsistencyService
             ];
         }
 
-        $steps = collect($blueprint['missionPlan'] ?? []);
+        $steps = collect($this->arrayList($blueprint['missionPlan'] ?? null));
         $missions = $this->missionsByStep($campaign);
         $rewards = $this->rewardsByStep($campaign);
         $treasures = $this->treasuresByStep($campaign);
@@ -182,15 +187,19 @@ class CampaignBlueprintConsistencyService
             'issues' => $issues,
             'expectedSteps' => $steps->count(),
             'completedSteps' => $completedSteps,
-            'treasureSteps' => $treasures->keys()->filter(fn (int $index): bool => $index > 0)->values()->all(),
+            'treasureSteps' => array_values($treasures->keys()->filter(fn (int $index): bool => $index > 0)->all()),
         ];
     }
 
-    /** @param array<string, mixed> $blueprint @param array<string, mixed> $data @return array<string, mixed> */
+    /**
+     * @param  array<string, mixed>  $blueprint
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
     private function stepFromData(array $blueprint, array $data): array
     {
         $index = (int) ($data['cycle_step_index'] ?? 0);
-        $step = collect($blueprint['missionPlan'] ?? [])->firstWhere('index', $index);
+        $step = collect($this->arrayList($blueprint['missionPlan'] ?? null))->firstWhere('index', $index);
 
         if (! $step) {
             throw ValidationException::withMessages([
@@ -204,7 +213,7 @@ class CampaignBlueprintConsistencyService
     /** @param array<string, mixed> $blueprint */
     private function assertRewardOption(array $blueprint, string $tierKey, mixed $rewardOption): void
     {
-        $tier = collect($blueprint['rewardDesign']['tiers'] ?? [])->firstWhere('tierKey', $tierKey);
+        $tier = collect($this->arrayList(data_get($blueprint, 'rewardDesign.tiers')))->firstWhere('tierKey', $tierKey);
 
         if (! $tier) {
             throw ValidationException::withMessages([
@@ -216,7 +225,7 @@ class CampaignBlueprintConsistencyService
             return;
         }
 
-        $options = collect($tier['options'] ?? []);
+        $options = collect($this->stringList($tier['options'] ?? null));
         if ($options->isNotEmpty() && ! $options->contains((string) $rewardOption)) {
             throw ValidationException::withMessages([
                 'reward_option' => 'گزینه پاداش باید از گزینه‌های همان سطح در الگوی کمپین انتخاب شود.',
@@ -259,5 +268,25 @@ class CampaignBlueprintConsistencyService
     private function issue(string $level, string $code, string $title, string $action): array
     {
         return compact('level', 'code', 'title', 'action');
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function arrayList(mixed $value): array
+    {
+        if (! is_array($value)) {
+            return [];
+        }
+
+        return array_values(array_filter($value, is_array(...)));
+    }
+
+    /** @return list<string> */
+    private function stringList(mixed $value): array
+    {
+        if (! is_array($value)) {
+            return [];
+        }
+
+        return array_values(array_filter($value, is_string(...)));
     }
 }

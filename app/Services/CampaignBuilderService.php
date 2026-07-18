@@ -158,7 +158,10 @@ class CampaignBuilderService
         ];
     }
 
-    /** @param array<string, int> $counts @return array<int, array<string, mixed>> */
+    /**
+     * @param  array<string, int>  $counts
+     * @return array<int, array<string, mixed>>
+     */
     private function steps(?Campaign $campaign, array $counts): array
     {
         $campaignCode = $campaign?->code;
@@ -188,7 +191,10 @@ class CampaignBuilderService
         ];
     }
 
-    /** @param array<string, int> $counts @return array<int, array<string, mixed>> */
+    /**
+     * @param  array<string, int>  $counts
+     * @return array<int, array<string, mixed>>
+     */
     private function roleTracks(?Campaign $campaign, array $counts): array
     {
         $campaignCode = $campaign?->code;
@@ -232,7 +238,10 @@ class CampaignBuilderService
         return $path.($params === [] ? '' : '?'.http_build_query($params));
     }
 
-    /** @param array<string, int> $counts @return array<string, mixed> */
+    /**
+     * @param  array<string, int>  $counts
+     * @return array<string, mixed>
+     */
     private function launchReadiness(?Campaign $campaign, array $counts): array
     {
         $campaignCode = $campaign?->code;
@@ -352,26 +361,6 @@ class CampaignBuilderService
             'severity' => $severity,
             'actionHref' => $actionHref,
             'actionLabel' => $actionLabel,
-        ];
-    }
-
-    /** @param array<string, int> $counts @return array<string, mixed> */
-    private function readiness(?Campaign $campaign, array $counts): array
-    {
-        $checks = [
-            ['key' => 'campaign', 'label' => 'اطلاعات پایه کمپین ثبت شده باشد.', 'complete' => $campaign !== null],
-            ['key' => 'qr', 'label' => 'حداقل یک QR ورودی به کمپین وصل باشد.', 'complete' => $counts['qrCodes'] > 0],
-            ['key' => 'missions', 'label' => 'حداقل یک مأموریت برای کمپین ثبت شده باشد.', 'complete' => $counts['missions'] > 0],
-            ['key' => 'incentives', 'label' => 'حداقل یک پاداش تاییدشده و فعال یا یک گنج برای کمپین ثبت شده باشد.', 'complete' => $counts['approvedRewards'] > 0 || $counts['treasures'] > 0],
-            ['key' => 'reward_review', 'label' => 'پیشنهاد پاداش در انتظار بررسی باقی نمانده باشد.', 'complete' => $counts['pendingRewards'] === 0],
-            ['key' => 'participants', 'label' => 'حداقل یک عضو، فروشگاه یا شریک آماده ثبت شده باشد.', 'complete' => $counts['readyParticipants'] > 0],
-            ['key' => 'route', 'label' => 'مسیر عملیاتی کمپین در نقشه عملیات تایید شده باشد.', 'complete' => (bool) ($campaign?->metadata['route_reviewed_at'] ?? false)],
-        ];
-
-        return [
-            'checks' => $checks,
-            'canActivate' => collect($checks)->every(fn (array $check): bool => (bool) $check['complete']),
-            'routeReviewedAt' => $campaign?->metadata['route_reviewed_at'] ?? null,
         ];
     }
 }
