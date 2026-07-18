@@ -149,7 +149,7 @@ class QrRegistryService
 
         return DB::transaction(function () use ($data, $attributes): QrCode {
             if (! empty($data['qr_code_id'])) {
-                $qrCode = QrCode::query()->findOrFail($data['qr_code_id']);
+                $qrCode = QrCode::query()->findOrFail($this->requiredId($data, 'qr_code_id'));
                 $metadata = array_merge($qrCode->metadata ?? [], $attributes['metadata']);
                 $qrCode->update(array_merge($attributes, ['metadata' => $metadata]));
 
@@ -167,5 +167,19 @@ class QrRegistryService
         }
 
         $qrCode->delete();
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function requiredId(array $data, string $key): int|string
+    {
+        $value = $data[$key] ?? null;
+
+        if (! is_int($value) && ! is_string($value)) {
+            throw ValidationException::withMessages([$key => 'شناسه QR معتبر نیست.']);
+        }
+
+        return $value;
     }
 }

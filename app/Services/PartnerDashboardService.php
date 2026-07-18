@@ -359,7 +359,7 @@ class PartnerDashboardService
             }
 
             $allocation = $this->reserveInventoryForReward($userReward->rewardDefinition);
-            $partnerId = $allocation?->partner_account_id ?? $userReward->rewardDefinition?->partner_account_id;
+            $partnerId = $allocation->partner_account_id ?? $userReward->rewardDefinition?->partner_account_id;
 
             if (! $partnerId) {
                 throw ValidationException::withMessages([
@@ -428,7 +428,7 @@ class PartnerDashboardService
                 'metadata' => [
                     ...($redemption->metadata ?? []),
                     'confirmed_by_partner_id' => $partner->id,
-                    'reward_inventory_allocation_id' => $allocation?->id ?? ($redemption->metadata['reward_inventory_allocation_id'] ?? null),
+                    'reward_inventory_allocation_id' => $allocation->id ?? ($redemption->metadata['reward_inventory_allocation_id'] ?? null),
                 ],
             ]);
             $redemption->userReward?->update(['status' => 'redeemed']);

@@ -99,7 +99,7 @@ class VenueManagerDashboardService
             ->get();
 
         $partners = $partnerAccounts
-            ->groupBy(fn (PartnerAccount $partner): string => $partner->locations->first()?->hub?->name ?? 'بدون هاب مشخص')
+            ->groupBy(fn (PartnerAccount $partner): string => $partner->locations->first()->hub->name ?? 'بدون هاب مشخص')
             ->map(fn ($group, string $hubName): array => [
                 'id' => 'hub-partner-summary-'.md5($hubName),
                 'code' => 'summary',
