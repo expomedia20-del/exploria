@@ -81,6 +81,7 @@ class UserAccessScopeService
             ->unique()
             ->values();
     }
+
     /** @return Collection<int, string> */
     public function venueIds(User $user): Collection
     {

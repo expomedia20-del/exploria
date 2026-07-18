@@ -175,7 +175,7 @@ class DemoCycleController extends Controller
     }
 
     /**
-     * @param array<string, mixed> $readinessReport
+     * @param  array<string, mixed>  $readinessReport
      * @return array<int, array<string, mixed>>
      */
     private function stageHealth(array $readinessReport): array

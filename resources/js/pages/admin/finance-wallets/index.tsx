@@ -4,7 +4,6 @@ import {
     BadgeDollarSign,
     BookOpenCheck,
     ClipboardList,
-    Landmark,
     Plus,
     ShieldAlert,
     WalletCards,

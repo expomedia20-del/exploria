@@ -114,7 +114,10 @@ const workstreams: Workstream[] = [
             'جذب مشارکت، راهنمایی بازدیدکننده، ثبت خطاها و رفع مانع‌های روز اجرا در میدان.',
         icon: UsersRound,
         links: [
-            { label: 'اعضا، فروشگاه‌ها و شرکا', href: '/admin/campaign-participants' },
+            {
+                label: 'اعضا، فروشگاه‌ها و شرکا',
+                href: '/admin/campaign-participants',
+            },
             { label: 'نقشه عملیات کمپین', href: '/admin/campaign-operations' },
             { label: 'داشبورد عملیاتی', href: '/dashboard' },
         ],
@@ -130,7 +133,10 @@ const workstreams: Workstream[] = [
             'بررسی محتوا، زمان‌بندی، سلامت نمایشگرها و ثبت شواهد قابل گزارش برای تبلیغات.',
         icon: MonitorPlay,
         links: [
-            { label: 'عملیات تبلیغات و نمایشگرها', href: '/admin/display-operations' },
+            {
+                label: 'عملیات تبلیغات و نمایشگرها',
+                href: '/admin/display-operations',
+            },
             { label: 'تبلیغات مستقل', href: '/admin/ads' },
             { label: 'اسپانسرها و درآمد', href: '/admin/sponsors' },
         ],
@@ -357,7 +363,10 @@ export default function InternalOperationsIndex({
                     <div className="grid gap-3 p-4">
                         {teamMembers.length > 0 ? (
                             teamMembers.map((member) => (
-                                <TeamMemberCard key={member.id} member={member} />
+                                <TeamMemberCard
+                                    key={member.id}
+                                    member={member}
+                                />
                             ))
                         ) : (
                             <EmptyState />
@@ -440,7 +449,9 @@ export default function InternalOperationsIndex({
                                     <stream.icon className="size-5" />
                                 </div>
                                 <div className="min-w-0">
-                                    <h2 className="font-semibold">{stream.title}</h2>
+                                    <h2 className="font-semibold">
+                                        {stream.title}
+                                    </h2>
                                     <p className="mt-1 text-sm text-muted-foreground">
                                         مسئول: {stream.owner}
                                     </p>
@@ -469,7 +480,10 @@ export default function InternalOperationsIndex({
                                 </div>
                                 <ul className="space-y-2 text-sm text-muted-foreground">
                                     {stream.guardrails.map((guardrail) => (
-                                        <li key={guardrail} className="leading-7">
+                                        <li
+                                            key={guardrail}
+                                            className="leading-7"
+                                        >
                                             {guardrail}
                                         </li>
                                     ))}

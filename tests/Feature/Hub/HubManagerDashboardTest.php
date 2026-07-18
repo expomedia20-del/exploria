@@ -100,7 +100,6 @@ class HubManagerDashboardTest extends TestCase
             ->assertJsonMissing(['code' => 'family-route-sponsor']);
     }
 
-
     public function test_hub_dashboard_api_only_returns_managed_scope(): void
     {
         $manager = User::query()->where('email', 'ravaq.manager@example.test')->firstOrFail();

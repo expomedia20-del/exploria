@@ -276,8 +276,8 @@ function DisplayScheduleQueue({ items }: { items: DisplayScheduleItem[] }) {
                     </p>
                     <OperationalBoundaryNote title="حد اختیار مدیر رواق">
                         مدیر رواق می‌تواند مشکل اجرایی، ازدحام، مغایرت با قوانین
-                        مجموعه یا خرابی نمایشگر را گزارش کند؛ لغو یا تغییر پخش از این
-                        پنل انجام نمی‌شود.
+                        مجموعه یا خرابی نمایشگر را گزارش کند؛ لغو یا تغییر پخش
+                        از این پنل انجام نمی‌شود.
                     </OperationalBoundaryNote>
                 </article>
             ))}
@@ -306,13 +306,21 @@ export default function HubDashboard({
                         <p className="text-sm text-muted-foreground">
                             نظارت اجرایی بر رواق، فودکورت و واحدهای داخل محدوده
                         </p>
-                        <h1 className="mt-1 text-2xl font-semibold leading-tight">
+                        <h1 className="mt-1 text-2xl leading-tight font-semibold">
                             پنل مدیر رواق تجاری
                         </h1>
                     </div>
                     <div className="grid w-full grid-cols-2 gap-2 text-sm sm:grid-cols-3 md:w-auto xl:grid-cols-5">
-                        <Stat icon={Building2} label="محدوده" value={stats.hubs} />
-                        <Stat icon={Store} label="واحد/شریک" value={stats.partners} />
+                        <Stat
+                            icon={Building2}
+                            label="محدوده"
+                            value={stats.hubs}
+                        />
+                        <Stat
+                            icon={Store}
+                            label="واحد/شریک"
+                            value={stats.partners}
+                        />
                         <Stat
                             icon={Megaphone}
                             label="تبلیغ نیازمند بررسی"
@@ -333,8 +341,9 @@ export default function HubDashboard({
 
                 <OperationalBoundaryNote title="تعریف نقش این پنل">
                     این پنل برای نظم، آمادگی، هماهنگی و اعلام مغایرت‌های اجرایی
-                    رواق است. تصمیم تجاری هر فروشگاه، قیمت‌گذاری، درآمد، نوع پاداش،
-                    قرارداد اسپانسر و تایید نهایی تبلیغ از این پنل انجام نمی‌شود.
+                    رواق است. تصمیم تجاری هر فروشگاه، قیمت‌گذاری، درآمد، نوع
+                    پاداش، قرارداد اسپانسر و تایید نهایی تبلیغ از این پنل انجام
+                    نمی‌شود.
                 </OperationalBoundaryNote>
 
                 <Panel
@@ -343,9 +352,15 @@ export default function HubDashboard({
                     isEmpty={hubs.length === 0}
                 >
                     {hubs.map((hub) => (
-                        <article key={hub.id} className="grid gap-1 px-4 py-3 text-sm">
+                        <article
+                            key={hub.id}
+                            className="grid gap-1 px-4 py-3 text-sm"
+                        >
                             <p className="font-medium">{hub.name}</p>
-                            <p className="text-xs text-muted-foreground" dir="ltr">
+                            <p
+                                className="text-xs text-muted-foreground"
+                                dir="ltr"
+                            >
                                 {hub.code} · {hub.hubType}
                             </p>
                             <p className="text-xs text-muted-foreground">
@@ -378,7 +393,8 @@ export default function HubDashboard({
                                     className="truncate text-xs text-muted-foreground"
                                     dir="ltr"
                                 >
-                                    {partner.code ?? '-'} · {partner.partnerType ?? '-'}
+                                    {partner.code ?? '-'} ·{' '}
+                                    {partner.partnerType ?? '-'}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
                                     {partner.hubName ?? '-'} · نقش در محدوده:{' '}
@@ -394,9 +410,14 @@ export default function HubDashboard({
                         isEmpty={displayDevices.length === 0}
                     >
                         {displayDevices.map((device) => (
-                            <article key={device.id} className="grid gap-1 px-4 py-3 text-sm">
+                            <article
+                                key={device.id}
+                                className="grid gap-1 px-4 py-3 text-sm"
+                            >
                                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                                    <p className="truncate font-medium">{device.name}</p>
+                                    <p className="truncate font-medium">
+                                        {device.name}
+                                    </p>
                                     <span className="w-fit shrink-0 text-xs text-muted-foreground">
                                         {labelForStatus(device.status)}
                                     </span>
@@ -424,7 +445,10 @@ export default function HubDashboard({
                         isEmpty={adRequests.length === 0}
                     >
                         {adRequests.map((adRequest) => (
-                            <article key={adRequest.id} className="grid gap-2 px-4 py-3 text-sm">
+                            <article
+                                key={adRequest.id}
+                                className="grid gap-2 px-4 py-3 text-sm"
+                            >
                                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                                     <div className="min-w-0">
                                         <p className="truncate font-medium">
@@ -434,7 +458,8 @@ export default function HubDashboard({
                                             className="mt-1 truncate text-xs text-muted-foreground"
                                             dir="ltr"
                                         >
-                                            {adRequest.code} · {adRequest.creativeType ?? '-'}
+                                            {adRequest.code} ·{' '}
+                                            {adRequest.creativeType ?? '-'}
                                         </p>
                                     </div>
                                     <span className="w-fit shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
@@ -442,8 +467,8 @@ export default function HubDashboard({
                                     </span>
                                 </div>
                                 <p className="text-xs text-muted-foreground">
-                                    شریک: {adRequest.partnerName ?? '-'} · محدوده:{' '}
-                                    {adRequest.hubName ?? '-'} · جایگاه:{' '}
+                                    شریک: {adRequest.partnerName ?? '-'} ·
+                                    محدوده: {adRequest.hubName ?? '-'} · جایگاه:{' '}
                                     {adRequest.placementType ?? '-'}
                                 </p>
                                 {adRequest.displayDeviceName ? (
@@ -458,9 +483,10 @@ export default function HubDashboard({
                                         tone="warning"
                                         title="نیازمند بررسی اکسپلوریا"
                                     >
-                                        مدیر رواق فقط محدودیت‌های اجرایی، تعارض با
-                                        قوانین مجموعه، ازدحام یا مشکل محل نمایش را گزارش
-                                        می‌کند. تایید یا رد تبلیغ تصمیم تجاری این پنل نیست.
+                                        مدیر رواق فقط محدودیت‌های اجرایی، تعارض
+                                        با قوانین مجموعه، ازدحام یا مشکل محل
+                                        نمایش را گزارش می‌کند. تایید یا رد تبلیغ
+                                        تصمیم تجاری این پنل نیست.
                                     </OperationalBoundaryNote>
                                 ) : null}
                                 <ReviewTrail
@@ -477,7 +503,10 @@ export default function HubDashboard({
                         isEmpty={rewards.length === 0}
                     >
                         {rewards.map((reward) => (
-                            <article key={reward.id} className="grid gap-2 px-4 py-3 text-sm">
+                            <article
+                                key={reward.id}
+                                className="grid gap-2 px-4 py-3 text-sm"
+                            >
                                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                                     <div className="min-w-0">
                                         <p className="truncate font-medium">
@@ -503,9 +532,10 @@ export default function HubDashboard({
                                         tone="warning"
                                         title="نظر رواق، نه تصمیم تجاری"
                                     >
-                                        نوع پاداش، ارزش اقتصادی و شرایط فروشگاهی در
-                                        اختیار واحد تجاری و اکسپلوریا است. مدیر رواق فقط
-                                        مغایرت با مقررات مجموعه یا مانع اجرایی را اعلام می‌کند.
+                                        نوع پاداش، ارزش اقتصادی و شرایط فروشگاهی
+                                        در اختیار واحد تجاری و اکسپلوریا است.
+                                        مدیر رواق فقط مغایرت با مقررات مجموعه یا
+                                        مانع اجرایی را اعلام می‌کند.
                                     </OperationalBoundaryNote>
                                 ) : null}
                                 <ReviewTrail

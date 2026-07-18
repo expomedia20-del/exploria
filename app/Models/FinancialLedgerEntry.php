@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * @property string $id
@@ -18,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $source_type
  * @property string|null $source_id
  * @property string|null $description
- * @property \Illuminate\Support\Carbon|null $occurred_on
+ * @property Carbon|null $occurred_on
  * @property int|null $created_by
  * @property array<string, mixed>|null $metadata
  * @property-read FinancialAccount $financialAccount

@@ -445,7 +445,8 @@ export default function EcosystemDemo() {
                                 به‌روزرسانی پس از توسعه واقعی
                             </p>
                             <h2 className="mt-1 text-2xl font-semibold">
-                                بخش‌هایی که از دمو صرف عبور کرده‌اند و مسیر عملیاتی دارند
+                                بخش‌هایی که از دمو صرف عبور کرده‌اند و مسیر
+                                عملیاتی دارند
                             </h2>
                         </div>
                         <Link
@@ -471,7 +472,9 @@ export default function EcosystemDemo() {
                                         {item.status}
                                     </span>
                                 </div>
-                                <h3 className="mt-4 font-semibold">{item.title}</h3>
+                                <h3 className="mt-4 font-semibold">
+                                    {item.title}
+                                </h3>
                                 <p className="mt-2 text-sm leading-6 text-slate-600">
                                     {item.body}
                                 </p>

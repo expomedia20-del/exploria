@@ -118,10 +118,13 @@ export default function Consent() {
         setMessage('');
 
         try {
-            const response = await fetch('/api/v1/consents/current?language=fa', {
-                headers: { Accept: 'application/json' },
-                credentials: 'same-origin',
-            });
+            const response = await fetch(
+                '/api/v1/consents/current?language=fa',
+                {
+                    headers: { Accept: 'application/json' },
+                    credentials: 'same-origin',
+                },
+            );
             const payload = (await response.json()) as ApiResponse;
 
             if (response.status === 404) {
@@ -193,8 +196,8 @@ export default function Consent() {
                                 </p>
                                 <div className="rounded-xl bg-white/8 p-4">
                                     <ShieldCheck className="mb-3 size-6 text-teal-300" />
-                                    شماره موبایل و نشست شما در گزارش عمومی
-                                    نمایش داده نمی شود.
+                                    شماره موبایل و نشست شما در گزارش عمومی نمایش
+                                    داده نمی شود.
                                 </div>
                                 <div className="rounded-xl bg-white/8 p-4">
                                     <FileCheck2 className="mb-3 size-6 text-orange-300" />

@@ -49,9 +49,10 @@ export default function SupportCenterIndex() {
                         پشتیبانی و چت‌بات اکسپلوریا
                     </h1>
                     <p className="mt-2 max-w-4xl text-sm leading-7 text-muted-foreground">
-                        این نسخه، مرکز راهنمای سریع و مسیرهای عیب‌یابی را آماده می‌کند.
-                        اتصال چت‌بات هوشمند در مرحله بعد روی همین صفحه انجام می‌شود تا از داده‌های
-                        کمپین، کاربر، پاداش و نمایشگر پاسخ عملیاتی بدهد.
+                        این نسخه، مرکز راهنمای سریع و مسیرهای عیب‌یابی را آماده
+                        می‌کند. اتصال چت‌بات هوشمند در مرحله بعد روی همین صفحه
+                        انجام می‌شود تا از داده‌های کمپین، کاربر، پاداش و
+                        نمایشگر پاسخ عملیاتی بدهد.
                     </p>
                 </section>
 
@@ -59,17 +60,24 @@ export default function SupportCenterIndex() {
                     <article className="rounded-lg border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border">
                         <div className="flex items-center gap-2">
                             <BotMessageSquare className="size-5 text-primary" />
-                            <h2 className="font-semibold">جایگاه چت‌بات عملیاتی</h2>
+                            <h2 className="font-semibold">
+                                جایگاه چت‌بات عملیاتی
+                            </h2>
                         </div>
                         <div className="mt-3 rounded-lg border border-dashed border-sidebar-border/70 bg-muted/30 p-4">
                             <div className="flex items-start gap-3">
                                 <MessageSquareText className="mt-1 size-5 text-muted-foreground" />
                                 <div>
-                                    <p className="font-medium">چت‌بات هنوز به موتور پاسخ‌گو وصل نشده است.</p>
+                                    <p className="font-medium">
+                                        چت‌بات هنوز به موتور پاسخ‌گو وصل نشده
+                                        است.
+                                    </p>
                                     <p className="mt-2 text-sm leading-7 text-muted-foreground">
-                                        فعلا این صفحه به عنوان نقطه ورود پشتیبانی استفاده می‌شود. در نسخه بعد،
-                                        همین بخش می‌تواند به موتور پرسش و پاسخ متصل شود و از وضعیت واقعی
-                                        کمپین‌ها، کاربران، پاداش‌ها و نمایشگرها پاسخ بدهد.
+                                        فعلا این صفحه به عنوان نقطه ورود
+                                        پشتیبانی استفاده می‌شود. در نسخه بعد،
+                                        همین بخش می‌تواند به موتور پرسش و پاسخ
+                                        متصل شود و از وضعیت واقعی کمپین‌ها،
+                                        کاربران، پاداش‌ها و نمایشگرها پاسخ بدهد.
                                     </p>
                                 </div>
                             </div>
@@ -92,10 +100,21 @@ export default function SupportCenterIndex() {
                             <h2 className="font-semibold">اولویت پشتیبانی</h2>
                         </div>
                         <ol className="mt-3 space-y-2 text-sm leading-7 text-muted-foreground">
-                            <li>۱. خطایی که مانع ورود کاربر یا شروع کمپین می‌شود.</li>
-                            <li>۲. پاداشی که صادر شده ولی فروشگاه نمی‌تواند مصرف کند.</li>
-                            <li>۳. تبلیغ تاییدشده‌ای که روی نمایشگر پخش نمی‌شود.</li>
-                            <li>۴. دسترسی مدیریتی یا اکانتی که اشتباه تعریف شده است.</li>
+                            <li>
+                                ۱. خطایی که مانع ورود کاربر یا شروع کمپین
+                                می‌شود.
+                            </li>
+                            <li>
+                                ۲. پاداشی که صادر شده ولی فروشگاه نمی‌تواند مصرف
+                                کند.
+                            </li>
+                            <li>
+                                ۳. تبلیغ تاییدشده‌ای که روی نمایشگر پخش نمی‌شود.
+                            </li>
+                            <li>
+                                ۴. دسترسی مدیریتی یا اکانتی که اشتباه تعریف شده
+                                است.
+                            </li>
                         </ol>
                     </article>
                 </section>
@@ -107,7 +126,9 @@ export default function SupportCenterIndex() {
                             className="rounded-lg border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border"
                         >
                             <CircleHelp className="size-5 text-primary" />
-                            <h2 className="mt-3 font-semibold">{action.title}</h2>
+                            <h2 className="mt-3 font-semibold">
+                                {action.title}
+                            </h2>
                             <p className="mt-2 min-h-20 text-sm leading-7 text-muted-foreground">
                                 {action.body}
                             </p>
@@ -124,7 +145,9 @@ export default function SupportCenterIndex() {
                 <section className="rounded-lg border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border">
                     <div className="flex items-center gap-2">
                         <ClipboardCheck className="size-5 text-primary" />
-                        <h2 className="font-semibold">چک‌لیست قبل از ارجاع به پشتیبانی فنی</h2>
+                        <h2 className="font-semibold">
+                            چک‌لیست قبل از ارجاع به پشتیبانی فنی
+                        </h2>
                     </div>
                     <div className="mt-3 grid gap-3 md:grid-cols-4">
                         {[
@@ -133,7 +156,10 @@ export default function SupportCenterIndex() {
                             'آیا پاداش به فروشگاه یا اسپانسر درست وصل شده است؟',
                             'آیا نمایشگر آنلاین و دارای زمان‌بندی فعال است؟',
                         ].map((item) => (
-                            <div key={item} className="rounded-md bg-muted/40 p-3 text-sm">
+                            <div
+                                key={item}
+                                className="rounded-md bg-muted/40 p-3 text-sm"
+                            >
                                 {item}
                             </div>
                         ))}

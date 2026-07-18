@@ -104,7 +104,7 @@ class CampaignOperationsBlueprintTest extends TestCase
     {
         $admin = User::factory()->create(['role' => UserRole::Admin]);
 
-        $campaignId = \App\Models\Campaign::query()
+        $campaignId = Campaign::query()
             ->where('code', 'ecopark-pilot-1405')
             ->valueOrFail('id');
 
@@ -119,6 +119,6 @@ class CampaignOperationsBlueprintTest extends TestCase
             'id' => $campaignId,
         ]);
 
-        $this->assertNull(\App\Models\Campaign::query()->findOrFail($campaignId)->metadata['route_reviewed_at'] ?? null);
+        $this->assertNull(Campaign::query()->findOrFail($campaignId)->metadata['route_reviewed_at'] ?? null);
     }
 }

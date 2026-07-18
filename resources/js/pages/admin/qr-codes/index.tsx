@@ -105,11 +105,14 @@ function formatDateTimeLocal(value: string | null) {
     }
 
     const date = new Date(value);
+
     if (Number.isNaN(date.getTime())) {
         return '';
     }
 
-    return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+        .toISOString()
+        .slice(0, 16);
 }
 
 function entityLabel(entity: RegistryEntity | null, fallback: string) {
@@ -124,14 +127,27 @@ function canMutate(role?: string) {
     return role === 'admin' || role === 'operator';
 }
 
-export default function QrRegistryIndex({ qrCodes, formOptions, selectedCampaign }: Props) {
+export default function QrRegistryIndex({
+    qrCodes,
+    formOptions,
+    selectedCampaign,
+}: Props) {
     const { flash, auth } = usePage<SharedProps>().props;
     const [editingQr, setEditingQr] = useState<QrRegistryItem | null>(null);
     const activeCount = qrCodes.filter((qr) => qr.status === 'active').length;
-    const selectedCampaignOption = formOptions.campaigns.find((campaign) => campaign.id === selectedCampaign?.id);
-    const selectedVenueId = selectedCampaign?.venue?.id ?? selectedCampaignOption?.venueId ?? formOptions.venues[0]?.id ?? '';
-    const selectedCampaignId = selectedCampaign?.id ?? formOptions.campaigns[0]?.id ?? '';
-    const campaignContextUrl = selectedCampaign ? `?campaign=${selectedCampaign.code}` : '';
+    const selectedCampaignOption = formOptions.campaigns.find(
+        (campaign) => campaign.id === selectedCampaign?.id,
+    );
+    const selectedVenueId =
+        selectedCampaign?.venue?.id ??
+        selectedCampaignOption?.venueId ??
+        formOptions.venues[0]?.id ??
+        '';
+    const selectedCampaignId =
+        selectedCampaign?.id ?? formOptions.campaigns[0]?.id ?? '';
+    const campaignContextUrl = selectedCampaign
+        ? `?campaign=${selectedCampaign.code}`
+        : '';
 
     return (
         <>
@@ -179,25 +195,51 @@ export default function QrRegistryIndex({ qrCodes, formOptions, selectedCampaign
                     <section className="rounded-lg border border-primary/25 bg-primary/5 p-4 text-sm shadow-sm">
                         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                             <div>
-                                <p className="text-xs text-muted-foreground">زمینه کمپین فعال</p>
-                                <h2 className="mt-1 font-semibold">{selectedCampaign.name}</h2>
-                                <p className="mt-1 text-muted-foreground">کدهای QR این صفحه به عنوان نقاط شروع، اسکن یا تماس همین کمپین ثبت و فیلتر می‌شوند.</p>
+                                <p className="text-xs text-muted-foreground">
+                                    زمینه کمپین فعال
+                                </p>
+                                <h2 className="mt-1 font-semibold">
+                                    {selectedCampaign.name}
+                                </h2>
+                                <p className="mt-1 text-muted-foreground">
+                                    کدهای QR این صفحه به عنوان نقاط شروع، اسکن
+                                    یا تماس همین کمپین ثبت و فیلتر می‌شوند.
+                                </p>
                             </div>
                             <div className="flex flex-wrap gap-2">
-                                <span className="rounded-full bg-background px-3 py-1 text-xs" dir="ltr">{selectedCampaign.code}</span>
-                                {selectedCampaign.blueprintCode ? <span className="rounded-full bg-background px-3 py-1 text-xs" dir="ltr">{selectedCampaign.blueprintCode}</span> : null}
+                                <span
+                                    className="rounded-full bg-background px-3 py-1 text-xs"
+                                    dir="ltr"
+                                >
+                                    {selectedCampaign.code}
+                                </span>
+                                {selectedCampaign.blueprintCode ? (
+                                    <span
+                                        className="rounded-full bg-background px-3 py-1 text-xs"
+                                        dir="ltr"
+                                    >
+                                        {selectedCampaign.blueprintCode}
+                                    </span>
+                                ) : null}
                             </div>
                         </div>
                     </section>
                 ) : null}
 
-                {selectedCampaign ? <CampaignContextNav campaign={selectedCampaign} /> : null}
+                {selectedCampaign ? (
+                    <CampaignContextNav campaign={selectedCampaign} />
+                ) : null}
 
                 {canMutate(auth.user.role) ? (
-                    <section id="qr-form" className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
+                    <section
+                        id="qr-form"
+                        className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border"
+                    >
                         <div className="mb-4 flex items-center gap-2">
                             <Plus className="size-4 text-muted-foreground" />
-                            <h2 className="font-semibold">{editingQr ? 'ویرایش QR' : 'ثبت QR جدید'}</h2>
+                            <h2 className="font-semibold">
+                                {editingQr ? 'ویرایش QR' : 'ثبت QR جدید'}
+                            </h2>
                         </div>
                         <Form
                             action={`/admin/qr-codes${campaignContextUrl}`}
@@ -207,7 +249,13 @@ export default function QrRegistryIndex({ qrCodes, formOptions, selectedCampaign
                         >
                             {({ processing, errors }) => (
                                 <>
-                                    {editingQr ? <input type="hidden" name="qr_code_id" value={editingQr.id} /> : null}
+                                    {editingQr ? (
+                                        <input
+                                            type="hidden"
+                                            name="qr_code_id"
+                                            value={editingQr.id}
+                                        />
+                                    ) : null}
                                     <div className="grid gap-2 md:col-span-2">
                                         <Label htmlFor="venue_id">مکان</Label>
                                         <select
@@ -215,7 +263,10 @@ export default function QrRegistryIndex({ qrCodes, formOptions, selectedCampaign
                                             name="venue_id"
                                             required
                                             key={`qr-venue-${editingQr?.id ?? selectedVenueId}`}
-                                            defaultValue={editingQr?.venue?.id ?? selectedVenueId}
+                                            defaultValue={
+                                                editingQr?.venue?.id ??
+                                                selectedVenueId
+                                            }
                                             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                         >
                                             {formOptions.venues.map((venue) => (
@@ -238,7 +289,10 @@ export default function QrRegistryIndex({ qrCodes, formOptions, selectedCampaign
                                             name="campaign_id"
                                             required
                                             key={`qr-campaign-${editingQr?.id ?? selectedCampaignId}`}
-                                            defaultValue={editingQr?.campaign?.id ?? selectedCampaignId}
+                                            defaultValue={
+                                                editingQr?.campaign?.id ??
+                                                selectedCampaignId
+                                            }
                                             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                         >
                                             {formOptions.campaigns.map(
@@ -266,7 +320,12 @@ export default function QrRegistryIndex({ qrCodes, formOptions, selectedCampaign
                                             name="touchpoint_id"
                                             required
                                             key={`qr-touchpoint-${editingQr?.id ?? 'new'}`}
-                                            defaultValue={editingQr?.touchpoint?.id ?? formOptions.touchpoints[0]?.id ?? ''}
+                                            defaultValue={
+                                                editingQr?.touchpoint?.id ??
+                                                formOptions.touchpoints[0]
+                                                    ?.id ??
+                                                ''
+                                            }
                                             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                         >
                                             {formOptions.touchpoints.map(
@@ -292,7 +351,9 @@ export default function QrRegistryIndex({ qrCodes, formOptions, selectedCampaign
                                             id="label"
                                             name="label"
                                             key={`qr-label-${editingQr?.id ?? 'new'}`}
-                                            defaultValue={editingQr?.label ?? ''}
+                                            defaultValue={
+                                                editingQr?.label ?? ''
+                                            }
                                             placeholder="مثلا QR ورودی رواق"
                                         />
                                         <InputError message={errors.label} />
@@ -317,7 +378,9 @@ export default function QrRegistryIndex({ qrCodes, formOptions, selectedCampaign
                                             name="status"
                                             required
                                             key={`qr-status-${editingQr?.id ?? 'new'}`}
-                                            defaultValue={editingQr?.status ?? 'draft'}
+                                            defaultValue={
+                                                editingQr?.status ?? 'draft'
+                                            }
                                             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                         >
                                             <option value="draft">
@@ -335,7 +398,9 @@ export default function QrRegistryIndex({ qrCodes, formOptions, selectedCampaign
                                         name="valid_from"
                                         label="شروع"
                                         key={`qr-from-${editingQr?.id ?? 'new'}`}
-                                        defaultValue={formatDateTimeLocal(editingQr?.validFrom ?? null)}
+                                        defaultValue={formatDateTimeLocal(
+                                            editingQr?.validFrom ?? null,
+                                        )}
                                         error={errors.valid_from}
                                     />
                                     <DateTimePickerField
@@ -343,7 +408,9 @@ export default function QrRegistryIndex({ qrCodes, formOptions, selectedCampaign
                                         name="valid_until"
                                         label="پایان"
                                         key={`qr-until-${editingQr?.id ?? 'new'}`}
-                                        defaultValue={formatDateTimeLocal(editingQr?.validUntil ?? null)}
+                                        defaultValue={formatDateTimeLocal(
+                                            editingQr?.validUntil ?? null,
+                                        )}
                                         error={errors.valid_until}
                                     />
                                     <div className="grid gap-2">
@@ -358,7 +425,10 @@ export default function QrRegistryIndex({ qrCodes, formOptions, selectedCampaign
                                             max={1000}
                                             required
                                             key={`qr-max-${editingQr?.id ?? 'new'}`}
-                                            defaultValue={editingQr?.maxScansPerUserPerWindow ?? 1}
+                                            defaultValue={
+                                                editingQr?.maxScansPerUserPerWindow ??
+                                                1
+                                            }
                                         />
                                         <InputError
                                             message={
@@ -378,7 +448,10 @@ export default function QrRegistryIndex({ qrCodes, formOptions, selectedCampaign
                                             max={86400}
                                             required
                                             key={`qr-window-${editingQr?.id ?? 'new'}`}
-                                            defaultValue={editingQr?.duplicateWindowSeconds ?? 300}
+                                            defaultValue={
+                                                editingQr?.duplicateWindowSeconds ??
+                                                300
+                                            }
                                         />
                                         <InputError
                                             message={
@@ -392,7 +465,9 @@ export default function QrRegistryIndex({ qrCodes, formOptions, selectedCampaign
                                             className="w-full"
                                         >
                                             <Plus className="size-4" />
-                                            {editingQr ? 'ذخیره ویرایش QR' : 'ثبت QR'}
+                                            {editingQr
+                                                ? 'ذخیره ویرایش QR'
+                                                : 'ثبت QR'}
                                         </Button>
                                     </div>
                                 </>
@@ -547,7 +622,15 @@ export default function QrRegistryIndex({ qrCodes, formOptions, selectedCampaign
                                                     title="ویرایش QR"
                                                     onClick={() => {
                                                         setEditingQr(qr);
-                                                        document.getElementById('qr-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                                        document
+                                                            .getElementById(
+                                                                'qr-form',
+                                                            )
+                                                            ?.scrollIntoView({
+                                                                behavior:
+                                                                    'smooth',
+                                                                block: 'start',
+                                                            });
                                                     }}
                                                 >
                                                     <Pencil className="size-4" />
@@ -555,15 +638,30 @@ export default function QrRegistryIndex({ qrCodes, formOptions, selectedCampaign
                                                 <Form
                                                     action={`/admin/qr-codes/${qr.id}`}
                                                     method="delete"
-                                                    options={{ preserveScroll: true }}
+                                                    options={{
+                                                        preserveScroll: true,
+                                                    }}
                                                     onSubmit={(event) => {
-                                                        if (!window.confirm('این QR حذف شود؟ QR دارای سابقه اسکن حذف مستقیم نمی‌شود.')) {
+                                                        if (
+                                                            !window.confirm(
+                                                                'این QR حذف شود؟ QR دارای سابقه اسکن حذف مستقیم نمی‌شود.',
+                                                            )
+                                                        ) {
                                                             event.preventDefault();
                                                         }
                                                     }}
                                                 >
                                                     {({ processing }) => (
-                                                        <Button type="submit" variant="ghost" size="sm" className="h-8 px-2 text-destructive hover:text-destructive" disabled={processing} title="حذف QR">
+                                                        <Button
+                                                            type="submit"
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-8 px-2 text-destructive hover:text-destructive"
+                                                            disabled={
+                                                                processing
+                                                            }
+                                                            title="حذف QR"
+                                                        >
                                                             <Trash2 className="size-4" />
                                                         </Button>
                                                     )}

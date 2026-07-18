@@ -54,15 +54,17 @@ export default function UserManagementGuide() {
             <main className="space-y-4 p-4" dir="rtl">
                 <section className="rounded-lg border border-sidebar-border/70 bg-gradient-to-l from-cyan-50 to-background p-4 dark:border-sidebar-border dark:from-cyan-950/30">
                     <p className="text-sm text-muted-foreground">
-                        راهنمای داخلی ادمین‌ها برای نقش پایه، دسترسی عملیاتی و کاربران عمومی
+                        راهنمای داخلی ادمین‌ها برای نقش پایه، دسترسی عملیاتی و
+                        کاربران عمومی
                     </p>
                     <h1 className="mt-1 text-2xl font-semibold">
                         دستورالعمل مدیریت کاربران اکسپلوریا
                     </h1>
                     <p className="mt-2 max-w-4xl text-sm leading-7 text-muted-foreground">
-                        این صفحه کمک می‌کند ادمین بداند چه زمانی باید کاربر را دستی مدیریت کند،
-                        چه زمانی کاربر خودش وارد مسیر مشارکت می‌شود، و چرا همه کاربران به
-                        تخصیص دسترسی عملیاتی نیاز ندارند.
+                        این صفحه کمک می‌کند ادمین بداند چه زمانی باید کاربر را
+                        دستی مدیریت کند، چه زمانی کاربر خودش وارد مسیر مشارکت
+                        می‌شود، و چرا همه کاربران به تخصیص دسترسی عملیاتی نیاز
+                        ندارند.
                     </p>
                     <div className="mt-4 flex flex-wrap gap-2">
                         <Link
@@ -97,7 +99,9 @@ export default function UserManagementGuide() {
                             >
                                 <div className="flex items-center gap-2">
                                     <Icon className="size-5 text-primary" />
-                                    <h2 className="font-semibold">{section.title}</h2>
+                                    <h2 className="font-semibold">
+                                        {section.title}
+                                    </h2>
                                 </div>
                                 <ul className="mt-3 space-y-2 text-sm leading-7 text-muted-foreground">
                                     {section.items.map((item) => (
@@ -118,22 +122,29 @@ export default function UserManagementGuide() {
                         <div className="rounded-md bg-muted/40 p-3">
                             <p className="font-medium">۱. کاربر عمومی</p>
                             <p className="mt-2 text-sm leading-7 text-muted-foreground">
-                                با موبایل وارد می‌شود، رضایت‌نامه را تایید می‌کند و اگر مشارکت را
-                                انتخاب کند خودش وارد چرخه کمپین می‌شود.
+                                با موبایل وارد می‌شود، رضایت‌نامه را تایید
+                                می‌کند و اگر مشارکت را انتخاب کند خودش وارد چرخه
+                                کمپین می‌شود.
                             </p>
                         </div>
                         <div className="rounded-md bg-muted/40 p-3">
-                            <p className="font-medium">۲. اکانت مدیریتی محدود</p>
+                            <p className="font-medium">
+                                ۲. اکانت مدیریتی محدود
+                            </p>
                             <p className="mt-2 text-sm leading-7 text-muted-foreground">
-                                توسط ادمین یا مدیر بالادستی ساخته می‌شود و بعد از صفحه تخصیص
-                                دسترسی به مکان، هاب، فروشگاه یا کمپین وصل می‌شود.
+                                توسط ادمین یا مدیر بالادستی ساخته می‌شود و بعد
+                                از صفحه تخصیص دسترسی به مکان، هاب، فروشگاه یا
+                                کمپین وصل می‌شود.
                             </p>
                         </div>
                         <div className="rounded-md bg-muted/40 p-3">
-                            <p className="font-medium">۳. کنترل و بستن دسترسی</p>
+                            <p className="font-medium">
+                                ۳. کنترل و بستن دسترسی
+                            </p>
                             <p className="mt-2 text-sm leading-7 text-muted-foreground">
-                                اگر همکاری تمام شد یا نقش تغییر کرد، دسترسی عملیاتی غیرفعال
-                                می‌شود؛ سوابق مالی و اجرایی برای گزارش باقی می‌ماند.
+                                اگر همکاری تمام شد یا نقش تغییر کرد، دسترسی
+                                عملیاتی غیرفعال می‌شود؛ سوابق مالی و اجرایی برای
+                                گزارش باقی می‌ماند.
                             </p>
                         </div>
                     </div>

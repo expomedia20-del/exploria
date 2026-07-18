@@ -140,7 +140,8 @@ export default function PartnerRegistryIndex({ partners }: Props) {
                     >
                         <p className="font-semibold">اتصال اکانت به شریک</p>
                         <p className="mt-2 leading-6 text-muted-foreground">
-                            بعد از ثبت فروشگاه یا اسپانسر، دسترسی عملیاتی اکانت مسئول را تعیین کنید.
+                            بعد از ثبت فروشگاه یا اسپانسر، دسترسی عملیاتی اکانت
+                            مسئول را تعیین کنید.
                         </p>
                     </Link>
                     <Link
@@ -149,7 +150,8 @@ export default function PartnerRegistryIndex({ partners }: Props) {
                     >
                         <p className="font-semibold">پنل فروشگاه/شریک</p>
                         <p className="mt-2 leading-6 text-muted-foreground">
-                            پیشنهاد پاداش، مصرف کد و گزارش عملکرد از پنل شریک پیگیری می‌شود.
+                            پیشنهاد پاداش، مصرف کد و گزارش عملکرد از پنل شریک
+                            پیگیری می‌شود.
                         </p>
                     </Link>
                     <Link
@@ -158,7 +160,8 @@ export default function PartnerRegistryIndex({ partners }: Props) {
                     >
                         <p className="font-semibold">تبلیغات مستقل شریک</p>
                         <p className="mt-2 leading-6 text-muted-foreground">
-                            تبلیغات فروشگاه یا اسپانسر بعد از ثبت، از صف تایید تبلیغات عبور می‌کند.
+                            تبلیغات فروشگاه یا اسپانسر بعد از ثبت، از صف تایید
+                            تبلیغات عبور می‌کند.
                         </p>
                     </Link>
                 </section>

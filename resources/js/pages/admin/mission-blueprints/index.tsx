@@ -112,7 +112,15 @@ function fa(value: number) {
     return value.toLocaleString('fa-IR');
 }
 
-function Stat({ label, value, icon: Icon }: { label: string; value: number; icon: typeof Trophy }) {
+function Stat({
+    label,
+    value,
+    icon: Icon,
+}: {
+    label: string;
+    value: number;
+    icon: typeof Trophy;
+}) {
     return (
         <div className="rounded-lg border border-border/80 bg-card/80 px-3 py-2 shadow-sm">
             <div className="flex items-center gap-2 text-muted-foreground">
@@ -125,134 +133,268 @@ function Stat({ label, value, icon: Icon }: { label: string; value: number; icon
 }
 
 function Chip({ children }: { children: ReactNode }) {
-    return <span className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">{children}</span>;
+    return (
+        <span className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
+            {children}
+        </span>
+    );
 }
 
 function VenueDesignContextPanel({ context }: { context: VenueDesignContext }) {
-    const connectedVenues = context.venues.filter((venue) => venue.locationProfile.facilitiesCount > 0);
+    const connectedVenues = context.venues.filter(
+        (venue) => venue.locationProfile.facilitiesCount > 0,
+    );
 
     return (
         <section className="exploria-panel">
             <div className="flex flex-col gap-3 border-b border-border/70 px-4 py-3 lg:flex-row lg:items-end lg:justify-between">
                 <div>
-                    <h2 className="font-semibold">ارزیابی مکان متصل به الگوها</h2>
+                    <h2 className="font-semibold">
+                        ارزیابی مکان متصل به الگوها
+                    </h2>
                     <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                        امکانات و جاذبه‌های ثبت‌شده اینجا به عنوان زمینه مشترک طراحی در اختیار الگوی کمپین، مأموریت، گنج، پاداش، QR، اسپانسر و تبلیغ قرار می‌گیرد.
+                        امکانات و جاذبه‌های ثبت‌شده اینجا به عنوان زمینه مشترک
+                        طراحی در اختیار الگوی کمپین، مأموریت، گنج، پاداش، QR،
+                        اسپانسر و تبلیغ قرار می‌گیرد.
                     </p>
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-center text-xs">
                     <div className="rounded-md border border-border/70 bg-background px-3 py-2">
                         <p className="text-muted-foreground">مکان</p>
-                        <p className="mt-1 font-semibold">{fa(context.totals.venues)}</p>
+                        <p className="mt-1 font-semibold">
+                            {fa(context.totals.venues)}
+                        </p>
                     </div>
                     <div className="rounded-md border border-border/70 bg-background px-3 py-2">
                         <p className="text-muted-foreground">امکان/جاذبه</p>
-                        <p className="mt-1 font-semibold">{fa(context.totals.facilities)}</p>
+                        <p className="mt-1 font-semibold">
+                            {fa(context.totals.facilities)}
+                        </p>
                     </div>
                     <div className="rounded-md border border-border/70 bg-background px-3 py-2">
                         <p className="text-muted-foreground">قابل استفاده</p>
-                        <p className="mt-1 font-semibold">{fa(context.totals.campaignUsableFacilities)}</p>
+                        <p className="mt-1 font-semibold">
+                            {fa(context.totals.campaignUsableFacilities)}
+                        </p>
                     </div>
                 </div>
             </div>
             {connectedVenues.length > 0 ? (
                 <div className="grid gap-3 p-4 xl:grid-cols-2">
                     {connectedVenues.map((venue) => (
-                        <article key={venue.id} className="rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm">
+                        <article
+                            key={venue.id}
+                            className="rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm"
+                        >
                             <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                                 <div>
                                     <div className="flex items-center gap-2">
                                         <MapPinned className="size-4 text-muted-foreground" />
-                                        <h3 className="text-sm font-semibold">{venue.name}</h3>
+                                        <h3 className="text-sm font-semibold">
+                                            {venue.name}
+                                        </h3>
                                     </div>
-                                    <p className="mt-1 text-xs text-muted-foreground" dir="ltr">{venue.code}</p>
+                                    <p
+                                        className="mt-1 text-xs text-muted-foreground"
+                                        dir="ltr"
+                                    >
+                                        {venue.code}
+                                    </p>
                                 </div>
-                                <Chip>آمادگی {fa(venue.locationProfile.readinessScore)}٪</Chip>
+                                <Chip>
+                                    آمادگی{' '}
+                                    {fa(venue.locationProfile.readinessScore)}٪
+                                </Chip>
                             </div>
 
                             <div className="mt-3 grid gap-2 text-xs sm:grid-cols-3">
                                 <div className="rounded-md bg-muted/45 p-2">
-                                    <p className="text-muted-foreground">مخاطب غالب</p>
-                                    <p className="mt-1 leading-5">{venue.locationProfile.primaryAudience ?? 'ثبت نشده'}</p>
+                                    <p className="text-muted-foreground">
+                                        مخاطب غالب
+                                    </p>
+                                    <p className="mt-1 leading-5">
+                                        {venue.locationProfile
+                                            .primaryAudience ?? 'ثبت نشده'}
+                                    </p>
                                 </div>
                                 <div className="rounded-md bg-muted/45 p-2">
-                                    <p className="text-muted-foreground">امکانات ثبت‌شده</p>
-                                    <p className="mt-1 font-semibold">{fa(venue.locationProfile.facilitiesCount)}</p>
+                                    <p className="text-muted-foreground">
+                                        امکانات ثبت‌شده
+                                    </p>
+                                    <p className="mt-1 font-semibold">
+                                        {fa(
+                                            venue.locationProfile
+                                                .facilitiesCount,
+                                        )}
+                                    </p>
                                 </div>
                                 <div className="rounded-md bg-muted/45 p-2">
-                                    <p className="text-muted-foreground">محدودیت‌ها</p>
-                                    <p className="mt-1 font-semibold">{fa(venue.locationProfile.constraintsCount)}</p>
+                                    <p className="text-muted-foreground">
+                                        محدودیت‌ها
+                                    </p>
+                                    <p className="mt-1 font-semibold">
+                                        {fa(
+                                            venue.locationProfile
+                                                .constraintsCount,
+                                        )}
+                                    </p>
                                 </div>
                             </div>
 
                             <div className="mt-3 grid gap-2 md:grid-cols-2">
-                                {Object.entries(context.campaignUseLabels).map(([use, label]) => {
-                                    const assets = venue.designAssets[use] ?? [];
+                                {Object.entries(context.campaignUseLabels).map(
+                                    ([use, label]) => {
+                                        const assets =
+                                            venue.designAssets[use] ?? [];
 
-                                    return (
-                                        <div key={use} className="rounded-md border border-border/70 bg-background/70 p-2">
-                                            <div className="mb-2 flex items-center justify-between gap-2">
-                                                <p className="text-xs font-medium">{label}</p>
-                                                <span className="text-[11px] text-muted-foreground">{fa(assets.length)} مورد</span>
-                                            </div>
-                                            {assets.length > 0 ? (
-                                                <div className="flex flex-wrap gap-1.5">
-                                                    {assets.slice(0, 4).map((facility) => <Chip key={`${use}-${facility.name}`}>{facility.name}</Chip>)}
+                                        return (
+                                            <div
+                                                key={use}
+                                                className="rounded-md border border-border/70 bg-background/70 p-2"
+                                            >
+                                                <div className="mb-2 flex items-center justify-between gap-2">
+                                                    <p className="text-xs font-medium">
+                                                        {label}
+                                                    </p>
+                                                    <span className="text-[11px] text-muted-foreground">
+                                                        {fa(assets.length)} مورد
+                                                    </span>
                                                 </div>
-                                            ) : (
-                                                <p className="text-xs text-muted-foreground">هنوز موردی برای این کارکرد انتخاب نشده است.</p>
-                                            )}
-                                        </div>
-                                    );
-                                })}
+                                                {assets.length > 0 ? (
+                                                    <div className="flex flex-wrap gap-1.5">
+                                                        {assets
+                                                            .slice(0, 4)
+                                                            .map((facility) => (
+                                                                <Chip
+                                                                    key={`${use}-${facility.name}`}
+                                                                >
+                                                                    {
+                                                                        facility.name
+                                                                    }
+                                                                </Chip>
+                                                            ))}
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-xs text-muted-foreground">
+                                                        هنوز موردی برای این
+                                                        کارکرد انتخاب نشده است.
+                                                    </p>
+                                                )}
+                                            </div>
+                                        );
+                                    },
+                                )}
                             </div>
 
                             <div className="mt-3 rounded-md border border-dashed border-primary/30 bg-primary/5 p-3">
                                 <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                                     <div>
-                                        <p className="text-xs font-semibold text-primary">پیشنهاد الگو از شناخت‌نامه این مکان</p>
-                                        <p className="mt-1 text-xs leading-5 text-muted-foreground">سیستم بر اساس کارکرد امکانات و جاذبه‌ها، الگوهای آماده مناسب را رتبه‌بندی می‌کند.</p>
+                                        <p className="text-xs font-semibold text-primary">
+                                            پیشنهاد الگو از شناخت‌نامه این مکان
+                                        </p>
+                                        <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                                            سیستم بر اساس کارکرد امکانات و
+                                            جاذبه‌ها، الگوهای آماده مناسب را
+                                            رتبه‌بندی می‌کند.
+                                        </p>
                                     </div>
                                     <Sparkles className="size-4 text-primary" />
                                 </div>
                                 {venue.templateRecommendations.length > 0 ? (
                                     <div className="mt-3 grid gap-2">
-                                        {venue.templateRecommendations.map((recommendation) => (
-                                            <article key={recommendation.code} className="rounded-md border border-border/70 bg-background/80 p-2">
-                                                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                                                    <div>
-                                                        <h4 className="text-xs font-semibold leading-5">{recommendation.title}</h4>
-                                                        <p className="mt-1 text-[11px] text-muted-foreground" dir="ltr">{recommendation.code}</p>
+                                        {venue.templateRecommendations.map(
+                                            (recommendation) => (
+                                                <article
+                                                    key={recommendation.code}
+                                                    className="rounded-md border border-border/70 bg-background/80 p-2"
+                                                >
+                                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                                        <div>
+                                                            <h4 className="text-xs leading-5 font-semibold">
+                                                                {
+                                                                    recommendation.title
+                                                                }
+                                                            </h4>
+                                                            <p
+                                                                className="mt-1 text-[11px] text-muted-foreground"
+                                                                dir="ltr"
+                                                            >
+                                                                {
+                                                                    recommendation.code
+                                                                }
+                                                            </p>
+                                                        </div>
+                                                        <Chip>
+                                                            امتیاز تطبیق{' '}
+                                                            {fa(
+                                                                recommendation.matchScore,
+                                                            )}
+                                                        </Chip>
                                                     </div>
-                                                    <Chip>امتیاز تطبیق {fa(recommendation.matchScore)}</Chip>
-                                                </div>
-                                                <p className="mt-2 text-xs leading-5 text-muted-foreground">{recommendation.reason}</p>
-                                                <div className="mt-2 flex flex-wrap gap-1.5">
-                                                    {recommendation.matchedUses.map((use) => (
-                                                        <Chip key={`${recommendation.code}-${use}`}>{context.campaignUseLabels[use] ?? use}</Chip>
-                                                    ))}
-                                                </div>
-                                                <div className="mt-2">
-                                                    <Button asChild variant="outline" className="h-8 text-xs">
-                                                        <Link href={recommendation.buildUrl}>شروع ساخت کمپین با این الگو</Link>
-                                                    </Button>
-                                                </div>
-                                            </article>
-                                        ))}
+                                                    <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                                                        {recommendation.reason}
+                                                    </p>
+                                                    <div className="mt-2 flex flex-wrap gap-1.5">
+                                                        {recommendation.matchedUses.map(
+                                                            (use) => (
+                                                                <Chip
+                                                                    key={`${recommendation.code}-${use}`}
+                                                                >
+                                                                    {context
+                                                                        .campaignUseLabels[
+                                                                        use
+                                                                    ] ?? use}
+                                                                </Chip>
+                                                            ),
+                                                        )}
+                                                    </div>
+                                                    <div className="mt-2">
+                                                        <Button
+                                                            asChild
+                                                            variant="outline"
+                                                            className="h-8 text-xs"
+                                                        >
+                                                            <Link
+                                                                href={
+                                                                    recommendation.buildUrl
+                                                                }
+                                                            >
+                                                                شروع ساخت کمپین
+                                                                با این الگو
+                                                            </Link>
+                                                        </Button>
+                                                    </div>
+                                                </article>
+                                            ),
+                                        )}
                                     </div>
                                 ) : (
                                     <p className="mt-3 rounded-md bg-background/80 p-2 text-xs text-muted-foreground">
-                                        برای پیشنهاد خودکار الگو، حداقل چند امکان/جاذبه را با کارکرد کمپینی مشخص کنید.
+                                        برای پیشنهاد خودکار الگو، حداقل چند
+                                        امکان/جاذبه را با کارکرد کمپینی مشخص
+                                        کنید.
                                     </p>
                                 )}
                             </div>
 
                             <div className="mt-3 flex flex-wrap gap-2">
-                                <Button asChild variant="outline" className="h-8 text-xs">
-                                    <Link href="/admin/venues">تکمیل ارزیابی مکان</Link>
+                                <Button
+                                    asChild
+                                    variant="outline"
+                                    className="h-8 text-xs"
+                                >
+                                    <Link href="/admin/venues">
+                                        تکمیل ارزیابی مکان
+                                    </Link>
                                 </Button>
-                                <Button asChild variant="outline" className="h-8 text-xs">
-                                    <Link href="/admin/campaigns">رفتن به کمپین‌ها</Link>
+                                <Button
+                                    asChild
+                                    variant="outline"
+                                    className="h-8 text-xs"
+                                >
+                                    <Link href="/admin/campaigns">
+                                        رفتن به کمپین‌ها
+                                    </Link>
                                 </Button>
                             </div>
                         </article>
@@ -261,7 +403,9 @@ function VenueDesignContextPanel({ context }: { context: VenueDesignContext }) {
             ) : (
                 <div className="p-4">
                     <div className="rounded-lg border border-dashed border-border/80 bg-background/70 p-4 text-sm text-muted-foreground">
-                        هنوز برای مکان‌ها امکانات و جاذبه قابل استفاده در کمپین ثبت نشده است. ابتدا ارزیابی مکان را تکمیل کنید تا الگوها بتوانند از داده واقعی مکان استفاده کنند.
+                        هنوز برای مکان‌ها امکانات و جاذبه قابل استفاده در کمپین
+                        ثبت نشده است. ابتدا ارزیابی مکان را تکمیل کنید تا الگوها
+                        بتوانند از داده واقعی مکان استفاده کنند.
                     </div>
                 </div>
             )}
@@ -273,9 +417,17 @@ function rewardRule(template: BlueprintTemplate, tierIndex: number) {
     const stepCount = Math.max(template.userSteps.length, 1);
     const base = template.points.base;
 
-    if (tierIndex === 0) return `پس از انجام اولین کنش معتبر یا شروع مسیر؛ حدود ${fa(Math.max(20, Math.round(base * 0.2)))} امتیاز.`;
-    if (tierIndex === 1) return `پس از تکمیل حدود نیمی از مسیر یا ${fa(Math.max(2, Math.ceil(stepCount / 2)))} مرحله؛ حدود ${fa(Math.round(base * 0.5))} امتیاز.`;
-    if (tierIndex === 2) return `پس از تکمیل مسیر اصلی کمپین؛ حدود ${fa(base)} امتیاز.`;
+    if (tierIndex === 0) {
+        return `پس از انجام اولین کنش معتبر یا شروع مسیر؛ حدود ${fa(Math.max(20, Math.round(base * 0.2)))} امتیاز.`;
+    }
+
+    if (tierIndex === 1) {
+        return `پس از تکمیل حدود نیمی از مسیر یا ${fa(Math.max(2, Math.ceil(stepCount / 2)))} مرحله؛ حدود ${fa(Math.round(base * 0.5))} امتیاز.`;
+    }
+
+    if (tierIndex === 2) {
+        return `پس از تکمیل مسیر اصلی کمپین؛ حدود ${fa(base)} امتیاز.`;
+    }
 
     return 'برای تکمیل کامل مسیر، انجام کنش تکمیلی، بازگشت، خرید/تعامل معتبر یا انتخاب به‌عنوان کاربر برتر.';
 }
@@ -284,35 +436,73 @@ function BlueprintSystemGuide() {
     return (
         <section className="exploria-panel">
             <div className="border-b border-border/70 px-4 py-3">
-                <h2 className="font-semibold">ارتباط گنجینه با اجرای واقعی کمپین</h2>
+                <h2 className="font-semibold">
+                    ارتباط گنجینه با اجرای واقعی کمپین
+                </h2>
                 <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                    این صفحه محل طراحی و انتخاب الگو است؛ امتیاز قطعی، ظرفیت جایزه، مالک پاداش و محل تحویل باید هنگام ساخت مأموریت واقعی ثبت شود.
+                    این صفحه محل طراحی و انتخاب الگو است؛ امتیاز قطعی، ظرفیت
+                    جایزه، مالک پاداش و محل تحویل باید هنگام ساخت مأموریت واقعی
+                    ثبت شود.
                 </p>
             </div>
             <div className="grid gap-3 p-4 lg:grid-cols-4">
                 <article className="rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm">
                     <h3 className="text-sm font-semibold">۱. انتخاب الگو</h3>
-                    <p className="mt-2 text-xs leading-6 text-muted-foreground">از همین گنجینه، مسیر یا کمپین مناسب انتخاب می‌شود؛ مثلا طعم‌گردی، رواق، اقیانوس پارک یا مسیر خلوت.</p>
+                    <p className="mt-2 text-xs leading-6 text-muted-foreground">
+                        از همین گنجینه، مسیر یا کمپین مناسب انتخاب می‌شود؛ مثلا
+                        طعم‌گردی، رواق، اقیانوس پارک یا مسیر خلوت.
+                    </p>
                 </article>
                 <article className="rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm">
-                    <h3 className="text-sm font-semibold">۲. ثبت مأموریت واقعی</h3>
-                    <p className="mt-2 text-xs leading-6 text-muted-foreground">در صفحه مأموریت‌ها و پاداش‌ها، مراحل، امتیاز، مدرک انجام، سطح پاداش و قوانین مصرف ثبت می‌شود.</p>
-                    <Button asChild variant="outline" className="mt-3 h-8 text-xs">
-                        <Link href="/admin/missions">رفتن به مأموریت‌ها و پاداش‌ها</Link>
+                    <h3 className="text-sm font-semibold">
+                        ۲. ثبت مأموریت واقعی
+                    </h3>
+                    <p className="mt-2 text-xs leading-6 text-muted-foreground">
+                        در صفحه مأموریت‌ها و پاداش‌ها، مراحل، امتیاز، مدرک
+                        انجام، سطح پاداش و قوانین مصرف ثبت می‌شود.
+                    </p>
+                    <Button
+                        asChild
+                        variant="outline"
+                        className="mt-3 h-8 text-xs"
+                    >
+                        <Link href="/admin/missions">
+                            رفتن به مأموریت‌ها و پاداش‌ها
+                        </Link>
                     </Button>
                 </article>
                 <article className="rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm">
-                    <h3 className="text-sm font-semibold">۳. تعیین مالک پاداش</h3>
-                    <p className="mt-2 text-xs leading-6 text-muted-foreground">فروشگاه، مدیر هاب، اسپانسر داخلی/خارجی یا ادمین کمپین باید به پاداش وصل شود.</p>
-                    <Button asChild variant="outline" className="mt-3 h-8 text-xs">
-                        <Link href="/admin/campaign-participants">اعضا و شرکای کمپین</Link>
+                    <h3 className="text-sm font-semibold">
+                        ۳. تعیین مالک پاداش
+                    </h3>
+                    <p className="mt-2 text-xs leading-6 text-muted-foreground">
+                        فروشگاه، مدیر هاب، اسپانسر داخلی/خارجی یا ادمین کمپین
+                        باید به پاداش وصل شود.
+                    </p>
+                    <Button
+                        asChild
+                        variant="outline"
+                        className="mt-3 h-8 text-xs"
+                    >
+                        <Link href="/admin/campaign-participants">
+                            اعضا و شرکای کمپین
+                        </Link>
                     </Button>
                 </article>
                 <article className="rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm">
                     <h3 className="text-sm font-semibold">۴. اتصال به مسیر</h3>
-                    <p className="mt-2 text-xs leading-6 text-muted-foreground">مأموریت به QR، مکان، هاب، فروشگاه، نمایشگر یا شاخه مسیر در نقشه عملیات وصل می‌شود.</p>
-                    <Button asChild variant="outline" className="mt-3 h-8 text-xs">
-                        <Link href="/admin/campaign-operations">نقشه عملیات</Link>
+                    <p className="mt-2 text-xs leading-6 text-muted-foreground">
+                        مأموریت به QR، مکان، هاب، فروشگاه، نمایشگر یا شاخه مسیر
+                        در نقشه عملیات وصل می‌شود.
+                    </p>
+                    <Button
+                        asChild
+                        variant="outline"
+                        className="mt-3 h-8 text-xs"
+                    >
+                        <Link href="/admin/campaign-operations">
+                            نقشه عملیات
+                        </Link>
                     </Button>
                 </article>
             </div>
@@ -354,7 +544,8 @@ function CampaignFlowInfographic() {
             <div className="border-b border-border/70 px-4 py-3">
                 <h2 className="font-semibold">راهنمای اینفوگرافی مسیر کمپین</h2>
                 <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                    این نقشه نشان می‌دهد هر ایده در گنجینه چگونه از ورود کاربر به مسیر، مأموریت، ناوبری و پاداش تبدیل می‌شود.
+                    این نقشه نشان می‌دهد هر ایده در گنجینه چگونه از ورود کاربر
+                    به مسیر، مأموریت، ناوبری و پاداش تبدیل می‌شود.
                 </p>
             </div>
             <div className="grid gap-3 p-4 lg:grid-cols-5">
@@ -362,18 +553,27 @@ function CampaignFlowInfographic() {
                     const Icon = step.icon;
 
                     return (
-                        <article key={step.title} className="relative rounded-lg border border-border/80 bg-card/80 p-3 shadow-sm">
+                        <article
+                            key={step.title}
+                            className="relative rounded-lg border border-border/80 bg-card/80 p-3 shadow-sm"
+                        >
                             {index < campaignFlowSteps.length - 1 && (
-                                <div className="absolute left-[-1.25rem] top-8 hidden h-px w-5 bg-border lg:block" />
+                                <div className="absolute top-8 left-[-1.25rem] hidden h-px w-5 bg-border lg:block" />
                             )}
                             <div className="flex items-center gap-2">
                                 <span className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-primary">
                                     <Icon className="size-4" />
                                 </span>
-                                <span className="text-xs text-muted-foreground">مرحله {fa(index + 1)}</span>
+                                <span className="text-xs text-muted-foreground">
+                                    مرحله {fa(index + 1)}
+                                </span>
                             </div>
-                            <h3 className="mt-3 text-sm font-semibold">{step.title}</h3>
-                            <p className="mt-2 text-xs leading-6 text-muted-foreground">{step.body}</p>
+                            <h3 className="mt-3 text-sm font-semibold">
+                                {step.title}
+                            </h3>
+                            <p className="mt-2 text-xs leading-6 text-muted-foreground">
+                                {step.body}
+                            </p>
                         </article>
                     );
                 })}
@@ -392,26 +592,50 @@ export default function MissionBlueprintIndex({
     rewardVault,
     globalPatterns,
 }: Props) {
-    const families = useMemo(() => ['همه', ...Array.from(new Set(templates.map((template) => template.family)))], [templates]);
-    const [activeFamily, setActiveFamily] = useState(families[0] ?? 'همه');
-    const mvpTemplates = useMemo(
-        () => [...templates].filter((template) => template.mvpPriority < 99).sort((a, b) => a.mvpPriority - b.mvpPriority),
+    const families = useMemo(
+        () => [
+            'همه',
+            ...Array.from(
+                new Set(templates.map((template) => template.family)),
+            ),
+        ],
         [templates],
     );
-    const visibleTemplates = activeFamily === 'همه' ? templates : templates.filter((template) => template.family === activeFamily);
+    const [activeFamily, setActiveFamily] = useState(families[0] ?? 'همه');
+    const mvpTemplates = useMemo(
+        () =>
+            [...templates]
+                .filter((template) => template.mvpPriority < 99)
+                .sort((a, b) => a.mvpPriority - b.mvpPriority),
+        [templates],
+    );
+    const visibleTemplates =
+        activeFamily === 'همه'
+            ? templates
+            : templates.filter((template) => template.family === activeFamily);
     const mvpPhases = useMemo(
-        () => Array.from(new Set(mvpTemplates.map((template) => template.launchPhase))),
+        () =>
+            Array.from(
+                new Set(mvpTemplates.map((template) => template.launchPhase)),
+            ),
         [mvpTemplates],
     );
 
     return (
         <>
             <Head title="گنجینه الگوها" />
-            <div dir="rtl" className="flex h-full flex-1 flex-col gap-5 overflow-x-auto p-4">
+            <div
+                dir="rtl"
+                className="flex h-full flex-1 flex-col gap-5 overflow-x-auto p-4"
+            >
                 <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                     <div>
-                        <p className="text-sm text-muted-foreground">موتور طراحی بازی، گنج، امتیاز و مشوق</p>
-                        <h1 className="mt-1 text-2xl font-semibold">گنجینه الگوها</h1>
+                        <p className="text-sm text-muted-foreground">
+                            موتور طراحی بازی، گنج، امتیاز و مشوق
+                        </p>
+                        <h1 className="mt-1 text-2xl font-semibold">
+                            گنجینه الگوها
+                        </h1>
                     </div>
                     <div className="flex flex-wrap gap-2">
                         <Button asChild variant="outline">
@@ -430,10 +654,26 @@ export default function MissionBlueprintIndex({
                 </header>
 
                 <section className="grid grid-cols-2 gap-3 text-sm lg:grid-cols-4">
-                    <Stat icon={Lightbulb} label="الگوی آماده" value={stats.templates} />
-                    <Stat icon={BookOpenCheck} label="خانواده مأموریت" value={stats.missionFamilies} />
-                    <Stat icon={Gift} label="مدل پاداش" value={stats.rewardModels} />
-                    <Stat icon={ShieldCheck} label="نوع مدرک" value={stats.evidenceTypes} />
+                    <Stat
+                        icon={Lightbulb}
+                        label="الگوی آماده"
+                        value={stats.templates}
+                    />
+                    <Stat
+                        icon={BookOpenCheck}
+                        label="خانواده مأموریت"
+                        value={stats.missionFamilies}
+                    />
+                    <Stat
+                        icon={Gift}
+                        label="مدل پاداش"
+                        value={stats.rewardModels}
+                    />
+                    <Stat
+                        icon={ShieldCheck}
+                        label="نوع مدرک"
+                        value={stats.evidenceTypes}
+                    />
                 </section>
 
                 <CampaignFlowInfographic />
@@ -446,50 +686,82 @@ export default function MissionBlueprintIndex({
                     <div className="border-b border-border/70 px-4 py-3 dark:border-sidebar-border">
                         <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
                             <div>
-                                <h2 className="font-semibold">نقشه کمپین‌های اولویت‌دار</h2>
-                                <p className="mt-1 text-sm text-muted-foreground">این بخش دیگر فقط چند مأموریت نیست؛ مسیر اجرای کمپین را از شروع مشترک تا شاخه‌های خانواده، هیجان، خرید، طعم‌گردی، علم، روایت شهری، ساعات خلوت و اسپانسرها نشان می‌دهد.</p>
+                                <h2 className="font-semibold">
+                                    نقشه کمپین‌های اولویت‌دار
+                                </h2>
+                                <p className="mt-1 text-sm text-muted-foreground">
+                                    این بخش دیگر فقط چند مأموریت نیست؛ مسیر
+                                    اجرای کمپین را از شروع مشترک تا شاخه‌های
+                                    خانواده، هیجان، خرید، طعم‌گردی، علم، روایت
+                                    شهری، ساعات خلوت و اسپانسرها نشان می‌دهد.
+                                </p>
                             </div>
                             <div className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-                                {fa(mvpTemplates.length)} کمپین/مسیر قابل استفاده
+                                {fa(mvpTemplates.length)} کمپین/مسیر قابل
+                                استفاده
                             </div>
                         </div>
                     </div>
                     <div className="space-y-5 p-4">
                         {mvpPhases.map((phase) => {
-                            const phaseTemplates = mvpTemplates.filter((template) => template.launchPhase === phase);
+                            const phaseTemplates = mvpTemplates.filter(
+                                (template) => template.launchPhase === phase,
+                            );
 
                             return (
                                 <Fragment key={phase}>
                                     <div className="flex items-center gap-3">
                                         <div className="h-px flex-1 bg-border" />
-                                        <h3 className="rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold text-muted-foreground">{phase}</h3>
+                                        <h3 className="rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold text-muted-foreground">
+                                            {phase}
+                                        </h3>
                                         <div className="h-px flex-1 bg-border" />
                                     </div>
                                     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                                         {phaseTemplates.map((template) => (
-                                            <article key={template.code} className="rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm">
+                                            <article
+                                                key={template.code}
+                                                className="rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm"
+                                            >
                                                 <div className="flex items-start justify-between gap-3">
                                                     <div>
-                                                        <p className="text-xs text-muted-foreground">اولویت {fa(template.mvpPriority)}</p>
-                                                        <h4 className="mt-1 text-sm font-semibold leading-6">{template.title}</h4>
+                                                        <p className="text-xs text-muted-foreground">
+                                                            اولویت{' '}
+                                                            {fa(
+                                                                template.mvpPriority,
+                                                            )}
+                                                        </p>
+                                                        <h4 className="mt-1 text-sm leading-6 font-semibold">
+                                                            {template.title}
+                                                        </h4>
                                                     </div>
                                                     <Trophy className="size-4 text-muted-foreground" />
                                                 </div>
-                                                <p className="mt-2 text-xs leading-6 text-muted-foreground">{template.priorityReason}</p>
+                                                <p className="mt-2 text-xs leading-6 text-muted-foreground">
+                                                    {template.priorityReason}
+                                                </p>
                                                 <div className="mt-3 grid gap-2 text-xs text-muted-foreground">
                                                     <div className="rounded-md bg-muted/45 p-2">
                                                         <div className="mb-1 flex items-center gap-1.5 font-medium text-foreground">
                                                             <Target className="size-3.5" />
                                                             هدف مأموریت
                                                         </div>
-                                                        <p className="leading-6">{template.missionGoal}</p>
+                                                        <p className="leading-6">
+                                                            {
+                                                                template.missionGoal
+                                                            }
+                                                        </p>
                                                     </div>
                                                     <div className="rounded-md bg-muted/45 p-2">
                                                         <div className="mb-1 flex items-center gap-1.5 font-medium text-foreground">
                                                             <Compass className="size-3.5" />
                                                             ناوبری و مسیر
                                                         </div>
-                                                        <p className="leading-6">{template.navigationHint}</p>
+                                                        <p className="leading-6">
+                                                            {
+                                                                template.navigationHint
+                                                            }
+                                                        </p>
                                                     </div>
                                                 </div>
                                                 <div className="mt-3 grid gap-2 text-xs md:grid-cols-2">
@@ -499,12 +771,33 @@ export default function MissionBlueprintIndex({
                                                             مراحل کاربر
                                                         </div>
                                                         <ol className="space-y-1 text-muted-foreground">
-                                                            {template.userSteps.slice(0, 3).map((step, index) => (
-                                                                <li key={step} className="flex gap-1.5 leading-5">
-                                                                    <span className="text-foreground">{fa(index + 1)}</span>
-                                                                    <span>{step}</span>
-                                                                </li>
-                                                            ))}
+                                                            {template.userSteps
+                                                                .slice(0, 3)
+                                                                .map(
+                                                                    (
+                                                                        step,
+                                                                        index,
+                                                                    ) => (
+                                                                        <li
+                                                                            key={
+                                                                                step
+                                                                            }
+                                                                            className="flex gap-1.5 leading-5"
+                                                                        >
+                                                                            <span className="text-foreground">
+                                                                                {fa(
+                                                                                    index +
+                                                                                        1,
+                                                                                )}
+                                                                            </span>
+                                                                            <span>
+                                                                                {
+                                                                                    step
+                                                                                }
+                                                                            </span>
+                                                                        </li>
+                                                                    ),
+                                                                )}
                                                         </ol>
                                                     </div>
                                                     <div className="rounded-md border border-border/70 p-2">
@@ -513,40 +806,132 @@ export default function MissionBlueprintIndex({
                                                             ذی‌نفعان
                                                         </div>
                                                         <div className="flex flex-wrap gap-1.5">
-                                                            {template.stakeholders.slice(0, 4).map((stakeholder) => <Chip key={stakeholder}>{stakeholder}</Chip>)}
+                                                            {template.stakeholders
+                                                                .slice(0, 4)
+                                                                .map(
+                                                                    (
+                                                                        stakeholder,
+                                                                    ) => (
+                                                                        <Chip
+                                                                            key={
+                                                                                stakeholder
+                                                                            }
+                                                                        >
+                                                                            {
+                                                                                stakeholder
+                                                                            }
+                                                                        </Chip>
+                                                                    ),
+                                                                )}
                                                         </div>
                                                     </div>
                                                 </div>
                                                 <div className="mt-3 flex flex-wrap gap-2">
-                                                    {template.connectedSurfaces.slice(0, 5).map((surface) => <Chip key={surface}>{surface}</Chip>)}
+                                                    {template.connectedSurfaces
+                                                        .slice(0, 5)
+                                                        .map((surface) => (
+                                                            <Chip key={surface}>
+                                                                {surface}
+                                                            </Chip>
+                                                        ))}
                                                 </div>
                                                 <div className="mt-3 grid gap-2 rounded-md border border-dashed border-border/80 bg-background/70 p-2 text-xs sm:grid-cols-[1fr_auto]">
-                                                    <Button asChild variant="outline" className="h-8 text-xs">
-                                                        <Link href={`/admin/campaigns?blueprint=${template.code}&blueprint_action=build`}>شروع ساخت کمپین</Link>
+                                                    <Button
+                                                        asChild
+                                                        variant="outline"
+                                                        className="h-8 text-xs"
+                                                    >
+                                                        <Link
+                                                            href={`/admin/campaigns?blueprint=${template.code}&blueprint_action=build`}
+                                                        >
+                                                            شروع ساخت کمپین
+                                                        </Link>
                                                     </Button>
-                                                    <Button asChild variant="outline" className="h-8 text-xs">
-                                                        <Link href={`/admin/campaign-operations?blueprint=${template.code}&blueprint_action=route`}>مشاهده مسیر مرجع</Link>
+                                                    <Button
+                                                        asChild
+                                                        variant="outline"
+                                                        className="h-8 text-xs"
+                                                    >
+                                                        <Link
+                                                            href={`/admin/campaign-operations?blueprint=${template.code}&blueprint_action=route`}
+                                                        >
+                                                            مشاهده مسیر مرجع
+                                                        </Link>
                                                     </Button>
                                                 </div>
                                                 <div className="mt-3 rounded-md bg-muted/50 p-2">
-                                                    <p className="text-xs font-medium">سطوح پاداش و شرط پیشنهادی</p>
+                                                    <p className="text-xs font-medium">
+                                                        سطوح پاداش و شرط
+                                                        پیشنهادی
+                                                    </p>
                                                     <div className="mt-2 grid gap-2">
-                                                        {template.rewardBasket.map((tier, tierIndex) => (
-                                                            <div key={tier.level} className="rounded-md border border-border/70 bg-background/60 p-2">
-                                                                <div className="flex flex-wrap items-center justify-between gap-2">
-                                                                    <p className="text-xs font-semibold">{tier.level}</p>
-                                                                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] text-primary">{rewardRule(template, tierIndex)}</span>
+                                                        {template.rewardBasket.map(
+                                                            (
+                                                                tier,
+                                                                tierIndex,
+                                                            ) => (
+                                                                <div
+                                                                    key={
+                                                                        tier.level
+                                                                    }
+                                                                    className="rounded-md border border-border/70 bg-background/60 p-2"
+                                                                >
+                                                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                                                        <p className="text-xs font-semibold">
+                                                                            {
+                                                                                tier.level
+                                                                            }
+                                                                        </p>
+                                                                        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] text-primary">
+                                                                            {rewardRule(
+                                                                                template,
+                                                                                tierIndex,
+                                                                            )}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="mt-2 flex flex-wrap gap-1.5">
+                                                                        {tier.items
+                                                                            .slice(
+                                                                                0,
+                                                                                3,
+                                                                            )
+                                                                            .map(
+                                                                                (
+                                                                                    item,
+                                                                                ) => (
+                                                                                    <Chip
+                                                                                        key={
+                                                                                            item
+                                                                                        }
+                                                                                    >
+                                                                                        {
+                                                                                            item
+                                                                                        }
+                                                                                    </Chip>
+                                                                                ),
+                                                                            )}
+                                                                    </div>
                                                                 </div>
-                                                                <div className="mt-2 flex flex-wrap gap-1.5">
-                                                                    {tier.items.slice(0, 3).map((item) => <Chip key={item}>{item}</Chip>)}
-                                                                </div>
-                                                            </div>
-                                                        ))}
+                                                            ),
+                                                        )}
                                                     </div>
                                                     <div className="mt-2 rounded-md border border-dashed border-border/80 p-2">
-                                                        <p className="text-xs font-medium">ایده‌های جایزه قابل انتخاب در ثبت نهایی</p>
+                                                        <p className="text-xs font-medium">
+                                                            ایده‌های جایزه قابل
+                                                            انتخاب در ثبت نهایی
+                                                        </p>
                                                         <div className="mt-2 flex flex-wrap gap-1.5">
-                                                            {template.rewardIdeas.slice(0, 4).map((idea) => <Chip key={idea}>{idea}</Chip>)}
+                                                            {template.rewardIdeas
+                                                                .slice(0, 4)
+                                                                .map((idea) => (
+                                                                    <Chip
+                                                                        key={
+                                                                            idea
+                                                                        }
+                                                                    >
+                                                                        {idea}
+                                                                    </Chip>
+                                                                ))}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -561,13 +946,22 @@ export default function MissionBlueprintIndex({
                 <section className="grid gap-4 xl:grid-cols-[0.85fr_1.15fr]">
                     <div className="exploria-panel">
                         <div className="border-b border-border/70 px-4 py-3 dark:border-sidebar-border">
-                            <h2 className="font-semibold">اصول طراحی مأموریت</h2>
+                            <h2 className="font-semibold">
+                                اصول طراحی مأموریت
+                            </h2>
                         </div>
                         <div className="grid gap-3 p-4">
                             {principles.map((principle) => (
-                                <article key={principle.title} className="rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm">
-                                    <h3 className="text-sm font-semibold">{principle.title}</h3>
-                                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{principle.body}</p>
+                                <article
+                                    key={principle.title}
+                                    className="rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm"
+                                >
+                                    <h3 className="text-sm font-semibold">
+                                        {principle.title}
+                                    </h3>
+                                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                                        {principle.body}
+                                    </p>
                                 </article>
                             ))}
                         </div>
@@ -575,16 +969,27 @@ export default function MissionBlueprintIndex({
 
                     <div className="exploria-panel">
                         <div className="border-b border-border/70 px-4 py-3 dark:border-sidebar-border">
-                            <h2 className="font-semibold">فرایند تبدیل ایده به اجرای کمپین</h2>
+                            <h2 className="font-semibold">
+                                فرایند تبدیل ایده به اجرای کمپین
+                            </h2>
                         </div>
                         <div className="grid gap-3 p-4 md:grid-cols-5">
                             {designFlow.map((step) => (
-                                <article key={step.step} className="rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm">
+                                <article
+                                    key={step.step}
+                                    className="rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm"
+                                >
                                     <div className="flex items-center gap-2">
-                                        <span className="flex size-7 items-center justify-center rounded-full bg-muted text-sm font-semibold">{step.step}</span>
-                                        <h3 className="text-sm font-semibold">{step.title}</h3>
+                                        <span className="flex size-7 items-center justify-center rounded-full bg-muted text-sm font-semibold">
+                                            {step.step}
+                                        </span>
+                                        <h3 className="text-sm font-semibold">
+                                            {step.title}
+                                        </h3>
                                     </div>
-                                    <p className="mt-2 text-xs leading-6 text-muted-foreground">{step.body}</p>
+                                    <p className="mt-2 text-xs leading-6 text-muted-foreground">
+                                        {step.body}
+                                    </p>
                                 </article>
                             ))}
                         </div>
@@ -592,10 +997,16 @@ export default function MissionBlueprintIndex({
                 </section>
 
                 <section className="exploria-panel">
-                    <div className="flex flex-col gap-3 border-b border-border/70 px-4 py-3 dark:border-sidebar-border lg:flex-row lg:items-center lg:justify-between">
+                    <div className="flex flex-col gap-3 border-b border-border/70 px-4 py-3 lg:flex-row lg:items-center lg:justify-between dark:border-sidebar-border">
                         <div>
-                            <h2 className="font-semibold">کتابخانه کمپین‌ها و مأموریت‌های قابل ترکیب</h2>
-                            <p className="mt-1 text-sm text-muted-foreground">هر مورد می‌تواند به‌تنهایی یک کمپین کوتاه باشد یا با مسیر مادر، پاداش‌های چهارسطحی و شاخه‌های اکوپارک ترکیب شود.</p>
+                            <h2 className="font-semibold">
+                                کتابخانه کمپین‌ها و مأموریت‌های قابل ترکیب
+                            </h2>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                                هر مورد می‌تواند به‌تنهایی یک کمپین کوتاه باشد
+                                یا با مسیر مادر، پاداش‌های چهارسطحی و شاخه‌های
+                                اکوپارک ترکیب شود.
+                            </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
                             {families.map((family) => (
@@ -617,18 +1028,33 @@ export default function MissionBlueprintIndex({
 
                     <div className="grid gap-4 p-4 lg:grid-cols-2">
                         {visibleTemplates.map((template) => (
-                            <article key={template.code} className="rounded-lg border border-border/80 bg-card/75 p-4 shadow-sm">
+                            <article
+                                key={template.code}
+                                className="rounded-lg border border-border/80 bg-card/75 p-4 shadow-sm"
+                            >
                                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                     <div>
                                         <div className="flex items-center gap-2">
                                             <Sparkles className="size-4 text-muted-foreground" />
-                                            <h3 className="font-semibold">{template.title}</h3>
+                                            <h3 className="font-semibold">
+                                                {template.title}
+                                            </h3>
                                         </div>
-                                        <p className="mt-1 text-xs text-muted-foreground" dir="ltr">{template.code}</p>
+                                        <p
+                                            className="mt-1 text-xs text-muted-foreground"
+                                            dir="ltr"
+                                        >
+                                            {template.code}
+                                        </p>
                                     </div>
                                     <div className="flex flex-wrap gap-2">
                                         <Chip>{template.launchPhase}</Chip>
-                                        {template.mvpPriority < 99 && <Chip>اولویت {fa(template.mvpPriority)}</Chip>}
+                                        {template.mvpPriority < 99 && (
+                                            <Chip>
+                                                اولویت{' '}
+                                                {fa(template.mvpPriority)}
+                                            </Chip>
+                                        )}
                                         <Chip>{template.family}</Chip>
                                         <Chip>{template.rewardModel}</Chip>
                                     </div>
@@ -636,20 +1062,37 @@ export default function MissionBlueprintIndex({
 
                                 <div className="mt-4 grid gap-3 text-sm md:grid-cols-2">
                                     <div>
-                                        <p className="text-xs text-muted-foreground">هدف مأموریت</p>
-                                        <p className="mt-1 leading-6">{template.missionGoal}</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            هدف مأموریت
+                                        </p>
+                                        <p className="mt-1 leading-6">
+                                            {template.missionGoal}
+                                        </p>
                                     </div>
                                     <div>
-                                        <p className="text-xs text-muted-foreground">بهترین کاربرد</p>
-                                        <p className="mt-1 leading-6">{template.bestFor}</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            بهترین کاربرد
+                                        </p>
+                                        <p className="mt-1 leading-6">
+                                            {template.bestFor}
+                                        </p>
                                     </div>
                                     <div>
-                                        <p className="text-xs text-muted-foreground">مدرک انجام</p>
-                                        <p className="mt-1 leading-6">{template.evidenceType}</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            مدرک انجام
+                                        </p>
+                                        <p className="mt-1 leading-6">
+                                            {template.evidenceType}
+                                        </p>
                                     </div>
                                     <div>
-                                        <p className="text-xs text-muted-foreground">امتیاز پیشنهادی</p>
-                                        <p className="mt-1 leading-6">{fa(template.points.base)} امتیاز · {template.points.bonus}</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            امتیاز پیشنهادی
+                                        </p>
+                                        <p className="mt-1 leading-6">
+                                            {fa(template.points.base)} امتیاز ·{' '}
+                                            {template.points.bonus}
+                                        </p>
                                     </div>
                                 </div>
 
@@ -657,42 +1100,75 @@ export default function MissionBlueprintIndex({
                                     <div className="rounded-lg bg-muted/40 p-3">
                                         <div className="mb-2 flex items-center gap-2">
                                             <Compass className="size-4 text-muted-foreground" />
-                                            <h4 className="text-sm font-semibold">مراحل کاربر</h4>
+                                            <h4 className="text-sm font-semibold">
+                                                مراحل کاربر
+                                            </h4>
                                         </div>
                                         <ol className="space-y-1 text-sm text-muted-foreground">
-                                            {template.userSteps.map((step, index) => (
-                                                <li key={step} className="flex gap-2">
-                                                    <span className="font-semibold text-foreground">{fa(index + 1)}</span>
-                                                    <span>{step}</span>
-                                                </li>
-                                            ))}
+                                            {template.userSteps.map(
+                                                (step, index) => (
+                                                    <li
+                                                        key={step}
+                                                        className="flex gap-2"
+                                                    >
+                                                        <span className="font-semibold text-foreground">
+                                                            {fa(index + 1)}
+                                                        </span>
+                                                        <span>{step}</span>
+                                                    </li>
+                                                ),
+                                            )}
                                         </ol>
                                     </div>
                                     <div className="rounded-lg bg-muted/40 p-3">
                                         <div className="mb-2 flex items-center gap-2">
                                             <MapPinned className="size-4 text-muted-foreground" />
-                                            <h4 className="text-sm font-semibold">ناوبری و مسیر</h4>
+                                            <h4 className="text-sm font-semibold">
+                                                ناوبری و مسیر
+                                            </h4>
                                         </div>
-                                        <p className="text-sm leading-6 text-muted-foreground">{template.navigationHint}</p>
+                                        <p className="text-sm leading-6 text-muted-foreground">
+                                            {template.navigationHint}
+                                        </p>
                                     </div>
                                 </div>
 
                                 <div className="mt-4 grid gap-3 md:grid-cols-3">
                                     <div>
-                                        <p className="text-xs text-muted-foreground">ایده‌های پاداش</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            ایده‌های پاداش
+                                        </p>
                                         <div className="mt-2 flex flex-wrap gap-2">
-                                            {template.rewardIdeas.map((idea) => <Chip key={idea}>{idea}</Chip>)}
+                                            {template.rewardIdeas.map(
+                                                (idea) => (
+                                                    <Chip key={idea}>
+                                                        {idea}
+                                                    </Chip>
+                                                ),
+                                            )}
                                         </div>
                                     </div>
                                     <div>
-                                        <p className="text-xs text-muted-foreground">ذی‌نفعان</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            ذی‌نفعان
+                                        </p>
                                         <div className="mt-2 flex flex-wrap gap-2">
-                                            {template.stakeholders.map((stakeholder) => <Chip key={stakeholder}>{stakeholder}</Chip>)}
+                                            {template.stakeholders.map(
+                                                (stakeholder) => (
+                                                    <Chip key={stakeholder}>
+                                                        {stakeholder}
+                                                    </Chip>
+                                                ),
+                                            )}
                                         </div>
                                     </div>
                                     <div>
-                                        <p className="text-xs text-muted-foreground">کنترل ریسک</p>
-                                        <p className="mt-2 text-sm leading-6 text-muted-foreground">{template.riskControl}</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            کنترل ریسک
+                                        </p>
+                                        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                                            {template.riskControl}
+                                        </p>
                                     </div>
                                 </div>
                             </article>
@@ -707,12 +1183,21 @@ export default function MissionBlueprintIndex({
                         </div>
                         <div className="divide-y divide-border/70">
                             {scoringMatrix.map((row) => (
-                                <article key={row.level} className="px-4 py-3 text-sm">
+                                <article
+                                    key={row.level}
+                                    className="px-4 py-3 text-sm"
+                                >
                                     <div className="flex items-center justify-between gap-3">
-                                        <span className="font-medium">{row.level}</span>
-                                        <span className="text-xs text-muted-foreground">{row.range}</span>
+                                        <span className="font-medium">
+                                            {row.level}
+                                        </span>
+                                        <span className="text-xs text-muted-foreground">
+                                            {row.range}
+                                        </span>
                                     </div>
-                                    <p className="mt-1 leading-6 text-muted-foreground">{row.rule}</p>
+                                    <p className="mt-1 leading-6 text-muted-foreground">
+                                        {row.rule}
+                                    </p>
                                 </article>
                             ))}
                         </div>
@@ -724,12 +1209,19 @@ export default function MissionBlueprintIndex({
                         </div>
                         <div className="grid gap-3 p-4">
                             {rewardVault.map((reward) => (
-                                <article key={reward.type} className="rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm">
+                                <article
+                                    key={reward.type}
+                                    className="rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm"
+                                >
                                     <div className="flex items-center gap-2">
                                         <Gift className="size-4 text-muted-foreground" />
-                                        <h3 className="text-sm font-semibold">{reward.type}</h3>
+                                        <h3 className="text-sm font-semibold">
+                                            {reward.type}
+                                        </h3>
                                     </div>
-                                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{reward.use}</p>
+                                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                                        {reward.use}
+                                    </p>
                                 </article>
                             ))}
                         </div>
@@ -741,12 +1233,19 @@ export default function MissionBlueprintIndex({
                         </div>
                         <div className="divide-y divide-border/70">
                             {globalPatterns.map((pattern) => (
-                                <article key={pattern.name} className="px-4 py-3 text-sm">
+                                <article
+                                    key={pattern.name}
+                                    className="px-4 py-3 text-sm"
+                                >
                                     <div className="flex items-center gap-2">
                                         <Gem className="size-4 text-muted-foreground" />
-                                        <h3 className="font-medium">{pattern.name}</h3>
+                                        <h3 className="font-medium">
+                                            {pattern.name}
+                                        </h3>
                                     </div>
-                                    <p className="mt-1 leading-6 text-muted-foreground">{pattern.pattern}</p>
+                                    <p className="mt-1 leading-6 text-muted-foreground">
+                                        {pattern.pattern}
+                                    </p>
                                 </article>
                             ))}
                         </div>

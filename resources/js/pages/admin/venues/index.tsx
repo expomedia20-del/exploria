@@ -335,54 +335,83 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                     <div className="rounded-lg bg-muted/35 p-3 text-sm">
                                         <div className="flex items-center justify-between gap-3">
                                             <div>
-                                                <h3 className="font-semibold">ارزیابی مکان</h3>
+                                                <h3 className="font-semibold">
+                                                    ارزیابی مکان
+                                                </h3>
                                                 <p className="mt-1 text-xs text-muted-foreground">
-                                                    مبنای طراحی الگوی کمپین، مأموریت، گنج، پاداش و مسیر برای این مکان.
+                                                    مبنای طراحی الگوی کمپین،
+                                                    مأموریت، گنج، پاداش و مسیر
+                                                    برای این مکان.
                                                 </p>
                                             </div>
                                             <span className="shrink-0 rounded-full bg-background px-2.5 py-1 text-xs">
-                                                آمادگی {venue.locationProfile.readinessScore.toLocaleString('fa-IR')}٪
+                                                آمادگی{' '}
+                                                {venue.locationProfile.readinessScore.toLocaleString(
+                                                    'fa-IR',
+                                                )}
+                                                ٪
                                             </span>
                                         </div>
                                         <div className="mt-3 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
                                             <p>
                                                 نوع مکان:{' '}
                                                 <span className="font-medium text-foreground">
-                                                    {venue.locationProfile.venueType
-                                                        ? venueTypeLabels[venue.locationProfile.venueType] ?? venue.locationProfile.venueType
+                                                    {venue.locationProfile
+                                                        .venueType
+                                                        ? (venueTypeLabels[
+                                                              venue
+                                                                  .locationProfile
+                                                                  .venueType
+                                                          ] ??
+                                                          venue.locationProfile
+                                                              .venueType)
                                                         : 'ثبت نشده'}
                                                 </span>
                                             </p>
                                             <p>
                                                 مخاطب غالب:{' '}
                                                 <span className="font-medium text-foreground">
-                                                    {venue.locationProfile.primaryAudience ?? 'ثبت نشده'}
+                                                    {venue.locationProfile
+                                                        .primaryAudience ??
+                                                        'ثبت نشده'}
                                                 </span>
                                             </p>
                                             <p>
                                                 امکانات/جاذبه‌ها:{' '}
                                                 <span className="font-medium text-foreground">
-                                                    {venue.locationProfile.facilities.length.toLocaleString('fa-IR')}
+                                                    {venue.locationProfile.facilities.length.toLocaleString(
+                                                        'fa-IR',
+                                                    )}
                                                 </span>
                                             </p>
                                             <p>
                                                 محدودیت‌ها:{' '}
                                                 <span className="font-medium text-foreground">
-                                                    {venue.locationProfile.constraints.length.toLocaleString('fa-IR')}
+                                                    {venue.locationProfile.constraints.length.toLocaleString(
+                                                        'fa-IR',
+                                                    )}
                                                 </span>
                                             </p>
                                         </div>
-                                        {venue.locationProfile.facilities.length > 0 ? (
+                                        {venue.locationProfile.facilities
+                                            .length > 0 ? (
                                             <div className="mt-3 flex flex-wrap gap-2">
-                                                {venue.locationProfile.facilities.slice(0, 8).map((facility) => (
-                                                    <span key={facility.name} className="rounded-full bg-background px-2.5 py-1 text-xs">
-                                                        {facility.name}
-                                                    </span>
-                                                ))}
+                                                {venue.locationProfile.facilities
+                                                    .slice(0, 8)
+                                                    .map((facility) => (
+                                                        <span
+                                                            key={facility.name}
+                                                            className="rounded-full bg-background px-2.5 py-1 text-xs"
+                                                        >
+                                                            {facility.name}
+                                                        </span>
+                                                    ))}
                                             </div>
                                         ) : (
                                             <p className="mt-3 rounded-md bg-background px-3 py-2 text-xs text-muted-foreground">
-                                                هنوز امکانات و جاذبه‌های این مکان برای طراحی کمپین ثبت نشده است.
+                                                هنوز امکانات و جاذبه‌های این
+                                                مکان برای طراحی کمپین ثبت نشده
+                                                است.
                                             </p>
                                         )}
                                     </div>
@@ -397,86 +426,201 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                             <>
                                                 <div className="grid gap-3 md:grid-cols-2">
                                                     <label className="grid gap-1">
-                                                        <span className="text-xs font-medium">نوع مکان</span>
+                                                        <span className="text-xs font-medium">
+                                                            نوع مکان
+                                                        </span>
                                                         <select
                                                             name="venue_type"
-                                                            defaultValue={venue.locationProfile.venueType ?? 'mixed'}
+                                                            defaultValue={
+                                                                venue
+                                                                    .locationProfile
+                                                                    .venueType ??
+                                                                'mixed'
+                                                            }
                                                             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                                         >
-                                                            {Object.entries(venueTypeLabels).map(([value, label]) => (
-                                                                <option key={value} value={value}>
-                                                                    {label}
-                                                                </option>
-                                                            ))}
+                                                            {Object.entries(
+                                                                venueTypeLabels,
+                                                            ).map(
+                                                                ([
+                                                                    value,
+                                                                    label,
+                                                                ]) => (
+                                                                    <option
+                                                                        key={
+                                                                            value
+                                                                        }
+                                                                        value={
+                                                                            value
+                                                                        }
+                                                                    >
+                                                                        {label}
+                                                                    </option>
+                                                                ),
+                                                            )}
                                                         </select>
-                                                        {errors.venue_type ? <span className="text-xs text-destructive">{errors.venue_type}</span> : null}
+                                                        {errors.venue_type ? (
+                                                            <span className="text-xs text-destructive">
+                                                                {
+                                                                    errors.venue_type
+                                                                }
+                                                            </span>
+                                                        ) : null}
                                                     </label>
                                                     <label className="grid gap-1">
-                                                        <span className="text-xs font-medium">مخاطب غالب</span>
+                                                        <span className="text-xs font-medium">
+                                                            مخاطب غالب
+                                                        </span>
                                                         <input
                                                             name="primary_audience"
-                                                            defaultValue={venue.locationProfile.primaryAudience ?? ''}
+                                                            defaultValue={
+                                                                venue
+                                                                    .locationProfile
+                                                                    .primaryAudience ??
+                                                                ''
+                                                            }
                                                             placeholder="مثلا خانواده، کودک، گردشگر، نوجوان"
                                                             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                                         />
-                                                        {errors.primary_audience ? <span className="text-xs text-destructive">{errors.primary_audience}</span> : null}
+                                                        {errors.primary_audience ? (
+                                                            <span className="text-xs text-destructive">
+                                                                {
+                                                                    errors.primary_audience
+                                                                }
+                                                            </span>
+                                                        ) : null}
                                                     </label>
                                                 </div>
                                                 <div className="grid gap-1">
-                                                    <span className="text-xs font-medium">لینک سایت رسمی یا منبع بررسی</span>
+                                                    <span className="text-xs font-medium">
+                                                        لینک سایت رسمی یا منبع
+                                                        بررسی
+                                                    </span>
                                                     <div className="grid gap-2 md:grid-cols-[1fr_auto]">
                                                         <input
                                                             name="official_website_url"
-                                                            defaultValue={venue.locationProfile.officialWebsiteUrl ?? ''}
+                                                            defaultValue={
+                                                                venue
+                                                                    .locationProfile
+                                                                    .officialWebsiteUrl ??
+                                                                ''
+                                                            }
                                                             dir="ltr"
                                                             placeholder="https://..."
                                                             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                                         />
                                                         <button
                                                             type="submit"
-                                                            disabled={processing}
+                                                            disabled={
+                                                                processing
+                                                            }
                                                             className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
                                                         >
-                                                            ثبت لینک و فعال‌سازی بررسی
+                                                            ثبت لینک و فعال‌سازی
+                                                            بررسی
                                                         </button>
                                                     </div>
                                                     <span className="text-xs text-muted-foreground">
-                                                        این دکمه لینک منبع را در شناخت‌نامه ثبت می‌کند؛ سپس فهرست استخراج‌شده از سایت یا بررسی میدانی را در بخش افزودن سریع وارد و موارد مهم را در ردیف‌های پایین دسته‌بندی کنید.
+                                                        این دکمه لینک منبع را در
+                                                        شناخت‌نامه ثبت می‌کند؛
+                                                        سپس فهرست استخراج‌شده از
+                                                        سایت یا بررسی میدانی را
+                                                        در بخش افزودن سریع وارد
+                                                        و موارد مهم را در
+                                                        ردیف‌های پایین دسته‌بندی
+                                                        کنید.
                                                     </span>
-                                                    {errors.official_website_url ? <span className="text-xs text-destructive">{errors.official_website_url}</span> : null}
-                                                    {venue.locationProfile.officialWebsiteUrl ? (
+                                                    {errors.official_website_url ? (
+                                                        <span className="text-xs text-destructive">
+                                                            {
+                                                                errors.official_website_url
+                                                            }
+                                                        </span>
+                                                    ) : null}
+                                                    {venue.locationProfile
+                                                        .officialWebsiteUrl ? (
                                                         <div className="mt-2 grid gap-2 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-100">
                                                             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                                                                <span className="font-medium">خروجی بررسی منبع: لینک ثبت شده و آماده تکمیل است.</span>
+                                                                <span className="font-medium">
+                                                                    خروجی بررسی
+                                                                    منبع: لینک
+                                                                    ثبت شده و
+                                                                    آماده تکمیل
+                                                                    است.
+                                                                </span>
                                                                 <a
-                                                                    href={venue.locationProfile.officialWebsiteUrl}
+                                                                    href={
+                                                                        venue
+                                                                            .locationProfile
+                                                                            .officialWebsiteUrl
+                                                                    }
                                                                     target="_blank"
                                                                     rel="noreferrer"
                                                                     className="inline-flex h-8 items-center justify-center rounded-md border border-emerald-300 px-3 text-emerald-900 hover:bg-emerald-100 dark:border-emerald-800 dark:text-emerald-100 dark:hover:bg-emerald-900"
                                                                 >
-                                                                    باز کردن منبع
+                                                                    باز کردن
+                                                                    منبع
                                                                 </a>
                                                             </div>
-                                                            <p className="break-all" dir="ltr">
-                                                                {venue.locationProfile.officialWebsiteUrl}
+                                                            <p
+                                                                className="break-all"
+                                                                dir="ltr"
+                                                            >
+                                                                {
+                                                                    venue
+                                                                        .locationProfile
+                                                                        .officialWebsiteUrl
+                                                                }
                                                             </p>
                                                             <p>
-                                                                استخراج خودکار از سایت هنوز به موتور جدا نیاز دارد؛ فعلا فهرست به‌دست‌آمده از بررسی سایت را در «افزودن سریع امکانات و جاذبه‌های جدید» وارد کنید.
+                                                                استخراج خودکار
+                                                                از سایت هنوز به
+                                                                موتور جدا نیاز
+                                                                دارد؛ فعلا فهرست
+                                                                به‌دست‌آمده از
+                                                                بررسی سایت را در
+                                                                «افزودن سریع
+                                                                امکانات و
+                                                                جاذبه‌های جدید»
+                                                                وارد کنید.
                                                             </p>
-                                                            {venue.locationProfile.sourceSuggestions.length > 0 ? (
+                                                            {venue
+                                                                .locationProfile
+                                                                .sourceSuggestions
+                                                                .length > 0 ? (
                                                                 <div className="grid gap-2 rounded-md bg-background/70 p-2 text-foreground">
                                                                     <div className="flex items-center justify-between gap-2">
-                                                                        <span className="font-medium">فهرست پیشنهادی از منبع رسمی</span>
+                                                                        <span className="font-medium">
+                                                                            فهرست
+                                                                            پیشنهادی
+                                                                            از
+                                                                            منبع
+                                                                            رسمی
+                                                                        </span>
                                                                         <span className="text-muted-foreground">
-                                                                            {venue.locationProfile.sourceSuggestions.length.toLocaleString('fa-IR')} مورد
+                                                                            {venue.locationProfile.sourceSuggestions.length.toLocaleString(
+                                                                                'fa-IR',
+                                                                            )}{' '}
+                                                                            مورد
                                                                         </span>
                                                                     </div>
                                                                     <div className="flex flex-wrap gap-1.5">
-                                                                        {venue.locationProfile.sourceSuggestions.map((suggestion) => (
-                                                                            <span key={suggestion} className="rounded-md border border-emerald-200 bg-white px-2 py-1 dark:border-emerald-900 dark:bg-emerald-950">
-                                                                                {suggestion}
-                                                                            </span>
-                                                                        ))}
+                                                                        {venue.locationProfile.sourceSuggestions.map(
+                                                                            (
+                                                                                suggestion,
+                                                                            ) => (
+                                                                                <span
+                                                                                    key={
+                                                                                        suggestion
+                                                                                    }
+                                                                                    className="rounded-md border border-emerald-200 bg-white px-2 py-1 dark:border-emerald-900 dark:bg-emerald-950"
+                                                                                >
+                                                                                    {
+                                                                                        suggestion
+                                                                                    }
+                                                                                </span>
+                                                                            ),
+                                                                        )}
                                                                     </div>
                                                                 </div>
                                                             ) : null}
@@ -485,7 +629,10 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                                 </div>
                                                 <div className="grid gap-3 md:grid-cols-2">
                                                     <label className="grid gap-1">
-                                                        <span className="text-xs font-medium">افزودن سریع امکانات و جاذبه‌های جدید</span>
+                                                        <span className="text-xs font-medium">
+                                                            افزودن سریع امکانات
+                                                            و جاذبه‌های جدید
+                                                        </span>
                                                         <textarea
                                                             name="facilities_text"
                                                             defaultValue=""
@@ -493,19 +640,33 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                                             className="min-h-24 rounded-md border border-input bg-background px-3 py-2 text-sm"
                                                         />
                                                         <span className="text-xs text-muted-foreground">
-                                                            این لیست با ردیف‌های دسته‌بندی ادغام می‌شود و موارد تکراری دوباره ذخیره نمی‌شوند.
+                                                            این لیست با ردیف‌های
+                                                            دسته‌بندی ادغام
+                                                            می‌شود و موارد
+                                                            تکراری دوباره ذخیره
+                                                            نمی‌شوند.
                                                         </span>
-                                                        {errors.facilities_text ? <span className="text-xs text-destructive">{errors.facilities_text}</span> : null}
+                                                        {errors.facilities_text ? (
+                                                            <span className="text-xs text-destructive">
+                                                                {
+                                                                    errors.facilities_text
+                                                                }
+                                                            </span>
+                                                        ) : null}
                                                     </label>
                                                     <label className="grid gap-1 rounded-md border border-dashed border-sidebar-border/70 bg-muted/20 p-3">
                                                         <div className="flex flex-wrap items-center justify-between gap-2">
-                                                            <span className="text-xs font-medium">آپلود لیست اکسل امکانات</span>
+                                                            <span className="text-xs font-medium">
+                                                                آپلود لیست اکسل
+                                                                امکانات
+                                                            </span>
                                                             <a
                                                                 href="/admin/venues/facilities-template"
                                                                 className="inline-flex h-8 items-center gap-1 rounded-md border border-input bg-background px-3 text-xs font-medium hover:bg-muted"
                                                             >
                                                                 <Download className="size-3.5" />
-                                                                دانلود فایل نمونه
+                                                                دانلود فایل
+                                                                نمونه
                                                             </a>
                                                         </div>
                                                         <input
@@ -515,110 +676,296 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                                             className="rounded-md border border-input bg-background px-3 py-2 text-sm"
                                                         />
                                                         <span className="text-xs leading-6 text-muted-foreground">
-                                                            فایل نمونه XLSX را دانلود و در همان ستون‌ها تکمیل کنید. هر ردیف یک امکان/جاذبه است و ستون‌ها جداگانه در فرم سایت خوانده می‌شوند.
+                                                            فایل نمونه XLSX را
+                                                            دانلود و در همان
+                                                            ستون‌ها تکمیل کنید.
+                                                            هر ردیف یک
+                                                            امکان/جاذبه است و
+                                                            ستون‌ها جداگانه در
+                                                            فرم سایت خوانده
+                                                            می‌شوند.
                                                         </span>
-                                                        {errors.facilities_file ? <span className="text-xs text-destructive">{errors.facilities_file}</span> : null}
+                                                        {errors.facilities_file ? (
+                                                            <span className="text-xs text-destructive">
+                                                                {
+                                                                    errors.facilities_file
+                                                                }
+                                                            </span>
+                                                        ) : null}
                                                     </label>
                                                     <label className="grid gap-1">
-                                                        <span className="text-xs font-medium">محدودیت‌ها و ملاحظات</span>
+                                                        <span className="text-xs font-medium">
+                                                            محدودیت‌ها و ملاحظات
+                                                        </span>
                                                         <textarea
                                                             name="constraints_text"
-                                                            defaultValue={lines(venue.locationProfile.constraints)}
+                                                            defaultValue={lines(
+                                                                venue
+                                                                    .locationProfile
+                                                                    .constraints,
+                                                            )}
                                                             placeholder="هر مورد در یک خط: ازدحام، ساعت کاری، نیاز به مجوز..."
                                                             className="min-h-24 rounded-md border border-input bg-background px-3 py-2 text-sm"
                                                         />
-                                                        {errors.constraints_text ? <span className="text-xs text-destructive">{errors.constraints_text}</span> : null}
+                                                        {errors.constraints_text ? (
+                                                            <span className="text-xs text-destructive">
+                                                                {
+                                                                    errors.constraints_text
+                                                                }
+                                                            </span>
+                                                        ) : null}
                                                     </label>
                                                 </div>
                                                 <div className="grid gap-2">
-                                                    <span className="text-xs font-medium">امکانات و جاذبه‌ها با کارکرد کمپینی</span>
+                                                    <span className="text-xs font-medium">
+                                                        امکانات و جاذبه‌ها با
+                                                        کارکرد کمپینی
+                                                    </span>
                                                     <div className="grid gap-2">
-                                                        {facilityRows(venue.locationProfile.facilities).map((facility, index) => (
-                                                            <div key={`${venue.id}-facility-${index}`} className="grid gap-2 rounded-md bg-muted/30 p-2 xl:grid-cols-[minmax(160px,1fr)_minmax(150px,0.9fr)_minmax(260px,1.35fr)_minmax(120px,0.65fr)_minmax(180px,1fr)]">
-                                                                <input
-                                                                    name={`facilities[${index}][name]`}
-                                                                    defaultValue={facility.name}
-                                                                    placeholder="نام امکان/جاذبه"
-                                                                    className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                                                                />
-                                                                <select
-                                                                    name={`facilities[${index}][function]`}
-                                                                    defaultValue={facility.function ?? ''}
-                                                                    className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                                        {facilityRows(
+                                                            venue
+                                                                .locationProfile
+                                                                .facilities,
+                                                        ).map(
+                                                            (
+                                                                facility,
+                                                                index,
+                                                            ) => (
+                                                                <div
+                                                                    key={`${venue.id}-facility-${index}`}
+                                                                    className="grid gap-2 rounded-md bg-muted/30 p-2 xl:grid-cols-[minmax(160px,1fr)_minmax(150px,0.9fr)_minmax(260px,1.35fr)_minmax(120px,0.65fr)_minmax(180px,1fr)]"
                                                                 >
-                                                                    <option value="">کارکرد</option>
-                                                                    {Object.entries(facilityFunctionLabels).map(([value, label]) => (
-                                                                        <option key={value} value={value}>{label}</option>
-                                                                    ))}
-                                                                </select>
-                                                                <div className="grid gap-1 rounded-md border border-input bg-background p-2 text-xs sm:grid-cols-2">
-                                                                    {Object.entries(campaignUseLabels).map(([value, label]) => (
-                                                                        <label key={value} className="flex min-h-7 items-center gap-2 rounded-sm px-1 leading-5">
-                                                                            <input
-                                                                                type="checkbox"
-                                                                                name={`facilities[${index}][campaign_uses][]`}
-                                                                                value={value}
-                                                                                defaultChecked={facility.campaignUses.includes(value)}
-                                                                                className="shrink-0"
-                                                                            />
-                                                                            <span className="whitespace-normal">{label}</span>
-                                                                        </label>
-                                                                    ))}
+                                                                    <input
+                                                                        name={`facilities[${index}][name]`}
+                                                                        defaultValue={
+                                                                            facility.name
+                                                                        }
+                                                                        placeholder="نام امکان/جاذبه"
+                                                                        className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                                                    />
+                                                                    <select
+                                                                        name={`facilities[${index}][function]`}
+                                                                        defaultValue={
+                                                                            facility.function ??
+                                                                            ''
+                                                                        }
+                                                                        className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                                                    >
+                                                                        <option value="">
+                                                                            کارکرد
+                                                                        </option>
+                                                                        {Object.entries(
+                                                                            facilityFunctionLabels,
+                                                                        ).map(
+                                                                            ([
+                                                                                value,
+                                                                                label,
+                                                                            ]) => (
+                                                                                <option
+                                                                                    key={
+                                                                                        value
+                                                                                    }
+                                                                                    value={
+                                                                                        value
+                                                                                    }
+                                                                                >
+                                                                                    {
+                                                                                        label
+                                                                                    }
+                                                                                </option>
+                                                                            ),
+                                                                        )}
+                                                                    </select>
+                                                                    <div className="grid gap-1 rounded-md border border-input bg-background p-2 text-xs sm:grid-cols-2">
+                                                                        {Object.entries(
+                                                                            campaignUseLabels,
+                                                                        ).map(
+                                                                            ([
+                                                                                value,
+                                                                                label,
+                                                                            ]) => (
+                                                                                <label
+                                                                                    key={
+                                                                                        value
+                                                                                    }
+                                                                                    className="flex min-h-7 items-center gap-2 rounded-sm px-1 leading-5"
+                                                                                >
+                                                                                    <input
+                                                                                        type="checkbox"
+                                                                                        name={`facilities[${index}][campaign_uses][]`}
+                                                                                        value={
+                                                                                            value
+                                                                                        }
+                                                                                        defaultChecked={facility.campaignUses.includes(
+                                                                                            value,
+                                                                                        )}
+                                                                                        className="shrink-0"
+                                                                                    />
+                                                                                    <span className="whitespace-normal">
+                                                                                        {
+                                                                                            label
+                                                                                        }
+                                                                                    </span>
+                                                                                </label>
+                                                                            ),
+                                                                        )}
+                                                                    </div>
+                                                                    <select
+                                                                        name={`facilities[${index}][priority]`}
+                                                                        defaultValue={
+                                                                            facility.priority
+                                                                        }
+                                                                        className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                                                    >
+                                                                        {Object.entries(
+                                                                            priorityLabels,
+                                                                        ).map(
+                                                                            ([
+                                                                                value,
+                                                                                label,
+                                                                            ]) => (
+                                                                                <option
+                                                                                    key={
+                                                                                        value
+                                                                                    }
+                                                                                    value={
+                                                                                        value
+                                                                                    }
+                                                                                >
+                                                                                    {
+                                                                                        label
+                                                                                    }
+                                                                                </option>
+                                                                            ),
+                                                                        )}
+                                                                    </select>
+                                                                    <input
+                                                                        name={`facilities[${index}][notes]`}
+                                                                        defaultValue={
+                                                                            facility.notes ??
+                                                                            ''
+                                                                        }
+                                                                        placeholder="یادداشت کوتاه"
+                                                                        className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                                                    />
                                                                 </div>
-                                                                <select
-                                                                    name={`facilities[${index}][priority]`}
-                                                                    defaultValue={facility.priority}
-                                                                    className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                                                                >
-                                                                    {Object.entries(priorityLabels).map(([value, label]) => (
-                                                                        <option key={value} value={value}>{label}</option>
-                                                                    ))}
-                                                                </select>
-                                                                <input
-                                                                    name={`facilities[${index}][notes]`}
-                                                                    defaultValue={facility.notes ?? ''}
-                                                                    placeholder="یادداشت کوتاه"
-                                                                    className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                                                                />
-                                                            </div>
-                                                        ))}
+                                                            ),
+                                                        )}
                                                     </div>
-                                                    {errors.facilities ? <span className="text-xs text-destructive">{errors.facilities}</span> : null}
+                                                    {errors.facilities ? (
+                                                        <span className="text-xs text-destructive">
+                                                            {errors.facilities}
+                                                        </span>
+                                                    ) : null}
                                                     <div className="rounded-md border border-sidebar-border/70 bg-background p-3 text-xs dark:border-sidebar-border">
                                                         <div className="mb-2 flex items-center justify-between gap-2">
-                                                            <span className="font-medium">لیست کامل امکانات ثبت‌شده</span>
-                                                            <span className="text-muted-foreground">{venue.locationProfile.facilities.length.toLocaleString('fa-IR')} مورد</span>
+                                                            <span className="font-medium">
+                                                                لیست کامل
+                                                                امکانات ثبت‌شده
+                                                            </span>
+                                                            <span className="text-muted-foreground">
+                                                                {venue.locationProfile.facilities.length.toLocaleString(
+                                                                    'fa-IR',
+                                                                )}{' '}
+                                                                مورد
+                                                            </span>
                                                         </div>
-                                                        {venue.locationProfile.facilities.length > 0 ? (
+                                                        {venue.locationProfile
+                                                            .facilities.length >
+                                                        0 ? (
                                                             <div className="grid gap-2">
-                                                                {venue.locationProfile.facilities.map((facility) => (
-                                                                    <div key={`${venue.id}-registered-${facility.name}`} className="grid gap-2 rounded-md bg-muted/35 p-2 md:grid-cols-[1fr_0.8fr_1.2fr_0.6fr]">
-                                                                        <span className="font-medium">{facility.name}</span>
-                                                                        <span className="text-muted-foreground">{facility.function ? facilityFunctionLabels[facility.function] ?? facility.function : 'کارکرد ثبت نشده'}</span>
-                                                                        <span className="text-muted-foreground">
-                                                                            {facility.campaignUses.length > 0
-                                                                                ? facility.campaignUses.map((use) => campaignUseLabels[use] ?? use).join('، ')
-                                                                                : 'قابلیت کمپینی ثبت نشده'}
-                                                                        </span>
-                                                                        <span className="text-muted-foreground">{priorityLabels[facility.priority] ?? facility.priority}</span>
-                                                                        {facility.notes ? <span className="text-muted-foreground md:col-span-4">{facility.notes}</span> : null}
-                                                                    </div>
-                                                                ))}
+                                                                {venue.locationProfile.facilities.map(
+                                                                    (
+                                                                        facility,
+                                                                    ) => (
+                                                                        <div
+                                                                            key={`${venue.id}-registered-${facility.name}`}
+                                                                            className="grid gap-2 rounded-md bg-muted/35 p-2 md:grid-cols-[1fr_0.8fr_1.2fr_0.6fr]"
+                                                                        >
+                                                                            <span className="font-medium">
+                                                                                {
+                                                                                    facility.name
+                                                                                }
+                                                                            </span>
+                                                                            <span className="text-muted-foreground">
+                                                                                {facility.function
+                                                                                    ? (facilityFunctionLabels[
+                                                                                          facility
+                                                                                              .function
+                                                                                      ] ??
+                                                                                      facility.function)
+                                                                                    : 'کارکرد ثبت نشده'}
+                                                                            </span>
+                                                                            <span className="text-muted-foreground">
+                                                                                {facility
+                                                                                    .campaignUses
+                                                                                    .length >
+                                                                                0
+                                                                                    ? facility.campaignUses
+                                                                                          .map(
+                                                                                              (
+                                                                                                  use,
+                                                                                              ) =>
+                                                                                                  campaignUseLabels[
+                                                                                                      use
+                                                                                                  ] ??
+                                                                                                  use,
+                                                                                          )
+                                                                                          .join(
+                                                                                              '، ',
+                                                                                          )
+                                                                                    : 'قابلیت کمپینی ثبت نشده'}
+                                                                            </span>
+                                                                            <span className="text-muted-foreground">
+                                                                                {priorityLabels[
+                                                                                    facility
+                                                                                        .priority
+                                                                                ] ??
+                                                                                    facility.priority}
+                                                                            </span>
+                                                                            {facility.notes ? (
+                                                                                <span className="text-muted-foreground md:col-span-4">
+                                                                                    {
+                                                                                        facility.notes
+                                                                                    }
+                                                                                </span>
+                                                                            ) : null}
+                                                                        </div>
+                                                                    ),
+                                                                )}
                                                             </div>
                                                         ) : (
-                                                            <p className="text-muted-foreground">هنوز امکان یا جاذبه‌ای برای این مکان ثبت نشده است.</p>
+                                                            <p className="text-muted-foreground">
+                                                                هنوز امکان یا
+                                                                جاذبه‌ای برای
+                                                                این مکان ثبت
+                                                                نشده است.
+                                                            </p>
                                                         )}
                                                     </div>
                                                 </div>
                                                 <label className="grid gap-1">
-                                                    <span className="text-xs font-medium">یادداشت بررسی دستی</span>
+                                                    <span className="text-xs font-medium">
+                                                        یادداشت بررسی دستی
+                                                    </span>
                                                     <textarea
                                                         name="manual_research_notes"
-                                                        defaultValue={venue.locationProfile.manualResearchNotes ?? ''}
+                                                        defaultValue={
+                                                            venue
+                                                                .locationProfile
+                                                                .manualResearchNotes ??
+                                                            ''
+                                                        }
                                                         placeholder="خلاصه شناخت مکان، کارکرد بخش‌ها و فرصت‌های کمپین..."
                                                         className="min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm"
                                                     />
-                                                    {errors.manual_research_notes ? <span className="text-xs text-destructive">{errors.manual_research_notes}</span> : null}
+                                                    {errors.manual_research_notes ? (
+                                                        <span className="text-xs text-destructive">
+                                                            {
+                                                                errors.manual_research_notes
+                                                            }
+                                                        </span>
+                                                    ) : null}
                                                 </label>
                                                 <div className="flex justify-end">
                                                     <button
@@ -641,7 +988,8 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                                 <div className="flex flex-wrap items-start justify-between gap-3">
                                                     <div>
                                                         <p className="text-sm text-muted-foreground">
-                                                            مسیر کنترل کیفیت محصول
+                                                            مسیر کنترل کیفیت
+                                                            محصول
                                                         </p>
                                                         <h3 className="mt-1 font-semibold">
                                                             {
@@ -651,7 +999,12 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                                             }
                                                         </h3>
                                                         <p className="mt-1 text-xs leading-6 text-muted-foreground">
-                                                            این چک‌لیست دمو را از همین ارزیابی مکان تا اجرای کاربر، مصرف پاداش و گزارش اسپانسر دنبال می‌کند.
+                                                            این چک‌لیست دمو را
+                                                            از همین ارزیابی مکان
+                                                            تا اجرای کاربر، مصرف
+                                                            پاداش و گزارش
+                                                            اسپانسر دنبال
+                                                            می‌کند.
                                                         </p>
                                                     </div>
                                                     <span
@@ -706,7 +1059,10 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                                             کمپین مرجع
                                                         </p>
                                                         <p className="mt-1 truncate font-semibold">
-                                                            {venue.demoStressPlan.selectedCampaign?.name ??
+                                                            {venue
+                                                                .demoStressPlan
+                                                                .selectedCampaign
+                                                                ?.name ??
                                                                 'ثبت نشده'}
                                                         </p>
                                                     </div>
@@ -740,7 +1096,10 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                                         </>
                                                     ) : (
                                                         <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                                                            همه مراحل دمو برای این مکان از نظر داده‌های فعلی کامل است.
+                                                            همه مراحل دمو برای
+                                                            این مکان از نظر
+                                                            داده‌های فعلی کامل
+                                                            است.
                                                         </p>
                                                     )}
                                                 </div>
@@ -748,8 +1107,7 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                                     .nextAction ? (
                                                     <Link
                                                         href={
-                                                            venue
-                                                                .demoStressPlan
+                                                            venue.demoStressPlan
                                                                 .nextAction
                                                                 .actionHref
                                                         }
@@ -794,9 +1152,7 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                                                 </div>
                                                                 <p className="mt-1 text-xs text-muted-foreground">
                                                                     مالک:{' '}
-                                                                    {
-                                                                        item.owner
-                                                                    }
+                                                                    {item.owner}
                                                                 </p>
                                                                 <p className="mt-2 text-xs leading-5 text-muted-foreground">
                                                                     {
@@ -810,7 +1166,9 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                                                         }
                                                                         className="mt-3 inline-flex h-8 items-center justify-center gap-2 rounded-md border border-input bg-background px-3 text-xs font-medium hover:bg-muted"
                                                                     >
-                                                                        تکمیل این مرحله
+                                                                        تکمیل
+                                                                        این
+                                                                        مرحله
                                                                         <ArrowLeft className="size-3.5" />
                                                                     </Link>
                                                                 ) : null}

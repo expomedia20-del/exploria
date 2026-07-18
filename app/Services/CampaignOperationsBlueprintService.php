@@ -121,8 +121,8 @@ class CampaignOperationsBlueprintService
     }
 
     /**
-     * @param array<string, int> $stats
-     * @param array<string, mixed> $alignment
+     * @param  array<string, int>  $stats
+     * @param  array<string, mixed>  $alignment
      * @return array{status: string, checks: array<int, array<string, mixed>>, issues: array<int, array<string, string>>}
      */
     private function operationalReview(array $stats, array $alignment): array
@@ -246,11 +246,11 @@ class CampaignOperationsBlueprintService
     }
 
     /**
-     * @param Collection<int, array<string, mixed>> $qrCodes
-     * @param Collection<int, array<string, mixed>> $missions
-     * @param Collection<int, array<string, mixed>> $rewards
-     * @param Collection<int, array<string, mixed>> $treasures
-     * @param Collection<int, array<string, mixed>> $participants
+     * @param  Collection<int, array<string, mixed>>  $qrCodes
+     * @param  Collection<int, array<string, mixed>>  $missions
+     * @param  Collection<int, array<string, mixed>>  $rewards
+     * @param  Collection<int, array<string, mixed>>  $treasures
+     * @param  Collection<int, array<string, mixed>>  $participants
      * @return Collection<int, array<string, mixed>>
      */
     private function operationTimeline(Collection $qrCodes, Collection $missions, Collection $rewards, Collection $treasures, Collection $participants): Collection

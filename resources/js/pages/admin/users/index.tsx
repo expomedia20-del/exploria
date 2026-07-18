@@ -177,9 +177,9 @@ export default function AdminUsersIndex({
                         مدیریت کاربران اکسپلوریا
                     </h1>
                     <p className="mt-2 max-w-4xl text-sm leading-7 text-muted-foreground">
-                        نقش پایه مشخص می‌کند کاربر از چه نوع اکانتی وارد
-                        می‌شود. محدوده و مسئولیت واقعی هر پروژه همچنان از صفحه
-                        تخصیص دسترسی تعریف می‌شود.
+                        نقش پایه مشخص می‌کند کاربر از چه نوع اکانتی وارد می‌شود.
+                        محدوده و مسئولیت واقعی هر پروژه همچنان از صفحه تخصیص
+                        دسترسی تعریف می‌شود.
                     </p>
                     <div className="mt-4">
                         <Link
@@ -203,13 +203,41 @@ export default function AdminUsersIndex({
                 )}
 
                 <section className="grid gap-3 md:grid-cols-7">
-                    <Stat icon={UsersRound} label="کل کاربران" value={stats.total} />
-                    <Stat icon={UserCog} label="تیم داخلی" value={stats.internal} />
-                    <Stat icon={ShieldCheck} label="واحدها و اسپانسرها" value={stats.partners} />
-                    <Stat icon={UsersRound} label="بازدیدکنندگان" value={stats.visitors} />
-                    <Stat icon={UsersRound} label="کاربر عادی" value={stats.publicRegistered} />
-                    <Stat icon={CheckCircle2} label="مشارکت‌کننده" value={stats.publicParticipants} />
-                    <Stat icon={CheckCircle2} label="دارای دسترسی فعال" value={stats.activeScopedUsers} />
+                    <Stat
+                        icon={UsersRound}
+                        label="کل کاربران"
+                        value={stats.total}
+                    />
+                    <Stat
+                        icon={UserCog}
+                        label="تیم داخلی"
+                        value={stats.internal}
+                    />
+                    <Stat
+                        icon={ShieldCheck}
+                        label="واحدها و اسپانسرها"
+                        value={stats.partners}
+                    />
+                    <Stat
+                        icon={UsersRound}
+                        label="بازدیدکنندگان"
+                        value={stats.visitors}
+                    />
+                    <Stat
+                        icon={UsersRound}
+                        label="کاربر عادی"
+                        value={stats.publicRegistered}
+                    />
+                    <Stat
+                        icon={CheckCircle2}
+                        label="مشارکت‌کننده"
+                        value={stats.publicParticipants}
+                    />
+                    <Stat
+                        icon={CheckCircle2}
+                        label="دارای دسترسی فعال"
+                        value={stats.activeScopedUsers}
+                    />
                 </section>
 
                 <section className="rounded-lg border border-sidebar-border/70 p-3 dark:border-sidebar-border">
@@ -247,7 +275,9 @@ export default function AdminUsersIndex({
                             <div className="grid gap-4 xl:grid-cols-[1.1fr_1.2fr_1fr]">
                                 <div className="min-w-0">
                                     <div className="flex flex-wrap items-center gap-2">
-                                        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusClass(user)}`}>
+                                        <span
+                                            className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusClass(user)}`}
+                                        >
                                             {user.statusLabel}
                                         </span>
                                         <span className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
@@ -266,7 +296,8 @@ export default function AdminUsersIndex({
                                         {user.email}
                                     </p>
                                     <p className="mt-2 text-sm">
-                                        نقش پایه: <strong>{user.roleLabel}</strong>
+                                        نقش پایه:{' '}
+                                        <strong>{user.roleLabel}</strong>
                                     </p>
                                     {user.role === 'visitor' && (
                                         <p className="mt-1 text-sm text-muted-foreground">
@@ -274,10 +305,30 @@ export default function AdminUsersIndex({
                                         </p>
                                     )}
                                     <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                                        <span>{countLabel(user.counts.visits, 'بازدید')}</span>
-                                        <span>{countLabel(user.counts.rewards, 'پاداش')}</span>
-                                        <span>{countLabel(user.counts.redemptions, 'مصرف')}</span>
-                                        <span>{countLabel(user.counts.consents, 'رضایت‌نامه')}</span>
+                                        <span>
+                                            {countLabel(
+                                                user.counts.visits,
+                                                'بازدید',
+                                            )}
+                                        </span>
+                                        <span>
+                                            {countLabel(
+                                                user.counts.rewards,
+                                                'پاداش',
+                                            )}
+                                        </span>
+                                        <span>
+                                            {countLabel(
+                                                user.counts.redemptions,
+                                                'مصرف',
+                                            )}
+                                        </span>
+                                        <span>
+                                            {countLabel(
+                                                user.counts.consents,
+                                                'رضایت‌نامه',
+                                            )}
+                                        </span>
                                     </div>
                                 </div>
 
@@ -315,7 +366,8 @@ export default function AdminUsersIndex({
                                                         </span>
                                                     </div>
                                                     <p className="mt-1 text-xs text-muted-foreground">
-                                                        {scope.scopeTypeLabel}: {scope.scopeLabel}
+                                                        {scope.scopeTypeLabel}:{' '}
+                                                        {scope.scopeLabel}
                                                     </p>
                                                 </div>
                                             ))}
@@ -337,7 +389,9 @@ export default function AdminUsersIndex({
                                                 </label>
                                                 <select
                                                     name="role"
-                                                    defaultValue={user.role ?? ''}
+                                                    defaultValue={
+                                                        user.role ?? ''
+                                                    }
                                                     className="min-h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
                                                 >
                                                     {roleOptions.map((role) => (
@@ -349,10 +403,16 @@ export default function AdminUsersIndex({
                                                         </option>
                                                     ))}
                                                 </select>
-                                                <InputError message={errors.role} />
+                                                <InputError
+                                                    message={errors.role}
+                                                />
                                                 {user.role === 'visitor' && (
                                                     <p className="text-xs leading-6 text-muted-foreground">
-                                                        تغییر نقش پایه برای کاربر عمومی فقط برای اصلاح اکانت است؛ شروع مشارکت از پنل کاربر انجام می‌شود.
+                                                        تغییر نقش پایه برای
+                                                        کاربر عمومی فقط برای
+                                                        اصلاح اکانت است؛ شروع
+                                                        مشارکت از پنل کاربر
+                                                        انجام می‌شود.
                                                     </p>
                                                 )}
                                                 <Button
@@ -377,7 +437,8 @@ export default function AdminUsersIndex({
                                                 variant="outline"
                                                 disabled={
                                                     processing ||
-                                                    user.counts.activeScopes === 0
+                                                    user.counts.activeScopes ===
+                                                        0
                                                 }
                                                 className="w-full gap-2"
                                             >
@@ -402,7 +463,8 @@ export default function AdminUsersIndex({
                                                             : 'outline'
                                                     }
                                                     disabled={
-                                                        processing || !user.canDelete
+                                                        processing ||
+                                                        !user.canDelete
                                                     }
                                                     className="w-full gap-2"
                                                 >
@@ -414,10 +476,15 @@ export default function AdminUsersIndex({
                                                 {!user.canDelete && (
                                                     <p className="text-xs leading-6 text-muted-foreground">
                                                         حذف بسته است، چون سابقه
-                                                        دارد: {user.deleteBlockers.join('، ')}
+                                                        دارد:{' '}
+                                                        {user.deleteBlockers.join(
+                                                            '، ',
+                                                        )}
                                                     </p>
                                                 )}
-                                                <InputError message={errors.delete} />
+                                                <InputError
+                                                    message={errors.delete}
+                                                />
                                             </div>
                                         )}
                                     </Form>

@@ -134,7 +134,7 @@ export default function PartnerAds({
                         <p className="text-sm text-muted-foreground">
                             تبلیغات مستقل
                         </p>
-                        <h1 className="mt-1 text-2xl font-semibold leading-tight">
+                        <h1 className="mt-1 text-2xl leading-tight font-semibold">
                             {partner.name}
                         </h1>
                         <p className="mt-1 text-sm text-muted-foreground">

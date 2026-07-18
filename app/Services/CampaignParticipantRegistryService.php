@@ -2,13 +2,12 @@
 
 namespace App\Services;
 
-use App\Models\CampaignParticipant;
 use App\Models\Campaign;
+use App\Models\CampaignParticipant;
 use App\Models\Hub;
 use App\Models\PartnerAccount;
 use App\Models\RewardDefinition;
 use App\Models\User;
-use App\Enums\RecordStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;

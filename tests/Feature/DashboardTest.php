@@ -4,8 +4,8 @@ namespace Tests\Feature;
 
 use App\Enums\UserRole;
 use App\Models\ConsentVersion;
-use App\Models\RewardRedemption;
 use App\Models\MissionInstance;
+use App\Models\RewardRedemption;
 use App\Models\User;
 use App\Models\UserReward;
 use App\Models\Visit;

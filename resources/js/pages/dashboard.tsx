@@ -1,6 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
-import { dashboard } from '@/routes';
 import { Activity, BarChart3, Gauge } from 'lucide-react';
+import { dashboard } from '@/routes';
 
 type Stats = {
     venues: number;
@@ -79,10 +79,26 @@ const statLabels: Array<[keyof Stats, string, string]> = [
     ['visits', 'بازدید ثبت‌شده', 'رخدادهای تاییدشده پس از رضایت'],
     ['activeCampaigns', 'کمپین فعال', 'کمپین‌هایی که وارد مرحله اجرا شده‌اند'],
     ['activeMissions', 'مأموریت فعال', 'مأموریت‌های قابل اجرا برای کاربران'],
-    ['missionCompletions', 'تکمیل مأموریت', 'کل مأموریت‌های انجام‌شده توسط کاربران'],
-    ['issuedRewards', 'پاداش صادرشده', 'پاداش‌هایی که در کیف کاربران ثبت شده‌اند'],
-    ['pendingRedemptions', 'در انتظار تحویل', 'پاداش‌هایی که فروشگاه یا اسپانسر باید تحویل دهد'],
-    ['confirmedRedemptions', 'تحویل‌شده', 'پاداش‌هایی که شریک تحویل آن‌ها را تایید کرده است'],
+    [
+        'missionCompletions',
+        'تکمیل مأموریت',
+        'کل مأموریت‌های انجام‌شده توسط کاربران',
+    ],
+    [
+        'issuedRewards',
+        'پاداش صادرشده',
+        'پاداش‌هایی که در کیف کاربران ثبت شده‌اند',
+    ],
+    [
+        'pendingRedemptions',
+        'در انتظار تحویل',
+        'پاداش‌هایی که فروشگاه یا اسپانسر باید تحویل دهد',
+    ],
+    [
+        'confirmedRedemptions',
+        'تحویل‌شده',
+        'پاداش‌هایی که شریک تحویل آن‌ها را تایید کرده است',
+    ],
 ];
 
 const dashboardChartItems: Array<[keyof Stats, string, string]> = [
@@ -135,17 +151,29 @@ function formatDate(value: string) {
     }).format(new Date(value));
 }
 
-export default function Dashboard({ stats, latestVisits, latestRedemptions, operationalAlerts, campaignPerformance }: Props) {
-    const chartMax = Math.max(...dashboardChartItems.map(([key]) => stats[key]), 1);
-    const flowTotal = flowChartItems.reduce((total, [key]) => total + stats[key], 0);
+export default function Dashboard({
+    stats,
+    latestVisits,
+    latestRedemptions,
+    operationalAlerts,
+    campaignPerformance,
+}: Props) {
+    const chartMax = Math.max(
+        ...dashboardChartItems.map(([key]) => stats[key]),
+        1,
+    );
+    const flowTotal = flowChartItems.reduce(
+        (total, [key]) => total + stats[key],
+        0,
+    );
     const readinessScore = Math.min(
         100,
         Math.round(
-            ((stats.activeCampaigns > 0 ? 20 : 0)
-                + (stats.activeQrCodes > 0 ? 20 : 0)
-                + (stats.visits > 0 ? 20 : 0)
-                + (stats.missionCompletions > 0 ? 20 : 0)
-                + (stats.issuedRewards > 0 ? 20 : 0)),
+            (stats.activeCampaigns > 0 ? 20 : 0) +
+                (stats.activeQrCodes > 0 ? 20 : 0) +
+                (stats.visits > 0 ? 20 : 0) +
+                (stats.missionCompletions > 0 ? 20 : 0) +
+                (stats.issuedRewards > 0 ? 20 : 0),
         ),
     );
 
@@ -164,10 +192,26 @@ export default function Dashboard({ stats, latestVisits, latestRedemptions, oper
 
                 <section className="grid gap-3 md:grid-cols-4">
                     {[
-                        ['مدیریت شرکا', '/admin/partners', 'وضعیت فروشگاه‌ها، اسپانسرها و اتصال اکانت‌ها'],
-                        ['تبلیغات مستقل', '/admin/ads', 'صف تایید تبلیغات و درخواست‌های آماده انتشار'],
-                        ['عملیات نمایشگرها', '/admin/display-operations', 'سلامت نمایشگرها و زمان‌بندی پخش'],
-                        ['پشتیبانی و چت‌بات', '/admin/support', 'مسیر سریع عیب‌یابی و سوالات عملیاتی'],
+                        [
+                            'مدیریت شرکا',
+                            '/admin/partners',
+                            'وضعیت فروشگاه‌ها، اسپانسرها و اتصال اکانت‌ها',
+                        ],
+                        [
+                            'تبلیغات مستقل',
+                            '/admin/ads',
+                            'صف تایید تبلیغات و درخواست‌های آماده انتشار',
+                        ],
+                        [
+                            'عملیات نمایشگرها',
+                            '/admin/display-operations',
+                            'سلامت نمایشگرها و زمان‌بندی پخش',
+                        ],
+                        [
+                            'پشتیبانی و چت‌بات',
+                            '/admin/support',
+                            'مسیر سریع عیب‌یابی و سوالات عملیاتی',
+                        ],
                     ].map(([title, href, body]) => (
                         <Link
                             key={href}
@@ -190,28 +234,46 @@ export default function Dashboard({ stats, latestVisits, latestRedemptions, oper
                                     <BarChart3 className="size-5" />
                                 </span>
                                 <div>
-                                    <h2 className="text-lg font-semibold">نمودار وضعیت عملیاتی پایلوت</h2>
+                                    <h2 className="text-lg font-semibold">
+                                        نمودار وضعیت عملیاتی پایلوت
+                                    </h2>
                                     <p className="mt-1 text-sm text-muted-foreground">
-                                        همین اعداد بالای داشبورد، اینجا برای تصمیم سریع‌تر به شکل نمودار دیده می‌شوند.
+                                        همین اعداد بالای داشبورد، اینجا برای
+                                        تصمیم سریع‌تر به شکل نمودار دیده
+                                        می‌شوند.
                                     </p>
                                 </div>
                             </div>
                             <span className="rounded-full bg-white px-3 py-1 text-sm font-medium text-cyan-900 dark:bg-background dark:text-cyan-200">
-                                امتیاز آمادگی {readinessScore.toLocaleString('fa-IR')}٪
+                                امتیاز آمادگی{' '}
+                                {readinessScore.toLocaleString('fa-IR')}٪
                             </span>
                         </div>
 
                         <div className="mt-6 flex h-56 items-end gap-3 overflow-x-auto rounded-md bg-white/70 p-4 dark:bg-background/40">
                             {dashboardChartItems.map(([key, label, color]) => (
-                                <div key={key} className="flex min-w-20 flex-1 flex-col items-center gap-2 text-center">
+                                <div
+                                    key={key}
+                                    className="flex min-w-20 flex-1 flex-col items-center gap-2 text-center"
+                                >
                                     <div className="flex h-40 items-end">
                                         <div
                                             className="w-9 rounded-t-md shadow-sm"
-                                            style={{ height: chartHeight(stats[key], chartMax), backgroundColor: color }}
+                                            style={{
+                                                height: chartHeight(
+                                                    stats[key],
+                                                    chartMax,
+                                                ),
+                                                backgroundColor: color,
+                                            }}
                                         />
                                     </div>
-                                    <strong className="text-lg">{stats[key].toLocaleString('fa-IR')}</strong>
-                                    <span className="text-xs leading-5 text-muted-foreground">{label}</span>
+                                    <strong className="text-lg">
+                                        {stats[key].toLocaleString('fa-IR')}
+                                    </strong>
+                                    <span className="text-xs leading-5 text-muted-foreground">
+                                        {label}
+                                    </span>
                                 </div>
                             ))}
                         </div>
@@ -223,7 +285,9 @@ export default function Dashboard({ stats, latestVisits, latestRedemptions, oper
                                 <Gauge className="size-5" />
                             </span>
                             <div>
-                                <h2 className="text-lg font-semibold">جریان مشارکت تا تحویل</h2>
+                                <h2 className="text-lg font-semibold">
+                                    جریان مشارکت تا تحویل
+                                </h2>
                                 <p className="mt-1 text-sm text-muted-foreground">
                                     مسیر کلیدی از ورود کاربر تا تحویل پاداش.
                                 </p>
@@ -236,7 +300,10 @@ export default function Dashboard({ stats, latestVisits, latestRedemptions, oper
                                     <div
                                         key={key}
                                         style={{
-                                            width: shareWidth(stats[key], flowTotal),
+                                            width: shareWidth(
+                                                stats[key],
+                                                flowTotal,
+                                            ),
                                             backgroundColor: flowColors[index],
                                         }}
                                     />
@@ -246,19 +313,31 @@ export default function Dashboard({ stats, latestVisits, latestRedemptions, oper
 
                         <div className="mt-5 grid gap-2">
                             {flowChartItems.map(([key, label], index) => (
-                                <div key={key} className="flex items-center justify-between gap-3 rounded-md bg-white/70 p-3 text-sm dark:bg-background/40">
+                                <div
+                                    key={key}
+                                    className="flex items-center justify-between gap-3 rounded-md bg-white/70 p-3 text-sm dark:bg-background/40"
+                                >
                                     <span className="flex items-center gap-2">
-                                        <span className="size-3 rounded-full" style={{ backgroundColor: flowColors[index] }} />
+                                        <span
+                                            className="size-3 rounded-full"
+                                            style={{
+                                                backgroundColor:
+                                                    flowColors[index],
+                                            }}
+                                        />
                                         {label}
                                     </span>
-                                    <strong>{stats[key].toLocaleString('fa-IR')}</strong>
+                                    <strong>
+                                        {stats[key].toLocaleString('fa-IR')}
+                                    </strong>
                                 </div>
                             ))}
                         </div>
 
                         <div className="mt-4 rounded-md border border-amber-200 bg-white/70 p-3 text-sm leading-7 text-muted-foreground dark:border-amber-900/60 dark:bg-background/40">
                             <Activity className="ml-2 inline size-4 text-amber-700" />
-                            اگر بازدید بالا باشد اما مصرف پاداش پایین بماند، گلوگاه فروش در مسیر فروشگاه یا مشوق‌هاست.
+                            اگر بازدید بالا باشد اما مصرف پاداش پایین بماند،
+                            گلوگاه فروش در مسیر فروشگاه یا مشوق‌هاست.
                         </div>
                     </article>
                 </section>
@@ -284,9 +363,12 @@ export default function Dashboard({ stats, latestVisits, latestRedemptions, oper
 
                 <section className="exploria-panel">
                     <div className="border-b border-border/70 p-4 dark:border-sidebar-border">
-                        <h2 className="text-lg font-semibold">هشدارهای عملیاتی</h2>
+                        <h2 className="text-lg font-semibold">
+                            هشدارهای عملیاتی
+                        </h2>
                         <p className="mt-1 text-sm text-muted-foreground">
-                            مواردی که ممکن است اجرای کمپین را کند کند یا نیازمند پیگیری سریع ادمین باشد.
+                            مواردی که ممکن است اجرای کمپین را کند کند یا نیازمند
+                            پیگیری سریع ادمین باشد.
                         </p>
                     </div>
 
@@ -299,12 +381,20 @@ export default function Dashboard({ stats, latestVisits, latestRedemptions, oper
                             {operationalAlerts.map((alert) => (
                                 <article
                                     key={alert.key}
-                                    className={alert.severity === 'attention' ? 'rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-900/60 dark:bg-amber-950/30' : 'rounded-lg border border-sky-200 bg-sky-50 p-4 dark:border-sky-900/60 dark:bg-sky-950/30'}
+                                    className={
+                                        alert.severity === 'attention'
+                                            ? 'rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-900/60 dark:bg-amber-950/30'
+                                            : 'rounded-lg border border-sky-200 bg-sky-50 p-4 dark:border-sky-900/60 dark:bg-sky-950/30'
+                                    }
                                 >
                                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                         <div>
-                                            <h3 className="font-semibold">{alert.title}</h3>
-                                            <p className="mt-1 text-sm leading-6 text-muted-foreground">{alert.message}</p>
+                                            <h3 className="font-semibold">
+                                                {alert.title}
+                                            </h3>
+                                            <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                                                {alert.message}
+                                            </p>
                                         </div>
                                         <Link
                                             className="inline-flex h-9 shrink-0 items-center justify-center rounded-md border border-input bg-background px-3 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
@@ -321,9 +411,13 @@ export default function Dashboard({ stats, latestVisits, latestRedemptions, oper
 
                 <section className="exploria-panel">
                     <div className="border-b border-border/70 p-4 dark:border-sidebar-border">
-                        <h2 className="text-lg font-semibold">پایش اجرای کمپین‌ها</h2>
+                        <h2 className="text-lg font-semibold">
+                            پایش اجرای کمپین‌ها
+                        </h2>
                         <p className="mt-1 text-sm text-muted-foreground">
-                            این بخش نشان می‌دهد کمپین فعال بعد از QR و ورود کاربر چقدر به مأموریت، پاداش و پیشرفت واقعی رسیده است.
+                            این بخش نشان می‌دهد کمپین فعال بعد از QR و ورود
+                            کاربر چقدر به مأموریت، پاداش و پیشرفت واقعی رسیده
+                            است.
                         </p>
                     </div>
 
@@ -334,11 +428,19 @@ export default function Dashboard({ stats, latestVisits, latestRedemptions, oper
                     ) : (
                         <div className="grid gap-3 p-4 lg:grid-cols-2">
                             {campaignPerformance.map((campaign) => (
-                                <article key={campaign.id} className="rounded-lg border border-border/80 bg-card/75 p-4 shadow-sm">
+                                <article
+                                    key={campaign.id}
+                                    className="rounded-lg border border-border/80 bg-card/75 p-4 shadow-sm"
+                                >
                                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                         <div>
-                                            <h3 className="font-semibold">{campaign.name}</h3>
-                                            <p className="mt-1 text-sm text-muted-foreground">{campaign.venueName ?? 'مکان ثبت نشده'}</p>
+                                            <h3 className="font-semibold">
+                                                {campaign.name}
+                                            </h3>
+                                            <p className="mt-1 text-sm text-muted-foreground">
+                                                {campaign.venueName ??
+                                                    'مکان ثبت نشده'}
+                                            </p>
                                         </div>
                                         <span className="w-fit rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">
                                             فعال
@@ -350,14 +452,32 @@ export default function Dashboard({ stats, latestVisits, latestRedemptions, oper
                                             ['بازدید', campaign.visits],
                                             ['QR', campaign.qrCodes],
                                             ['مأموریت', campaign.missions],
-                                            ['تکمیل', campaign.completedMissions],
+                                            [
+                                                'تکمیل',
+                                                campaign.completedMissions,
+                                            ],
                                             ['پاداش', campaign.rewards],
-                                            ['در انتظار تحویل', campaign.pendingRedemptions],
-                                            ['تحویل‌شده', campaign.confirmedRedemptions],
+                                            [
+                                                'در انتظار تحویل',
+                                                campaign.pendingRedemptions,
+                                            ],
+                                            [
+                                                'تحویل‌شده',
+                                                campaign.confirmedRedemptions,
+                                            ],
                                         ].map(([label, value]) => (
-                                            <div key={String(label)} className="rounded-md bg-muted/45 p-2">
-                                                <p className="text-xs text-muted-foreground">{label}</p>
-                                                <p className="mt-1 font-semibold">{Number(value).toLocaleString('fa-IR')}</p>
+                                            <div
+                                                key={String(label)}
+                                                className="rounded-md bg-muted/45 p-2"
+                                            >
+                                                <p className="text-xs text-muted-foreground">
+                                                    {label}
+                                                </p>
+                                                <p className="mt-1 font-semibold">
+                                                    {Number(
+                                                        value,
+                                                    ).toLocaleString('fa-IR')}
+                                                </p>
                                             </div>
                                         ))}
                                     </div>
@@ -365,18 +485,34 @@ export default function Dashboard({ stats, latestVisits, latestRedemptions, oper
                                     <div className="mt-4">
                                         <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
                                             <span>پیشرفت اجرای مأموریت‌ها</span>
-                                            <span>{campaign.progressPercent.toLocaleString('fa-IR')}٪</span>
+                                            <span>
+                                                {campaign.progressPercent.toLocaleString(
+                                                    'fa-IR',
+                                                )}
+                                                ٪
+                                            </span>
                                         </div>
                                         <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
-                                            <div className="h-full rounded-full bg-primary" style={{ width: `${campaign.progressPercent}%` }} />
+                                            <div
+                                                className="h-full rounded-full bg-primary"
+                                                style={{
+                                                    width: `${campaign.progressPercent}%`,
+                                                }}
+                                            />
                                         </div>
                                     </div>
 
                                     <div className="mt-4 flex flex-wrap gap-2">
-                                        <Link className="inline-flex h-9 items-center rounded-md border border-input bg-background px-3 text-sm font-medium hover:bg-accent hover:text-accent-foreground" href={`/admin/campaign-builder?campaign=${campaign.code}`}>
+                                        <Link
+                                            className="inline-flex h-9 items-center rounded-md border border-input bg-background px-3 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+                                            href={`/admin/campaign-builder?campaign=${campaign.code}`}
+                                        >
                                             ساخت کمپین
                                         </Link>
-                                        <Link className="inline-flex h-9 items-center rounded-md border border-input bg-background px-3 text-sm font-medium hover:bg-accent hover:text-accent-foreground" href={`/admin/campaign-operations?campaign=${campaign.code}`}>
+                                        <Link
+                                            className="inline-flex h-9 items-center rounded-md border border-input bg-background px-3 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+                                            href={`/admin/campaign-operations?campaign=${campaign.code}`}
+                                        >
                                             نقشه عملیات کمپین
                                         </Link>
                                     </div>
@@ -388,38 +524,76 @@ export default function Dashboard({ stats, latestVisits, latestRedemptions, oper
 
                 <section className="exploria-panel">
                     <div className="border-b border-border/70 p-4 dark:border-sidebar-border">
-                        <h2 className="text-lg font-semibold">آخرین وضعیت تحویل پاداش</h2>
+                        <h2 className="text-lg font-semibold">
+                            آخرین وضعیت تحویل پاداش
+                        </h2>
                         <p className="mt-1 text-sm text-muted-foreground">
-                            این لیست برای پیگیری سریع کدهای تحویل، فروشگاه مسئول و وضعیت مصرف پاداش است.
+                            این لیست برای پیگیری سریع کدهای تحویل، فروشگاه مسئول
+                            و وضعیت مصرف پاداش است.
                         </p>
                     </div>
 
                     {latestRedemptions.length === 0 ? (
                         <div className="p-8 text-center text-sm text-muted-foreground">
-                            هنوز پاداشی برای تحویل به فروشگاه یا اسپانسر نرسیده است.
+                            هنوز پاداشی برای تحویل به فروشگاه یا اسپانسر نرسیده
+                            است.
                         </div>
                     ) : (
                         <div className="divide-y divide-border/70">
                             {latestRedemptions.map((redemption) => (
-                                <article key={redemption.id} className="grid gap-3 p-4 lg:grid-cols-[1fr_auto]">
+                                <article
+                                    key={redemption.id}
+                                    className="grid gap-3 p-4 lg:grid-cols-[1fr_auto]"
+                                >
                                     <div>
                                         <div className="flex flex-wrap items-center gap-2">
-                                            <p className="font-medium">{redemption.rewardName ?? 'پاداش ثبت نشده'}</p>
-                                            <span className={redemption.status === 'confirmed' ? 'rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200' : 'rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-900 dark:bg-amber-950 dark:text-amber-100'}>
-                                                {redemptionStatusLabels[redemption.status] ?? redemption.status}
+                                            <p className="font-medium">
+                                                {redemption.rewardName ??
+                                                    'پاداش ثبت نشده'}
+                                            </p>
+                                            <span
+                                                className={
+                                                    redemption.status ===
+                                                    'confirmed'
+                                                        ? 'rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200'
+                                                        : 'rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-900 dark:bg-amber-950 dark:text-amber-100'
+                                                }
+                                            >
+                                                {redemptionStatusLabels[
+                                                    redemption.status
+                                                ] ?? redemption.status}
                                             </span>
                                         </div>
                                         <p className="mt-1 text-sm text-muted-foreground">
-                                            {redemption.partnerName ?? 'شریک ثبت نشده'} · {redemption.visitorName ?? 'کاربر ثبت نشده'} · {redemption.campaignName ?? 'کمپین ثبت نشده'}
+                                            {redemption.partnerName ??
+                                                'شریک ثبت نشده'}{' '}
+                                            ·{' '}
+                                            {redemption.visitorName ??
+                                                'کاربر ثبت نشده'}{' '}
+                                            ·{' '}
+                                            {redemption.campaignName ??
+                                                'کمپین ثبت نشده'}
                                         </p>
-                                        <p className="mt-2 font-mono text-xs text-muted-foreground" dir="ltr">
+                                        <p
+                                            className="mt-2 font-mono text-xs text-muted-foreground"
+                                            dir="ltr"
+                                        >
                                             {redemption.redemptionCode}
                                         </p>
                                     </div>
                                     <div className="flex flex-col gap-2 text-sm text-muted-foreground lg:items-end">
-                                        <p>{formatDate(redemption.redeemedAt ?? redemption.createdAt ?? new Date().toISOString())}</p>
+                                        <p>
+                                            {formatDate(
+                                                redemption.redeemedAt ??
+                                                    redemption.createdAt ??
+                                                    new Date().toISOString(),
+                                            )}
+                                        </p>
                                         {redemption.campaignCode ? (
-                                            <Link className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-xs font-medium hover:bg-accent hover:text-accent-foreground" href={`/admin/campaign-operations?campaign=${redemption.campaignCode}`}>
+                                            <Link
+                                                className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-xs font-medium hover:bg-accent hover:text-accent-foreground"
+                                                href={`/admin/campaign-operations?campaign=${redemption.campaignCode}`}
+                                            >
                                                 نقشه عملیات کمپین
                                             </Link>
                                         ) : null}

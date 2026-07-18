@@ -15,8 +15,8 @@ use App\Models\RewardRedemption;
 use App\Models\SponsorProposal;
 use App\Models\UserMissionProgress;
 use App\Models\UserReward;
-use App\Models\Visit;
 use App\Models\Venue;
+use App\Models\Visit;
 use Inertia\Inertia;
 use Inertia\Response;
 

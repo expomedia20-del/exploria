@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 /**
  * @property string $id
@@ -18,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $device_type
  * @property RecordStatus $status
  * @property array<int, string>|null $supported_media_formats
- * @property \Illuminate\Support\Carbon|null $last_heartbeat_at
+ * @property Carbon|null $last_heartbeat_at
  * @property string|null $playback_status
  * @property string|null $current_slot
  * @property string|null $last_playback_result

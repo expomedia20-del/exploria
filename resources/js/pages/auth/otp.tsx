@@ -227,9 +227,7 @@ export default function OtpAccess() {
                                         </h2>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="code">
-                                            کد شش رقمی
-                                        </Label>
+                                        <Label htmlFor="code">کد شش رقمی</Label>
                                         <Input
                                             id="code"
                                             inputMode="numeric"

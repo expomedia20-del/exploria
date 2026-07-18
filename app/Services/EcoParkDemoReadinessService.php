@@ -16,6 +16,8 @@ use App\Models\RewardInventoryAllocation;
 use App\Models\Treasure;
 use App\Models\UserAccessScope;
 use App\Models\Venue;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route;
 
@@ -212,7 +214,7 @@ class EcoParkDemoReadinessService
         ];
     }
 
-    /** @param \Illuminate\Database\Eloquent\Builder<\Illuminate\Database\Eloquent\Model> $query */
+    /** @param Builder<Model> $query */
     private function countForVenueCampaigns($query, ?string $venueId, Collection $campaignIds): int
     {
         if (! $venueId || $campaignIds->isEmpty()) {

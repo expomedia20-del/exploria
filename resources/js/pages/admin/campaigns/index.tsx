@@ -17,7 +17,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-
 type RewardBasketTier = {
     level: string;
     items: string[];
@@ -122,18 +121,26 @@ function formatDateTimeLocal(value: string | null) {
     }
 
     const date = new Date(value);
+
     if (Number.isNaN(date.getTime())) {
         return '';
     }
 
-    return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+        .toISOString()
+        .slice(0, 16);
 }
 
 function canMutate(role?: string) {
     return role === 'admin' || role === 'operator';
 }
 
-function blueprintFlowUrl(path: string, blueprintCode: string, action: string, campaignCode?: string) {
+function blueprintFlowUrl(
+    path: string,
+    blueprintCode: string,
+    action: string,
+    campaignCode?: string,
+) {
     const params = new URLSearchParams({
         blueprint: blueprintCode,
         blueprint_action: action,
@@ -146,7 +153,11 @@ function blueprintFlowUrl(path: string, blueprintCode: string, action: string, c
     return `${path}?${params.toString()}`;
 }
 
-function campaignContextUrl(path: string, campaign: CampaignItem, action?: string) {
+function campaignContextUrl(
+    path: string,
+    campaign: CampaignItem,
+    action?: string,
+) {
     const params = new URLSearchParams({ campaign: campaign.code });
 
     if (campaign.blueprintCode) {
@@ -168,19 +179,29 @@ export default function CampaignRegistryIndex({
     selectedBlueprint,
 }: Props) {
     const { flash, auth } = usePage<SharedProps>().props;
-    const [editingCampaign, setEditingCampaign] = useState<CampaignItem | null>(null);
+    const [editingCampaign, setEditingCampaign] = useState<CampaignItem | null>(
+        null,
+    );
     const activeCount = campaigns.filter(
         (campaign) => campaign.status === 'active',
     ).length;
-    const suggestedVenue = editingCampaign?.venue ?? selectedCampaign?.venue ?? selectedVenue ?? venueOptions[0] ?? null;
-    const suggestedName = selectedBlueprint && suggestedVenue ? `${selectedBlueprint.title} - ${suggestedVenue.name}` : '';
+    const suggestedVenue =
+        editingCampaign?.venue ??
+        selectedCampaign?.venue ??
+        selectedVenue ??
+        venueOptions[0] ??
+        null;
+    const suggestedName =
+        selectedBlueprint && suggestedVenue
+            ? `${selectedBlueprint.title} - ${suggestedVenue.name}`
+            : '';
     const suggestedCode = selectedBlueprint
         ? `${selectedBlueprint.code}-${suggestedVenue?.code ?? 'campaign'}`
-            .toLowerCase()
-            .replace(/[^a-z0-9-]+/g, '-')
-            .replace(/-+/g, '-')
-            .replace(/^-|-$/g, '')
-            .slice(0, 64)
+              .toLowerCase()
+              .replace(/[^a-z0-9-]+/g, '-')
+              .replace(/-+/g, '-')
+              .replace(/^-|-$/g, '')
+              .slice(0, 64)
         : '';
 
     return (
@@ -227,36 +248,98 @@ export default function CampaignRegistryIndex({
                     </div>
                 </header>
 
-
                 {selectedBlueprint ? (
                     <section className="rounded-lg border border-primary/25 bg-primary/5 p-4 text-sm shadow-sm">
                         <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                             <div>
-                                <p className="text-xs text-muted-foreground">الگوی مرجع برای ساخت کمپین</p>
-                                <h2 className="mt-1 text-lg font-semibold">{selectedBlueprint.title}</h2>
+                                <p className="text-xs text-muted-foreground">
+                                    الگوی مرجع برای ساخت کمپین
+                                </p>
+                                <h2 className="mt-1 text-lg font-semibold">
+                                    {selectedBlueprint.title}
+                                </h2>
                                 {selectedVenue ? (
                                     <p className="mt-2 rounded-md bg-background/75 px-3 py-2 text-xs text-muted-foreground">
-                                        این ساخت کمپین از پیشنهاد ارزیابی مکان شروع شده است: <span className="font-medium text-foreground">{selectedVenue.name}</span>
+                                        این ساخت کمپین از پیشنهاد ارزیابی مکان
+                                        شروع شده است:{' '}
+                                        <span className="font-medium text-foreground">
+                                            {selectedVenue.name}
+                                        </span>
                                     </p>
                                 ) : null}
-                                <p className="mt-1 text-muted-foreground">این الگو باید اول به کمپین تبدیل شود؛ بعد از ثبت کمپین، QR، اعضا، مأموریت، پاداش و نقشه عملیات باید تابع همین کمپین باشند.</p>
+                                <p className="mt-1 text-muted-foreground">
+                                    این الگو باید اول به کمپین تبدیل شود؛ بعد از
+                                    ثبت کمپین، QR، اعضا، مأموریت، پاداش و نقشه
+                                    عملیات باید تابع همین کمپین باشند.
+                                </p>
                             </div>
-                            <span className="rounded-full bg-background px-3 py-1 text-xs" dir="ltr">{selectedBlueprint.code}</span>
+                            <span
+                                className="rounded-full bg-background px-3 py-1 text-xs"
+                                dir="ltr"
+                            >
+                                {selectedBlueprint.code}
+                            </span>
                         </div>
                         <div className="mt-4 grid gap-3 lg:grid-cols-3">
-                            <div className="rounded-lg bg-background/75 p-3"><p className="font-medium">هدف کمپین</p><p className="mt-1 text-muted-foreground">{selectedBlueprint.missionGoal}</p></div>
-                            <div className="rounded-lg bg-background/75 p-3"><p className="font-medium">مسیر و ناوبری</p><p className="mt-1 text-muted-foreground">{selectedBlueprint.navigationHint}</p></div>
-                            <div className="rounded-lg bg-background/75 p-3"><p className="font-medium">بخش‌های تابع کمپین</p><div className="mt-2 flex flex-wrap gap-2">{selectedBlueprint.connectedSurfaces.slice(0, 5).map((item) => <span key={item} className="rounded-full bg-muted px-2 py-1 text-xs">{item}</span>)}</div></div>
+                            <div className="rounded-lg bg-background/75 p-3">
+                                <p className="font-medium">هدف کمپین</p>
+                                <p className="mt-1 text-muted-foreground">
+                                    {selectedBlueprint.missionGoal}
+                                </p>
+                            </div>
+                            <div className="rounded-lg bg-background/75 p-3">
+                                <p className="font-medium">مسیر و ناوبری</p>
+                                <p className="mt-1 text-muted-foreground">
+                                    {selectedBlueprint.navigationHint}
+                                </p>
+                            </div>
+                            <div className="rounded-lg bg-background/75 p-3">
+                                <p className="font-medium">
+                                    بخش‌های تابع کمپین
+                                </p>
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                    {selectedBlueprint.connectedSurfaces
+                                        .slice(0, 5)
+                                        .map((item) => (
+                                            <span
+                                                key={item}
+                                                className="rounded-full bg-muted px-2 py-1 text-xs"
+                                            >
+                                                {item}
+                                            </span>
+                                        ))}
+                                </div>
+                            </div>
                         </div>
                         <div className="mt-4 flex flex-wrap gap-2">
                             <Button asChild variant="outline" size="sm">
-                                <Link href={blueprintFlowUrl('/admin/missions', selectedBlueprint.code, 'components', selectedCampaign?.code)}>تکمیل اجزای کمپین</Link>
+                                <Link
+                                    href={blueprintFlowUrl(
+                                        '/admin/missions',
+                                        selectedBlueprint.code,
+                                        'components',
+                                        selectedCampaign?.code,
+                                    )}
+                                >
+                                    تکمیل اجزای کمپین
+                                </Link>
                             </Button>
                             <Button asChild variant="outline" size="sm">
-                                <Link href={blueprintFlowUrl('/admin/campaign-operations', selectedBlueprint.code, 'route', selectedCampaign?.code)}>طراحی مسیر کمپین</Link>
+                                <Link
+                                    href={blueprintFlowUrl(
+                                        '/admin/campaign-operations',
+                                        selectedBlueprint.code,
+                                        'route',
+                                        selectedCampaign?.code,
+                                    )}
+                                >
+                                    طراحی مسیر کمپین
+                                </Link>
                             </Button>
                             <Button asChild variant="ghost" size="sm">
-                                <Link href="/admin/mission-blueprints">بازگشت به گنجینه</Link>
+                                <Link href="/admin/mission-blueprints">
+                                    بازگشت به گنجینه
+                                </Link>
                             </Button>
                         </div>
                     </section>
@@ -266,39 +349,117 @@ export default function CampaignRegistryIndex({
                     <section className="rounded-lg border border-sidebar-border/70 bg-background p-4 text-sm shadow-sm dark:border-sidebar-border">
                         <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                             <div>
-                                <p className="text-xs text-muted-foreground">کمپین فعال برای تکمیل مرحله‌ای</p>
-                                <h2 className="mt-1 text-lg font-semibold">{selectedCampaign.name}</h2>
-                                <p className="mt-1 text-muted-foreground">از اینجا ادامه کار را برای همین کمپین انجام دهید؛ هر مرحله با کد همین کمپین باز می‌شود تا تنظیمات از هم جدا نشوند.</p>
+                                <p className="text-xs text-muted-foreground">
+                                    کمپین فعال برای تکمیل مرحله‌ای
+                                </p>
+                                <h2 className="mt-1 text-lg font-semibold">
+                                    {selectedCampaign.name}
+                                </h2>
+                                <p className="mt-1 text-muted-foreground">
+                                    از اینجا ادامه کار را برای همین کمپین انجام
+                                    دهید؛ هر مرحله با کد همین کمپین باز می‌شود
+                                    تا تنظیمات از هم جدا نشوند.
+                                </p>
                             </div>
                             <div className="flex flex-wrap gap-2">
-                                <span className="rounded-full bg-muted px-3 py-1 text-xs" dir="ltr">{selectedCampaign.code}</span>
-                                {selectedCampaign.blueprintCode ? <span className="rounded-full bg-primary/10 px-3 py-1 text-xs text-primary" dir="ltr">{selectedCampaign.blueprintCode}</span> : null}
-                                {selectedCampaign.designSource === 'venue_blueprint_recommendation' ? (
+                                <span
+                                    className="rounded-full bg-muted px-3 py-1 text-xs"
+                                    dir="ltr"
+                                >
+                                    {selectedCampaign.code}
+                                </span>
+                                {selectedCampaign.blueprintCode ? (
+                                    <span
+                                        className="rounded-full bg-primary/10 px-3 py-1 text-xs text-primary"
+                                        dir="ltr"
+                                    >
+                                        {selectedCampaign.blueprintCode}
+                                    </span>
+                                ) : null}
+                                {selectedCampaign.designSource ===
+                                'venue_blueprint_recommendation' ? (
                                     <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs text-emerald-800 dark:bg-emerald-950 dark:text-emerald-100">
                                         از ارزیابی مکان
-                                        {selectedCampaign.designVenueCode ? <span dir="ltr"> {selectedCampaign.designVenueCode}</span> : null}
+                                        {selectedCampaign.designVenueCode ? (
+                                            <span dir="ltr">
+                                                {' '}
+                                                {
+                                                    selectedCampaign.designVenueCode
+                                                }
+                                            </span>
+                                        ) : null}
                                     </span>
                                 ) : null}
                             </div>
                         </div>
                         <div className="mt-4 grid gap-2 md:grid-cols-5">
                             <Button asChild size="sm">
-                                <Link href={`/admin/campaign-builder?campaign=${selectedCampaign.code}`}>ادامه تکمیل در کارگاه</Link>
+                                <Link
+                                    href={`/admin/campaign-builder?campaign=${selectedCampaign.code}`}
+                                >
+                                    ادامه تکمیل در کارگاه
+                                </Link>
                             </Button>
                             <Button asChild variant="outline" size="sm">
-                                <Link href={`/admin/qr-codes?campaign=${selectedCampaign.code}`}>اتصال QR</Link>
+                                <Link
+                                    href={`/admin/qr-codes?campaign=${selectedCampaign.code}`}
+                                >
+                                    اتصال QR
+                                </Link>
                             </Button>
                             <Button asChild variant="outline" size="sm">
-                                <Link href={selectedCampaign.blueprintCode ? blueprintFlowUrl('/admin/missions', selectedCampaign.blueprintCode, 'components', selectedCampaign.code) : `/admin/missions?campaign=${selectedCampaign.code}`}>تکمیل اجزا</Link>
+                                <Link
+                                    href={
+                                        selectedCampaign.blueprintCode
+                                            ? blueprintFlowUrl(
+                                                  '/admin/missions',
+                                                  selectedCampaign.blueprintCode,
+                                                  'components',
+                                                  selectedCampaign.code,
+                                              )
+                                            : `/admin/missions?campaign=${selectedCampaign.code}`
+                                    }
+                                >
+                                    تکمیل اجزا
+                                </Link>
                             </Button>
                             <Button asChild variant="outline" size="sm">
-                                <Link href={selectedCampaign.blueprintCode ? blueprintFlowUrl('/admin/campaign-participants', selectedCampaign.blueprintCode, 'participants', selectedCampaign.code) : `/admin/campaign-participants?campaign=${selectedCampaign.code}`}>اعضا و مالک پاداش</Link>
+                                <Link
+                                    href={
+                                        selectedCampaign.blueprintCode
+                                            ? blueprintFlowUrl(
+                                                  '/admin/campaign-participants',
+                                                  selectedCampaign.blueprintCode,
+                                                  'participants',
+                                                  selectedCampaign.code,
+                                              )
+                                            : `/admin/campaign-participants?campaign=${selectedCampaign.code}`
+                                    }
+                                >
+                                    اعضا و مالک پاداش
+                                </Link>
                             </Button>
                             <Button asChild variant="outline" size="sm">
-                                <Link href={selectedCampaign.blueprintCode ? blueprintFlowUrl('/admin/campaign-operations', selectedCampaign.blueprintCode, 'route', selectedCampaign.code) : `/admin/campaign-operations?campaign=${selectedCampaign.code}`}>طراحی مسیر</Link>
+                                <Link
+                                    href={
+                                        selectedCampaign.blueprintCode
+                                            ? blueprintFlowUrl(
+                                                  '/admin/campaign-operations',
+                                                  selectedCampaign.blueprintCode,
+                                                  'route',
+                                                  selectedCampaign.code,
+                                              )
+                                            : `/admin/campaign-operations?campaign=${selectedCampaign.code}`
+                                    }
+                                >
+                                    طراحی مسیر
+                                </Link>
                             </Button>
                         </div>
-                        <CampaignContextNav campaign={selectedCampaign} className="mt-4" />
+                        <CampaignContextNav
+                            campaign={selectedCampaign}
+                            className="mt-4"
+                        />
                     </section>
                 ) : null}
 
@@ -309,10 +470,17 @@ export default function CampaignRegistryIndex({
                 ) : null}
 
                 {canMutate(auth.user.role) ? (
-                    <section id="campaign-form" className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
+                    <section
+                        id="campaign-form"
+                        className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border"
+                    >
                         <div className="mb-4 flex items-center gap-2">
                             <Plus className="size-4 text-muted-foreground" />
-                            <h2 className="font-semibold">{editingCampaign ? 'ویرایش کمپین' : 'ثبت کمپین جدید'}</h2>
+                            <h2 className="font-semibold">
+                                {editingCampaign
+                                    ? 'ویرایش کمپین'
+                                    : 'ثبت کمپین جدید'}
+                            </h2>
                         </div>
                         <Form
                             action="/admin/campaigns"
@@ -323,8 +491,20 @@ export default function CampaignRegistryIndex({
                         >
                             {({ processing, errors }) => (
                                 <>
-                                    {editingCampaign ? <input type="hidden" name="campaign_id" value={editingCampaign.id} /> : null}
-                                    {selectedBlueprint ? <input type="hidden" name="blueprint_code" value={selectedBlueprint.code} /> : null}
+                                    {editingCampaign ? (
+                                        <input
+                                            type="hidden"
+                                            name="campaign_id"
+                                            value={editingCampaign.id}
+                                        />
+                                    ) : null}
+                                    {selectedBlueprint ? (
+                                        <input
+                                            type="hidden"
+                                            name="blueprint_code"
+                                            value={selectedBlueprint.code}
+                                        />
+                                    ) : null}
                                     <div className="grid gap-2 md:col-span-2">
                                         <Label htmlFor="venue_id">مکان</Label>
                                         <select
@@ -332,7 +512,9 @@ export default function CampaignRegistryIndex({
                                             name="venue_id"
                                             required
                                             key={`campaign-venue-${editingCampaign?.id ?? 'new'}`}
-                                            defaultValue={suggestedVenue?.id ?? ''}
+                                            defaultValue={
+                                                suggestedVenue?.id ?? ''
+                                            }
                                             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                         >
                                             {venueOptions.map((venue) => (
@@ -354,7 +536,10 @@ export default function CampaignRegistryIndex({
                                             required
                                             autoComplete="off"
                                             key={`campaign-name-${editingCampaign?.id ?? 'new'}`}
-                                            defaultValue={editingCampaign?.name ?? suggestedName}
+                                            defaultValue={
+                                                editingCampaign?.name ??
+                                                suggestedName
+                                            }
                                             placeholder="مثلا کمپین گنج تابستان"
                                         />
                                         <InputError message={errors.name} />
@@ -369,7 +554,10 @@ export default function CampaignRegistryIndex({
                                             autoComplete="off"
                                             placeholder="summer-treasure"
                                             key={`campaign-code-${editingCampaign?.id ?? selectedBlueprint?.code ?? 'new'}`}
-                                            defaultValue={editingCampaign?.code ?? suggestedCode}
+                                            defaultValue={
+                                                editingCampaign?.code ??
+                                                suggestedCode
+                                            }
                                         />
                                         <InputError message={errors.code} />
                                     </div>
@@ -384,7 +572,12 @@ export default function CampaignRegistryIndex({
                                             dir="ltr"
                                             autoComplete="off"
                                             key={`campaign-type-${editingCampaign?.id ?? 'new'}`}
-                                            defaultValue={editingCampaign?.campaignType ?? (selectedBlueprint ? 'blueprint_campaign' : 'pilot_visit')}
+                                            defaultValue={
+                                                editingCampaign?.campaignType ??
+                                                (selectedBlueprint
+                                                    ? 'blueprint_campaign'
+                                                    : 'pilot_visit')
+                                            }
                                         />
                                         <InputError
                                             message={errors.campaign_type}
@@ -397,7 +590,10 @@ export default function CampaignRegistryIndex({
                                             name="status"
                                             required
                                             key={`campaign-status-${editingCampaign?.id ?? 'new'}`}
-                                            defaultValue={editingCampaign?.status ?? 'draft'}
+                                            defaultValue={
+                                                editingCampaign?.status ??
+                                                'draft'
+                                            }
                                             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                         >
                                             <option value="draft">
@@ -415,7 +611,9 @@ export default function CampaignRegistryIndex({
                                         name="start_at"
                                         label="شروع"
                                         key={`campaign-start-${editingCampaign?.id ?? 'new'}`}
-                                        defaultValue={formatDateTimeLocal(editingCampaign?.startAt ?? null)}
+                                        defaultValue={formatDateTimeLocal(
+                                            editingCampaign?.startAt ?? null,
+                                        )}
                                         error={errors.start_at}
                                     />
                                     <DateTimePickerField
@@ -423,7 +621,9 @@ export default function CampaignRegistryIndex({
                                         name="end_at"
                                         label="پایان"
                                         key={`campaign-end-${editingCampaign?.id ?? 'new'}`}
-                                        defaultValue={formatDateTimeLocal(editingCampaign?.endAt ?? null)}
+                                        defaultValue={formatDateTimeLocal(
+                                            editingCampaign?.endAt ?? null,
+                                        )}
                                         error={errors.end_at}
                                     />
                                     <div className="flex items-end md:col-span-2">
@@ -432,7 +632,9 @@ export default function CampaignRegistryIndex({
                                             className="w-full"
                                         >
                                             <Plus className="size-4" />
-                                            {editingCampaign ? 'ذخیره ویرایش کمپین' : 'ثبت کمپین'}
+                                            {editingCampaign
+                                                ? 'ذخیره ویرایش کمپین'
+                                                : 'ثبت کمپین'}
                                         </Button>
                                     </div>
                                 </>
@@ -488,11 +690,15 @@ export default function CampaignRegistryIndex({
                                                 {campaign.code}
                                             </span>
                                             {campaign.blueprintCode ? (
-                                                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary" dir="ltr">
+                                                <span
+                                                    className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary"
+                                                    dir="ltr"
+                                                >
                                                     {campaign.blueprintCode}
                                                 </span>
                                             ) : null}
-                                            {campaign.designSource === 'venue_blueprint_recommendation' ? (
+                                            {campaign.designSource ===
+                                            'venue_blueprint_recommendation' ? (
                                                 <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800 dark:bg-emerald-950 dark:text-emerald-100">
                                                     از ارزیابی مکان
                                                 </span>
@@ -500,11 +706,41 @@ export default function CampaignRegistryIndex({
                                         </div>
                                         <div className="mt-3 flex flex-wrap gap-2 text-xs">
                                             {[
-                                                ['ادامه تکمیل', `/admin/campaign-builder?campaign=${campaign.code}`],
-                                                ['QR', campaignContextUrl('/admin/qr-codes', campaign)],
-                                                ['مأموریت‌ها و پاداش‌ها', campaignContextUrl('/admin/missions', campaign, 'components')],
-                                                ['اعضا و شرکای کمپین', campaignContextUrl('/admin/campaign-participants', campaign, 'participants')],
-                                                ['نقشه عملیات کمپین', campaignContextUrl('/admin/campaign-operations', campaign, 'route')],
+                                                [
+                                                    'ادامه تکمیل',
+                                                    `/admin/campaign-builder?campaign=${campaign.code}`,
+                                                ],
+                                                [
+                                                    'QR',
+                                                    campaignContextUrl(
+                                                        '/admin/qr-codes',
+                                                        campaign,
+                                                    ),
+                                                ],
+                                                [
+                                                    'مأموریت‌ها و پاداش‌ها',
+                                                    campaignContextUrl(
+                                                        '/admin/missions',
+                                                        campaign,
+                                                        'components',
+                                                    ),
+                                                ],
+                                                [
+                                                    'اعضا و شرکای کمپین',
+                                                    campaignContextUrl(
+                                                        '/admin/campaign-participants',
+                                                        campaign,
+                                                        'participants',
+                                                    ),
+                                                ],
+                                                [
+                                                    'نقشه عملیات کمپین',
+                                                    campaignContextUrl(
+                                                        '/admin/campaign-operations',
+                                                        campaign,
+                                                        'route',
+                                                    ),
+                                                ],
                                             ].map(([label, href]) => (
                                                 <Link
                                                     key={href}
@@ -524,8 +760,18 @@ export default function CampaignRegistryIndex({
                                                     className="h-8 px-2"
                                                     title="ویرایش کمپین"
                                                     onClick={() => {
-                                                        setEditingCampaign(campaign);
-                                                        document.getElementById('campaign-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                                        setEditingCampaign(
+                                                            campaign,
+                                                        );
+                                                        document
+                                                            .getElementById(
+                                                                'campaign-form',
+                                                            )
+                                                            ?.scrollIntoView({
+                                                                behavior:
+                                                                    'smooth',
+                                                                block: 'start',
+                                                            });
                                                     }}
                                                 >
                                                     <Pencil className="size-4" />
@@ -533,15 +779,30 @@ export default function CampaignRegistryIndex({
                                                 <Form
                                                     action={`/admin/campaigns/${campaign.id}`}
                                                     method="delete"
-                                                    options={{ preserveScroll: true }}
+                                                    options={{
+                                                        preserveScroll: true,
+                                                    }}
                                                     onSubmit={(event) => {
-                                                        if (!window.confirm('این کمپین حذف شود؟ حذف فقط وقتی ممکن است که اجزای وابسته نداشته باشد.')) {
+                                                        if (
+                                                            !window.confirm(
+                                                                'این کمپین حذف شود؟ حذف فقط وقتی ممکن است که اجزای وابسته نداشته باشد.',
+                                                            )
+                                                        ) {
                                                             event.preventDefault();
                                                         }
                                                     }}
                                                 >
                                                     {({ processing }) => (
-                                                        <Button type="submit" variant="ghost" size="sm" className="h-8 px-2 text-destructive hover:text-destructive" disabled={processing} title="حذف کمپین">
+                                                        <Button
+                                                            type="submit"
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-8 px-2 text-destructive hover:text-destructive"
+                                                            disabled={
+                                                                processing
+                                                            }
+                                                            title="حذف کمپین"
+                                                        >
                                                             <Trash2 className="size-4" />
                                                         </Button>
                                                     )}

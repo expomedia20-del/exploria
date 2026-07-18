@@ -46,6 +46,7 @@ export function DateTimePickerField({
 
         if (showPicker) {
             showPicker.call(input);
+
             return;
         }
 
@@ -85,7 +86,9 @@ export function DateTimePickerField({
                     <CalendarClock className="size-4" />
                 </Button>
             </div>
-            {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
+            {hint ? (
+                <p className="text-xs text-muted-foreground">{hint}</p>
+            ) : null}
             <InputError message={error} />
         </div>
     );

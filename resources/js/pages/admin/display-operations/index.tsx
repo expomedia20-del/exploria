@@ -245,7 +245,8 @@ export default function AdminDisplayOperationsIndex({
                     >
                         <p className="font-semibold">تبلیغات آماده انتشار</p>
                         <p className="mt-2 leading-6 text-muted-foreground">
-                            تبلیغ ابتدا باید تایید شود، سپس در این صفحه روی نمایشگر زمان‌بندی شود.
+                            تبلیغ ابتدا باید تایید شود، سپس در این صفحه روی
+                            نمایشگر زمان‌بندی شود.
                         </p>
                     </Link>
                     <Link
@@ -254,7 +255,8 @@ export default function AdminDisplayOperationsIndex({
                     >
                         <p className="font-semibold">هماهنگی با روز اجرا</p>
                         <p className="mt-2 leading-6 text-muted-foreground">
-                            زمان پخش نمایشگر باید با نقشه عملیات کمپین و نقاط QR هماهنگ باشد.
+                            زمان پخش نمایشگر باید با نقشه عملیات کمپین و نقاط QR
+                            هماهنگ باشد.
                         </p>
                     </Link>
                     <Link
@@ -263,7 +265,8 @@ export default function AdminDisplayOperationsIndex({
                     >
                         <p className="font-semibold">عیب‌یابی نمایشگر</p>
                         <p className="mt-2 leading-6 text-muted-foreground">
-                            آفلاین بودن، خطای پخش یا heartbeat نامنظم را از مسیر پشتیبانی پیگیری کنید.
+                            آفلاین بودن، خطای پخش یا heartbeat نامنظم را از مسیر
+                            پشتیبانی پیگیری کنید.
                         </p>
                     </Link>
                 </section>

@@ -341,7 +341,10 @@ function AuthorityGuideBox({ roleKey }: { roleKey: string }) {
                     title="فقط مشاهده / اعلام نظر"
                     items={guide.observeOnly}
                 />
-                <AuthorityColumn title="خارج از اختیار" items={guide.notAllowed} />
+                <AuthorityColumn
+                    title="خارج از اختیار"
+                    items={guide.notAllowed}
+                />
             </div>
         </section>
     );
@@ -460,7 +463,8 @@ export default function RoleOperationsIndex({
                 <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                     <div>
                         <p className="text-sm text-muted-foreground">
-                            مدل Role + Scope برای تبدیل اکسپلوریا به پایلوت قابل اجرا و قابل فروش
+                            مدل Role + Scope برای تبدیل اکسپلوریا به پایلوت قابل
+                            اجرا و قابل فروش
                         </p>
                         <h1 className="mt-1 text-2xl font-semibold">
                             نقش‌ها، حدود اختیار و عملیات روزانه
@@ -507,7 +511,10 @@ export default function RoleOperationsIndex({
                                 قاعده کنترل پیچیدگی
                             </h2>
                             <p className="mt-1 text-sm text-muted-foreground">
-                                هر نقش باید بداند چه کاری انجام می‌دهد، چه چیزی را فقط می‌بیند و کجا نباید تصمیم بگیرد. این مرزها جلوی تداخل مدیر مکان، مدیر رواق، فروشگاه، اسپانسر و تیم اکسپلوریا را می‌گیرد.
+                                هر نقش باید بداند چه کاری انجام می‌دهد، چه چیزی
+                                را فقط می‌بیند و کجا نباید تصمیم بگیرد. این
+                                مرزها جلوی تداخل مدیر مکان، مدیر رواق، فروشگاه،
+                                اسپانسر و تیم اکسپلوریا را می‌گیرد.
                             </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -524,7 +531,9 @@ export default function RoleOperationsIndex({
                 </section>
 
                 {(
-                    Object.keys(groupedRoles) as Array<keyof typeof groupedRoles>
+                    Object.keys(groupedRoles) as Array<
+                        keyof typeof groupedRoles
+                    >
                 ).map((group) => (
                     <section key={group} className="grid gap-3">
                         <div>

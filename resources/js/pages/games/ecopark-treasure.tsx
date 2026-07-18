@@ -1,9 +1,28 @@
 ﻿import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, BadgeCheck, CheckCircle2, Compass, Gift, Home, MapPin, QrCode, Sparkles, Trophy, WalletCards } from 'lucide-react';
+import {
+    ArrowLeft,
+    BadgeCheck,
+    CheckCircle2,
+    Compass,
+    Gift,
+    Home,
+    MapPin,
+    QrCode,
+    Sparkles,
+    Trophy,
+    WalletCards,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 type StartMode = 'home' | 'onsite';
-type NodeId = 'gate' | 'hologram' | 'ravaq' | 'food' | 'mina' | 'ocean' | 'final';
+type NodeId =
+    | 'gate'
+    | 'hologram'
+    | 'ravaq'
+    | 'food'
+    | 'mina'
+    | 'ocean'
+    | 'final';
 
 type TreasureNode = {
     id: NodeId;
@@ -107,9 +126,18 @@ const nodes: TreasureNode[] = [
 
 const baskets = [
     { level: 'Starter', items: ['digital seal', 'route code', 'first points'] },
-    { level: 'Silver', items: ['shop coupon', 'taste reward', 'small draw chance'] },
-    { level: 'Gold', items: ['Ravaq + food basket', 'family invite', 'double onsite points'] },
-    { level: 'Legendary', items: ['sponsor prize', 'VIP visit pack', 'public winner badge'] },
+    {
+        level: 'Silver',
+        items: ['shop coupon', 'taste reward', 'small draw chance'],
+    },
+    {
+        level: 'Gold',
+        items: ['Ravaq + food basket', 'family invite', 'double onsite points'],
+    },
+    {
+        level: 'Legendary',
+        items: ['sponsor prize', 'VIP visit pack', 'public winner badge'],
+    },
 ];
 
 function formatFa(value: number) {
@@ -119,6 +147,7 @@ function formatFa(value: number) {
 function buildCode(mode: StartMode, completed: NodeId[]) {
     const prefix = mode === 'home' ? 'HOME' : 'PARK';
     const score = completed.length * 17 + (mode === 'home' ? 41 : 64);
+
     return `EXP-${prefix}-1405-${score}`;
 }
 
@@ -129,7 +158,10 @@ export default function EcoParkTreasureGame() {
 
     const selectedNode = nodes.find((node) => node.id === selected) ?? nodes[0];
     const points = useMemo(
-        () => nodes.filter((node) => completed.includes(node.id)).reduce((sum, node) => sum + node.points, 0),
+        () =>
+            nodes
+                .filter((node) => completed.includes(node.id))
+                .reduce((sum, node) => sum + node.points, 0),
         [completed],
     );
     const code = buildCode(mode, completed);
@@ -146,11 +178,17 @@ export default function EcoParkTreasureGame() {
             <main className="min-h-screen bg-[#f6f7f2] text-zinc-950" dir="ltr">
                 <section className="border-b border-zinc-200 bg-white/90 backdrop-blur">
                     <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-5 py-4 sm:px-8 lg:px-10">
-                        <Link href="/admin/mission-blueprints" className="inline-flex items-center gap-2 text-sm font-medium text-zinc-600 hover:text-zinc-950">
+                        <Link
+                            href="/admin/mission-blueprints"
+                            className="inline-flex items-center gap-2 text-sm font-medium text-zinc-600 hover:text-zinc-950"
+                        >
                             <ArrowLeft className="size-4" />
                             Mission blueprints
                         </Link>
-                        <Link href="/dashboard" className="inline-flex h-9 items-center gap-2 rounded-md border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-700 hover:bg-zinc-100">
+                        <Link
+                            href="/dashboard"
+                            className="inline-flex h-9 items-center gap-2 rounded-md border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-700 hover:bg-zinc-100"
+                        >
                             <Compass className="size-4" />
                             Dashboard
                         </Link>
@@ -168,10 +206,17 @@ export default function EcoParkTreasureGame() {
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-r from-zinc-950/85 via-zinc-950/45 to-transparent" />
                                 <div className="relative max-w-xl p-5 text-white sm:p-6">
-                                    <p className="text-sm font-semibold text-emerald-200">Exploria pilot game</p>
-                                    <h1 className="mt-3 text-4xl font-semibold leading-tight sm:text-5xl">EcoPark Treasure Map</h1>
+                                    <p className="text-sm font-semibold text-emerald-200">
+                                        Exploria pilot game
+                                    </p>
+                                    <h1 className="mt-3 text-4xl leading-tight font-semibold sm:text-5xl">
+                                        EcoPark Treasure Map
+                                    </h1>
                                     <p className="mt-4 text-sm leading-7 text-zinc-100">
-                                        A first-playable treasure hunt for EcoPark: home pre-game, on-site QR clues, hologram backpacks, partner rewards, and prize baskets.
+                                        A first-playable treasure hunt for
+                                        EcoPark: home pre-game, on-site QR
+                                        clues, hologram backpacks, partner
+                                        rewards, and prize baskets.
                                     </p>
                                 </div>
                             </div>
@@ -181,35 +226,54 @@ export default function EcoParkTreasureGame() {
                             <button
                                 type="button"
                                 onClick={() => setMode('home')}
-                                className={`rounded-lg border p-4 text-left transition ${mode === 'home' ? 'border-emerald-300 bg-emerald-50 text-emerald-950 shadow-sm' : 'border-zinc-200 bg-white hover:bg-zinc-50 shadow-sm'}`}
+                                className={`rounded-lg border p-4 text-left transition ${mode === 'home' ? 'border-emerald-300 bg-emerald-50 text-emerald-950 shadow-sm' : 'border-zinc-200 bg-white shadow-sm hover:bg-zinc-50'}`}
                             >
                                 <Home className="size-5" />
-                                <p className="mt-3 font-semibold">Start from home</p>
-                                <p className="mt-1 text-xs opacity-80">Pre-game, route choice, first clue, onsite continuation code.</p>
+                                <p className="mt-3 font-semibold">
+                                    Start from home
+                                </p>
+                                <p className="mt-1 text-xs opacity-80">
+                                    Pre-game, route choice, first clue, onsite
+                                    continuation code.
+                                </p>
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setMode('onsite')}
-                                className={`rounded-lg border p-4 text-left transition ${mode === 'onsite' ? 'border-cyan-300 bg-cyan-50 text-cyan-950 shadow-sm' : 'border-zinc-200 bg-white hover:bg-zinc-50 shadow-sm'}`}
+                                className={`rounded-lg border p-4 text-left transition ${mode === 'onsite' ? 'border-cyan-300 bg-cyan-50 text-cyan-950 shadow-sm' : 'border-zinc-200 bg-white shadow-sm hover:bg-zinc-50'}`}
                             >
                                 <QrCode className="size-5" />
-                                <p className="mt-3 font-semibold">Start at EcoPark</p>
-                                <p className="mt-1 text-xs opacity-80">QR scan, field display, route unlock, live rewards.</p>
+                                <p className="mt-3 font-semibold">
+                                    Start at EcoPark
+                                </p>
+                                <p className="mt-1 text-xs opacity-80">
+                                    QR scan, field display, route unlock, live
+                                    rewards.
+                                </p>
                             </button>
                         </div>
 
                         <div className="grid gap-3 sm:grid-cols-3">
                             <div className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
-                                <p className="text-xs text-zinc-500">Progress</p>
-                                <p className="mt-2 text-2xl font-semibold">{formatFa(progress)}%</p>
+                                <p className="text-xs text-zinc-500">
+                                    Progress
+                                </p>
+                                <p className="mt-2 text-2xl font-semibold">
+                                    {formatFa(progress)}%
+                                </p>
                             </div>
                             <div className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
                                 <p className="text-xs text-zinc-500">Points</p>
-                                <p className="mt-2 text-2xl font-semibold">{formatFa(points)}</p>
+                                <p className="mt-2 text-2xl font-semibold">
+                                    {formatFa(points)}
+                                </p>
                             </div>
                             <div className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
                                 <p className="text-xs text-zinc-500">Seals</p>
-                                <p className="mt-2 text-2xl font-semibold">{formatFa(completed.length)} / {formatFa(nodes.length)}</p>
+                                <p className="mt-2 text-2xl font-semibold">
+                                    {formatFa(completed.length)} /{' '}
+                                    {formatFa(nodes.length)}
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -221,10 +285,31 @@ export default function EcoParkTreasureGame() {
                             className="absolute inset-0 h-full w-full object-cover opacity-30"
                         />
                         <div className="absolute inset-0 bg-gradient-to-br from-white/80 via-[#eef5ed]/82 to-white/70" />
-                        <svg className="absolute inset-0 h-full w-full opacity-80" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-                            <path d="M12 74 C24 48, 35 56, 43 66 S53 36, 57 38 S66 58, 72 56 S79 31, 84 27 S89 55, 91 78" fill="none" stroke="rgba(63,63,70,0.42)" strokeWidth="0.7" strokeDasharray="2 2" />
-                            <path d="M8 88 C26 82, 34 88, 50 82 S73 84, 95 90" fill="none" stroke="rgba(16,185,129,0.16)" strokeWidth="8" />
-                            <path d="M4 28 C28 20, 42 22, 66 15 S84 16, 98 10" fill="none" stroke="rgba(14,165,233,0.14)" strokeWidth="9" />
+                        <svg
+                            className="absolute inset-0 h-full w-full opacity-80"
+                            viewBox="0 0 100 100"
+                            preserveAspectRatio="none"
+                            aria-hidden="true"
+                        >
+                            <path
+                                d="M12 74 C24 48, 35 56, 43 66 S53 36, 57 38 S66 58, 72 56 S79 31, 84 27 S89 55, 91 78"
+                                fill="none"
+                                stroke="rgba(63,63,70,0.42)"
+                                strokeWidth="0.7"
+                                strokeDasharray="2 2"
+                            />
+                            <path
+                                d="M8 88 C26 82, 34 88, 50 82 S73 84, 95 90"
+                                fill="none"
+                                stroke="rgba(16,185,129,0.16)"
+                                strokeWidth="8"
+                            />
+                            <path
+                                d="M4 28 C28 20, 42 22, 66 15 S84 16, 98 10"
+                                fill="none"
+                                stroke="rgba(14,165,233,0.14)"
+                                strokeWidth="9"
+                            />
                         </svg>
 
                         {nodes.map((node, index) => {
@@ -239,28 +324,46 @@ export default function EcoParkTreasureGame() {
                                     className={`absolute z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-2 rounded-full p-1 transition ${active ? 'scale-110' : 'hover:scale-105'}`}
                                     style={{ left: node.x, top: node.y }}
                                 >
-                                    <span className={`flex size-12 items-center justify-center rounded-full border text-sm font-bold shadow-lg ${done ? 'border-emerald-200 bg-emerald-300 text-zinc-950' : active ? 'border-white bg-white text-zinc-950' : `border-white/30 ${node.accent} text-zinc-950`}`}>
-                                        {done ? <CheckCircle2 className="size-5" /> : index + 1}
+                                    <span
+                                        className={`flex size-12 items-center justify-center rounded-full border text-sm font-bold shadow-lg ${done ? 'border-emerald-200 bg-emerald-300 text-zinc-950' : active ? 'border-white bg-white text-zinc-950' : `border-white/30 ${node.accent} text-zinc-950`}`}
+                                    >
+                                        {done ? (
+                                            <CheckCircle2 className="size-5" />
+                                        ) : (
+                                            index + 1
+                                        )}
                                     </span>
-                                    <span className="max-w-28 rounded-full border border-zinc-200 bg-white/95 px-2 py-1 text-center text-[11px] font-medium leading-4 text-zinc-950 shadow-sm backdrop-blur">{node.title}</span>
+                                    <span className="max-w-28 rounded-full border border-zinc-200 bg-white/95 px-2 py-1 text-center text-[11px] leading-4 font-medium text-zinc-950 shadow-sm backdrop-blur">
+                                        {node.title}
+                                    </span>
                                 </button>
                             );
                         })}
 
-                        <div className="absolute bottom-4 left-4 right-4 z-20 rounded-lg border border-zinc-200 bg-white/95 p-4 text-zinc-950 shadow-lg backdrop-blur">
+                        <div className="absolute right-4 bottom-4 left-4 z-20 rounded-lg border border-zinc-200 bg-white/95 p-4 text-zinc-950 shadow-lg backdrop-blur">
                             <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
                                 <div>
                                     <div className="flex flex-wrap items-center gap-2">
                                         <MapPin className="size-4 text-emerald-300" />
-                                        <p className="text-xs text-zinc-500">{selectedNode.place}</p>
+                                        <p className="text-xs text-zinc-500">
+                                            {selectedNode.place}
+                                        </p>
                                     </div>
-                                    <h2 className="mt-2 text-xl font-semibold text-zinc-950">{selectedNode.title}</h2>
-                                    <p className="mt-2 text-sm leading-6 text-zinc-600">{selectedNode.clue}</p>
-                                    <p className="mt-2 text-sm leading-6 text-zinc-900">Mission: {selectedNode.mission}</p>
+                                    <h2 className="mt-2 text-xl font-semibold text-zinc-950">
+                                        {selectedNode.title}
+                                    </h2>
+                                    <p className="mt-2 text-sm leading-6 text-zinc-600">
+                                        {selectedNode.clue}
+                                    </p>
+                                    <p className="mt-2 text-sm leading-6 text-zinc-900">
+                                        Mission: {selectedNode.mission}
+                                    </p>
                                 </div>
                                 <button
                                     type="button"
-                                    onClick={() => completeNode(selectedNode.id)}
+                                    onClick={() =>
+                                        completeNode(selectedNode.id)
+                                    }
                                     className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white hover:bg-zinc-800"
                                 >
                                     <BadgeCheck className="size-4" />
@@ -275,23 +378,47 @@ export default function EcoParkTreasureGame() {
                     <div className="rounded-lg border border-zinc-200 bg-white p-4 text-zinc-950 shadow-sm">
                         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-200 pb-4">
                             <div>
-                                <p className="text-sm text-zinc-500">Continuation code</p>
-                                <h2 className="mt-1 font-mono text-2xl font-semibold" dir="ltr">{code}</h2>
+                                <p className="text-sm text-zinc-500">
+                                    Continuation code
+                                </p>
+                                <h2
+                                    className="mt-1 font-mono text-2xl font-semibold"
+                                    dir="ltr"
+                                >
+                                    {code}
+                                </h2>
                             </div>
-                            <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium">{mode === 'home' ? 'home optional start' : 'onsite start'}</span>
+                            <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium">
+                                {mode === 'home'
+                                    ? 'home optional start'
+                                    : 'onsite start'}
+                            </span>
                         </div>
                         <div className="mt-4 grid gap-3 md:grid-cols-2">
-                            {nodes.filter((node) => completed.includes(node.id)).map((node) => (
-                                <div key={node.id} className="rounded-lg border border-zinc-200 p-3">
-                                    <div className="flex items-center gap-2">
-                                        <Gift className="size-4 text-emerald-700" />
-                                        <p className="font-medium">{node.reward}</p>
+                            {nodes
+                                .filter((node) => completed.includes(node.id))
+                                .map((node) => (
+                                    <div
+                                        key={node.id}
+                                        className="rounded-lg border border-zinc-200 p-3"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <Gift className="size-4 text-emerald-700" />
+                                            <p className="font-medium">
+                                                {node.reward}
+                                            </p>
+                                        </div>
+                                        <p className="mt-1 text-sm text-zinc-500">
+                                            {node.title} ·{' '}
+                                            {formatFa(node.points)} points
+                                        </p>
                                     </div>
-                                    <p className="mt-1 text-sm text-zinc-500">{node.title} · {formatFa(node.points)} points</p>
-                                </div>
-                            ))}
+                                ))}
                             {completed.length === 0 && (
-                                <p className="text-sm leading-7 text-zinc-500">Collected rewards will appear here after the first clue is completed.</p>
+                                <p className="text-sm leading-7 text-zinc-500">
+                                    Collected rewards will appear here after the
+                                    first clue is completed.
+                                </p>
                             )}
                         </div>
                     </div>
@@ -299,19 +426,38 @@ export default function EcoParkTreasureGame() {
                     <aside className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
                         <div className="flex items-center gap-2">
                             <Trophy className="size-5 text-amber-600" />
-                            <h2 className="font-semibold">Prize basket ladder</h2>
+                            <h2 className="font-semibold">
+                                Prize basket ladder
+                            </h2>
                         </div>
                         <div className="mt-4 grid gap-2">
                             {baskets.map((basket, index) => {
                                 const unlocked = completed.length >= index + 1;
+
                                 return (
-                                    <div key={basket.level} className={`rounded-md border p-3 ${unlocked ? 'border-amber-200 bg-amber-50' : 'border-zinc-200 bg-zinc-50'}`}>
+                                    <div
+                                        key={basket.level}
+                                        className={`rounded-md border p-3 ${unlocked ? 'border-amber-200 bg-amber-50' : 'border-zinc-200 bg-zinc-50'}`}
+                                    >
                                         <div className="flex items-center justify-between gap-3">
-                                            <p className="font-medium">{basket.level}</p>
-                                            {unlocked ? <WalletCards className="size-4 text-amber-700" /> : <Sparkles className="size-4 text-zinc-500" />}
+                                            <p className="font-medium">
+                                                {basket.level}
+                                            </p>
+                                            {unlocked ? (
+                                                <WalletCards className="size-4 text-amber-700" />
+                                            ) : (
+                                                <Sparkles className="size-4 text-zinc-500" />
+                                            )}
                                         </div>
                                         <div className="mt-2 flex flex-wrap gap-2">
-                                            {basket.items.map((item) => <span key={item} className="rounded-full bg-zinc-100 px-2 py-1 text-xs text-zinc-700">{item}</span>)}
+                                            {basket.items.map((item) => (
+                                                <span
+                                                    key={item}
+                                                    className="rounded-full bg-zinc-100 px-2 py-1 text-xs text-zinc-700"
+                                                >
+                                                    {item}
+                                                </span>
+                                            ))}
                                         </div>
                                     </div>
                                 );
@@ -323,5 +469,3 @@ export default function EcoParkTreasureGame() {
         </>
     );
 }
-
-

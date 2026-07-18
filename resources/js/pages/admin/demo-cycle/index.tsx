@@ -1,5 +1,4 @@
 import { Form, Head, Link } from '@inertiajs/react';
-import { Button } from '@/components/ui/button';
 import {
     AlertTriangle,
     ArrowLeft,
@@ -11,6 +10,7 @@ import {
     Route,
     Save,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 type DemoLink = {
     label: string;

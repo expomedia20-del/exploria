@@ -350,7 +350,7 @@ class MissionRewardRegistryService
             ]);
         }
 
-        return DB::transaction(function () use ($actor, $campaign, $cycleStepIndex, $cycleStepLabel, $data, $mission, $partnerAllocations, $reward, $rewardTier, $stockQuantity, $treasure): RewardDefinition {
+        return DB::transaction(function () use ($actor, $cycleStepIndex, $cycleStepLabel, $data, $mission, $partnerAllocations, $reward, $rewardTier, $stockQuantity, $treasure): RewardDefinition {
             $metadata = array_merge($reward->metadata ?? [], [
                 'reward_tier' => $rewardTier,
                 'reward_option' => $data['reward_option'] ?? ($reward->metadata['reward_option'] ?? null),

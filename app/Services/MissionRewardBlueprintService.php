@@ -459,7 +459,7 @@ class MissionRewardBlueprintService
             'launchPhase' => 'مخزن ایده',
             'mvpPriority' => 99,
             'priorityReason' => 'فعلاً به عنوان الگوی پشتیبان نگهداری شود و بعد از مسیر اصلی به اجرا برسد.',
-                'connectedSurfaces' => ['گنجینه الگوها', 'تعریف مأموریت', 'نقشه عملیات کمپین'],
+            'connectedSurfaces' => ['گنجینه الگوها', 'تعریف مأموریت', 'نقشه عملیات کمپین'],
             'rewardBasket' => [
                 ['level' => 'برنزی', 'items' => ['امتیاز پایه', 'نشان دیجیتال']],
                 ['level' => 'نقره‌ای', 'items' => ['کوپن کوچک', 'ورود به قرعه کشی']],

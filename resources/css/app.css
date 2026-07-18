@@ -139,20 +139,33 @@
 
     body {
         @apply bg-background text-foreground antialiased;
-        font-feature-settings: ""ss01"", ""ss02"";
+        font-feature-settings:
+            '' ss01 '',
+            '' ss02 '';
     }
 }
 
 @layer components {
     .exploria-app-surface {
         background:
-            radial-gradient(circle at 12% 8%, color-mix(in oklch, var(--accent) 38%, transparent) 0, transparent 28rem),
-            radial-gradient(circle at 88% 18%, color-mix(in oklch, var(--chart-2) 22%, transparent) 0, transparent 24rem),
-            linear-gradient(135deg, oklch(0.992 0.006 170), oklch(0.962 0.018 198));
+            radial-gradient(
+                circle at 12% 8%,
+                color-mix(in oklch, var(--accent) 38%, transparent) 0,
+                transparent 28rem
+            ),
+            radial-gradient(
+                circle at 88% 18%,
+                color-mix(in oklch, var(--chart-2) 22%, transparent) 0,
+                transparent 24rem
+            ),
+            linear-gradient(
+                135deg,
+                oklch(0.992 0.006 170),
+                oklch(0.962 0.018 198)
+            );
     }
 
     .exploria-panel {
         @apply rounded-lg border border-border/80 bg-card/95 shadow-sm backdrop-blur;
     }
 }
-

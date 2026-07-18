@@ -271,19 +271,31 @@ export default function VenueDashboard({
                             نمای مدیریتی و read-only برای آمادگی مکان، هماهنگی
                             ذی‌نفعان و ریسک‌های روز اجرا
                         </p>
-                        <h1 className="mt-1 text-2xl font-semibold leading-tight">
+                        <h1 className="mt-1 text-2xl leading-tight font-semibold">
                             پنل مدیر اجرایی مکان
                         </h1>
                     </div>
                     <div className="grid w-full grid-cols-2 gap-2 text-sm sm:grid-cols-3 lg:w-auto xl:grid-cols-5 2xl:grid-cols-9">
-                        <Stat icon={Building2} label="مکان" value={stats.venues} />
+                        <Stat
+                            icon={Building2}
+                            label="مکان"
+                            value={stats.venues}
+                        />
                         <Stat
                             icon={Trophy}
                             label="کمپین فعال"
                             value={stats.activeCampaigns}
                         />
-                        <Stat icon={Route} label="هاب/رواق" value={stats.hubs} />
-                        <Stat icon={Store} label="واحد/شریک" value={stats.partners} />
+                        <Stat
+                            icon={Route}
+                            label="هاب/رواق"
+                            value={stats.hubs}
+                        />
+                        <Stat
+                            icon={Store}
+                            label="واحد/شریک"
+                            value={stats.partners}
+                        />
                         <Stat
                             icon={Megaphone}
                             label="تبلیغ نیازمند بررسی"
@@ -305,10 +317,10 @@ export default function VenueDashboard({
                 </header>
 
                 <ManagementNote>
-                    مدیر اجرایی مکان دید کلان دارد: آمادگی مکان، جریان بازدیدکننده،
-                    وضعیت هاب‌ها، ریسک‌های اجرایی و اثر کمپین. این پنل وارد تصمیم
-                    تجاری هر فروشگاه، قیمت، درآمد، موجودی یا نوع پاداش اختصاصی واحدها
-                    نمی‌شود.
+                    مدیر اجرایی مکان دید کلان دارد: آمادگی مکان، جریان
+                    بازدیدکننده، وضعیت هاب‌ها، ریسک‌های اجرایی و اثر کمپین. این
+                    پنل وارد تصمیم تجاری هر فروشگاه، قیمت، درآمد، موجودی یا نوع
+                    پاداش اختصاصی واحدها نمی‌شود.
                 </ManagementNote>
 
                 <Panel
@@ -335,7 +347,8 @@ export default function VenueDashboard({
                                     {labelForStatus(venue.status)}
                                 </span>
                                 <span className="rounded-full bg-muted px-2.5 py-1">
-                                    پروفایل: {labelForStatus(venue.profileStatus)}
+                                    پروفایل:{' '}
+                                    {labelForStatus(venue.profileStatus)}
                                 </span>
                             </div>
                         </article>
@@ -349,7 +362,10 @@ export default function VenueDashboard({
                         isEmpty={campaigns.length === 0}
                     >
                         {campaigns.map((campaign) => (
-                            <article key={campaign.id} className="grid gap-2 px-4 py-3 text-sm">
+                            <article
+                                key={campaign.id}
+                                className="grid gap-2 px-4 py-3 text-sm"
+                            >
                                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                                     <div className="min-w-0">
                                         <p className="truncate font-medium">
@@ -359,7 +375,8 @@ export default function VenueDashboard({
                                             className="mt-1 truncate text-xs text-muted-foreground"
                                             dir="ltr"
                                         >
-                                            {campaign.code} · {campaign.campaignType}
+                                            {campaign.code} ·{' '}
+                                            {campaign.campaignType}
                                         </p>
                                     </div>
                                     <span className="w-fit shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
@@ -367,14 +384,17 @@ export default function VenueDashboard({
                                     </span>
                                 </div>
                                 <p className="text-xs text-muted-foreground">
-                                    ماموریت: {formatNumber(campaign.missionCount)} ·
-                                    پاداش: {formatNumber(campaign.rewardCount)} · گنج:{' '}
-                                    {formatNumber(campaign.treasureCount)} · مشارکت:{' '}
+                                    ماموریت:{' '}
+                                    {formatNumber(campaign.missionCount)} ·
+                                    پاداش: {formatNumber(campaign.rewardCount)}{' '}
+                                    · گنج:{' '}
+                                    {formatNumber(campaign.treasureCount)} ·
+                                    مشارکت:{' '}
                                     {formatNumber(campaign.participantCount)}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
-                                    شروع: {formatDate(campaign.startsAt)} · پایان:{' '}
-                                    {formatDate(campaign.endsAt)}
+                                    شروع: {formatDate(campaign.startsAt)} ·
+                                    پایان: {formatDate(campaign.endsAt)}
                                 </p>
                             </article>
                         ))}
@@ -386,10 +406,15 @@ export default function VenueDashboard({
                         isEmpty={hubs.length === 0}
                     >
                         {hubs.map((hub) => (
-                            <article key={hub.id} className="grid gap-2 px-4 py-3 text-sm">
+                            <article
+                                key={hub.id}
+                                className="grid gap-2 px-4 py-3 text-sm"
+                            >
                                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                                     <div className="min-w-0">
-                                        <p className="truncate font-medium">{hub.name}</p>
+                                        <p className="truncate font-medium">
+                                            {hub.name}
+                                        </p>
                                         <p
                                             className="mt-1 truncate text-xs text-muted-foreground"
                                             dir="ltr"
@@ -419,15 +444,21 @@ export default function VenueDashboard({
                         isEmpty={partners.length === 0}
                     >
                         {partners.map((partner) => (
-                            <article key={partner.id} className="grid gap-2 px-4 py-3 text-sm">
+                            <article
+                                key={partner.id}
+                                className="grid gap-2 px-4 py-3 text-sm"
+                            >
                                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                                     <div className="min-w-0">
-                                        <p className="truncate font-medium">{partner.name}</p>
+                                        <p className="truncate font-medium">
+                                            {partner.name}
+                                        </p>
                                         <p
                                             className="mt-1 truncate text-xs text-muted-foreground"
                                             dir="ltr"
                                         >
-                                            {partner.code} · {partner.partnerType}
+                                            {partner.code} ·{' '}
+                                            {partner.partnerType}
                                         </p>
                                     </div>
                                     <span className="w-fit shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
@@ -437,8 +468,8 @@ export default function VenueDashboard({
                                 <p className="text-xs text-muted-foreground">
                                     محدوده: {partner.hubName ?? '-'} · پاداش:{' '}
                                     {formatNumber(partner.rewardCount)} · مصرف:{' '}
-                                    {formatNumber(partner.redemptionCount)} · تبلیغ:{' '}
-                                    {formatNumber(partner.adCount)}
+                                    {formatNumber(partner.redemptionCount)} ·
+                                    تبلیغ: {formatNumber(partner.adCount)}
                                 </p>
                             </article>
                         ))}
@@ -450,10 +481,15 @@ export default function VenueDashboard({
                         isEmpty={displayDevices.length === 0}
                     >
                         {displayDevices.map((device) => (
-                            <article key={device.id} className="grid gap-2 px-4 py-3 text-sm">
+                            <article
+                                key={device.id}
+                                className="grid gap-2 px-4 py-3 text-sm"
+                            >
                                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                                     <div className="min-w-0">
-                                        <p className="truncate font-medium">{device.name}</p>
+                                        <p className="truncate font-medium">
+                                            {device.name}
+                                        </p>
                                         <p
                                             className="mt-1 truncate text-xs text-muted-foreground"
                                             dir="ltr"
@@ -467,7 +503,8 @@ export default function VenueDashboard({
                                 </div>
                                 <p className="text-xs text-muted-foreground">
                                     هاب: {device.hubName ?? '-'} · پخش:{' '}
-                                    {device.playbackStatus ?? '-'} · آخرین heartbeat:{' '}
+                                    {device.playbackStatus ?? '-'} · آخرین
+                                    heartbeat:{' '}
                                     {formatDate(device.lastHeartbeatAt)}
                                 </p>
                             </article>
@@ -485,7 +522,10 @@ export default function VenueDashboard({
                         }
                     >
                         {adRequests.map((adRequest) => (
-                            <article key={adRequest.id} className="grid gap-2 px-4 py-3 text-sm">
+                            <article
+                                key={adRequest.id}
+                                className="grid gap-2 px-4 py-3 text-sm"
+                            >
                                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                                     <div className="min-w-0">
                                         <p className="truncate font-medium">
@@ -495,7 +535,8 @@ export default function VenueDashboard({
                                             className="mt-1 truncate text-xs text-muted-foreground"
                                             dir="ltr"
                                         >
-                                            {adRequest.adType} · {adRequest.advertiserType}
+                                            {adRequest.adType} ·{' '}
+                                            {adRequest.advertiserType}
                                         </p>
                                     </div>
                                     <span className="w-fit shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
@@ -503,7 +544,8 @@ export default function VenueDashboard({
                                     </span>
                                 </div>
                                 <p className="text-xs text-muted-foreground">
-                                    محدوده: {adRequest.hubName ?? '-'} · نمایشگر:{' '}
+                                    محدوده: {adRequest.hubName ?? '-'} ·
+                                    نمایشگر:{' '}
                                     {adRequest.displayDeviceName ?? '-'} · بازه:{' '}
                                     {formatDate(adRequest.startsAt)} تا{' '}
                                     {formatDate(adRequest.endsAt)}
@@ -511,7 +553,10 @@ export default function VenueDashboard({
                             </article>
                         ))}
                         {displayScheduleItems.map((item) => (
-                            <article key={item.id} className="grid gap-2 px-4 py-3 text-sm">
+                            <article
+                                key={item.id}
+                                className="grid gap-2 px-4 py-3 text-sm"
+                            >
                                 <p className="font-medium">
                                     پخش زمان‌بندی‌شده در نمایشگر:{' '}
                                     {item.displayDeviceName ?? '-'}
@@ -519,7 +564,8 @@ export default function VenueDashboard({
                                 <p className="text-xs text-muted-foreground">
                                     جایگاه: {item.placementType} · وضعیت:{' '}
                                     {labelForStatus(item.status)} · بازه:{' '}
-                                    {formatDate(item.startsAt)} تا {formatDate(item.endsAt)}
+                                    {formatDate(item.startsAt)} تا{' '}
+                                    {formatDate(item.endsAt)}
                                 </p>
                             </article>
                         ))}
@@ -531,17 +577,22 @@ export default function VenueDashboard({
                         isEmpty={rewards.length === 0 && treasures.length === 0}
                     >
                         {rewards.map((reward) => (
-                            <article key={reward.id} className="grid gap-2 px-4 py-3 text-sm">
+                            <article
+                                key={reward.id}
+                                className="grid gap-2 px-4 py-3 text-sm"
+                            >
                                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                                     <div className="min-w-0">
                                         <p className="truncate font-medium">
-                                            {reward.campaignName ?? 'پاداش کمپین'}
+                                            {reward.campaignName ??
+                                                'پاداش کمپین'}
                                         </p>
                                         <p
                                             className="mt-1 truncate text-xs text-muted-foreground"
                                             dir="ltr"
                                         >
-                                            {reward.rewardType} · {reward.status}
+                                            {reward.rewardType} ·{' '}
+                                            {reward.status}
                                         </p>
                                     </div>
                                     <span className="w-fit shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
@@ -549,24 +600,29 @@ export default function VenueDashboard({
                                     </span>
                                 </div>
                                 <p className="text-xs text-muted-foreground">
-                                    محدوده تصمیم‌گیری تجاری با واحد/اسپانسر و اکسپلوریا
-                                    است؛ اینجا فقط وضعیت کلی برای آمادگی مکان نمایش داده
-                                    می‌شود.
+                                    محدوده تصمیم‌گیری تجاری با واحد/اسپانسر و
+                                    اکسپلوریا است؛ اینجا فقط وضعیت کلی برای
+                                    آمادگی مکان نمایش داده می‌شود.
                                 </p>
                             </article>
                         ))}
                         {treasures.map((treasure) => (
-                            <article key={treasure.id} className="grid gap-2 px-4 py-3 text-sm">
+                            <article
+                                key={treasure.id}
+                                className="grid gap-2 px-4 py-3 text-sm"
+                            >
                                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                                     <div className="min-w-0">
                                         <p className="truncate font-medium">
-                                            {treasure.campaignName ?? 'گنج کمپین'}
+                                            {treasure.campaignName ??
+                                                'گنج کمپین'}
                                         </p>
                                         <p
                                             className="mt-1 truncate text-xs text-muted-foreground"
                                             dir="ltr"
                                         >
-                                            {treasure.treasureType} · {treasure.missionCode ?? '-'}
+                                            {treasure.treasureType} ·{' '}
+                                            {treasure.missionCode ?? '-'}
                                         </p>
                                     </div>
                                     <span className="w-fit shrink-0 rounded-full bg-amber-100 px-2.5 py-1 text-xs text-amber-800 dark:bg-amber-950 dark:text-amber-200">
@@ -583,8 +639,8 @@ export default function VenueDashboard({
 
                 <ManagementNote>
                     این پنل فقط برای مشاهده و هماهنگی مدیریتی است. تایید مالی،
-                    قرارداد اسپانسر، تصمیم پاداش فروشگاهی، قیمت‌گذاری، تغییر نقش‌ها و
-                    تنظیمات سراسری از این صفحه انجام نمی‌شود.
+                    قرارداد اسپانسر، تصمیم پاداش فروشگاهی، قیمت‌گذاری، تغییر
+                    نقش‌ها و تنظیمات سراسری از این صفحه انجام نمی‌شود.
                 </ManagementNote>
             </div>
         </>

@@ -6,8 +6,8 @@ use App\Enums\UserRole;
 use App\Models\User;
 use Database\Seeders\PilotLocationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Inertia\Testing\AssertableInertia as Assert;
 use Illuminate\Testing\Fluent\AssertableJson;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class RoleBasedDemoAccessTest extends TestCase

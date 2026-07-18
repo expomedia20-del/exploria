@@ -1,5 +1,13 @@
 import { Link } from '@inertiajs/react';
-import { ArrowRight, BookOpenCheck, ClipboardList, QrCode, Route, Trophy, UsersRound } from 'lucide-react';
+import {
+    ArrowRight,
+    BookOpenCheck,
+    ClipboardList,
+    QrCode,
+    Route,
+    Trophy,
+    UsersRound,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 type CampaignContext = {
@@ -15,7 +23,11 @@ type CampaignContextNavProps = {
     className?: string;
 };
 
-function campaignHref(path: string, campaign: CampaignContext, blueprintAction?: string) {
+function campaignHref(
+    path: string,
+    campaign: CampaignContext,
+    blueprintAction?: string,
+) {
     const params = new URLSearchParams({
         campaign: campaign.code,
     });
@@ -31,35 +43,59 @@ function campaignHref(path: string, campaign: CampaignContext, blueprintAction?:
     return `${path}?${params.toString()}`;
 }
 
-export function CampaignContextNav({ campaign, className = '' }: CampaignContextNavProps) {
+export function CampaignContextNav({
+    campaign,
+    className = '',
+}: CampaignContextNavProps) {
     const campaignName = campaign.name ?? campaign.code;
 
     return (
-        <section className={`rounded-lg border border-border/80 bg-card/80 p-3 text-sm shadow-sm ${className}`}>
+        <section
+            className={`rounded-lg border border-border/80 bg-card/80 p-3 text-sm shadow-sm ${className}`}
+        >
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div className="min-w-0">
-                    <p className="text-xs text-muted-foreground">ادامه کار همین کمپین</p>
+                    <p className="text-xs text-muted-foreground">
+                        ادامه کار همین کمپین
+                    </p>
                     <div className="mt-1 flex flex-wrap items-center gap-2">
                         <span className="font-medium">{campaignName}</span>
-                        <span className="rounded-full bg-muted px-2.5 py-1 text-[11px]" dir="ltr">
+                        <span
+                            className="rounded-full bg-muted px-2.5 py-1 text-[11px]"
+                            dir="ltr"
+                        >
                             {campaign.code}
                         </span>
                         {campaign.blueprintCode ? (
-                            <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[11px] text-primary" dir="ltr">
+                            <span
+                                className="rounded-full bg-primary/10 px-2.5 py-1 text-[11px] text-primary"
+                                dir="ltr"
+                            >
                                 {campaign.blueprintCode}
                             </span>
                         ) : null}
-                        {campaign.designSource === 'venue_blueprint_recommendation' ? (
+                        {campaign.designSource ===
+                        'venue_blueprint_recommendation' ? (
                             <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] text-emerald-800 dark:bg-emerald-950 dark:text-emerald-100">
                                 از ارزیابی مکان
-                                {campaign.designVenueCode ? <span dir="ltr"> {campaign.designVenueCode}</span> : null}
+                                {campaign.designVenueCode ? (
+                                    <span dir="ltr">
+                                        {' '}
+                                        {campaign.designVenueCode}
+                                    </span>
+                                ) : null}
                             </span>
                         ) : null}
                     </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
                     <Button asChild size="sm">
-                        <Link href={campaignHref('/admin/campaign-builder', campaign)}>
+                        <Link
+                            href={campaignHref(
+                                '/admin/campaign-builder',
+                                campaign,
+                            )}
+                        >
                             <ArrowRight className="size-4" />
                             ساخت همین کمپین
                         </Link>
@@ -77,19 +113,37 @@ export function CampaignContextNav({ campaign, className = '' }: CampaignContext
                         </Link>
                     </Button>
                     <Button asChild variant="outline" size="sm">
-                        <Link href={campaignHref('/admin/missions', campaign, 'components')}>
+                        <Link
+                            href={campaignHref(
+                                '/admin/missions',
+                                campaign,
+                                'components',
+                            )}
+                        >
                             <Trophy className="size-4" />
                             مأموریت‌ها و پاداش‌ها
                         </Link>
                     </Button>
                     <Button asChild variant="outline" size="sm">
-                        <Link href={campaignHref('/admin/campaign-participants', campaign, 'participants')}>
+                        <Link
+                            href={campaignHref(
+                                '/admin/campaign-participants',
+                                campaign,
+                                'participants',
+                            )}
+                        >
                             <UsersRound className="size-4" />
                             اعضا و شرکای کمپین
                         </Link>
                     </Button>
                     <Button asChild variant="outline" size="sm">
-                        <Link href={campaignHref('/admin/campaign-operations', campaign, 'route')}>
+                        <Link
+                            href={campaignHref(
+                                '/admin/campaign-operations',
+                                campaign,
+                                'route',
+                            )}
+                        >
                             <Route className="size-4" />
                             نقشه عملیات کمپین
                         </Link>
