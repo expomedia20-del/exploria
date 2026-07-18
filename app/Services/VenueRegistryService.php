@@ -67,7 +67,7 @@ class VenueRegistryService
 
     public function __construct(private readonly UserAccessScopeService $accessScopes) {}
 
-    /** @return Collection<int, array<string, mixed>> */
+    /** @return Collection<int, covariant array<string, mixed>> */
     public function list(?User $user = null): Collection
     {
         $hubIds = $user ? $this->accessScopes->hubIds($user) : collect();
@@ -168,7 +168,10 @@ class VenueRegistryService
         ];
     }
 
-    /** @param array<string, mixed> $locationProfile @return array<string, mixed> */
+    /**
+     * @param  array<string, mixed>  $locationProfile
+     * @return array<string, mixed>
+     */
     private function demoStressPlan(Venue $venue, array $locationProfile): array
     {
         $campaigns = Campaign::query()
@@ -180,7 +183,7 @@ class VenueRegistryService
             ?? $campaigns->first();
         $campaignCode = $selectedCampaign?->code;
         $blueprintCode = $selectedCampaign?->metadata['blueprint_code'] ?? null;
-        $facilities = collect($locationProfile['facilities'] ?? []);
+        $facilities = collect($this->arrayList($locationProfile['facilities'] ?? null));
         $hasUse = fn (string $use): bool => $facilities->contains(fn (array $facility): bool => in_array($use, $facility['campaignUses'] ?? [], true));
 
         $readyParticipants = CampaignParticipant::query()
@@ -261,7 +264,7 @@ class VenueRegistryService
             'summary' => [
                 'completeCount' => $completeCount,
                 'totalCount' => count($items),
-                'progress' => count($items) > 0 ? (int) round(($completeCount / count($items)) * 100) : 0,
+                'progress' => (int) round(($completeCount / count($items)) * 100),
                 'riskLevel' => $completeCount < 4 ? 'high' : ($completeCount < 8 ? 'medium' : 'low'),
             ],
             'nextAction' => $nextAction,
@@ -300,7 +303,7 @@ class VenueRegistryService
     {
         $profile = Arr::get(is_array($venue->metadata) ? $venue->metadata : [], 'location_profile', []);
         $facilities = $this->normalizeFacilities(Arr::get($profile, 'facilities', []));
-        $constraints = collect(Arr::get($profile, 'constraints', []))->filter()->values();
+        $constraints = collect($this->valueList(Arr::get($profile, 'constraints', [])))->filter()->values();
 
         return [
             'venueType' => Arr::get($profile, 'venue_type'),
@@ -328,7 +331,10 @@ class VenueRegistryService
         return min(100, $score);
     }
 
-    /** @param array<string, mixed> $data @return array<int, array<string, mixed>> */
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<int, array<string, mixed>>
+     */
     private function facilityItems(array $data): array
     {
         $structured = $this->normalizeFacilities($data['facilities'] ?? []);
@@ -349,7 +355,7 @@ class VenueRegistryService
             ->all();
     }
 
-    /** @param mixed $items @return Collection<int, array<string, mixed>> */
+    /** @return Collection<int, covariant array<string, mixed>> */
     private function normalizeFacilities(mixed $items): Collection
     {
         return collect(is_array($items) ? $items : [])
@@ -369,9 +375,7 @@ class VenueRegistryService
                 return [
                     'name' => trim((string) ($item['name'] ?? '')),
                     'function' => blank($item['function'] ?? null) ? null : trim((string) $item['function']),
-                    'campaignUses' => collect($item['campaignUses'] ?? $item['campaign_uses'] ?? [])
-                        ->filter()
-                        ->map(fn (mixed $value): string => (string) $value)
+                    'campaignUses' => collect($this->stringList($item['campaignUses'] ?? $item['campaign_uses'] ?? null))
                         ->unique()
                         ->values()
                         ->all(),
@@ -393,7 +397,7 @@ class VenueRegistryService
             ->all();
     }
 
-    /** @return Collection<int, array<string, mixed>> */
+    /** @return Collection<int, covariant array<string, mixed>> */
     private function fileItems(mixed $file): Collection
     {
         if (! $file instanceof UploadedFile || ! $file->isValid()) {
@@ -424,14 +428,17 @@ class VenueRegistryService
 
         $headerMap = $this->facilityImportHeaderMap($rows->first());
 
+        if ($headerMap !== []) {
+            $rows = $rows->skip(1)->values();
+        }
+
         return $rows
-            ->when($headerMap !== [], fn (Collection $collection): Collection => $collection->skip(1))
             ->map(fn (array $row): array => $this->facilityImportRow($row, $headerMap))
             ->filter(fn (array $item): bool => filled($item['name']))
             ->values();
     }
 
-    /** @return Collection<int, array<string, mixed>> */
+    /** @return Collection<int, covariant array<string, mixed>> */
     private function xlsxItems(UploadedFile $file): Collection
     {
         if (! class_exists(ZipArchive::class)) {
@@ -489,8 +496,11 @@ class VenueRegistryService
 
         $headerMap = $this->facilityImportHeaderMap($rows->first());
 
+        if ($headerMap !== []) {
+            $rows = $rows->skip(1)->values();
+        }
+
         return $rows
-            ->when($headerMap !== [], fn (Collection $collection): Collection => $collection->skip(1))
             ->map(fn (array $row): array => $this->facilityImportRow($row, $headerMap))
             ->filter(fn (array $item): bool => filled($item['name']))
             ->values();
@@ -567,7 +577,10 @@ class VenueRegistryService
             ->first() ?? ',';
     }
 
-    /** @param array<int, mixed> $row @return array<string, int> */
+    /**
+     * @param  array<int, mixed>  $row
+     * @return array<string, int>
+     */
     private function facilityImportHeaderMap(array $row): array
     {
         $aliases = [
@@ -593,7 +606,11 @@ class VenueRegistryService
             ->all();
     }
 
-    /** @param array<int, mixed> $row @param array<string, int> $headerMap @return array<string, mixed> */
+    /**
+     * @param  array<int, mixed>  $row
+     * @param  array<string, int>  $headerMap
+     * @return array<string, mixed>
+     */
     private function facilityImportRow(array $row, array $headerMap): array
     {
         $value = fn (string $field, int $fallbackIndex): string => trim((string) ($row[$headerMap[$field] ?? $fallbackIndex] ?? ''));
@@ -677,5 +694,29 @@ class VenueRegistryService
         }
 
         return self::ABBASABAD_OFFICIAL_SOURCE_SUGGESTIONS;
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function arrayList(mixed $value): array
+    {
+        $items = $value instanceof Collection ? $value->all() : $value;
+
+        return is_array($items) ? array_values(array_filter($items, is_array(...))) : [];
+    }
+
+    /** @return list<mixed> */
+    private function valueList(mixed $value): array
+    {
+        if ($value instanceof Collection) {
+            return array_values($value->all());
+        }
+
+        return is_array($value) ? array_values($value) : [];
+    }
+
+    /** @return list<string> */
+    private function stringList(mixed $value): array
+    {
+        return is_array($value) ? array_values(array_filter($value, is_string(...))) : [];
     }
 }

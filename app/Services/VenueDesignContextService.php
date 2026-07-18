@@ -61,7 +61,7 @@ class VenueDesignContextService
                 'readinessScore' => $this->profileReadinessScore($profile, $facilities->count()),
                 'facilitiesCount' => $facilities->count(),
                 'campaignUsableFacilitiesCount' => $campaignUsableCount,
-                'constraintsCount' => collect(Arr::get($profile, 'constraints', []))->filter()->count(),
+                'constraintsCount' => collect($this->valueList(Arr::get($profile, 'constraints', [])))->filter()->count(),
                 'updatedAt' => Arr::get($profile, 'updated_at'),
             ],
             'designAssets' => $designAssets,
@@ -86,7 +86,10 @@ class VenueDesignContextService
         return min(100, $score);
     }
 
-    /** @param Collection<int, array<string, mixed>> $facilities @return array<string, array<int, array<string, mixed>>> */
+    /**
+     * @param  Collection<int, covariant array<string, mixed>>  $facilities
+     * @return array<string, array<int, array<string, mixed>>>
+     */
     private function designAssets(Collection $facilities): array
     {
         return collect(array_keys(self::CAMPAIGN_USE_LABELS))
@@ -101,7 +104,7 @@ class VenueDesignContextService
             ->all();
     }
 
-    /** @param mixed $items @return Collection<int, array<string, mixed>> */
+    /** @return Collection<int, covariant array<string, mixed>> */
     private function normalizeFacilities(mixed $items): Collection
     {
         return collect(is_array($items) ? $items : [])
@@ -121,9 +124,7 @@ class VenueDesignContextService
                 return [
                     'name' => trim((string) ($item['name'] ?? '')),
                     'function' => blank($item['function'] ?? null) ? null : trim((string) $item['function']),
-                    'campaignUses' => collect($item['campaignUses'] ?? $item['campaign_uses'] ?? [])
-                        ->filter()
-                        ->map(fn (mixed $value): string => (string) $value)
+                    'campaignUses' => collect($this->stringList($item['campaignUses'] ?? $item['campaign_uses'] ?? null))
                         ->unique()
                         ->values()
                         ->all(),
@@ -142,5 +143,17 @@ class VenueDesignContextService
             'secondary' => 1,
             default => 2,
         };
+    }
+
+    /** @return list<mixed> */
+    private function valueList(mixed $value): array
+    {
+        return is_array($value) ? array_values($value) : [];
+    }
+
+    /** @return list<string> */
+    private function stringList(mixed $value): array
+    {
+        return is_array($value) ? array_values(array_filter($value, is_string(...))) : [];
     }
 }
