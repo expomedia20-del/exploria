@@ -201,11 +201,14 @@ class SponsorPortalService
         });
     }
 
-    /** @param array<string, mixed> $data */
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array{campaign: Campaign|null, partner: PartnerAccount|null, partnerIds: list<string>, items: list<array<string, mixed>>}
+     */
     private function prepareProposalData(SponsorAccount $sponsor, array $data): array
     {
         $campaign = ! empty($data['campaign_id'])
-            ? Campaign::query()->findOrFail($data['campaign_id'])
+            ? Campaign::query()->findOrFail($this->requiredId($data, 'campaign_id'))
             : null;
         $partnerIds = $this->partnerIdsFromProposalData($data);
         $partners = PartnerAccount::query()
@@ -252,44 +255,51 @@ class SponsorPortalService
         ]);
     }
 
-    /** @param array<string, mixed> $data */
+    /**
+     * @param  array<string, mixed>  $data
+     * @return list<string>
+     */
     private function partnerIdsFromProposalData(array $data): array
     {
-        $partnerIds = collect($data['partner_account_ids'] ?? [])
-            ->filter()
+        $partnerIds = collect($this->stringList($data['partner_account_ids'] ?? null))
             ->values();
 
-        if (! empty($data['preferred_partner_account_id'])) {
-            $partnerIds->prepend($data['preferred_partner_account_id']);
+        $preferredPartnerId = $this->optionalString($data, 'preferred_partner_account_id');
+        if ($preferredPartnerId !== null) {
+            $partnerIds->prepend($preferredPartnerId);
         }
 
-        foreach ($data['items'] ?? [] as $item) {
-            foreach ($item['target_partner_account_ids'] ?? [] as $partnerId) {
+        foreach ($this->arrayList($data['items'] ?? null) as $item) {
+            foreach ($this->stringList($item['target_partner_account_ids'] ?? null) as $partnerId) {
                 $partnerIds->push($partnerId);
             }
 
-            foreach ($item['partner_allocations'] ?? [] as $allocation) {
-                if (! empty($allocation['partner_account_id']) && ! empty($allocation['quantity'])) {
-                    $partnerIds->push($allocation['partner_account_id']);
+            foreach ($this->arrayList($item['partner_allocations'] ?? null) as $allocation) {
+                $partnerId = $allocation['partner_account_id'] ?? null;
+                if (is_string($partnerId) && $partnerId !== '' && ! empty($allocation['quantity'])) {
+                    $partnerIds->push($partnerId);
                 }
             }
         }
 
-        return $partnerIds
+        return array_values($partnerIds
             ->unique()
             ->values()
-            ->all();
+            ->all());
     }
 
-    /** @param array<string, mixed> $data */
+    /**
+     * @param  array<string, mixed>  $data
+     * @param  list<string>  $partnerIds
+     * @return list<array<string, mixed>>
+     */
     private function proposalItemsFromData(array $data, array $partnerIds): array
     {
-        $items = collect($data['items'] ?? [])
+        $items = collect($this->arrayList($data['items'] ?? null))
             ->filter(fn (array $item): bool => trim((string) ($item['title'] ?? '')) !== '')
             ->map(function (array $item, int $index) use ($partnerIds): array {
                 $partnerAllocations = $this->partnerAllocationsFromItem($item, $partnerIds);
-                $targetPartnerIds = collect($item['target_partner_account_ids'] ?? [])
-                    ->filter()
+                $targetPartnerIds = collect($this->stringList($item['target_partner_account_ids'] ?? null))
                     ->unique()
                     ->values()
                     ->all();
@@ -364,13 +374,17 @@ class SponsorPortalService
             ]);
         }
 
-        return $items->all();
+        return array_values($items->all());
     }
 
-    /** @param array<string, mixed> $item */
+    /**
+     * @param  array<string, mixed>  $item
+     * @param  list<string>  $partnerIds
+     * @return list<array{partner_account_id: string, quantity: int}>
+     */
     private function partnerAllocationsFromItem(array $item, array $partnerIds): array
     {
-        $allocations = collect($item['partner_allocations'] ?? [])
+        $allocations = collect($this->arrayList($item['partner_allocations'] ?? null))
             ->filter(fn (array $allocation): bool => ! empty($allocation['partner_account_id']) && ! empty($allocation['quantity']))
             ->groupBy('partner_account_id')
             ->map(fn ($partnerAllocations, string $partnerId): array => [
@@ -385,7 +399,7 @@ class SponsorPortalService
             throw ValidationException::withMessages(['items' => 'سهم هر واحد باید فقط برای واحدهای هدف همان پیشنهاد ثبت شود.']);
         }
 
-        return $allocations;
+        return array_values($allocations);
     }
 
     /** @return array<string, mixed> */
@@ -541,5 +555,47 @@ class SponsorPortalService
             'status' => $partner->status->value,
             'venueName' => $partner->venue?->name,
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function requiredId(array $data, string $key): int|string
+    {
+        $value = $data[$key] ?? null;
+
+        if (! is_int($value) && ! is_string($value)) {
+            throw ValidationException::withMessages([$key => 'شناسه انتخاب‌شده معتبر نیست.']);
+        }
+
+        return $value;
+    }
+
+    /** @param array<string, mixed> $data */
+    private function optionalString(array $data, string $key): ?string
+    {
+        $value = $data[$key] ?? null;
+
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (! is_string($value)) {
+            throw ValidationException::withMessages([$key => 'شناسه انتخاب‌شده معتبر نیست.']);
+        }
+
+        return $value;
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function arrayList(mixed $value): array
+    {
+        return is_array($value) ? array_values(array_filter($value, is_array(...))) : [];
+    }
+
+    /** @return list<string> */
+    private function stringList(mixed $value): array
+    {
+        return is_array($value) ? array_values(array_filter($value, is_string(...))) : [];
     }
 }
