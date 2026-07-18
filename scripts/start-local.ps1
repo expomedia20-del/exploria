@@ -9,20 +9,25 @@ $manifestFile = Join-Path $projectRoot 'public\build\manifest.json'
 $externalPhp = 'E:\exploria-toolchain-local\php\php.exe'
 $localPhp = Join-Path $projectRoot '.codex-runtime\exploria-toolchain-local\php\php.exe'
 $localNpm = Join-Path $projectRoot '.codex-runtime\node\npm.cmd'
-$fallbackNpm = 'npm.cmd'
+$pathPhp = Get-Command 'php.exe' -ErrorAction SilentlyContinue
+$pathNpm = Get-Command 'npm.cmd' -ErrorAction SilentlyContinue
 
 if (Test-Path $externalPhp) {
     $php = $externalPhp
 } elseif (Test-Path $localPhp) {
     $php = $localPhp
+} elseif ($pathPhp) {
+    $php = $pathPhp.Source
 } else {
-    throw 'PHP executable was not found. Expected E:\exploria-toolchain-local\php\php.exe or .codex-runtime\exploria-toolchain-local\php\php.exe.'
+    throw 'PHP executable was not found. Install PHP, add php.exe to PATH, or provide the project runtime under .codex-runtime.'
 }
 
 if (Test-Path $localNpm) {
     $npm = $localNpm
+} elseif ($pathNpm) {
+    $npm = $pathNpm.Source
 } else {
-    $npm = $fallbackNpm
+    throw 'npm.cmd was not found. Install Node.js, add npm.cmd to PATH, or provide the project runtime under .codex-runtime.'
 }
 
 $viteIsRunning = Get-NetTCPConnection -LocalAddress $hostName -LocalPort 5173 -State Listen -ErrorAction SilentlyContinue

@@ -3,15 +3,15 @@
 ## Repository
 
 - GitHub: `https://github.com/expomedia20-del/exploria`
-- Main local codebase: `E:\exploria-codebase-current`
-- Runtime / transfer copy, if present: `E:\New project - Copy`
+- Main local codebase: `C:\source\exploria`
+- Runtime / transfer copies are not canonical and must not be used for development.
 - Main local URL: `http://127.0.0.1:8004`
 
-## Latest Working Commits
+## Latest Working Baseline
 
-- `3a10b86 feat: balance public landing hero`
-- `c807fb2 feat: redesign exploria public landing page`
-- `667e081 feat: add ecopark demo readiness check`
+- `89276a8 chore: refresh dependency lockfiles`
+- `014e983 Separate visitor and viewer demo accounts`
+- `6d34a40 Polish Exploria hero and participant dashboard`
 
 Always verify the real latest point with:
 
@@ -22,22 +22,14 @@ git status --short
 
 ## Local Toolchain
 
-Preferred fixed toolchain path:
+Verified on 2026-07-18:
 
-- `E:\exploria-toolchain-local`
+- Project: `C:\source\exploria`
+- PHP: `C:\php\php.exe` (available through `PATH`)
+- Node.js and npm: available through `PATH`
+- Local database: SQLite at `database/database.sqlite` (Git-ignored)
 
-Verified on 2026-07-08:
-
-- PHP: `E:\exploria-toolchain-local\php\php.exe`
-- PHP version: `8.4.22`
-- Composer: `E:\exploria-toolchain-local\composer\composer.phar`
-- Composer version: `2.10.1`
-
-Node/NPM were not found inside the fixed toolchain path during this handoff. For frontend build on this PC, use the project runtime Node:
-
-- `E:\exploria-codebase-current\.codex-runtime\node\npm.cmd`
-
-The local startup script now prefers the fixed PHP path first and falls back to the project runtime PHP if needed:
+The local startup script supports the legacy fixed toolchain, the project runtime, and PHP/npm available through `PATH`:
 
 - `scripts/start-local.ps1`
 
@@ -49,13 +41,11 @@ Run from the project root:
 powershell -ExecutionPolicy Bypass -File scripts\start-local.ps1
 ```
 
-The server must run from:
+The server must run from the canonical repository:
 
 ```text
-E:\exploria-codebase-current
+C:\source\exploria
 ```
-
-not from a runtime copy.
 
 Important local pages:
 
@@ -88,16 +78,22 @@ php artisan exploria:demo-readiness --json
 
 Recent verification:
 
-- Vite build passed after setting local PHP and Node paths.
+- Backend suite passed: 229 tests.
+- TypeScript check passed.
+- ESLint check passed with zero errors.
+- Vite production build passed.
+- EcoPark Demo Readiness passed with 17 pass, 0 warning, and 0 fail.
+- `scripts/start-local.ps1` passed from `C:\source\exploria` using the PHP/npm available through `PATH`.
 - Public landing was checked in desktop viewport.
 - Public landing was checked in mobile viewport `390x844`.
 - No horizontal overflow was observed.
 
-Known unrelated issue:
+Current limitation:
 
-- `npm run types:check` still stops on an older, unrelated tuple typing issue in `resources/js/pages/dashboard.tsx`.
+- Automated browser-backed visual UAT was unavailable in the 2026-07-18 stabilization session because no controllable browser runtime was attached. HTTP, Feature tests, TypeScript, ESLint, and build verification passed.
+- PHPStan level 7 now runs with a controlled 512 MB memory limit, but reports 247 pre-existing static-analysis findings across legacy controllers, services, commands, configuration, and database code. Do not lower the analysis level or generate an ignore baseline; remediate findings domain by domain before starting a new product feature.
 
-## Recommended Next Slice
+## Recommended Next Slice After Stabilization
 
 1. Visual identity and UX polish:
    - Design an Exploria logo and replace the default Laravel-style mark across the app shell, auth pages, favicon, and any remaining brand surfaces.
@@ -128,8 +124,8 @@ Known unrelated issue:
 ```text
 This is the Exploria project.
 Repository: https://github.com/expomedia20-del/exploria
-Main local codebase: E:\exploria-codebase-current
-Fixed toolchain path: E:\exploria-toolchain-local
+Main local codebase: C:\source\exploria
+PHP: C:\php\php.exe or php.exe from PATH
 Continue from the latest pushed main commit.
 
 Read AGENTS.md and docs 20, 21, 24, and 25.
@@ -144,5 +140,5 @@ Continue from the public landing / role-panel work:
 - /admin/internal-operations is the internal Exploria supervision panel.
 - /admin/access-scopes should show account/role governance, approval sensitivity, and scope boundaries.
 
-Next recommended work: fix the unrelated dashboard TypeScript tuple issue, then continue controlled access-change workflow or venue readiness confirmations.
+The stabilization baseline has passing backend tests, TypeScript, ESLint, build, and Demo Readiness. Continue with domain-by-domain PHPStan remediation and manual responsive/browser UAT when a browser runtime is available, then proceed to the next approved existing-product slice.
 ```
