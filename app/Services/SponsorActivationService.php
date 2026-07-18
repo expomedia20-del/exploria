@@ -108,10 +108,11 @@ class SponsorActivationService
     public function storeSponsor(array $data): SponsorAccount
     {
         $code = trim((string) ($data['code'] ?? ''));
+        $venueId = $this->optionalString($data, 'venue_id');
 
         $attributes = [
-            'venue_id' => $data['venue_id'] ?? null,
-            'code' => $code === '' ? $this->generateSponsorCode($data['venue_id'] ?? null, (string) $data['sponsor_type']) : strtolower($code),
+            'venue_id' => $venueId,
+            'code' => $code === '' ? $this->generateSponsorCode($venueId, (string) $data['sponsor_type']) : strtolower($code),
             'name' => $data['name'],
             'sponsor_type' => $data['sponsor_type'],
             'status' => $data['status'],
@@ -126,7 +127,7 @@ class SponsorActivationService
 
         return DB::transaction(function () use ($data, $attributes): SponsorAccount {
             if (! empty($data['sponsor_id'])) {
-                $sponsor = SponsorAccount::query()->findOrFail($data['sponsor_id']);
+                $sponsor = SponsorAccount::query()->findOrFail($this->requiredId($data, 'sponsor_id'));
                 $metadata = array_merge($sponsor->metadata ?? [], $attributes['metadata']);
                 $sponsor->update(array_merge($attributes, ['metadata' => $metadata]));
 
@@ -159,8 +160,8 @@ class SponsorActivationService
     /** @param array<string, mixed> $data */
     public function storeSponsorship(array $data): CampaignSponsorship
     {
-        $campaign = Campaign::query()->findOrFail($data['campaign_id']);
-        $sponsor = SponsorAccount::query()->findOrFail($data['sponsor_account_id']);
+        $campaign = Campaign::query()->findOrFail($this->requiredId($data, 'campaign_id'));
+        $sponsor = SponsorAccount::query()->findOrFail($this->requiredId($data, 'sponsor_account_id'));
 
         if ($sponsor->venue_id !== null && $sponsor->venue_id !== $campaign->venue_id) {
             throw ValidationException::withMessages(['sponsor_account_id' => 'اسپانسر انتخاب‌شده به مکان این کمپین تعلق ندارد.']);
@@ -182,7 +183,7 @@ class SponsorActivationService
 
         return DB::transaction(function () use ($data, $attributes): CampaignSponsorship {
             if (! empty($data['sponsorship_id'])) {
-                $sponsorship = CampaignSponsorship::query()->findOrFail($data['sponsorship_id']);
+                $sponsorship = CampaignSponsorship::query()->findOrFail($this->requiredId($data, 'sponsorship_id'));
                 $metadata = array_merge($sponsorship->metadata ?? [], $attributes['metadata']);
                 $sponsorship->update(array_merge($attributes, ['metadata' => $metadata]));
 
@@ -209,10 +210,10 @@ class SponsorActivationService
     /** @param array<string, mixed> $data */
     public function storePartnerAssignment(array $data): SponsorPartnerAssignment
     {
-        $sponsor = SponsorAccount::query()->findOrFail($data['sponsor_account_id']);
-        $partner = PartnerAccount::query()->findOrFail($data['partner_account_id']);
+        $sponsor = SponsorAccount::query()->findOrFail($this->requiredId($data, 'sponsor_account_id'));
+        $partner = PartnerAccount::query()->findOrFail($this->requiredId($data, 'partner_account_id'));
         $campaign = ! empty($data['campaign_id'])
-            ? Campaign::query()->findOrFail($data['campaign_id'])
+            ? Campaign::query()->findOrFail($this->requiredId($data, 'campaign_id'))
             : null;
 
         if ($sponsor->venue_id !== null && $sponsor->venue_id !== $partner->venue_id) {
@@ -241,7 +242,7 @@ class SponsorActivationService
 
         return DB::transaction(function () use ($data, $attributes): SponsorPartnerAssignment {
             if (! empty($data['assignment_id'])) {
-                $assignment = SponsorPartnerAssignment::query()->findOrFail($data['assignment_id']);
+                $assignment = SponsorPartnerAssignment::query()->findOrFail($this->requiredId($data, 'assignment_id'));
                 $metadata = array_merge($assignment->metadata ?? [], $attributes['metadata']);
                 $assignment->update(array_merge($attributes, ['metadata' => $metadata]));
 
@@ -407,7 +408,7 @@ class SponsorActivationService
 
         $package = $packageLabels[$sponsorship->package_type] ?? $sponsorship->package_type;
 
-        return trim(($sponsorship->sponsorAccount?->name ?? 'اسپانسر').' - '.$package);
+        return trim(($sponsorship->sponsorAccount->name ?? 'اسپانسر').' - '.$package);
     }
 
     /** @param array<string, mixed> $data */
@@ -443,7 +444,7 @@ class SponsorActivationService
         }
 
         $campaign = ! empty($data['campaign_id'])
-            ? Campaign::query()->findOrFail($data['campaign_id'])
+            ? Campaign::query()->findOrFail($this->requiredId($data, 'campaign_id'))
             : $proposal->campaign;
 
         if (! $campaign) {
@@ -921,5 +922,35 @@ class SponsorActivationService
                 'status' => $sponsorship->sponsorAccount->status->value,
             ] : null,
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function requiredId(array $data, string $key): int|string
+    {
+        $value = $data[$key] ?? null;
+
+        if (! is_int($value) && ! is_string($value)) {
+            throw ValidationException::withMessages([$key => 'شناسه انتخاب‌شده معتبر نیست.']);
+        }
+
+        return $value;
+    }
+
+    /** @param array<string, mixed> $data */
+    private function optionalString(array $data, string $key): ?string
+    {
+        $value = $data[$key] ?? null;
+
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (! is_string($value)) {
+            throw ValidationException::withMessages([$key => 'شناسه انتخاب‌شده معتبر نیست.']);
+        }
+
+        return $value;
     }
 }
