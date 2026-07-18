@@ -48,7 +48,9 @@ class PrepareDemoCycleCommand extends Command
             $blueprint = $blueprints->handoff(is_string($blueprintCode) ? $blueprintCode : null);
         }
 
-        $steps = collect($blueprint['missionPlan'] ?? []);
+        $missionPlan = $blueprint['missionPlan'] ?? [];
+        $steps = collect(is_array($missionPlan) ? $missionPlan : [])
+            ->filter(fn (mixed $step): bool => is_array($step));
 
         if ($steps->isEmpty()) {
             $this->error('Campaign blueprint has no mission plan.');
@@ -234,7 +236,9 @@ class PrepareDemoCycleCommand extends Command
             ->first(fn (Treasure $treasure): bool => ($treasure->metadata['reward_definition_id'] ?? null) === $reward->id
                 || ($treasure->reveal_rule['reward_definition_id'] ?? null) === $reward->id);
 
-        $partnerAllocations = collect($reward->metadata['partner_allocations'] ?? [])
+        $rawPartnerAllocations = $reward->metadata['partner_allocations'] ?? [];
+        $partnerAllocations = collect(is_array($rawPartnerAllocations) ? $rawPartnerAllocations : [])
+            ->filter(fn (mixed $allocation): bool => is_array($allocation))
             ->map(fn (array $allocation): array => [
                 'partner_account_id' => (string) ($allocation['partner_account_id'] ?? ''),
                 'quantity' => (int) ($allocation['quantity'] ?? 0),

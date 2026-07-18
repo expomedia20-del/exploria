@@ -98,7 +98,10 @@ class ParticipantDashboardController extends Controller
         return back()->with('success', 'وضعیت شما به مشارکت‌کننده فعال تغییر کرد. حالا می‌توانید کمپین را انتخاب یا QR را اسکن کنید.');
     }
 
-    /** @param array<string, mixed>|null $flow */
+    /**
+     * @param  array<string, mixed>|null  $flow
+     * @return array<string, mixed>
+     */
     private function journeySummary(User $user, ?Visit $latestVisit, ?array $flow): array
     {
         $earnedPoints = (int) UserMissionProgress::query()
@@ -141,7 +144,7 @@ class ParticipantDashboardController extends Controller
             ->limit(8)
             ->get()
             ->map(fn (RewardRedemption $redemption): array => [
-                'name' => $redemption->partnerAccount?->name ?? 'واحد تجاری',
+                'name' => $redemption->partnerAccount->name ?? 'واحد تجاری',
                 'type' => $redemption->partnerAccount?->partner_type,
                 'rewardName' => $redemption->userReward?->rewardDefinition?->name,
                 'rewardType' => $redemption->userReward?->rewardDefinition?->reward_type,
@@ -255,7 +258,7 @@ class ParticipantDashboardController extends Controller
                     'rewardType' => $userReward->rewardDefinition?->reward_type,
                     'rewardTypeLabel' => $this->rewardTypeLabel($userReward->rewardDefinition?->reward_type),
                     'pointCost' => $userReward->rewardDefinition?->point_cost,
-                    'partnerName' => $redemption?->partnerAccount?->name ?? $userReward->rewardDefinition?->partnerAccount?->name,
+                    'partnerName' => $redemption?->partnerAccount->name ?? $userReward->rewardDefinition?->partnerAccount?->name,
                     'redemptionCode' => $redemption?->redemption_code,
                     'redemptionStatus' => $redemption?->status,
                     'redeemedAt' => $redemption?->redeemed_at?->toIso8601String(),
@@ -277,7 +280,8 @@ class ParticipantDashboardController extends Controller
             ])
             ->values();
 
-        $nextMission = collect($flow['missions'] ?? [])
+        $missions = is_array($flow['missions'] ?? null) ? $flow['missions'] : [];
+        $nextMission = collect($missions)
             ->first(fn ($mission): bool => in_array($mission['status'] ?? null, ['started', 'available', 'locked'], true));
         $potentialNextPoints = (int) ($nextMission['points'] ?? 0);
 

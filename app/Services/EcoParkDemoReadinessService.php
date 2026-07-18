@@ -21,9 +21,17 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route;
 
+/**
+ * @phpstan-type ReadinessCheck array{key: string, label: string, status: string, count: int, message: string, nextAction: string|null, minimum?: int}
+ * @phpstan-type ReadinessReport array{
+ *     summary: array{venueCode: string, campaigns: list<array{code: string, name: string}>, ready: bool, passCount: int, warningCount: int, failCount: int},
+ *     checks: list<ReadinessCheck>,
+ *     nextActions: list<string>
+ * }
+ */
 class EcoParkDemoReadinessService
 {
-    /** @return array<string, mixed> */
+    /** @return ReadinessReport */
     public function report(string $venueCode = 'ecopark-abbasabad'): array
     {
         $venue = Venue::query()->where('code', $venueCode)->first();
@@ -192,10 +200,10 @@ class EcoParkDemoReadinessService
 
         $summary = [
             'venueCode' => $venueCode,
-            'campaigns' => $campaigns->map(fn (Campaign $campaign): array => [
+            'campaigns' => array_values($campaigns->map(fn (Campaign $campaign): array => [
                 'code' => $campaign->code,
                 'name' => $campaign->name,
-            ])->values()->all(),
+            ])->all()),
             'ready' => $checks->where('status', 'fail')->isEmpty(),
             'passCount' => $checks->where('status', 'pass')->count(),
             'warningCount' => $checks->where('status', 'warning')->count(),
@@ -204,17 +212,21 @@ class EcoParkDemoReadinessService
 
         return [
             'summary' => $summary,
-            'checks' => $checks->values()->all(),
-            'nextActions' => $checks
+            'checks' => array_values($checks->all()),
+            'nextActions' => array_values($checks
                 ->whereIn('status', ['warning', 'fail'])
                 ->pluck('nextAction')
-                ->filter()
-                ->values()
-                ->all(),
+                ->filter(fn (mixed $action): bool => is_string($action))
+                ->all()),
         ];
     }
 
-    /** @param Builder<Model> $query */
+    /**
+     * @template TModel of Model
+     *
+     * @param  Builder<TModel>  $query
+     * @param  Collection<int, string>  $campaignIds
+     */
     private function countForVenueCampaigns($query, ?string $venueId, Collection $campaignIds): int
     {
         if (! $venueId || $campaignIds->isEmpty()) {
@@ -228,6 +240,10 @@ class EcoParkDemoReadinessService
             ->count();
     }
 
+    /**
+     * @param  Collection<int, string>  $campaignIds
+     * @param  Collection<int, string>  $partnerIds
+     */
     private function rewardCountForPartners(?string $venueId, Collection $campaignIds, Collection $partnerIds, bool $sponsorOnly): int
     {
         if (! $venueId || $campaignIds->isEmpty() || $partnerIds->isEmpty()) {
@@ -260,7 +276,7 @@ class EcoParkDemoReadinessService
             ->count();
     }
 
-    /** @return array<string, mixed> */
+    /** @return ReadinessCheck */
     private function routeCheck(): array
     {
         $missingRoutes = collect(['venue.dashboard', 'ravaq.dashboard', 'hub.dashboard', 'sponsor.dashboard', 'dashboard'])
@@ -277,7 +293,7 @@ class EcoParkDemoReadinessService
         );
     }
 
-    /** @return array<string, mixed> */
+    /** @return ReadinessCheck */
     private function minimumCountCheck(
         string $key,
         string $label,
@@ -298,7 +314,7 @@ class EcoParkDemoReadinessService
         ) + ['minimum' => $minimum];
     }
 
-    /** @return array<string, mixed> */
+    /** @return ReadinessCheck */
     private function check(
         string $key,
         string $label,

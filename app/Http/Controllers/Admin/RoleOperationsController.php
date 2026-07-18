@@ -11,7 +11,8 @@ class RoleOperationsController extends Controller
 {
     public function page(): Response
     {
-        $roles = collect(config('exploria_roles.roles', []))
+        $configuredRoles = config('exploria_roles.roles', []);
+        $roles = collect(is_array($configuredRoles) ? $configuredRoles : [])
             ->map(fn (array $role, string $key): array => [
                 'key' => $key,
                 'group' => $role['group'],
@@ -31,7 +32,9 @@ class RoleOperationsController extends Controller
     }
 
     /**
-     * @param  Collection<int, array<string, mixed>>  $roles
+     * @template TRole of array<string, mixed>
+     *
+     * @param  Collection<int, TRole>  $roles
      * @return array<string, int>
      */
     private function stats(Collection $roles): array

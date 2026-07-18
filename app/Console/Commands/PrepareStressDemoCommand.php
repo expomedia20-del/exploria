@@ -352,7 +352,9 @@ class PrepareStressDemoCommand extends Command
         );
     }
 
-    /** @param Collection<int, PartnerAccount> $partners */
+    /**
+     * @param  Collection<int, PartnerAccount>  $partners
+     */
     private function sponsorProposal(
         SponsorActivationService $sponsors,
         User $actor,
@@ -413,7 +415,10 @@ class PrepareStressDemoCommand extends Command
         return $proposal->refresh();
     }
 
-    /** @param Collection<int, PartnerAccount> $partners */
+    /**
+     * @param  Collection<int, PartnerAccount>  $partners
+     * @param  list<int>  $shares
+     */
     private function proposalItem(SponsorProposal $proposal, string $type, string $title, int $quantity, $partners, array $shares): SponsorProposalItem
     {
         return SponsorProposalItem::query()->updateOrCreate(
@@ -537,7 +542,7 @@ class PrepareStressDemoCommand extends Command
                     'status' => 'completed',
                     'started_at' => now()->subMinutes(30),
                     'completed_at' => now(),
-                    'points_awarded' => (int) ($mission->missionTemplate?->point_value ?? 0),
+                    'points_awarded' => (int) ($mission->missionTemplate->point_value ?? 0),
                     'metadata' => ['is_demo' => true, 'stress_demo' => true],
                 ],
             );

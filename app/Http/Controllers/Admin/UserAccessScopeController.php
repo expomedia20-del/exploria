@@ -129,7 +129,7 @@ class UserAccessScopeController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'email', 'role'])
             ->map(function (User $user): array {
-                $role = $user->role?->value;
+                $role = $user->role->value;
                 $kind = $this->userKind($user);
 
                 return [
@@ -137,7 +137,7 @@ class UserAccessScopeController extends Controller
                     'name' => $user->name,
                     'email' => $user->email,
                     'role' => $role,
-                    'roleLabel' => $role ? $this->accountRoleLabel($role) : '-',
+                    'roleLabel' => $this->accountRoleLabel($role),
                     'kind' => $kind,
                     'kindLabel' => $this->userKindLabel($kind),
                     'isStressDemo' => str_contains((string) $user->email, 'stress-demo'),
@@ -146,10 +146,12 @@ class UserAccessScopeController extends Controller
             ->all();
     }
 
-    /** @return array<int, array<string, string>> */
+    /** @return array<int, array{key: string, label: string, defaultScope: string, governance: array<string, string>}> */
     private function roleOptions(): array
     {
-        return collect(config('exploria_roles.roles', []))
+        $configuredRoles = config('exploria_roles.roles', []);
+
+        return collect(is_array($configuredRoles) ? $configuredRoles : [])
             ->map(fn (array $role, string $key): array => [
                 'key' => $key,
                 'label' => $this->roleLabel($key),
@@ -197,7 +199,9 @@ class UserAccessScopeController extends Controller
     /** @return array<int, array<string, mixed>> */
     private function assignmentTemplates(): array
     {
-        return collect(config('exploria_roles.assignment_templates', []))
+        $configuredTemplates = config('exploria_roles.assignment_templates', []);
+
+        return collect(is_array($configuredTemplates) ? $configuredTemplates : [])
             ->map(function (array $template): array {
                 $scopeTarget = $this->scopeTargetByCode(
                     $template['scope_type'],
@@ -375,14 +379,13 @@ class UserAccessScopeController extends Controller
             return 'stress_demo';
         }
 
-        return match ($user->role?->value) {
+        return match ($user->role->value) {
             'admin', 'operator' => 'exploria_internal',
             'viewer' => 'internal_viewer',
             'hub_manager' => 'hub_manager',
             'shop_partner' => 'commercial_partner',
             'sponsor' => 'sponsor',
             'visitor' => 'visitor',
-            default => 'unknown',
         };
     }
 

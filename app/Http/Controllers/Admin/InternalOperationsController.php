@@ -15,7 +15,8 @@ class InternalOperationsController extends Controller
 {
     public function page(): Response
     {
-        $roles = collect(config('exploria_roles.roles', []));
+        $configuredRoles = config('exploria_roles.roles', []);
+        $roles = collect(is_array($configuredRoles) ? $configuredRoles : []);
         $internalRoleKeys = $roles
             ->filter(fn (array $role): bool => ($role['group'] ?? null) === 'exploria_team')
             ->keys()
@@ -65,7 +66,8 @@ class InternalOperationsController extends Controller
     private function teamMember(UserAccessScope $scope): array
     {
         $reportsToKey = config("exploria_roles.roles.{$scope->role_key}.reports_to");
-        $subordinateRoleKeys = collect(config('exploria_roles.roles', []))
+        $configuredRoles = config('exploria_roles.roles', []);
+        $subordinateRoleKeys = collect(is_array($configuredRoles) ? $configuredRoles : [])
             ->filter(fn (array $role): bool => ($role['reports_to'] ?? null) === $scope->role_key)
             ->keys();
 
@@ -73,7 +75,7 @@ class InternalOperationsController extends Controller
             'id' => $scope->id,
             'user' => [
                 'id' => $scope->user?->id,
-                'name' => $scope->user?->name ?? 'کاربر بدون نام',
+                'name' => $scope->user->name ?? 'کاربر بدون نام',
                 'email' => $scope->user?->email,
                 'accountRole' => $scope->user?->role?->value,
                 'accountRoleLabel' => $this->accountRoleLabel($scope->user?->role?->value),

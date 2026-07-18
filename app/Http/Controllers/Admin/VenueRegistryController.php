@@ -132,7 +132,7 @@ XML);
             $xml .= '<row r="'.$excelRow.'">';
 
             foreach ($row as $columnIndex => $value) {
-                $cell = chr(65 + $columnIndex).$excelRow;
+                $cell = ['A', 'B', 'C', 'D', 'E', 'F'][$columnIndex].$excelRow;
                 $style = $excelRow === 1 ? ' s="1"' : '';
                 $xml .= '<c r="'.$cell.'" t="inlineStr"'.$style.'><is><t xml:space="preserve">'.e($value).'</t></is></c>';
             }

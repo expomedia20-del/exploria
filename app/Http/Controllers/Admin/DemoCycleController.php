@@ -175,7 +175,7 @@ class DemoCycleController extends Controller
     }
 
     /**
-     * @param  array<string, mixed>  $readinessReport
+     * @param  array{checks?: list<array<string, mixed>>}  $readinessReport
      * @return array<int, array<string, mixed>>
      */
     private function stageHealth(array $readinessReport): array
@@ -497,7 +497,10 @@ class DemoCycleController extends Controller
         ];
     }
 
-    /** @param Collection<int, string> $userRewardIds */
+    /**
+     * @param  Collection<int, string>  $userRewardIds
+     * @return array{code: string, status: string, partnerName: string|null, rewardName: string|null, redeemedAt: string|null}|null
+     */
     private function latestRedemption(Collection $userRewardIds): ?array
     {
         if ($userRewardIds->isEmpty()) {
@@ -523,7 +526,10 @@ class DemoCycleController extends Controller
         ];
     }
 
-    /** @param Collection<string, array<string, mixed>> $checks */
+    /**
+     * @param  Collection<string, array<string, mixed>>  $checks
+     * @param  list<string>  $keys
+     */
     private function statusFromChecks(Collection $checks, array $keys): string
     {
         $selected = $checks->only($keys);
@@ -539,6 +545,7 @@ class DemoCycleController extends Controller
         return 'ready';
     }
 
+    /** @param list<bool> $conditions */
     private function statusFromBooleans(array $conditions): string
     {
         $passed = collect($conditions)->filter()->count();
@@ -550,39 +557,52 @@ class DemoCycleController extends Controller
         return $passed > 0 ? 'warning' : 'needs_work';
     }
 
-    /** @param Collection<string, array<string, mixed>> $checks */
+    /**
+     * @param  Collection<string, array<string, mixed>>  $checks
+     * @param  array<string, string>  $labels
+     * @return list<array{label: string, value: int}>
+     */
     private function metricsFromChecks(Collection $checks, array $labels): array
     {
-        return collect($labels)
+        return array_values(collect($labels)
             ->map(fn (string $label, string $key): array => $this->metric($label, (int) ($checks[$key]['count'] ?? 0)))
             ->values()
-            ->all();
+            ->all());
     }
 
+    /** @return array{label: string, value: int} */
     private function metric(string $label, int $value): array
     {
         return ['label' => $label, 'value' => $value];
     }
 
-    /** @param Collection<string, array<string, mixed>> $checks */
+    /**
+     * @param  Collection<string, array<string, mixed>>  $checks
+     * @param  list<string>  $keys
+     * @return list<string>
+     */
     private function nextActionsFromChecks(Collection $checks, array $keys): array
     {
-        return $checks
+        return array_values($checks
             ->only($keys)
             ->filter(fn (array $check): bool => ($check['status'] ?? 'pass') !== 'pass')
             ->pluck('nextAction')
-            ->filter()
+            ->filter(fn (mixed $action): bool => is_string($action))
             ->values()
-            ->all();
+            ->all());
     }
 
+    /**
+     * @param  list<array{bool, string}>  $items
+     * @return list<string>
+     */
     private function nextActionsFromBooleans(array $items): array
     {
-        return collect($items)
+        return array_values(collect($items)
             ->filter(fn (array $item): bool => ! $item[0])
-            ->pluck(1)
+            ->map(fn (array $item): string => $item[1])
             ->values()
-            ->all();
+            ->all());
     }
 
     private function participantCount(): int

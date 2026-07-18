@@ -59,7 +59,7 @@ class ScanLandingController extends Controller
                 'id' => $mission->id,
                 'title' => $mission->title_override ?? $mission->missionTemplate?->title,
                 'description' => $mission->metadata['visitor_instruction'] ?? $mission->missionTemplate?->description,
-                'points' => $mission->missionTemplate?->point_value ?? 0,
+                'points' => $mission->missionTemplate->point_value ?? 0,
                 'displayStep' => (int) data_get($mission->metadata, 'cycle_step_index', $index + 1),
                 'cycleStep' => [
                     'index' => $mission->metadata['cycle_step_index'] ?? null,

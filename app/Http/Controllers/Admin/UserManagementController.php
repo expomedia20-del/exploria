@@ -115,18 +115,18 @@ class UserManagementController extends Controller
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
-                    'role' => $user->role?->value,
-                    'roleLabel' => $this->accountRoleLabel($user->role?->value),
+                    'role' => $user->role->value,
+                    'roleLabel' => $this->accountRoleLabel($user->role->value),
                     'kind' => $kind,
                     'kindLabel' => $this->userKindLabel($kind),
-                    'statusLabel' => $this->statusLabel($user),
+                    'statusLabel' => $this->statusLabel($user, $activeScopes->count()),
                     'publicStatus' => $this->publicStatus($user),
                     'publicStatusLabel' => $this->publicStatusLabel($user),
                     'publicParticipationMode' => (string) ($user->public_participation_mode ?? 'individual'),
                     'isStressDemo' => str_contains((string) $user->email, 'stress-demo'),
                     'counts' => [
                         'accessScopes' => (int) $user->access_scopes_count,
-                        'activeScopes' => (int) $user->active_access_scopes_count,
+                        'activeScopes' => $activeScopes->count(),
                         'visits' => (int) $user->visits_count,
                         'missionProgress' => (int) $user->mission_progress_count,
                         'rewards' => (int) $user->rewards_count,
@@ -230,7 +230,6 @@ class UserManagementController extends Controller
             UserRole::HubManager => 'venue_management',
             UserRole::ShopPartner, UserRole::Sponsor => 'commercial_partner',
             UserRole::Visitor => 'public',
-            default => 'uncategorized',
         };
     }
 
@@ -298,13 +297,13 @@ class UserManagementController extends Controller
         };
     }
 
-    private function statusLabel(User $user): string
+    private function statusLabel(User $user, int $activeScopeCount): string
     {
         if ($user->role === UserRole::Visitor) {
             return $this->publicStatusLabel($user);
         }
 
-        if ((int) $user->active_access_scopes_count > 0) {
+        if ($activeScopeCount > 0) {
             return 'دارای دسترسی فعال';
         }
 

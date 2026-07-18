@@ -20,6 +20,7 @@ use App\Models\Visit;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/** @phpstan-type AudienceReport array{title: string, audience: string, headline: string, proofPoints: list<string>, offer: string, nextStep: string} */
 class CommercializationController extends Controller
 {
     private const STRESS_DEMO_CAMPAIGN_CODE = 'ecopark-online-treasure-map-game-campaign';
@@ -33,8 +34,8 @@ class CommercializationController extends Controller
             'summary' => [
                 'title' => 'تجاری‌سازی اکسپلوریا',
                 'positioning' => 'اکسپلوریا بازدیدکننده مکان را با ماموریت، QR، پاداش و گزارش عددی به فروشگاه و اسپانسر وصل می‌کند.',
-                'venue' => $venue?->name ?? 'اکوپارک عباس‌آباد',
-                'campaign' => $campaign?->name ?? 'پایلوت بازدید اکوپارک ۱۴۰۵',
+                'venue' => $venue->name ?? 'اکوپارک عباس‌آباد',
+                'campaign' => $campaign->name ?? 'پایلوت بازدید اکوپارک ۱۴۰۵',
                 'status' => 'آماده تبدیل دمو به بسته فروش',
             ],
             'salesMetrics' => $this->salesMetrics($venue, $campaign),
@@ -381,7 +382,10 @@ class CommercializationController extends Controller
                 ->sum('estimated_value_amount');
     }
 
-    /** @param array<string, int> $stats */
+    /**
+     * @param  array{visits: int, completedMissions: int, issuedRewards: int, confirmedRedemptions: int, participants: int, roiPercent: int, redemptionRate: int}  $stats
+     * @return list<AudienceReport>
+     */
     private function audienceReports(Campaign $campaign, array $stats): array
     {
         $proposal = SponsorProposal::query()
@@ -414,7 +418,7 @@ class CommercializationController extends Controller
                 'audience' => 'اسپانسر کمپین',
                 'headline' => 'حضور برند به ماموریت، گنج، جایزه و گزارش ROI وصل شده است.',
                 'proofPoints' => [
-                    'پیشنهاد اسپانسر: '.($proposal?->title ?? 'آماده تعریف'),
+                    'پیشنهاد اسپانسر: '.($proposal->title ?? 'آماده تعریف'),
                     'ROI تخمینی '.$stats['roiPercent'].'٪',
                     'نرخ مصرف پاداش '.$stats['redemptionRate'].'٪',
                 ],
@@ -428,7 +432,7 @@ class CommercializationController extends Controller
                 'proofPoints' => [
                     $stats['issuedRewards'].' پاداش صادرشده',
                     $stats['confirmedRedemptions'].' مصرف تاییدشده',
-                    'نمونه واحد: '.($partnerReward?->partnerAccount?->name ?? 'واحد عضو دمو'),
+                    'نمونه واحد: '.($partnerReward->partnerAccount->name ?? 'واحد عضو دمو'),
                 ],
                 'offer' => 'عضویت واحد با پاداش قابل مصرف و گزارش مراجعه',
                 'nextStep' => 'ثبت پیشنهاد واقعی واحد و تعریف سهم موجودی قابل مصرف.',
@@ -436,6 +440,7 @@ class CommercializationController extends Controller
         ];
     }
 
+    /** @return array{investment: int, estimatedValue: int, roiPercent: int, redemptionRate: int} */
     private function emptyRoi(): array
     {
         return [
@@ -446,6 +451,7 @@ class CommercializationController extends Controller
         ];
     }
 
+    /** @return list<AudienceReport> */
     private function emptyAudienceReports(): array
     {
         return [
