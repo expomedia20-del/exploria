@@ -115,10 +115,11 @@ class CampaignRegistryService
     /** @param array<string, mixed> $data */
     public function create(array $data): Campaign
     {
-        $venue = Venue::query()->findOrFail($data['venue_id']);
+        $venueId = $this->requiredId($data, 'venue_id');
+        $venue = Venue::query()->findOrFail($venueId);
 
         $attributes = [
-            'venue_id' => $data['venue_id'],
+            'venue_id' => $venueId,
             'code' => Str::lower((string) $data['code']),
             'name' => $data['name'],
             'campaign_type' => Str::lower((string) $data['campaign_type']),
@@ -130,7 +131,7 @@ class CampaignRegistryService
 
         return DB::transaction(function () use ($data, $attributes): Campaign {
             if (! empty($data['campaign_id'])) {
-                $campaign = Campaign::query()->findOrFail($data['campaign_id']);
+                $campaign = Campaign::query()->findOrFail($this->requiredId($data, 'campaign_id'));
                 $metadata = array_filter(array_merge($campaign->metadata ?? [], $attributes['metadata']));
                 $campaign->update(array_merge($attributes, ['metadata' => $metadata]));
 
@@ -141,7 +142,10 @@ class CampaignRegistryService
         });
     }
 
-    /** @param array<string, mixed> $data @return array<string, mixed> */
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
     private function campaignMetadata(Venue $venue, array $data): array
     {
         $blueprintCode = $data['blueprint_code'] ?? null;
@@ -193,5 +197,19 @@ class CampaignRegistryService
                 'name' => $campaign->venue->name,
             ] : null,
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function requiredId(array $data, string $key): int|string
+    {
+        $value = $data[$key] ?? null;
+
+        if (! is_int($value) && ! is_string($value)) {
+            throw ValidationException::withMessages([$key => 'شناسه انتخاب‌شده معتبر نیست.']);
+        }
+
+        return $value;
     }
 }

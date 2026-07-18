@@ -109,15 +109,17 @@ class CampaignParticipantRegistryService
     /** @param array<string, mixed> $data */
     public function createParticipant(array $data): CampaignParticipant
     {
-        $campaign = Campaign::query()->findOrFail($data['campaign_id']);
-        $this->assertSameVenueHub($campaign, $data['hub_id'] ?? null);
-        $this->assertSameVenuePartner($campaign, $data['partner_account_id'] ?? null);
+        $campaign = Campaign::query()->findOrFail($this->requiredId($data, 'campaign_id'));
+        $hubId = $this->optionalString($data, 'hub_id');
+        $partnerId = $this->optionalString($data, 'partner_account_id');
+        $this->assertSameVenueHub($campaign, $hubId);
+        $this->assertSameVenuePartner($campaign, $partnerId);
 
         $attributes = [
             'campaign_id' => $campaign->id,
             'venue_id' => $campaign->venue_id,
-            'hub_id' => $data['hub_id'] ?? null,
-            'partner_account_id' => $data['partner_account_id'] ?? null,
+            'hub_id' => $hubId,
+            'partner_account_id' => $partnerId,
             'participant_type' => $data['participant_type'],
             'participation_role' => $data['participation_role'],
             'status' => $data['status'],
@@ -136,7 +138,7 @@ class CampaignParticipantRegistryService
 
         return DB::transaction(function () use ($data, $attributes): CampaignParticipant {
             if (! empty($data['participant_id'])) {
-                $participant = CampaignParticipant::query()->findOrFail($data['participant_id']);
+                $participant = CampaignParticipant::query()->findOrFail($this->requiredId($data, 'participant_id'));
                 $metadata = array_merge($participant->metadata ?? [], $attributes['metadata']);
                 $participant->update(array_merge($attributes, ['metadata' => $metadata]));
 
@@ -181,7 +183,10 @@ class CampaignParticipantRegistryService
             ->first();
     }
 
-    /** @param Collection<int, array<string, mixed>> $participants */
+    /**
+     * @param  Collection<int, array<string, mixed>>  $participants
+     * @return Collection<int, covariant array<string, mixed>>
+     */
     private function campaignGroups(Collection $participants): Collection
     {
         return $participants
@@ -195,7 +200,10 @@ class CampaignParticipantRegistryService
             ->values();
     }
 
-    /** @param Collection<int, array<string, mixed>> $participants */
+    /**
+     * @param  Collection<int, array<string, mixed>>  $participants
+     * @return Collection<int, covariant array<string, mixed>>
+     */
     private function hubGroups(Collection $participants): Collection
     {
         return $participants
@@ -279,5 +287,35 @@ class CampaignParticipantRegistryService
         if (! PartnerAccount::query()->whereKey($partnerId)->where('venue_id', $campaign->venue_id)->exists()) {
             throw ValidationException::withMessages(['partner_account_id' => 'شریک انتخاب‌شده به مکان کمپین تعلق ندارد.']);
         }
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function requiredId(array $data, string $key): int|string
+    {
+        $value = $data[$key] ?? null;
+
+        if (! is_int($value) && ! is_string($value)) {
+            throw ValidationException::withMessages([$key => 'شناسه انتخاب‌شده معتبر نیست.']);
+        }
+
+        return $value;
+    }
+
+    /** @param array<string, mixed> $data */
+    private function optionalString(array $data, string $key): ?string
+    {
+        $value = $data[$key] ?? null;
+
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (! is_string($value)) {
+            throw ValidationException::withMessages([$key => 'شناسه انتخاب‌شده معتبر نیست.']);
+        }
+
+        return $value;
     }
 }
