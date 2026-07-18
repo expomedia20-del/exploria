@@ -44,10 +44,14 @@ class MissionRewardBlueprintService
         ];
     }
 
-    /** @param array<string, mixed> $context @param \Illuminate\Support\Collection<int, array<string, mixed>> $templates @return array<string, mixed> */
+    /**
+     * @param  array<string, mixed>  $context
+     * @param  Collection<int, array<string, mixed>>  $templates
+     * @return array<string, mixed>
+     */
     private function withTemplateRecommendations(array $context, Collection $templates): array
     {
-        $context['venues'] = collect($context['venues'] ?? [])
+        $context['venues'] = collect($this->arrayList($context['venues'] ?? null))
             ->map(function (array $venue) use ($templates): array {
                 $venue['templateRecommendations'] = $this->templateRecommendationsForVenue($venue, $templates);
 
@@ -58,10 +62,14 @@ class MissionRewardBlueprintService
         return $context;
     }
 
-    /** @param array<string, mixed> $venue @param \Illuminate\Support\Collection<int, array<string, mixed>> $templates @return array<int, array<string, mixed>> */
+    /**
+     * @param  array<string, mixed>  $venue
+     * @param  Collection<int, array<string, mixed>>  $templates
+     * @return array<int, array<string, mixed>>
+     */
     private function templateRecommendationsForVenue(array $venue, Collection $templates): array
     {
-        $assets = collect($venue['designAssets'] ?? []);
+        $assets = collect($this->associativeArray($venue['designAssets'] ?? null));
         $useCounts = $assets
             ->map(fn (mixed $items): int => is_array($items) ? count($items) : 0)
             ->filter(fn (int $count): bool => $count > 0);
@@ -70,7 +78,7 @@ class MissionRewardBlueprintService
             return [];
         }
 
-        $topUses = $useCounts->sortDesc()->keys()->take(5)->values()->all();
+        $topUses = array_values($useCounts->sortDesc()->keys()->filter(fn (mixed $use): bool => is_string($use))->take(5)->all());
 
         return $templates
             ->map(function (array $template) use ($topUses, $venue): array {
@@ -94,13 +102,17 @@ class MissionRewardBlueprintService
             ->all();
     }
 
-    /** @param array<string, mixed> $template @param array<int, string> $topUses @param array<string, mixed> $venue */
+    /**
+     * @param  array<string, mixed>  $template
+     * @param  list<string>  $topUses
+     * @param  array<string, mixed>  $venue
+     */
     private function templateVenueScore(array $template, array $topUses, array $venue): int
     {
         $code = strtolower((string) $template['code']);
         $score = max(0, 120 - ((int) ($template['mvpPriority'] ?? 99) * 4));
-        $facilities = collect($venue['topFacilities'] ?? [])
-            ->map(fn (array $facility): string => strtolower((string) ($facility['function'] ?? '').' '.implode(' ', $facility['campaignUses'] ?? [])))
+        $facilities = collect($this->arrayList($venue['topFacilities'] ?? null))
+            ->map(fn (array $facility): string => strtolower((string) ($facility['function'] ?? '').' '.implode(' ', $this->stringList($facility['campaignUses'] ?? null))))
             ->implode(' ');
 
         foreach ($topUses as $use) {
@@ -182,7 +194,10 @@ class MissionRewardBlueprintService
         ];
     }
 
-    /** @param array<string, mixed> $template */
+    /**
+     * @param  array<string, mixed>  $template
+     * @return array<string, mixed>
+     */
     private function enrichTemplate(array $template): array
     {
         $plan = $this->executionPlans()[$template['code']] ?? $this->defaultExecutionPlan();
@@ -194,10 +209,13 @@ class MissionRewardBlueprintService
         ]);
     }
 
-    /** @param array<string, mixed> $template @return array<int, array<string, mixed>> */
+    /**
+     * @param  array<string, mixed>  $template
+     * @return array<int, array<string, mixed>>
+     */
     private function missionPlan(array $template): array
     {
-        $steps = collect($template['userSteps'] ?? [])->values();
+        $steps = collect($this->stringList($template['userSteps'] ?? null))->values();
         $stepCount = max($steps->count(), 1);
         $basePoints = max((int) data_get($template, 'points.base', 120), 60);
         $tiers = ['bronze', 'silver', 'gold', 'diamond'];
@@ -224,16 +242,19 @@ class MissionRewardBlueprintService
             ->all();
     }
 
-    /** @param array<string, mixed> $template @return array<string, mixed> */
+    /**
+     * @param  array<string, mixed>  $template
+     * @return array<string, mixed>
+     */
     private function rewardDesign(array $template): array
     {
         $tierKeys = ['bronze', 'silver', 'gold', 'diamond'];
         $optionCounts = ['bronze' => 5, 'silver' => 4, 'gold' => 3, 'diamond' => 2];
-        $basket = collect($template['rewardBasket'] ?? [])->values();
+        $basket = collect($this->arrayList($template['rewardBasket'] ?? null))->values();
 
         $tiers = $basket->map(function (array $tier, int $index) use ($tierKeys, $optionCounts): array {
             $tierKey = $tierKeys[$index] ?? 'custom';
-            $items = array_values($tier['items'] ?? []);
+            $items = $this->stringList($tier['items'] ?? null);
 
             return [
                 'tierKey' => $tierKey,
@@ -261,7 +282,10 @@ class MissionRewardBlueprintService
         ];
     }
 
-    /** @param array<int, string> $items @return array<int, string> */
+    /**
+     * @param  list<string>  $items
+     * @return list<string>
+     */
     private function rewardOptionsForTier(string $tierKey, array $items): array
     {
         $primary = $items[0] ?? 'پاداش اصلی';
@@ -435,6 +459,14 @@ class MissionRewardBlueprintService
     }
 
     /** @return array<string, mixed> */
+    /**
+     * @param  list<string>  $connectedSurfaces
+     * @param  list<string>  $bronze
+     * @param  list<string>  $silver
+     * @param  list<string>  $gold
+     * @param  list<string>  $diamond
+     * @return array<string, mixed>
+     */
     private function campaignPlan(string $launchPhase, int $mvpPriority, string $priorityReason, array $connectedSurfaces, array $bronze, array $silver, array $gold, array $diamond, string $nextBuildAction): array
     {
         return [
@@ -797,5 +829,23 @@ class MissionRewardBlueprintService
             ['name' => 'Pokémon GO style routes', 'pattern' => 'مسیر، نقطه مکانی، مأموریت مرحله ای و پاداش فوری.'],
             ['name' => 'UX gamification guidance', 'pattern' => 'پاداش باید به رفتار واقعی وصل باشد و جای تجربه اصلی را نگیرد.'],
         ];
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function arrayList(mixed $value): array
+    {
+        return is_array($value) ? array_values(array_filter($value, is_array(...))) : [];
+    }
+
+    /** @return array<array-key, mixed> */
+    private function associativeArray(mixed $value): array
+    {
+        return is_array($value) ? $value : [];
+    }
+
+    /** @return list<string> */
+    private function stringList(mixed $value): array
+    {
+        return is_array($value) ? array_values(array_filter($value, is_string(...))) : [];
     }
 }
