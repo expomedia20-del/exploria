@@ -23,6 +23,7 @@ class EcoParkDemoReadinessTest extends TestCase
 
         $this->assertTrue($report['summary']['ready']);
         $this->assertSame(0, $report['summary']['failCount']);
+        $this->assertSame(0, $report['summary']['warningCount']);
         $this->assertContains('ecopark-pilot-1405', collect($report['summary']['campaigns'])->pluck('code')->all());
 
         $checks = collect($report['checks'])->keyBy('key');
@@ -31,8 +32,9 @@ class EcoParkDemoReadinessTest extends TestCase
         $this->assertSame('pass', $checks['mission_chain']['status']);
         $this->assertSame('pass', $checks['treasure_connected']['status']);
         $this->assertSame('pass', $checks['sponsor_rewards']['status']);
+        $this->assertSame('pass', $checks['inventory_allocations']['status']);
         $this->assertSame('pass', $checks['panel_routes']['status']);
-        $this->assertSame('warning', $checks['venue_manager_scope']['status']);
+        $this->assertSame('pass', $checks['venue_manager_scope']['status']);
     }
 
     public function test_demo_readiness_command_outputs_json_report(): void

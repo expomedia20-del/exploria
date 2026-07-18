@@ -65,7 +65,7 @@ class InternalOperationsPanelTest extends TestCase
                 ->has('teamMembers', 2)
                 ->where('teamMembers.0.user.email', 'project.lead@example.test')
                 ->where('teamMembers.0.entryHref', '/admin/internal-operations')
-                ->where('teamMembers.0.subordinateCount', 1)
+                ->where('teamMembers.0.subordinateCount', 2)
                 ->where('teamMembers.1.user.email', 'field.operator@example.test')
                 ->where('teamMembers.1.entryHref', '/admin/campaign-operations')
                 ->where('teamMembers.1.reportsToKey', 'project_admin')

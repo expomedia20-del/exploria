@@ -16,6 +16,7 @@ use App\Models\PartnerLocation;
 use App\Models\PartnerUser;
 use App\Models\QrCode;
 use App\Models\RewardDefinition;
+use App\Models\RewardInventoryAllocation;
 use App\Models\Touchpoint;
 use App\Models\Treasure;
 use App\Models\User;
@@ -163,6 +164,16 @@ class PilotLocationSeeder extends Seeder
         UserAccessScope::query()->updateOrCreate(
             ['user_id' => $ravaqManager->id, 'role_key' => 'ravaq_manager', 'scope_type' => 'hub', 'scope_id' => $foodHub->id],
             ['status' => RecordStatus::Active, 'metadata' => ['source' => 'pilot_seed', 'scope_reason' => 'foodcourt_inside_ravaq_zone']],
+        );
+
+        $venueManager = User::query()->updateOrCreate(
+            ['email' => 'venue.manager.ecopark@example.test'],
+            ['name' => 'مدیر اجرایی مکان اکوپارک', 'password' => 'password', 'role' => UserRole::Viewer],
+        );
+
+        UserAccessScope::query()->updateOrCreate(
+            ['user_id' => $venueManager->id, 'role_key' => 'venue_executive', 'scope_type' => 'venue', 'scope_id' => $ecoPark->id],
+            ['status' => RecordStatus::Active, 'metadata' => ['source' => 'pilot_seed', 'purpose' => 'venue_manager_readiness']],
         );
 
         $partners = [
@@ -450,7 +461,7 @@ class PilotLocationSeeder extends Seeder
             );
         }
 
-        Treasure::query()->updateOrCreate(
+        $treasure = Treasure::query()->updateOrCreate(
             ['campaign_id' => $campaign->id, 'code' => 'eco-family-route-treasure'],
             [
                 'venue_id' => $ecoPark->id,
@@ -505,7 +516,7 @@ class PilotLocationSeeder extends Seeder
             /** @var PartnerAccount|null $rewardPartner */
             $rewardPartner = $rewardData['partner'];
 
-            RewardDefinition::query()->updateOrCreate(
+            $reward = RewardDefinition::query()->updateOrCreate(
                 ['campaign_id' => $campaign->id, 'code' => $rewardData['code']],
                 [
                     'venue_id' => $ecoPark->id,
@@ -518,6 +529,25 @@ class PilotLocationSeeder extends Seeder
                     'metadata' => ['is_demo' => true],
                 ],
             );
+
+            if ($rewardPartner && $reward->stock_quantity) {
+                RewardInventoryAllocation::query()->updateOrCreate(
+                    [
+                        'reward_definition_id' => $reward->id,
+                        'partner_account_id' => $rewardPartner->id,
+                    ],
+                    [
+                        'treasure_id' => $reward->code === 'pilot-prize-draw' ? $treasure->id : null,
+                        'campaign_id' => $campaign->id,
+                        'mission_instance_id' => null,
+                        'allocated_quantity' => $reward->stock_quantity,
+                        'reserved_quantity' => 0,
+                        'redeemed_quantity' => 0,
+                        'status' => RecordStatus::Active,
+                        'metadata' => ['source' => 'pilot_seed', 'is_demo' => true],
+                    ],
+                );
+            }
         }
     }
 }

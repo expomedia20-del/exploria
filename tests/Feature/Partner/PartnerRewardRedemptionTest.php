@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Partner;
 
+use App\Enums\RecordStatus;
 use App\Enums\UserRole;
 use App\Models\MissionInstance;
 use App\Models\MissionTemplate;
@@ -81,7 +82,6 @@ class PartnerRewardRedemptionTest extends TestCase
             ->assertJsonPath('data.partner.code', 'cafe-eco');
     }
 
-
     public function test_partner_reward_completion_creates_pending_redemption(): void
     {
         $this->completeMission('scan-entry-qr');
@@ -129,6 +129,11 @@ class PartnerRewardRedemptionTest extends TestCase
     {
         $campaign = $this->visit->campaign;
         $partner = PartnerAccount::query()->where('code', 'cafe-eco')->firstOrFail();
+
+        RewardInventoryAllocation::query()
+            ->where('partner_account_id', $partner->id)
+            ->delete();
+
         $reward = RewardDefinition::query()->create([
             'campaign_id' => $campaign->id,
             'venue_id' => $campaign->venue_id,
@@ -340,7 +345,7 @@ class PartnerRewardRedemptionTest extends TestCase
         $draftCampaign->forceFill([
             'code' => 'draft-partner-proposal',
             'name' => 'Draft partner proposal',
-            'status' => \App\Enums\RecordStatus::Draft,
+            'status' => RecordStatus::Draft,
         ])->save();
 
         $this->actingAs($partnerUser)
@@ -544,7 +549,6 @@ class PartnerRewardRedemptionTest extends TestCase
         $this->assertSame('cafe-eco', $reward['partner']['code']);
         $this->assertArrayHasKey('submittedAt', $reward);
     }
-
 
     private function completeMission(string $code): void
     {
