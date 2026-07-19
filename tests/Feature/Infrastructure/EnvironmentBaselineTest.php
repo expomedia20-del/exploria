@@ -36,4 +36,18 @@ class EnvironmentBaselineTest extends TestCase
         $this->assertStringContainsString('<env name="DB_CONNECTION" value="pgsql"/>', $configuration);
         $this->assertStringNotContainsString('DB_PASSWORD" value=', $configuration);
     }
+
+    public function test_backup_and_restore_scripts_are_fail_closed(): void
+    {
+        $backupScript = file_get_contents(base_path('scripts/backup-postgresql.ps1'));
+        $restoreScript = file_get_contents(base_path('scripts/test-postgresql-restore.ps1'));
+
+        $this->assertIsString($backupScript);
+        $this->assertIsString($restoreScript);
+        $this->assertStringContainsString('pg_restore --list', $backupScript);
+        $this->assertStringContainsString('must end with _restore_test or -restore-test', $restoreScript);
+        $this->assertStringContainsString('--clean --if-exists --exit-on-error', $restoreScript);
+        $this->assertStringNotContainsString('PGPASSWORD = \'', $backupScript);
+        $this->assertStringNotContainsString('PGPASSWORD = \'', $restoreScript);
+    }
 }

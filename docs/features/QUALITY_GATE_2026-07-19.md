@@ -21,7 +21,7 @@
 
 ```text
 composer ci:check
-PHPUnit: 255 passed / 2,229 assertions
+PHPUnit: 259 passed / 2,257 assertions
 PHPStan: 0 error
 Pint, ESLint, Prettier, TypeScript: PASS
 
@@ -54,3 +54,5 @@ Checklist progress: 100%
 پس از این گزارش، Gate اجرایی `exploria:production-readiness` اضافه شد. این Gate تنظیمات امن، اتصال واقعی دیتابیس و نبود Migration معوق را پیش از Staging کنترل می‌کند و در محیط Local به‌صورت Fail-Closed متوقف می‌شود.
 
 Binding ارسال OTP نیز Fail-Closed شد: Driver محلی فقط در Local/Test قابل استفاده است و نام Driver ناشناخته به `UnavailableOtpProvider` می‌رسد. Gate استقرار فقط پیاده‌سازی واقعی `OtpProvider` را می‌پذیرد.
+
+هدرهای امنیتی پایه به‌صورت سراسری به پاسخ‌های وب، API و Health اضافه شدند و HSTS فقط روی درخواست امن فعال می‌شود. رویه Backup و آزمون Restore جداگانه PostgreSQL نیز با کنترل نام دیتابیس بازیابی، اعتبارسنجی Archive و بدون Credential ثابت اضافه شد. خط مبنای محلی جدید در `docs/features/LOCAL_PERFORMANCE_BASELINE.md` ثبت شده است.
