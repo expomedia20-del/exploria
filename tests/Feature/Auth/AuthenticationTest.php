@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\RateLimiter;
+use Inertia\Testing\AssertableInertia as Assert;
 use Laravel\Fortify\Features;
 use Tests\TestCase;
 
@@ -105,6 +106,27 @@ class AuthenticationTest extends TestCase
         $response->assertRedirect(route('home'));
 
         $this->assertGuest();
+    }
+
+    public function test_shared_authenticated_user_data_does_not_expose_mobile_or_hashes(): void
+    {
+        $this->withoutVite();
+        $user = User::factory()->create([
+            'mobile' => '09120000000',
+            'mobile_hash' => hash('sha256', '09120000000'),
+            'role' => UserRole::Visitor,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('participant.dashboard'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('auth.user.id', $user->id)
+                ->where('auth.user.role', UserRole::Visitor->value)
+                ->missing('auth.user.mobile')
+                ->missing('auth.user.mobile_hash')
+                ->missing('auth.user.password')
+                ->missing('auth.user.remember_token'));
     }
 
     public function test_users_are_rate_limited()
