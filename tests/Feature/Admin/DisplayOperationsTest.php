@@ -156,10 +156,13 @@ class DisplayOperationsTest extends TestCase
             ->getJson(route('admin.display-operations.index'))
             ->assertOk()
             ->assertJsonPath('data.stats.onlineDevices', 1)
-            ->assertJsonPath('data.displayDevices.0.isOnline', true)
-            ->assertJsonPath('data.displayDevices.0.playbackStatus', 'playing')
-            ->assertJsonPath('data.displayDevices.0.currentSlot', 'hero-loop-1')
-            ->assertJsonPath('data.displayDevices.0.lastPlaybackResult', 'ok');
+            ->assertJsonPath('data.displayDevices', fn (array $devices): bool => collect($devices)->contains(
+                fn (array $device): bool => $device['code'] === 'ecopark-entry-fixed-display'
+                    && $device['isOnline'] === true
+                    && $device['playbackStatus'] === 'playing'
+                    && $device['currentSlot'] === 'hero-loop-1'
+                    && $device['lastPlaybackResult'] === 'ok',
+            ));
     }
 
     public function test_old_display_heartbeat_is_reported_as_offline(): void

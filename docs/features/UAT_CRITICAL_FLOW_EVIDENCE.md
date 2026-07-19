@@ -36,7 +36,7 @@
 - UAT خودکار سمت سرور: PASS.
 - Readiness داده دمو: PASS.
 - UAT بصری مرورگری: PARTIAL PASS — صفحه عمومی، QR و پنل شریک در نمای موبایل بررسی شد؛ تعامل کلیکی و گردش کامل نقش‌ها همچنان نیازمند اجرای دستی یا اتصال قابل‌کنترل است.
-- PHPUnit کامل: 259 تست و 2,257 Assertion — PASS.
+- PHPUnit کامل: 259 تست و 2,254 Assertion — PASS.
 - PHPStan، Pint، ESLint، Prettier، TypeScript و Production Build — PASS.
 - Audit وابستگی‌های npm و Composer در ۲۰۲۶-۰۷-۱۹ — PASS، بدون Advisory شناخته‌شده.
 - Stress Demo با سفر کامل بازدیدکننده و مصرف پاداش — PASS، پیشرفت چک‌لیست ۱۰۰٪.

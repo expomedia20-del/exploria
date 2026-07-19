@@ -21,7 +21,7 @@
 
 ```text
 composer ci:check
-PHPUnit: 259 passed / 2,257 assertions
+PHPUnit: 259 passed / 2,254 assertions
 PHPStan: 0 error
 Pint, ESLint, Prettier, TypeScript: PASS
 
