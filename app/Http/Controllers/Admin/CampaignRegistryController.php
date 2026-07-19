@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Actions\Events\RecordAdminAuditAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreCampaignRequest;
 use App\Models\Campaign;
@@ -31,10 +32,15 @@ class CampaignRegistryController extends Controller
         return response()->json(['status' => 'success', 'data' => $service->list($request->user())]);
     }
 
-    public function store(StoreCampaignRequest $request, CampaignRegistryService $service): JsonResponse|RedirectResponse
+    public function store(StoreCampaignRequest $request, CampaignRegistryService $service, RecordAdminAuditAction $audit): JsonResponse|RedirectResponse
     {
         $validated = $request->validated();
         $campaign = $service->create($validated);
+        $audit->execute($request->user(), ! empty($validated['campaign_id']) ? 'campaign_updated' : 'campaign_created', 'campaign', $campaign->id, $request->session()->getId(), [
+            'code' => $campaign->code,
+            'name' => $campaign->name,
+            'status' => $campaign->status->value,
+        ]);
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -60,9 +66,12 @@ class CampaignRegistryController extends Controller
             ->with('success', 'کمپین جدید ثبت شد.');
     }
 
-    public function destroy(Request $request, Campaign $campaign, CampaignRegistryService $service): JsonResponse|RedirectResponse
+    public function destroy(Request $request, Campaign $campaign, CampaignRegistryService $service, RecordAdminAuditAction $audit): JsonResponse|RedirectResponse
     {
+        $campaignId = $campaign->id;
+        $payload = ['code' => $campaign->code, 'name' => $campaign->name];
         $service->delete($campaign);
+        $audit->execute($request->user(), 'campaign_deleted', 'campaign', $campaignId, $request->session()->getId(), $payload);
 
         if ($request->expectsJson()) {
             return response()->json(['status' => 'success']);

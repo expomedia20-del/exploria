@@ -100,6 +100,12 @@ class CampaignQrCoreTest extends TestCase
         $this->assertSame('venue_blueprint_recommendation', $campaign->metadata['design_source']);
         $this->assertSame($venue->id, $campaign->metadata['design_venue_id']);
         $this->assertSame('ecopark-abbasabad', $campaign->metadata['design_venue_code']);
+        $this->assertDatabaseHas('event_log', [
+            'event_type' => 'audit.campaign_created',
+            'actor_user_id' => $operator->id,
+            'object_type' => 'campaign',
+            'object_id' => $campaign->id,
+        ]);
 
         $this->actingAs($operator)
             ->get(route('admin.campaigns.page', ['campaign' => 'family-route-1405']))
@@ -139,6 +145,11 @@ class CampaignQrCoreTest extends TestCase
             'name' => 'Updated empty campaign',
             'status' => 'inactive',
         ]);
+        $this->assertDatabaseHas('event_log', [
+            'event_type' => 'audit.campaign_updated',
+            'actor_user_id' => $operator->id,
+            'object_id' => $campaign->id,
+        ]);
 
         $this->actingAs($operator)
             ->from(route('admin.campaigns.page'))
@@ -146,6 +157,11 @@ class CampaignQrCoreTest extends TestCase
             ->assertRedirect(route('admin.campaigns.page'));
 
         $this->assertDatabaseMissing('campaigns', ['id' => $campaign->id]);
+        $this->assertDatabaseHas('event_log', [
+            'event_type' => 'audit.campaign_deleted',
+            'actor_user_id' => $operator->id,
+            'object_id' => $campaign->id,
+        ]);
     }
 
     public function test_viewer_can_open_campaign_builder_page(): void
@@ -491,6 +507,11 @@ class CampaignQrCoreTest extends TestCase
             ->assertRedirect();
 
         $mission = MissionInstance::query()->where('code', 'delete-test-mission')->firstOrFail();
+        $this->assertDatabaseHas('event_log', [
+            'event_type' => 'audit.mission_created',
+            'actor_user_id' => $operator->id,
+            'object_id' => $mission->id,
+        ]);
 
         $this->actingAs($operator)
             ->post(route('admin.rewards.store'), [
@@ -506,6 +527,11 @@ class CampaignQrCoreTest extends TestCase
             ->assertRedirect();
 
         $reward = RewardDefinition::query()->where('code', 'delete-test-reward')->firstOrFail();
+        $this->assertDatabaseHas('event_log', [
+            'event_type' => 'audit.reward_created',
+            'actor_user_id' => $operator->id,
+            'object_id' => $reward->id,
+        ]);
 
         $this->actingAs($operator)
             ->delete(route('admin.rewards.destroy', ['reward' => $reward->id]))
@@ -517,6 +543,23 @@ class CampaignQrCoreTest extends TestCase
 
         $this->assertDatabaseMissing('reward_definitions', ['id' => $reward->id]);
         $this->assertDatabaseMissing('mission_instances', ['id' => $mission->id]);
+        $this->assertDatabaseHas('event_log', [
+            'event_type' => 'audit.reward_deleted',
+            'actor_user_id' => $operator->id,
+            'object_id' => $reward->id,
+        ]);
+        $this->assertDatabaseHas('event_log', [
+            'event_type' => 'audit.mission_deleted',
+            'actor_user_id' => $operator->id,
+            'object_id' => $mission->id,
+        ]);
+
+        $this->actingAs($operator)
+            ->getJson(route('admin.events.scan-log.index', ['event_type' => 'audit.mission_deleted']))
+            ->assertOk()
+            ->assertJsonPath('data.items.0.objectType', 'mission')
+            ->assertJsonPath('data.items.0.objectCode', 'delete-test-mission')
+            ->assertJsonMissingPath('data.items.0.sessionHash');
     }
 
     public function test_operator_can_complete_campaign_participants_route_and_launch_review(): void

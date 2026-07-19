@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Actions\Events\RecordAdminAuditAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\AssignSponsorIncentiveRequest;
 use App\Http\Requests\Admin\StoreMissionInstanceRequest;
@@ -41,9 +42,14 @@ class MissionRewardRegistryController extends Controller
         return response()->json(['status' => 'success', 'data' => $service->overview($request->user(), $selectedCampaign['id'] ?? null)]);
     }
 
-    public function storeMission(StoreMissionInstanceRequest $request, MissionRewardRegistryService $service): JsonResponse|RedirectResponse
+    public function storeMission(StoreMissionInstanceRequest $request, MissionRewardRegistryService $service, RecordAdminAuditAction $audit): JsonResponse|RedirectResponse
     {
         $mission = $service->createMission($request->validated());
+        $audit->execute($request->user(), $mission->wasRecentlyCreated ? 'mission_created' : 'mission_updated', 'mission', $mission->id, $request->session()->getId(), [
+            'code' => $mission->code,
+            'name' => $mission->title_override,
+            'status' => $mission->status->value,
+        ]);
 
         if ($request->expectsJson()) {
             return response()->json(['status' => 'success', 'data' => ['id' => $mission->id, 'code' => $mission->code]], 201);
@@ -52,9 +58,14 @@ class MissionRewardRegistryController extends Controller
         return back()->with('success', 'مأموریت کمپین ثبت شد.');
     }
 
-    public function storeReward(StoreRewardDefinitionRequest $request, MissionRewardRegistryService $service): JsonResponse|RedirectResponse
+    public function storeReward(StoreRewardDefinitionRequest $request, MissionRewardRegistryService $service, RecordAdminAuditAction $audit): JsonResponse|RedirectResponse
     {
         $reward = $service->createReward($request->validated());
+        $audit->execute($request->user(), $reward->wasRecentlyCreated ? 'reward_created' : 'reward_updated', 'reward', $reward->id, $request->session()->getId(), [
+            'code' => $reward->code,
+            'name' => $reward->name,
+            'status' => $reward->status->value,
+        ]);
 
         if ($request->expectsJson()) {
             return response()->json(['status' => 'success', 'data' => ['id' => $reward->id, 'code' => $reward->code]], 201);
@@ -85,9 +96,12 @@ class MissionRewardRegistryController extends Controller
         return back()->with('success', 'مشوق اسپانسری به ماموریت، سطح پاداش و ردیابی موجودی وصل شد.');
     }
 
-    public function destroyMission(Request $request, MissionInstance $mission, MissionRewardRegistryService $service): JsonResponse|RedirectResponse
+    public function destroyMission(Request $request, MissionInstance $mission, MissionRewardRegistryService $service, RecordAdminAuditAction $audit): JsonResponse|RedirectResponse
     {
+        $missionId = $mission->id;
+        $payload = ['code' => $mission->code, 'name' => $mission->title_override];
         $service->deleteMission($mission);
+        $audit->execute($request->user(), 'mission_deleted', 'mission', $missionId, $request->session()->getId(), $payload);
 
         if ($request->expectsJson()) {
             return response()->json(['status' => 'success']);
@@ -96,9 +110,12 @@ class MissionRewardRegistryController extends Controller
         return back()->with('success', 'مأموریت کمپین حذف شد.');
     }
 
-    public function destroyReward(Request $request, RewardDefinition $reward, MissionRewardRegistryService $service): JsonResponse|RedirectResponse
+    public function destroyReward(Request $request, RewardDefinition $reward, MissionRewardRegistryService $service, RecordAdminAuditAction $audit): JsonResponse|RedirectResponse
     {
+        $rewardId = $reward->id;
+        $payload = ['code' => $reward->code, 'name' => $reward->name];
         $service->deleteReward($reward);
+        $audit->execute($request->user(), 'reward_deleted', 'reward', $rewardId, $request->session()->getId(), $payload);
 
         if ($request->expectsJson()) {
             return response()->json(['status' => 'success']);

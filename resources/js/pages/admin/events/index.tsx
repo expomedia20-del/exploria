@@ -9,8 +9,9 @@ type ScanEventItem = {
     result: 'accepted' | 'invalid' | 'duplicate' | null;
     riskFlag: boolean;
     riskReason: string | null;
-    qrCode: string | null;
-    qrLabel: string | null;
+    objectType: string | null;
+    objectCode: string | null;
+    objectLabel: string | null;
     actorLabel: string;
     occurredAt: string;
 };
@@ -43,6 +44,14 @@ const summaryLabels = {
     auth: 'ورود و OTP',
     consent: 'رضایت‌نامه',
     audit: 'Audit مدیریتی',
+};
+const objectTypeLabels: Record<string, string> = {
+    qr_code: 'QR',
+    venue: 'مکان',
+    campaign: 'کمپین',
+    mission: 'مأموریت',
+    reward: 'پاداش',
+    consent_version: 'نسخه رضایت‌نامه',
 };
 
 export default function ScanEventIndex({ items, summary, filters }: Props) {
@@ -132,6 +141,36 @@ export default function ScanEventIndex({ items, summary, filters }: Props) {
                                     ویرایش QR
                                 </option>
                                 <option value="audit.qr_deleted">حذف QR</option>
+                                <option value="audit.venue_updated">
+                                    ویرایش مکان
+                                </option>
+                                <option value="audit.campaign_created">
+                                    ساخت کمپین
+                                </option>
+                                <option value="audit.campaign_updated">
+                                    ویرایش کمپین
+                                </option>
+                                <option value="audit.campaign_deleted">
+                                    حذف کمپین
+                                </option>
+                                <option value="audit.mission_created">
+                                    ساخت مأموریت
+                                </option>
+                                <option value="audit.mission_updated">
+                                    ویرایش مأموریت
+                                </option>
+                                <option value="audit.mission_deleted">
+                                    حذف مأموریت
+                                </option>
+                                <option value="audit.reward_created">
+                                    ساخت پاداش
+                                </option>
+                                <option value="audit.reward_updated">
+                                    ویرایش پاداش
+                                </option>
+                                <option value="audit.reward_deleted">
+                                    حذف پاداش
+                                </option>
                             </select>
                         </label>
                         <label className="grid gap-2 text-sm">
@@ -202,17 +241,14 @@ export default function ScanEventIndex({ items, summary, filters }: Props) {
                                     </div>
                                 </div>
                                 <div>
-                                    <p>
-                                        {event.qrLabel ??
-                                            (event.qrCode
-                                                ? 'QR بدون عنوان'
-                                                : 'بدون QR')}
-                                    </p>
+                                    <p>{event.objectLabel ?? 'بدون عنوان'}</p>
                                     <p
                                         className="text-xs text-muted-foreground"
                                         dir="ltr"
                                     >
-                                        {event.qrCode ?? '-'}
+                                        {event.objectType
+                                            ? `${objectTypeLabels[event.objectType] ?? event.objectType}: ${event.objectCode ?? '-'}`
+                                            : '-'}
                                     </p>
                                 </div>
                                 <p className="text-sm">{event.actorLabel}</p>

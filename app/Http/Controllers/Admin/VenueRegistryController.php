@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Actions\Events\RecordAdminAuditAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateVenueProfileRequest;
 use App\Models\Venue;
@@ -143,9 +144,14 @@ XML);
         return $xml.'</sheetData></worksheet>';
     }
 
-    public function updateProfile(UpdateVenueProfileRequest $request, Venue $venue, VenueRegistryService $service): JsonResponse|RedirectResponse
+    public function updateProfile(UpdateVenueProfileRequest $request, Venue $venue, VenueRegistryService $service, RecordAdminAuditAction $audit): JsonResponse|RedirectResponse
     {
         $service->updateProfile($venue, $request->validated());
+        $audit->execute($request->user(), 'venue_updated', 'venue', $venue->id, $request->session()->getId(), [
+            'code' => $venue->code,
+            'name' => $venue->name,
+            'status' => $venue->status->value,
+        ]);
 
         if ($request->expectsJson()) {
             return response()->json(['status' => 'success']);

@@ -89,6 +89,12 @@ class VenueRegistryTest extends TestCase
         $this->assertSame(['mission', 'treasure'], $venue->metadata['location_profile']['facilities'][0]['campaignUses']);
         $this->assertSame('باغ کتاب', $venue->metadata['location_profile']['facilities'][2]['name']);
         $this->assertCount(3, $venue->metadata['location_profile']['facilities']);
+        $this->assertDatabaseHas('event_log', [
+            'event_type' => 'audit.venue_updated',
+            'actor_user_id' => $admin->id,
+            'object_type' => 'venue',
+            'object_id' => $venue->id,
+        ]);
 
         $this->actingAs($admin)
             ->getJson(route('admin.venues.index'))

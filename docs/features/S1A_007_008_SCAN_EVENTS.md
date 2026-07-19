@@ -14,7 +14,7 @@
 - ثبت `invalid_scan` برای QR ناشناخته، غیرفعال، منقضی یا خارج از بازه اعتبار.
 - ثبت `duplicate_scan_flagged` برای عبور از سقف اسکن کاربر در پنجره زمانی QR.
 - ثبت امن `otp_requested`، `otp_verified`، `consent_viewed` و `consent_accepted` در Event Log.
-- ثبت Audit append-only برای ایجاد، ویرایش و حذف QR همراه با شناسه عامل و شیء، بدون داده حساس خام.
+- ثبت Audit append-only برای تغییرات حساس Venue، Campaign، Mission، Reward و QR همراه با شناسه عامل و شیء، بدون داده حساس خام؛ جزئیات در `ADMIN_002_SENSITIVE_AUDIT.md`.
 - جلوگیری از ساخت Visit یا Progress تکراری برای همان کاربر و QR.
 - نمایش تعداد کل اسکن‌ها و اسکن‌های پذیرفته‌شده در Dashboard مدیریتی.
 - صفحه و API فقط‌خواندنی Event Monitor برای Admin، Operator و Viewer با نمایش یکپارچه اسکن، OTP، رضایت‌نامه و Audit؛ فیلتر نتیجه، نوع رویداد و بازه تاریخ؛ و سقف ۱۰۰ رکورد آخر.
@@ -39,7 +39,7 @@
 - تست Dashboard برای کل اسکن‌ها و اسکن‌های پذیرفته‌شده — PASS.
 - تست Eventهای OTP/Consent، ثبت `consent_viewed`، عدم نشت موبایل و کد OTP، فیلتر نوع/تاریخ Event Monitor و Authorization — PASS.
 - تست Audit ایجاد، ویرایش و حذف QR و نمایش فقط‌خواندنی آن در Event Monitor — PASS.
-- PHPUnit کامل: 248 تست و 2,152 Assertion — PASS.
+- PHPUnit کامل: 248 تست و 2,164 Assertion — PASS.
 - PHPStan کل پروژه: صفر Finding — PASS.
 - Pint، ESLint، Prettier، TypeScript و Production Build — PASS.
-- Production Build: 2,335 module و chunk مستقل Event Monitor حدود 5.75 kB — PASS.
+- Production Build: 2,335 module و chunk مستقل Event Monitor حدود 6.79 kB — PASS.

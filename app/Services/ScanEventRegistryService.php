@@ -30,6 +30,8 @@ class ScanEventRegistryService
             $payload = $event->payload_json ?? [];
             $qrCode = $qr instanceof QrCode ? $qr->code : null;
             $qrLabel = $qr instanceof QrCode ? $qr->label : null;
+            $payloadCode = is_string($payload['code'] ?? null) ? $payload['code'] : null;
+            $payloadName = is_string($payload['name'] ?? null) ? $payload['name'] : null;
 
             return [
                 'id' => $event->id,
@@ -37,8 +39,9 @@ class ScanEventRegistryService
                 'result' => $payload['result'] ?? null,
                 'riskFlag' => (bool) ($payload['risk_flag'] ?? false),
                 'riskReason' => $payload['risk_reason'] ?? null,
-                'qrCode' => $qrCode ?? (is_string($payload['code'] ?? null) ? $payload['code'] : null),
-                'qrLabel' => $qrLabel,
+                'objectType' => $event->object_type,
+                'objectCode' => $qrCode ?? $payloadCode,
+                'objectLabel' => $qrLabel ?? $payloadName,
                 'actorLabel' => $event->actor_user_id ? 'کاربر #'.$event->actor_user_id : 'نشست ناشناس',
                 'occurredAt' => $event->occurred_at->toIso8601String(),
             ];
