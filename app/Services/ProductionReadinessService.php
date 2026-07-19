@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Contracts\OtpProvider;
+use App\Infrastructure\Otp\LocalFixedOtpProvider;
+use App\Infrastructure\Otp\UnavailableOtpProvider;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Migrations\Migrator;
 use Throwable;
@@ -11,6 +14,7 @@ class ProductionReadinessService
     public function __construct(
         private readonly DatabaseManager $database,
         private readonly Migrator $migrator,
+        private readonly OtpProvider $otpProvider,
     ) {}
 
     /**
@@ -71,9 +75,10 @@ class ProductionReadinessService
             $this->check(
                 'otp',
                 'ارسال‌کننده OTP',
-                ! in_array(config('otp.driver'), ['local', 'unavailable', null, ''], true),
-                config('otp.driver'),
-                'OTP_DRIVER باید Provider واقعی و غیرمحلی باشد.',
+                ! $this->otpProvider instanceof LocalFixedOtpProvider
+                    && ! $this->otpProvider instanceof UnavailableOtpProvider,
+                class_basename($this->otpProvider),
+                'یک Provider واقعی و غیرمحلی باید برای OtpProvider ثبت شده باشد.',
             ),
             $this->check(
                 'queue',

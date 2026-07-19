@@ -21,7 +21,7 @@
 
 ```text
 composer ci:check
-PHPUnit: 254 passed / 2,226 assertions
+PHPUnit: 255 passed / 2,229 assertions
 PHPStan: 0 error
 Pint, ESLint, Prettier, TypeScript: PASS
 
@@ -52,3 +52,5 @@ Checklist progress: 100%
 ## Gate تکمیلی استقرار
 
 پس از این گزارش، Gate اجرایی `exploria:production-readiness` اضافه شد. این Gate تنظیمات امن، اتصال واقعی دیتابیس و نبود Migration معوق را پیش از Staging کنترل می‌کند و در محیط Local به‌صورت Fail-Closed متوقف می‌شود.
+
+Binding ارسال OTP نیز Fail-Closed شد: Driver محلی فقط در Local/Test قابل استفاده است و نام Driver ناشناخته به `UnavailableOtpProvider` می‌رسد. Gate استقرار فقط پیاده‌سازی واقعی `OtpProvider` را می‌پذیرد.

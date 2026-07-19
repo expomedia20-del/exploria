@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Contracts\OtpProvider;
 use App\Infrastructure\Otp\LocalFixedOtpProvider;
+use App\Infrastructure\Otp\UnavailableOtpProvider;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +18,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->bind(OtpProvider::class, LocalFixedOtpProvider::class);
+        $this->app->bind(OtpProvider::class, fn ($app): OtpProvider => match (config('otp.driver')) {
+            'local' => $app->make(LocalFixedOtpProvider::class),
+            default => $app->make(UnavailableOtpProvider::class),
+        });
     }
 
     /**

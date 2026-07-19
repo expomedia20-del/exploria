@@ -24,7 +24,7 @@ php artisan exploria:production-readiness --json
 - `APP_URL` با HTTPS؛
 - `DB_CONNECTION=pgsql`؛
 - اتصال واقعی PostgreSQL و نبود Migration معوق؛
-- Provider واقعی و غیرمحلی OTP؛
+- Provider واقعی و غیرمحلی OTP که عملاً در Container برنامه Bind شده باشد؛ نام دلخواه در `OTP_DRIVER` کافی نیست؛
 - Queue و Cache پایدار؛
 - Session روی database یا redis؛
 - Cookieهای `Secure` و `HttpOnly`؛
