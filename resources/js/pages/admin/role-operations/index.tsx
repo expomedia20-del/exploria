@@ -12,7 +12,10 @@ import {
 import type { LucideIcon } from 'lucide-react';
 
 type RoleGroup =
-    'exploria_team' | 'venue_management' | 'commercial_partner' | 'public';
+    | 'exploria_team'
+    | 'venue_management'
+    | 'commercial_partner'
+    | 'public';
 
 type RoleItem = {
     key: string;

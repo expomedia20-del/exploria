@@ -16,7 +16,13 @@ import { useMemo, useState } from 'react';
 
 type StartMode = 'home' | 'onsite';
 type NodeId =
-    'gate' | 'hologram' | 'ravaq' | 'food' | 'mina' | 'ocean' | 'final';
+    | 'gate'
+    | 'hologram'
+    | 'ravaq'
+    | 'food'
+    | 'mina'
+    | 'ocean'
+    | 'final';
 
 type TreasureNode = {
     id: NodeId;
