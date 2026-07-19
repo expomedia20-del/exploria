@@ -2,6 +2,7 @@
 
 namespace App\Actions\Auth;
 
+use App\Actions\Events\RecordDomainEventAction;
 use App\Actions\Events\RecordQrScanEventAction;
 use App\Contracts\OtpProvider;
 use App\Models\OtpRequest;
@@ -14,6 +15,7 @@ class RequestOtpAction
     public function __construct(
         private readonly OtpProvider $provider,
         private readonly RecordQrScanEventAction $recordQrScan,
+        private readonly RecordDomainEventAction $recordEvent,
     ) {}
 
     public function execute(
@@ -44,12 +46,20 @@ class RequestOtpAction
 
         $code = $this->provider->issue($mobile);
 
-        return OtpRequest::create([
+        $otp = OtpRequest::create([
             'mobile' => $mobile,
             'mobile_hash' => hash('sha256', $mobile),
             'code_hash' => Hash::make($code),
             'source_qr_code' => $sourceQrCode,
             'expires_at' => now()->addMinutes(config('otp.expires_minutes')),
         ]);
+
+        $this->recordEvent->execute('otp_requested', null, $sessionId, 'otp_request', $otp->id, [
+            'mobile_hash' => $otp->mobile_hash,
+            'channel' => 'sms',
+            'source_qr_code' => $sourceQrCode,
+        ]);
+
+        return $otp;
     }
 }

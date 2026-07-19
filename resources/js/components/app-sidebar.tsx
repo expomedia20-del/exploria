@@ -15,6 +15,7 @@ import {
     PlayCircle,
     QrCode,
     Route,
+    ScrollText,
     ShieldCheck,
     ShoppingBag,
     Store,
@@ -130,6 +131,13 @@ const mainNavItems: RoleAwareNavItem[] = [
         icon: QrCode,
         group: '۱. تیم داخلی اکسپلوریا',
         roles: ['admin', 'operator', 'viewer', 'hub_manager'],
+    },
+    {
+        title: 'پایش رویدادهای اسکن',
+        href: '/admin/events/scan-log',
+        icon: ScrollText,
+        group: '۱. تیم داخلی اکسپلوریا',
+        roles: ['admin', 'operator', 'viewer'],
     },
     {
         title: 'نقشه عملیات کمپین',

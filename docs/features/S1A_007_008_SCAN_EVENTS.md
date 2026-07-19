@@ -13,8 +13,10 @@
 - ثبت `qr_scanned` پس از Consent و پذیرش اسکن معتبر.
 - ثبت `invalid_scan` برای QR ناشناخته، غیرفعال، منقضی یا خارج از بازه اعتبار.
 - ثبت `duplicate_scan_flagged` برای عبور از سقف اسکن کاربر در پنجره زمانی QR.
+- ثبت امن `otp_requested`، `otp_verified` و `consent_accepted` در Event Log.
 - جلوگیری از ساخت Visit یا Progress تکراری برای همان کاربر و QR.
 - نمایش تعداد کل اسکن‌ها و اسکن‌های پذیرفته‌شده در Dashboard مدیریتی.
+- صفحه و API فقط‌خواندنی Scan Log برای Admin، Operator و Viewer با فیلتر نتیجه و سقف ۱۰۰ رکورد آخر.
 
 ## امنیت و حریم خصوصی
 
@@ -34,6 +36,8 @@
 - تست Accepted، Invalid، Duplicate، Attribution، Hashing و Append-only — PASS.
 - Migration Rollback و Reapply ایزوله — PASS.
 - تست Dashboard برای کل اسکن‌ها و اسکن‌های پذیرفته‌شده — PASS.
-- PHPUnit کامل: 242 تست و 2,091 Assertion — PASS.
+- تست Eventهای OTP/Consent، عدم نشت موبایل و کد OTP، فیلتر Scan Log و Authorization — PASS.
+- PHPUnit کامل: 246 تست و 2,123 Assertion — PASS.
 - PHPStan کل پروژه: صفر Finding — PASS.
 - Pint، ESLint، Prettier، TypeScript و Production Build — PASS.
+- Production Build: 2,335 module و chunk مستقل Event Monitor حدود 3.99 kB — PASS.

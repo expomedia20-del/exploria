@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\PartnerRegistryController;
 use App\Http\Controllers\Admin\QrRegistryController;
 use App\Http\Controllers\Admin\RewardApprovalController;
 use App\Http\Controllers\Admin\RoleOperationsController;
+use App\Http\Controllers\Admin\ScanEventController;
 use App\Http\Controllers\Admin\SponsorActivationController;
 use App\Http\Controllers\Admin\SupportCenterController;
 use App\Http\Controllers\Admin\UserAccessScopeController;
@@ -143,6 +144,9 @@ Route::patch('/api/v1/sponsor/proposals/{proposal}', [SponsorDashboardController
 Route::get('/admin/qr-codes', [QrRegistryController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer'])
     ->name('admin.qr-codes.page');
+Route::get('/admin/events/scan-log', [ScanEventController::class, 'page'])
+    ->middleware(['auth', 'role:admin,operator,viewer'])
+    ->name('admin.events.scan-log.page');
 
 Route::get('/admin/internal-operations', [InternalOperationsController::class, 'page'])
     ->middleware(['auth', 'role:admin,operator,viewer'])
@@ -353,6 +357,9 @@ Route::patch('/admin/venues/{venue}/profile', [VenueRegistryController::class, '
 Route::get('/api/v1/admin/qr-codes', [QrRegistryController::class, 'index'])
     ->middleware(['auth', 'role:admin,operator,viewer'])
     ->name('admin.qr-codes.index');
+Route::get('/api/v1/admin/events/scan-log', [ScanEventController::class, 'index'])
+    ->middleware(['auth', 'role:admin,operator,viewer'])
+    ->name('admin.events.scan-log.index');
 
 Route::post('/api/v1/admin/qr-codes', [QrRegistryController::class, 'store'])
     ->middleware(['auth', 'role:admin,operator'])

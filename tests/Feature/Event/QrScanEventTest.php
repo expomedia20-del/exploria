@@ -60,6 +60,25 @@ class QrScanEventTest extends TestCase
         $this->assertDatabaseCount('visits', 1);
         $this->assertDatabaseHas('event_log', ['event_type' => 'qr_scanned']);
         $this->assertDatabaseHas('event_log', ['event_type' => 'duplicate_scan_flagged']);
+        $this->assertDatabaseHas('event_log', ['event_type' => 'consent_accepted']);
+    }
+
+    public function test_otp_and_consent_events_contain_hashes_but_no_raw_mobile_or_code(): void
+    {
+        $otpId = $this->postJson('/api/v1/auth/otp/request', ['mobile' => '09120000000'])
+            ->assertOk()
+            ->json('data.otpRequestId');
+        $this->postJson('/api/v1/auth/otp/verify', ['otpRequestId' => $otpId, 'code' => '123456'])->assertOk();
+        $version = ConsentVersion::query()->where('is_active', true)->firstOrFail();
+        $this->postJson('/api/v1/consents/accept', ['consentVersionId' => $version->id, 'source' => 'pwa'])->assertCreated();
+
+        $events = EventLog::query()->whereIn('event_type', ['otp_requested', 'otp_verified', 'consent_accepted'])->get();
+        $serialized = json_encode($events->toArray(), JSON_THROW_ON_ERROR);
+
+        $this->assertCount(3, $events);
+        $this->assertStringNotContainsString('09120000000', $serialized);
+        $this->assertStringNotContainsString('123456', $serialized);
+        $this->assertStringContainsString(hash('sha256', '09120000000'), $serialized);
     }
 
     public function test_unknown_qr_creates_a_privacy_safe_invalid_event(): void

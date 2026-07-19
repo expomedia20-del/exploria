@@ -2,6 +2,7 @@
 
 namespace App\Actions\Auth;
 
+use App\Actions\Events\RecordDomainEventAction;
 use App\Enums\UserRole;
 use App\Models\OtpRequest;
 use App\Models\User;
@@ -13,6 +14,8 @@ use Illuminate\Validation\ValidationException;
 
 class VerifyOtpAction
 {
+    public function __construct(private readonly RecordDomainEventAction $recordEvent) {}
+
     public function execute(string $requestId, string $code): User
     {
         return DB::transaction(function () use ($requestId, $code): User {
@@ -42,6 +45,11 @@ class VerifyOtpAction
             $otp->update(['verified_at' => now()]);
             Auth::login($user);
             request()->session()->regenerate();
+
+            $this->recordEvent->execute('otp_verified', $user, request()->session()->getId(), 'otp_request', $otp->id, [
+                'mobile_hash' => $otp->mobile_hash,
+                'result' => 'verified',
+            ]);
 
             return $user;
         });
