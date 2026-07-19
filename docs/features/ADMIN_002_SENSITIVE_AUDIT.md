@@ -39,7 +39,7 @@
 - ورودی Notes تصمیم پاداش با `ReviewRewardRequest` و تغییرات Role/Scope/Account با Form Requestهای اختصاصی اعتبارسنجی می‌شوند.
 - تست‌های متمرکز Venue و Campaign Core: PASS.
 - Pint و PHPStan: PASS.
-- PHPUnit کامل: 250 تست و 2,205 Assertion — PASS.
+- PHPUnit کامل: 251 تست و 2,211 Assertion — PASS.
 - ESLint، Prettier، TypeScript و Production Build — PASS.
 
 ## خارج از دامنه

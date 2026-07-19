@@ -23,4 +23,17 @@ class EnvironmentBaselineTest extends TestCase
         $this->assertSame('sqlite', config('database.default'));
         $this->assertSame(':memory:', config('database.connections.sqlite.database'));
     }
+
+    public function test_postgresql_gate_is_fail_closed_and_contains_no_credentials(): void
+    {
+        $script = file_get_contents(base_path('scripts/test-postgresql.ps1'));
+        $configuration = file_get_contents(base_path('phpunit.pgsql.xml'));
+
+        $this->assertIsString($script);
+        $this->assertIsString($configuration);
+        $this->assertStringContainsString('must end with _test, -test, _testing, or -testing', $script);
+        $this->assertStringContainsString('select current_database()', $script);
+        $this->assertStringContainsString('<env name="DB_CONNECTION" value="pgsql"/>', $configuration);
+        $this->assertStringNotContainsString('DB_PASSWORD" value=', $configuration);
+    }
 }
