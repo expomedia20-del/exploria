@@ -430,6 +430,13 @@ class SponsorActivationTest extends TestCase
             ->assertJsonPath('data.status', 'ready_for_campaign_design');
 
         $activation = SponsorProposalActivation::query()->where('sponsor_proposal_id', $proposal->id)->firstOrFail();
+        $this->assertDatabaseHas('event_log', [
+            'event_type' => 'audit.sponsor_proposal_activated',
+            'actor_user_id' => $admin->id,
+            'object_type' => 'sponsor_proposal_activation',
+            'object_id' => $activation->id,
+            'campaign_id' => $campaign->id,
+        ]);
 
         $this->assertCount(2, $activation->reward_definition_ids);
         $this->assertCount(2, $activation->treasure_ids);

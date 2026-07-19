@@ -3,6 +3,7 @@
 namespace Tests\Feature\Mission;
 
 use App\Enums\UserRole;
+use App\Models\EventLog;
 use App\Models\MissionInstance;
 use App\Models\QrCode;
 use App\Models\RewardRedemption;
@@ -66,6 +67,9 @@ class VisitMissionFlowTest extends TestCase
         $this->actingAs($this->visitor)
             ->post(route('visits.missions.start', [$this->visit, $mission]))
             ->assertRedirect();
+        $this->actingAs($this->visitor)
+            ->post(route('visits.missions.start', [$this->visit, $mission]))
+            ->assertRedirect();
 
         $this->assertDatabaseHas('user_mission_progress', [
             'user_id' => $this->visitor->id,
@@ -88,6 +92,24 @@ class VisitMissionFlowTest extends TestCase
             'user_id' => $this->visitor->id,
             'status' => 'awarded',
         ]);
+        $this->assertSame(1, EventLog::query()->where('event_type', 'mission_started')->count());
+        $this->assertSame(1, EventLog::query()->where('event_type', 'mission_completed')->count());
+        $this->assertSame(1, EventLog::query()->where('event_type', 'reward_issued')->count());
+        $this->assertDatabaseHas('event_log', [
+            'event_type' => 'mission_completed',
+            'actor_user_id' => $this->visitor->id,
+            'object_type' => 'mission',
+            'object_id' => $mission->id,
+            'venue_id' => $this->visit->venue_id,
+            'touchpoint_id' => $this->visit->touchpoint_id,
+            'campaign_id' => $this->visit->campaign_id,
+        ]);
+
+        $this->actingAs($this->visitor)
+            ->post(route('visits.missions.complete', [$this->visit, $mission]))
+            ->assertRedirect();
+        $this->assertSame(1, EventLog::query()->where('event_type', 'mission_completed')->count());
+        $this->assertSame(1, EventLog::query()->where('event_type', 'reward_issued')->count());
     }
 
     public function test_locked_challenge_requires_enough_completed_points(): void
@@ -102,6 +124,10 @@ class VisitMissionFlowTest extends TestCase
         $this->assertDatabaseMissing('user_mission_progress', [
             'user_id' => $this->visitor->id,
             'mission_instance_id' => $challenge->id,
+        ]);
+        $this->assertDatabaseMissing('event_log', [
+            'event_type' => 'mission_completed',
+            'object_id' => $challenge->id,
         ]);
     }
 

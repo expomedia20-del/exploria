@@ -100,6 +100,13 @@ class StandaloneAdvertisingTest extends TestCase
         $this->assertSame('approved', $adRequest->status);
         $this->assertSame('approved', $adRequest->approvals()->firstOrFail()->action);
         $this->assertSame('approved', $adRequest->placements()->firstOrFail()->status);
+        $this->assertDatabaseHas('event_log', [
+            'event_type' => 'audit.ad_approved',
+            'actor_user_id' => $admin->id,
+            'object_type' => 'ad_request',
+            'object_id' => $adRequest->id,
+            'venue_id' => $adRequest->venue_id,
+        ]);
     }
 
     public function test_hub_manager_can_reject_ad_request(): void
@@ -119,6 +126,11 @@ class StandaloneAdvertisingTest extends TestCase
         $this->assertSame('rejected', $adRequest->status);
         $this->assertSame('rejected', $adRequest->creatives()->firstOrFail()->status);
         $this->assertSame('rejected', $adRequest->placements()->firstOrFail()->status);
+        $this->assertDatabaseHas('event_log', [
+            'event_type' => 'audit.ad_rejected',
+            'actor_user_id' => $manager->id,
+            'object_id' => $adRequest->id,
+        ]);
     }
 
     public function test_admin_can_open_ad_moderation_page(): void

@@ -55,6 +55,7 @@ class ScanEventRegistryService
                 'scans' => EventLog::query()->whereIn('event_type', ['qr_scanned', 'invalid_scan', 'duplicate_scan_flagged'])->count(),
                 'auth' => EventLog::query()->whereIn('event_type', ['otp_requested', 'otp_verified'])->count(),
                 'consent' => EventLog::query()->whereIn('event_type', ['consent_viewed', 'consent_accepted'])->count(),
+                'journey' => EventLog::query()->whereIn('event_type', ['user_registered', 'mission_started', 'mission_completed', 'reward_issued', 'reward_redeemed'])->count(),
                 'audit' => EventLog::query()->where('event_type', 'like', 'audit.%')->count(),
             ],
             'filters' => ['result' => $result, 'eventType' => $eventType, 'from' => $from, 'to' => $to],

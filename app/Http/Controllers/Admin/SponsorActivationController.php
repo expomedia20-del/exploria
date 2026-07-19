@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Actions\Events\RecordAdminAuditAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ActivateSponsorProposalRequest;
 use App\Http\Requests\Admin\StoreCampaignSponsorshipRequest;
@@ -68,9 +69,14 @@ class SponsorActivationController extends Controller
         return back()->with('success', 'اتصال اسپانسر به واحد عضو کمپین ذخیره شد.');
     }
 
-    public function updateProposalStatus(UpdateSponsorProposalStatusRequest $request, SponsorProposal $proposal, SponsorActivationService $service): JsonResponse|RedirectResponse
+    public function updateProposalStatus(UpdateSponsorProposalStatusRequest $request, SponsorProposal $proposal, SponsorActivationService $service, RecordAdminAuditAction $audit): JsonResponse|RedirectResponse
     {
         $proposal = $service->updateProposalStatus($proposal, $request->validated(), $request->user());
+        $audit->execute($request->user(), 'sponsor_proposal_status_updated', 'sponsor_proposal', $proposal->id, $request->session()->getId(), [
+            'code' => $proposal->code,
+            'name' => $proposal->title,
+            'status' => $proposal->status,
+        ], ['campaign_id' => $proposal->campaign_id]);
 
         if ($request->expectsJson()) {
             return response()->json(['status' => 'success', 'data' => ['id' => $proposal->id, 'status' => $proposal->status]]);
@@ -79,9 +85,14 @@ class SponsorActivationController extends Controller
         return back()->with('success', 'وضعیت پیشنهاد اسپانسر به‌روزرسانی شد.');
     }
 
-    public function activateProposal(ActivateSponsorProposalRequest $request, SponsorProposal $proposal, SponsorActivationService $service): JsonResponse|RedirectResponse
+    public function activateProposal(ActivateSponsorProposalRequest $request, SponsorProposal $proposal, SponsorActivationService $service, RecordAdminAuditAction $audit): JsonResponse|RedirectResponse
     {
         $activation = $service->activateProposal($proposal, $request->validated(), $request->user());
+        $audit->execute($request->user(), 'sponsor_proposal_activated', 'sponsor_proposal_activation', $activation->id, $request->session()->getId(), [
+            'code' => $proposal->code,
+            'name' => $proposal->title,
+            'status' => $activation->status,
+        ], ['campaign_id' => $activation->campaign_id]);
 
         if ($request->expectsJson()) {
             return response()->json(['status' => 'success', 'data' => ['id' => $activation->id, 'status' => $activation->status]], 201);

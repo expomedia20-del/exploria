@@ -4,6 +4,7 @@ namespace Tests\Feature\Partner;
 
 use App\Enums\RecordStatus;
 use App\Enums\UserRole;
+use App\Models\EventLog;
 use App\Models\MissionInstance;
 use App\Models\MissionTemplate;
 use App\Models\PartnerAccount;
@@ -115,6 +116,14 @@ class PartnerRewardRedemptionTest extends TestCase
 
         $this->assertSame('confirmed', $redemption->status);
         $this->assertSame('redeemed', $redemption->userReward->status);
+        $this->assertDatabaseHas('event_log', [
+            'event_type' => 'reward_redeemed',
+            'actor_user_id' => $partnerUser->id,
+            'object_type' => 'reward_redemption',
+            'object_id' => $redemption->id,
+            'venue_id' => $this->visit->venue_id,
+            'campaign_id' => $this->visit->campaign_id,
+        ]);
 
         $this->actingAs($partnerUser)
             ->postJson(route('partner.redemptions.api.confirm'), [
@@ -123,6 +132,7 @@ class PartnerRewardRedemptionTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonValidationErrors('redemption_code')
             ->assertJsonPath('errors.redemption_code.0', 'این کد قبلا مصرف شده است.');
+        $this->assertSame(1, EventLog::query()->where('event_type', 'reward_redeemed')->where('object_id', $redemption->id)->count());
     }
 
     public function test_sponsor_inventory_is_reserved_and_redeemed_through_partner_code(): void

@@ -24,6 +24,7 @@ type Props = {
         scans: number;
         auth: number;
         consent: number;
+        journey: number;
         audit: number;
     };
     filters: {
@@ -44,6 +45,7 @@ const summaryLabels = {
     scans: 'اسکن‌ها',
     auth: 'ورود و OTP',
     consent: 'رضایت‌نامه',
+    journey: 'چرخه تجربه و پاداش',
     audit: 'Audit مدیریتی',
 };
 const objectTypeLabels: Record<string, string> = {
@@ -52,6 +54,11 @@ const objectTypeLabels: Record<string, string> = {
     campaign: 'کمپین',
     mission: 'مأموریت',
     reward: 'پاداش',
+    user_reward: 'پاداش کاربر',
+    reward_redemption: 'مصرف پاداش',
+    ad_request: 'درخواست تبلیغ',
+    sponsor_proposal: 'پیشنهاد اسپانسر',
+    sponsor_proposal_activation: 'فعال‌سازی اسپانسر',
     user: 'کاربر',
     access_scope: 'دامنه دسترسی',
     consent_version: 'نسخه رضایت‌نامه',
@@ -76,7 +83,7 @@ export default function ScanEventIndex({ items, summary, filters }: Props) {
                 </p>
             </header>
 
-            <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+            <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
                 {Object.entries(summary).map(([key, value]) => (
                     <article
                         key={key}
@@ -129,6 +136,21 @@ export default function ScanEventIndex({ items, summary, filters }: Props) {
                                 </option>
                                 <option value="consent_accepted">
                                     پذیرش رضایت‌نامه
+                                </option>
+                                <option value="user_registered">
+                                    ثبت‌نام کاربر
+                                </option>
+                                <option value="mission_started">
+                                    شروع مأموریت
+                                </option>
+                                <option value="mission_completed">
+                                    تکمیل مأموریت
+                                </option>
+                                <option value="reward_issued">
+                                    صدور پاداش
+                                </option>
+                                <option value="reward_redeemed">
+                                    مصرف پاداش
                                 </option>
                                 <option value="qr_scanned">اسکن پذیرفته</option>
                                 <option value="invalid_scan">
@@ -203,6 +225,18 @@ export default function ScanEventIndex({ items, summary, filters }: Props) {
                                 </option>
                                 <option value="audit.access_scope_deactivated">
                                     غیرفعال‌سازی دامنه
+                                </option>
+                                <option value="audit.ad_approved">
+                                    تأیید تبلیغ
+                                </option>
+                                <option value="audit.ad_rejected">
+                                    رد تبلیغ
+                                </option>
+                                <option value="audit.sponsor_proposal_status_updated">
+                                    تغییر وضعیت پیشنهاد اسپانسر
+                                </option>
+                                <option value="audit.sponsor_proposal_activated">
+                                    فعال‌سازی پیشنهاد اسپانسر
                                 </option>
                             </select>
                         </label>

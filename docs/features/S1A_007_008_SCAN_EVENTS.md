@@ -18,6 +18,7 @@
 - جلوگیری از ساخت Visit یا Progress تکراری برای همان کاربر و QR.
 - نمایش تعداد کل اسکن‌ها و اسکن‌های پذیرفته‌شده در Dashboard مدیریتی.
 - صفحه و API فقط‌خواندنی Event Monitor برای Admin، Operator و Viewer با نمایش یکپارچه اسکن، OTP، رضایت‌نامه و Audit؛ فیلتر نتیجه، نوع رویداد و بازه تاریخ؛ و سقف ۱۰۰ رکورد آخر.
+- نمایش چرخه ثبت‌نام، مأموریت و پاداش مطابق `EVENT_001_EXPERIENCE_LIFECYCLE.md` با شمارنده مستقل.
 
 ## امنیت و حریم خصوصی
 
@@ -39,7 +40,7 @@
 - تست Dashboard برای کل اسکن‌ها و اسکن‌های پذیرفته‌شده — PASS.
 - تست Eventهای OTP/Consent، ثبت `consent_viewed`، عدم نشت موبایل و کد OTP، فیلتر نوع/تاریخ Event Monitor و Authorization — PASS.
 - تست Audit ایجاد، ویرایش و حذف QR و نمایش فقط‌خواندنی آن در Event Monitor — PASS.
-- PHPUnit کامل: 250 تست و 2,188 Assertion — PASS.
+- PHPUnit کامل: 250 تست و 2,205 Assertion — PASS.
 - PHPStan کل پروژه: صفر Finding — PASS.
 - Pint، ESLint، Prettier، TypeScript و Production Build — PASS.
-- Production Build: 2,335 module و chunk مستقل Event Monitor حدود 7.83 kB — PASS.
+- Production Build: 2,335 module و chunk مستقل Event Monitor حدود 8.92 kB — PASS.

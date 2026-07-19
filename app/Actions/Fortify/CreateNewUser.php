@@ -2,6 +2,7 @@
 
 namespace App\Actions\Fortify;
 
+use App\Actions\Events\RecordDomainEventAction;
 use App\Concerns\PasswordValidationRules;
 use App\Concerns\ProfileValidationRules;
 use App\Enums\UserRole;
@@ -12,6 +13,8 @@ use Laravel\Fortify\Contracts\CreatesNewUsers;
 class CreateNewUser implements CreatesNewUsers
 {
     use PasswordValidationRules, ProfileValidationRules;
+
+    public function __construct(private readonly RecordDomainEventAction $recordEvent) {}
 
     /**
      * Validate and create a newly registered user.
@@ -25,11 +28,18 @@ class CreateNewUser implements CreatesNewUsers
             'password' => $this->passwordRules(),
         ])->validate();
 
-        return User::create([
+        $user = User::create([
             'name' => $input['name'],
             'email' => $input['email'],
             'password' => $input['password'],
             'role' => UserRole::Visitor,
         ]);
+
+        $this->recordEvent->execute('user_registered', $user, '', 'user', (string) $user->id, [
+            'source' => 'web_registration',
+            'quality_flag' => false,
+        ]);
+
+        return $user;
     }
 }

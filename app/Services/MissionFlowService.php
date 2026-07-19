@@ -70,7 +70,7 @@ class MissionFlowService
         });
     }
 
-    /** @return array{progress: UserMissionProgress, reward: UserReward|null} */
+    /** @return array{progress: UserMissionProgress, reward: UserReward|null, completedNow: bool, rewardIssuedNow: bool} */
     public function complete(User $user, Visit $visit, MissionInstance $mission): array
     {
         $this->ensureMissionCanBeUsed($user, $visit, $mission);
@@ -82,7 +82,7 @@ class MissionFlowService
             ]);
 
             if ($progress->status === 'completed') {
-                return ['progress' => $progress, 'reward' => $this->existingRewardForMission($user, $mission)];
+                return ['progress' => $progress, 'reward' => $this->existingRewardForMission($user, $mission), 'completedNow' => false, 'rewardIssuedNow' => false];
             }
 
             $mission->loadMissing('missionTemplate');
@@ -96,7 +96,14 @@ class MissionFlowService
             ]);
             $progress->save();
 
-            return ['progress' => $progress, 'reward' => $this->awardRewardForMission($user, $mission)];
+            $reward = $this->awardRewardForMission($user, $mission);
+
+            return [
+                'progress' => $progress,
+                'reward' => $reward,
+                'completedNow' => true,
+                'rewardIssuedNow' => $reward instanceof UserReward && $reward->wasRecentlyCreated,
+            ];
         });
     }
 

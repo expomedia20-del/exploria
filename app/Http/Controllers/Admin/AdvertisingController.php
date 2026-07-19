@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Actions\Events\RecordAdminAuditAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ReviewAdRequestRequest;
 use App\Models\AdRequest;
@@ -25,11 +26,12 @@ class AdvertisingController extends Controller
         return response()->json(['status' => 'success', 'data' => $service->adminOverview($request->user())]);
     }
 
-    public function approve(ReviewAdRequestRequest $request, AdRequest $adRequest, StandaloneAdvertisingService $service, HubManagerAccessService $access): JsonResponse|RedirectResponse
+    public function approve(ReviewAdRequestRequest $request, AdRequest $adRequest, StandaloneAdvertisingService $service, HubManagerAccessService $access, RecordAdminAuditAction $audit): JsonResponse|RedirectResponse
     {
         $access->ensureCanReviewAdRequest($request->user(), $adRequest);
 
         $adRequest = $service->approve($request->user(), $adRequest, $request->validated());
+        $this->audit($request, $adRequest, $audit, 'ad_approved');
 
         if ($request->expectsJson()) {
             return response()->json(['status' => 'success', 'data' => [
@@ -42,11 +44,12 @@ class AdvertisingController extends Controller
         return back()->with('success', 'درخواست تبلیغ تایید و برای انتشار زمان‌بندی شد.');
     }
 
-    public function reject(ReviewAdRequestRequest $request, AdRequest $adRequest, StandaloneAdvertisingService $service, HubManagerAccessService $access): JsonResponse|RedirectResponse
+    public function reject(ReviewAdRequestRequest $request, AdRequest $adRequest, StandaloneAdvertisingService $service, HubManagerAccessService $access, RecordAdminAuditAction $audit): JsonResponse|RedirectResponse
     {
         $access->ensureCanReviewAdRequest($request->user(), $adRequest);
 
         $adRequest = $service->reject($request->user(), $adRequest, $request->validated());
+        $this->audit($request, $adRequest, $audit, 'ad_rejected');
 
         if ($request->expectsJson()) {
             return response()->json(['status' => 'success', 'data' => [
@@ -57,5 +60,17 @@ class AdvertisingController extends Controller
         }
 
         return back()->with('success', 'درخواست تبلیغ رد شد.');
+    }
+
+    private function audit(ReviewAdRequestRequest $request, AdRequest $adRequest, RecordAdminAuditAction $audit, string $action): void
+    {
+        $audit->execute($request->user(), $action, 'ad_request', $adRequest->id, $request->session()->getId(), [
+            'code' => $adRequest->code,
+            'name' => $adRequest->title,
+            'status' => $adRequest->status,
+        ], [
+            'venue_id' => $adRequest->venue_id,
+            'touchpoint_id' => $adRequest->touchpoint_id,
+        ]);
     }
 }

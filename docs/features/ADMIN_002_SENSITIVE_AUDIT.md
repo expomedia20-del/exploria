@@ -16,6 +16,8 @@
 - `audit.qr_created`، `audit.qr_updated` و `audit.qr_deleted`
 - `audit.user_created`، `audit.user_role_updated`، `audit.user_access_deactivated` و `audit.user_deleted`
 - `audit.access_scope_created`، `audit.access_scope_reactivated` و `audit.access_scope_deactivated`
+- `audit.ad_approved` و `audit.ad_rejected`
+- `audit.sponsor_proposal_status_updated` و `audit.sponsor_proposal_activated`
 
 همه رویدادها از `RecordAdminAuditAction` وارد `event_log` append-only می‌شوند. Payload فقط شامل کد، عنوان و وضعیت عملیاتی شیء است و شناسه Session صرفاً به‌شکل SHA-256 ذخیره می‌شود.
 
@@ -37,7 +39,7 @@
 - ورودی Notes تصمیم پاداش با `ReviewRewardRequest` و تغییرات Role/Scope/Account با Form Requestهای اختصاصی اعتبارسنجی می‌شوند.
 - تست‌های متمرکز Venue و Campaign Core: PASS.
 - Pint و PHPStan: PASS.
-- PHPUnit کامل: 250 تست و 2,188 Assertion — PASS.
+- PHPUnit کامل: 250 تست و 2,205 Assertion — PASS.
 - ESLint، Prettier، TypeScript و Production Build — PASS.
 
 ## خارج از دامنه

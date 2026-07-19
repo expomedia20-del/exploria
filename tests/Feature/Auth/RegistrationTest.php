@@ -3,6 +3,7 @@
 namespace Tests\Feature\Auth;
 
 use App\Enums\UserRole;
+use App\Models\EventLog;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Fortify\Features;
@@ -41,6 +42,10 @@ class RegistrationTest extends TestCase
         $user = User::query()->where('email', 'test@example.com')->firstOrFail();
 
         $this->assertSame(UserRole::Visitor, $user->role);
+        $event = EventLog::query()->where('event_type', 'user_registered')->firstOrFail();
+        $this->assertSame($user->id, $event->actor_user_id);
+        $this->assertSame((string) $user->id, $event->object_id);
+        $this->assertArrayNotHasKey('email', $event->payload_json ?? []);
     }
 
     public function test_registered_public_users_are_sent_to_participant_dashboard(): void
