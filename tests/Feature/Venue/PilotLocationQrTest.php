@@ -74,6 +74,25 @@ class PilotLocationQrTest extends TestCase
         $this->getJson('/scan/'.PilotLocationSeeder::DEMO_QR_CODE)->assertNotFound();
     }
 
+    public function test_expired_qr_does_not_open_an_accepted_landing(): void
+    {
+        QrCode::query()->firstOrFail()->update(['valid_until' => now()->subSecond()]);
+
+        $this->getJson('/scan/'.PilotLocationSeeder::DEMO_QR_CODE)->assertNotFound();
+    }
+
+    public function test_qr_before_its_validity_window_does_not_open_an_accepted_landing(): void
+    {
+        QrCode::query()->firstOrFail()->update(['valid_from' => now()->addMinute()]);
+
+        $this->getJson('/scan/'.PilotLocationSeeder::DEMO_QR_CODE)->assertNotFound();
+    }
+
+    public function test_unknown_qr_does_not_open_an_accepted_landing(): void
+    {
+        $this->getJson('/scan/unknown-qr')->assertNotFound();
+    }
+
     public function test_qr_registry_requires_authentication(): void
     {
         $this->getJson('/api/v1/admin/qr-codes')->assertUnauthorized();

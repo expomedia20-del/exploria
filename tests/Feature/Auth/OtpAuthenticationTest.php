@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Infrastructure\Otp\LocalFixedOtpProvider;
 use App\Models\ConsentVersion;
 use App\Models\OtpRequest;
+use App\Models\QrCode;
 use App\Models\Visit;
 use Database\Seeders\ConsentVersionSeeder;
 use Database\Seeders\PilotLocationSeeder;
@@ -40,6 +41,31 @@ class OtpAuthenticationTest extends TestCase
             ->assertJsonPath('errors.mobile.0', 'شماره موبایل معتبر نیست.');
     }
 
+    public function test_unknown_source_qr_is_rejected_before_issuing_an_otp(): void
+    {
+        $this->postJson('/api/v1/auth/otp/request', [
+            'mobile' => '09120000000',
+            'sourceQrCode' => 'unknown-qr',
+        ])->assertUnprocessable()
+            ->assertJsonPath('errors.sourceQrCode.0', 'کد QR معتبر یا فعال نیست. لطفاً دوباره اسکن کنید.');
+
+        $this->assertDatabaseCount('otp_requests', 0);
+    }
+
+    public function test_unavailable_source_qr_is_rejected_before_issuing_an_otp(): void
+    {
+        $this->seed(PilotLocationSeeder::class);
+        QrCode::query()->firstOrFail()->update(['valid_until' => now()->subMinute()]);
+
+        $this->postJson('/api/v1/auth/otp/request', [
+            'mobile' => '09120000000',
+            'sourceQrCode' => PilotLocationSeeder::DEMO_QR_CODE,
+        ])->assertUnprocessable()
+            ->assertJsonPath('errors.sourceQrCode.0', 'کد QR معتبر یا فعال نیست. لطفاً دوباره اسکن کنید.');
+
+        $this->assertDatabaseCount('otp_requests', 0);
+    }
+
     public function test_fixed_local_code_creates_an_authenticated_session(): void
     {
         $otpId = $this->postJson('/api/v1/auth/otp/request', ['mobile' => '09120000000'])->json('data.otpRequestId');
@@ -51,7 +77,7 @@ class OtpAuthenticationTest extends TestCase
 
         $this->assertAuthenticated();
         $this->assertSame(UserRole::Visitor, auth()->user()->role);
-        $this->assertNotNull(OtpRequest::find($otpId)->verified_at);
+        $this->assertNotNull(OtpRequest::query()->findOrFail($otpId)->verified_at);
     }
 
     public function test_returning_user_skips_an_already_accepted_active_consent(): void

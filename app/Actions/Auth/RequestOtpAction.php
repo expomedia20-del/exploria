@@ -4,7 +4,9 @@ namespace App\Actions\Auth;
 
 use App\Contracts\OtpProvider;
 use App\Models\OtpRequest;
+use App\Models\QrCode;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 class RequestOtpAction
 {
@@ -12,6 +14,19 @@ class RequestOtpAction
 
     public function execute(string $mobile, ?string $sourceQrCode = null): OtpRequest
     {
+        if ($sourceQrCode !== null && $sourceQrCode !== '') {
+            $qr = QrCode::query()
+                ->with(['venue', 'touchpoint', 'campaign'])
+                ->where('code', $sourceQrCode)
+                ->first();
+
+            if (! $qr?->isAvailableForLanding()) {
+                throw ValidationException::withMessages([
+                    'sourceQrCode' => 'کد QR معتبر یا فعال نیست. لطفاً دوباره اسکن کنید.',
+                ]);
+            }
+        }
+
         $code = $this->provider->issue($mobile);
 
         return OtpRequest::create([

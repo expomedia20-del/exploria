@@ -28,14 +28,19 @@
 
 - QR فعال بدون Venue، Touchpoint و Campaign معتبر در دیتابیس قابل ایجاد نیست.
 - Landing فقط وقتی QR و تمام Bindingهای اصلی Active و در بازه اعتبار باشند باز می‌شود.
+- درخواست OTP دارای منبع QR فقط پس از اعتبارسنجی مجدد QR و Bindingهای فعال صادر می‌شود.
+- QR نامعتبر، غیرفعال، منقضی یا هنوزفعال‌نشده پیش از صدور OTP با پیام فارسی رد می‌شود.
+- ثبت تکراری همان QR برای همان کاربر Visit جدید تولید نمی‌کند.
 - تمام Seedها با `is_demo=true` مشخص و اجرای Seeder تکرارپذیر است.
 
 ## Verification
 
-- PHPUnit: 62 تست و 227 Assertion — PASS.
-- تست Seed، Binding، Role، Registry، Landing و QR غیرفعال — PASS.
+- تست‌های هدفمند Auth، Consent، QR و Visit: 37 تست و 187 Assertion — PASS.
+- PHPUnit کامل: 236 تست و 2,040 Assertion — PASS.
+- PHPStan کل پروژه: صفر Finding — PASS.
+- تست Seed، Binding، Role، Registry، Landing و QR نامعتبر، غیرفعال، منقضی، آینده و تکراری — PASS.
 - Migration و Rollback کامل — PASS.
 - Pint، Prettier، ESLint و TypeScript — PASS.
-- Production Build: 2,297 module؛ chunk مستقل Landing حدود 3.83 kB — PASS.
+- Production Build: 2,334 module؛ chunk مستقل Landing حدود 8.51 kB — PASS.
 - Smoke محلی Landing: HTTP 200، RTL و عنوان EXPLORIA — PASS.
 - Registry بدون Authentication: HTTP 401 — PASS.
