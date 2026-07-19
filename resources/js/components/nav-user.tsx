@@ -4,6 +4,7 @@ import { UserInfo } from '@/components/user-info';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
 import { logout } from '@/routes';
 import { edit } from '@/routes/profile';
+import type { Auth } from '@/types';
 import {
     SidebarMenu,
     SidebarMenuButton,
@@ -13,8 +14,13 @@ import {
 const actionClassName =
     'flex min-w-0 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md px-2 py-2 text-xs font-medium text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none';
 
+type PageProps = {
+    auth: Auth;
+    [key: string]: unknown;
+};
+
 export function NavUser() {
-    const { auth } = usePage().props;
+    const { auth } = usePage<PageProps>().props;
     const cleanup = useMobileNavigation();
 
     if (!auth.user) {
