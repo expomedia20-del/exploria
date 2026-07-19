@@ -6,7 +6,6 @@ import {
     Building2,
     BotMessageSquare,
     ClipboardCheck,
-    FolderGit2,
     LayoutGrid,
     MapPinned,
     Megaphone,
@@ -25,7 +24,6 @@ import {
     WalletCards,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
-import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import {
@@ -241,7 +239,7 @@ const mainNavItems: RoleAwareNavItem[] = [
         title: 'پنل مشارکت‌کننده',
         href: '/participant/dashboard',
         icon: PlayCircle,
-        group: '۵. پنل کاربر',
+        group: 'پنل کاربر',
         roles: ['admin', 'visitor'],
     },
     {
@@ -264,14 +262,6 @@ const mainNavItems: RoleAwareNavItem[] = [
         icon: WalletCards,
         group: '۱. تیم داخلی اکسپلوریا',
         roles: ['admin', 'operator', 'viewer'],
-    },
-];
-
-const footerNavItems: NavItem[] = [
-    {
-        title: 'GitHub پروژه',
-        href: 'https://github.com/expomedia20-del/exploria',
-        icon: FolderGit2,
     },
 ];
 
@@ -325,7 +315,6 @@ export function AppSidebar() {
             </SidebarContent>
 
             <SidebarFooter>
-                <NavFooter items={footerNavItems} className="mt-auto" />
                 <NavUser />
             </SidebarFooter>
         </Sidebar>
