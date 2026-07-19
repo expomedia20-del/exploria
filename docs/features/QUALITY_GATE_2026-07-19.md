@@ -21,7 +21,7 @@
 
 ```text
 composer ci:check
-PHPUnit: 251 passed / 2,218 assertions
+PHPUnit: 254 passed / 2,226 assertions
 PHPStan: 0 error
 Pint, ESLint, Prettier, TypeScript: PASS
 
@@ -48,3 +48,7 @@ Checklist progress: 100%
 - توسعه قابلیت جدید فقط پس از سبز ماندن CI مجاز است.
 - Merge باید هر دو Job عمومی و PostgreSQL را سبز کند.
 - UAT تعاملی نقش‌ها و فرم‌ها پیش از تحویل پایلوت باید تکمیل و Screenshotهای نهایی ثبت شود.
+
+## Gate تکمیلی استقرار
+
+پس از این گزارش، Gate اجرایی `exploria:production-readiness` اضافه شد. این Gate تنظیمات امن، اتصال واقعی دیتابیس و نبود Migration معوق را پیش از Staging کنترل می‌کند و در محیط Local به‌صورت Fail-Closed متوقف می‌شود.
