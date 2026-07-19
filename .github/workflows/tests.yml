@@ -127,7 +127,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          php vendor/bin/phpunit -c phpunit.pgsql.xml 2>&1 | tee postgresql-test.log
+          php vendor/bin/phpunit -c phpunit.pgsql.xml --stop-on-failure 2>&1 | tee postgresql-test.log
           status=${PIPESTATUS[0]}
           if [ "$status" -ne 0 ]; then
             {
@@ -136,7 +136,7 @@ jobs:
               tail -n 200 postgresql-test.log
               echo '```'
             } >> "$GITHUB_STEP_SUMMARY"
-            details=$(tail -n 120 postgresql-test.log | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')
+            details=$(tail -n 40 postgresql-test.log | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')
             echo "::error title=PostgreSQL test failure::$details"
           fi
           exit "$status"
