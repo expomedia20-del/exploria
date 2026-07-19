@@ -9,9 +9,9 @@
 
 ## Latest Working Baseline
 
-- `89276a8 chore: refresh dependency lockfiles`
-- `014e983 Separate visitor and viewer demo accounts`
-- `6d34a40 Polish Exploria hero and participant dashboard`
+- `0d76cbd fix: align pilot mission trigger mappings`
+- `1effe0f fix: complete service layer type safety`
+- `b9bb081 fix: normalize venue design and registry data`
 
 Always verify the real latest point with:
 
@@ -79,10 +79,15 @@ php artisan exploria:demo-readiness --json
 Recent verification:
 
 - Backend suite passed: 229 tests.
+- PHPStan passed across the complete configured project with zero findings.
 - TypeScript check passed.
 - ESLint check passed with zero errors.
+- Prettier formatting check passed.
 - Vite production build passed.
 - EcoPark Demo Readiness passed with 17 pass, 0 warning, and 0 fail.
+- Role-based UAT suite passed with 103 tests and 1,145 assertions covering admin, access scope, partner, sponsor, venue, hub, and participant flows.
+- Critical-path smoke suite passed with 41 tests and 382 assertions covering QR, OTP, consent, visit missions, and dashboard summary.
+- Local HTTP smoke returned `200` for the public landing and login pages.
 - `scripts/start-local.ps1` passed from `C:\source\exploria` using the PHP/npm available through `PATH`.
 - Public landing was checked in desktop viewport.
 - Public landing was checked in mobile viewport `390x844`.
@@ -90,8 +95,7 @@ Recent verification:
 
 Current limitation:
 
-- Automated browser-backed visual UAT was unavailable in the 2026-07-18 stabilization session because no controllable browser runtime was attached. HTTP, Feature tests, TypeScript, ESLint, and build verification passed.
-- PHPStan level 7 now runs with a controlled 512 MB memory limit, but reports 247 pre-existing static-analysis findings across legacy controllers, services, commands, configuration, and database code. Do not lower the analysis level or generate an ignore baseline; remediate findings domain by domain before starting a new product feature.
+- Automated browser-backed visual UAT remained unavailable in the 2026-07-19 stabilization session because no controllable browser runtime was attached. HTTP, Feature tests, TypeScript, ESLint, formatting, PHPStan, and production build verification passed.
 
 ## Recommended Next Slice After Stabilization
 
@@ -140,5 +144,5 @@ Continue from the public landing / role-panel work:
 - /admin/internal-operations is the internal Exploria supervision panel.
 - /admin/access-scopes should show account/role governance, approval sensitivity, and scope boundaries.
 
-The stabilization baseline has passing backend tests, TypeScript, ESLint, build, and Demo Readiness. Continue with domain-by-domain PHPStan remediation and manual responsive/browser UAT when a browser runtime is available, then proceed to the next approved existing-product slice.
+The stabilization baseline has passing backend tests, role-based UAT, TypeScript, ESLint, formatting, PHPStan, production build, HTTP smoke, and Demo Readiness. Continue with manual responsive/browser UAT when a browser runtime is available, then proceed to the next approved existing-product slice.
 ```
