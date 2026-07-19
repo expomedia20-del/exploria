@@ -127,6 +127,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
+          set +e
           php vendor/bin/phpunit -c phpunit.pgsql.xml --stop-on-failure 2>&1 | tee postgresql-test.log
           status=${PIPESTATUS[0]}
           if [ "$status" -ne 0 ]; then
