@@ -268,7 +268,7 @@ export default function VenueDashboard({
                 <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                     <div className="min-w-0">
                         <p className="text-sm text-muted-foreground">
-                            نمای مدیریتی و read-only برای آمادگی مکان، هماهنگی
+                            نمای مدیریتی و فقط‌خواندنی برای آمادگی مکان، هماهنگی
                             ذی‌نفعان و ریسک‌های روز اجرا
                         </p>
                         <h1 className="mt-1 text-2xl leading-tight font-semibold">
@@ -335,11 +335,8 @@ export default function VenueDashboard({
                         >
                             <div className="min-w-0">
                                 <p className="font-medium">{venue.name}</p>
-                                <p
-                                    className="mt-1 truncate text-xs text-muted-foreground"
-                                    dir="ltr"
-                                >
-                                    {venue.code} · {venue.city}
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                    {venue.city}
                                 </p>
                             </div>
                             <div className="flex flex-wrap gap-2 text-xs">
@@ -370,13 +367,6 @@ export default function VenueDashboard({
                                     <div className="min-w-0">
                                         <p className="truncate font-medium">
                                             {campaign.name}
-                                        </p>
-                                        <p
-                                            className="mt-1 truncate text-xs text-muted-foreground"
-                                            dir="ltr"
-                                        >
-                                            {campaign.code} ·{' '}
-                                            {campaign.campaignType}
                                         </p>
                                     </div>
                                     <span className="w-fit shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
@@ -415,12 +405,6 @@ export default function VenueDashboard({
                                         <p className="truncate font-medium">
                                             {hub.name}
                                         </p>
-                                        <p
-                                            className="mt-1 truncate text-xs text-muted-foreground"
-                                            dir="ltr"
-                                        >
-                                            {hub.code} · {hub.hubType}
-                                        </p>
                                     </div>
                                     <span className="w-fit shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
                                         {labelForStatus(hub.status)}
@@ -453,13 +437,6 @@ export default function VenueDashboard({
                                         <p className="truncate font-medium">
                                             {partner.name}
                                         </p>
-                                        <p
-                                            className="mt-1 truncate text-xs text-muted-foreground"
-                                            dir="ltr"
-                                        >
-                                            {partner.code} ·{' '}
-                                            {partner.partnerType}
-                                        </p>
                                     </div>
                                     <span className="w-fit shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
                                         {labelForStatus(partner.status)}
@@ -489,12 +466,6 @@ export default function VenueDashboard({
                                     <div className="min-w-0">
                                         <p className="truncate font-medium">
                                             {device.name}
-                                        </p>
-                                        <p
-                                            className="mt-1 truncate text-xs text-muted-foreground"
-                                            dir="ltr"
-                                        >
-                                            {device.code} · {device.deviceType}
                                         </p>
                                     </div>
                                     <span className="w-fit shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">

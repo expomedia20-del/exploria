@@ -1,6 +1,6 @@
 ﻿import { Head, Link } from '@inertiajs/react';
 import {
-    ArrowLeft,
+    ArrowRight,
     BadgeCheck,
     CheckCircle2,
     Compass,
@@ -40,11 +40,11 @@ type TreasureNode = {
 const nodes: TreasureNode[] = [
     {
         id: 'gate',
-        title: 'EcoPark Gate',
-        place: 'Arrival point',
-        clue: 'Your path starts where the first campaign message or QR is seen.',
-        mission: 'Choose a route and collect the first digital seal.',
-        reward: 'Starter seal + fast-entry code',
+        title: 'دروازه اکوپارک',
+        place: 'نقطه ورود',
+        clue: 'مسیر شما از نخستین پیام کمپین یا کد QR آغاز می‌شود.',
+        mission: 'یک مسیر انتخاب کنید و اولین نشان دیجیتال را بگیرید.',
+        reward: 'نشان آغاز + کد ورود سریع',
         points: 60,
         x: '12%',
         y: '74%',
@@ -52,11 +52,11 @@ const nodes: TreasureNode[] = [
     },
     {
         id: 'hologram',
-        title: 'Hologram Backpack',
-        place: 'Mobile display touchpoint',
-        clue: 'A moving display gives the first live clue when the visitor is on site.',
-        mission: 'Scan the field QR or continue from the home-start code.',
-        reward: 'Welcome bonus + route unlock',
+        title: 'کوله‌پشتی هولوگرام',
+        place: 'نقطه تعامل نمایشگر سیار',
+        clue: 'نمایشگر سیار هنگام حضور بازدیدکننده نخستین سرنخ زنده را نشان می‌دهد.',
+        mission: 'کد QR محیط را اسکن کنید یا با کد شروع از خانه ادامه دهید.',
+        reward: 'امتیاز خوش‌آمدگویی + بازشدن مسیر',
         points: 80,
         x: '25%',
         y: '48%',
@@ -64,11 +64,11 @@ const nodes: TreasureNode[] = [
     },
     {
         id: 'ravaq',
-        title: 'Ravaq Commercial Hub',
-        place: 'Shops and cultural units',
-        clue: 'The next clue is hidden inside a partner offer, not only on the map.',
-        mission: 'Visit a partner unit and claim or save a coupon.',
-        reward: 'Shop coupon + loyalty score',
+        title: 'رواق تجاری',
+        place: 'فروشگاه‌ها و واحدهای فرهنگی',
+        clue: 'سرنخ بعدی در پیشنهاد یکی از واحدهای عضو پنهان شده است.',
+        mission: 'از یک واحد عضو بازدید و کوپن آن را دریافت یا ذخیره کنید.',
+        reward: 'کوپن فروشگاه + امتیاز وفاداری',
         points: 140,
         x: '43%',
         y: '66%',
@@ -76,11 +76,11 @@ const nodes: TreasureNode[] = [
     },
     {
         id: 'food',
-        title: 'Taste Tour',
-        place: 'Food garden and cafes',
-        clue: 'A flavor vote opens the next part of the route.',
-        mission: 'Pick a food stop, vote, and collect a taste badge.',
-        reward: 'Small treat + silver basket chance',
+        title: 'گردش طعم',
+        place: 'باغ غذا و کافه‌ها',
+        clue: 'ثبت رأی برای یک طعم، بخش بعدی مسیر را باز می‌کند.',
+        mission: 'یک ایستگاه خوراک انتخاب کنید، رأی دهید و نشان طعم بگیرید.',
+        reward: 'پذیرایی کوچک + شانس سبد نقره‌ای',
         points: 130,
         x: '57%',
         y: '38%',
@@ -88,11 +88,11 @@ const nodes: TreasureNode[] = [
     },
     {
         id: 'mina',
-        title: 'Gonbad Mina',
-        place: 'Science and learning hub',
-        clue: 'The star clue opens only after a short learning answer.',
-        mission: 'Answer one short science question and unlock a star seal.',
-        reward: 'Learning badge + family bonus',
+        title: 'گنبد مینا',
+        place: 'هاب علم و یادگیری',
+        clue: 'سرنخ ستاره پس از پاسخ به یک پرسش کوتاه آموزشی باز می‌شود.',
+        mission: 'به یک پرسش علمی کوتاه پاسخ دهید و نشان ستاره را باز کنید.',
+        reward: 'نشان یادگیری + امتیاز خانوادگی',
         points: 170,
         x: '72%',
         y: '56%',
@@ -100,11 +100,11 @@ const nodes: TreasureNode[] = [
     },
     {
         id: 'ocean',
-        title: 'Ocean Park Family Route',
-        place: 'Family discovery path',
-        clue: 'The family passport needs one more seal before the final treasure.',
-        mission: 'Complete one family-friendly stop or photo memory.',
-        reward: 'Family pass + gold basket chance',
+        title: 'مسیر خانوادگی پارک آب‌وآتش',
+        place: 'مسیر کشف خانوادگی',
+        clue: 'گذرنامه خانوادگی پیش از گنج نهایی به یک نشان دیگر نیاز دارد.',
+        mission: 'یک ایستگاه خانوادگی یا خاطره تصویری را کامل کنید.',
+        reward: 'گذرنامه خانوادگی + شانس سبد طلایی',
         points: 220,
         x: '84%',
         y: '27%',
@@ -112,11 +112,11 @@ const nodes: TreasureNode[] = [
     },
     {
         id: 'final',
-        title: 'Final Treasure',
-        place: 'Campaign reward vault',
-        clue: 'The final code is created from your path and can continue in the real visit.',
-        mission: 'Collect enough seals and receive the continuation code.',
-        reward: 'Gold basket or sponsor draw entry',
+        title: 'گنج نهایی',
+        place: 'خزانه پاداش کمپین',
+        clue: 'کد نهایی از مسیر شما ساخته می‌شود و در بازدید واقعی قابل ادامه است.',
+        mission: 'نشان‌های کافی جمع کنید و کد ادامه مسیر را بگیرید.',
+        reward: 'سبد طلایی یا ورود به قرعه‌کشی اسپانسر',
         points: 260,
         x: '91%',
         y: '78%',
@@ -125,18 +125,18 @@ const nodes: TreasureNode[] = [
 ];
 
 const baskets = [
-    { level: 'Starter', items: ['digital seal', 'route code', 'first points'] },
+    { level: 'آغاز', items: ['نشان دیجیتال', 'کد مسیر', 'امتیاز اولیه'] },
     {
-        level: 'Silver',
-        items: ['shop coupon', 'taste reward', 'small draw chance'],
+        level: 'نقره‌ای',
+        items: ['کوپن فروشگاه', 'پاداش طعم', 'شانس قرعه‌کشی کوچک'],
     },
     {
-        level: 'Gold',
-        items: ['Ravaq + food basket', 'family invite', 'double onsite points'],
+        level: 'طلایی',
+        items: ['سبد رواق و خوراک', 'دعوت خانوادگی', 'امتیاز دوبرابر حضوری'],
     },
     {
-        level: 'Legendary',
-        items: ['sponsor prize', 'VIP visit pack', 'public winner badge'],
+        level: 'ویژه',
+        items: ['جایزه اسپانسر', 'بسته بازدید ویژه', 'نشان برنده عمومی'],
     },
 ];
 
@@ -174,23 +174,23 @@ export default function EcoParkTreasureGame() {
 
     return (
         <>
-            <Head title="EcoPark Treasure Map Game" />
-            <main className="min-h-screen bg-[#f6f7f2] text-zinc-950" dir="ltr">
+            <Head title="بازی نقشه گنج اکوپارک" />
+            <main className="min-h-screen bg-[#f6f7f2] text-zinc-950" dir="rtl">
                 <section className="border-b border-zinc-200 bg-white/90 backdrop-blur">
                     <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-5 py-4 sm:px-8 lg:px-10">
                         <Link
                             href="/admin/mission-blueprints"
                             className="inline-flex items-center gap-2 text-sm font-medium text-zinc-600 hover:text-zinc-950"
                         >
-                            <ArrowLeft className="size-4" />
-                            Mission blueprints
+                            <ArrowRight className="size-4" />
+                            گنجینه الگوهای مأموریت
                         </Link>
                         <Link
                             href="/dashboard"
                             className="inline-flex h-9 items-center gap-2 rounded-md border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-700 hover:bg-zinc-100"
                         >
                             <Compass className="size-4" />
-                            Dashboard
+                            داشبورد
                         </Link>
                     </div>
                 </section>
@@ -201,22 +201,22 @@ export default function EcoParkTreasureGame() {
                             <div className="relative min-h-[260px]">
                                 <img
                                     src="/images/ecopark/hero.webp"
-                                    alt="EcoPark campaign concept"
+                                    alt="نمای کمپین اکوپارک"
                                     className="absolute inset-0 h-full w-full object-cover"
                                 />
-                                <div className="absolute inset-0 bg-gradient-to-r from-zinc-950/85 via-zinc-950/45 to-transparent" />
+                                <div className="absolute inset-0 bg-gradient-to-l from-zinc-950/85 via-zinc-950/45 to-transparent" />
                                 <div className="relative max-w-xl p-5 text-white sm:p-6">
                                     <p className="text-sm font-semibold text-emerald-200">
-                                        Exploria pilot game
+                                        بازی پایلوت اکسپلوریا
                                     </p>
                                     <h1 className="mt-3 text-4xl leading-tight font-semibold sm:text-5xl">
-                                        EcoPark Treasure Map
+                                        نقشه گنج اکوپارک
                                     </h1>
                                     <p className="mt-4 text-sm leading-7 text-zinc-100">
-                                        A first-playable treasure hunt for
-                                        EcoPark: home pre-game, on-site QR
-                                        clues, hologram backpacks, partner
-                                        rewards, and prize baskets.
+                                        یک مسیر گنج قابل بازی برای اکوپارک؛ شامل
+                                        شروع از خانه، سرنخ‌های QR در محل،
+                                        کوله‌پشتی هولوگرام، پاداش واحدهای عضو و
+                                        سبدهای جایزه.
                                     </p>
                                 </div>
                             </div>
@@ -226,50 +226,48 @@ export default function EcoParkTreasureGame() {
                             <button
                                 type="button"
                                 onClick={() => setMode('home')}
-                                className={`rounded-lg border p-4 text-left transition ${mode === 'home' ? 'border-emerald-300 bg-emerald-50 text-emerald-950 shadow-sm' : 'border-zinc-200 bg-white shadow-sm hover:bg-zinc-50'}`}
+                                className={`rounded-lg border p-4 text-right transition ${mode === 'home' ? 'border-emerald-300 bg-emerald-50 text-emerald-950 shadow-sm' : 'border-zinc-200 bg-white shadow-sm hover:bg-zinc-50'}`}
                             >
                                 <Home className="size-5" />
                                 <p className="mt-3 font-semibold">
-                                    Start from home
+                                    شروع از خانه
                                 </p>
                                 <p className="mt-1 text-xs opacity-80">
-                                    Pre-game, route choice, first clue, onsite
-                                    continuation code.
+                                    پیش‌بازی، انتخاب مسیر، نخستین سرنخ و کد
+                                    ادامه در محل.
                                 </p>
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setMode('onsite')}
-                                className={`rounded-lg border p-4 text-left transition ${mode === 'onsite' ? 'border-cyan-300 bg-cyan-50 text-cyan-950 shadow-sm' : 'border-zinc-200 bg-white shadow-sm hover:bg-zinc-50'}`}
+                                className={`rounded-lg border p-4 text-right transition ${mode === 'onsite' ? 'border-cyan-300 bg-cyan-50 text-cyan-950 shadow-sm' : 'border-zinc-200 bg-white shadow-sm hover:bg-zinc-50'}`}
                             >
                                 <QrCode className="size-5" />
                                 <p className="mt-3 font-semibold">
-                                    Start at EcoPark
+                                    شروع در اکوپارک
                                 </p>
                                 <p className="mt-1 text-xs opacity-80">
-                                    QR scan, field display, route unlock, live
-                                    rewards.
+                                    اسکن QR، نمایشگر محیطی، بازشدن مسیر و
+                                    پاداش‌های زنده.
                                 </p>
                             </button>
                         </div>
 
                         <div className="grid gap-3 sm:grid-cols-3">
                             <div className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
-                                <p className="text-xs text-zinc-500">
-                                    Progress
-                                </p>
+                                <p className="text-xs text-zinc-500">پیشرفت</p>
                                 <p className="mt-2 text-2xl font-semibold">
                                     {formatFa(progress)}%
                                 </p>
                             </div>
                             <div className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
-                                <p className="text-xs text-zinc-500">Points</p>
+                                <p className="text-xs text-zinc-500">امتیاز</p>
                                 <p className="mt-2 text-2xl font-semibold">
                                     {formatFa(points)}
                                 </p>
                             </div>
                             <div className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
-                                <p className="text-xs text-zinc-500">Seals</p>
+                                <p className="text-xs text-zinc-500">نشان‌ها</p>
                                 <p className="mt-2 text-2xl font-semibold">
                                     {formatFa(completed.length)} /{' '}
                                     {formatFa(nodes.length)}
@@ -281,7 +279,7 @@ export default function EcoParkTreasureGame() {
                     <div className="relative min-h-[560px] overflow-hidden rounded-lg border border-zinc-200 bg-[#eef5ed] p-4 shadow-sm">
                         <img
                             src="/images/ecopark/treasure-route.webp"
-                            alt="EcoPark treasure route concept"
+                            alt="مسیر مفهومی گنج اکوپارک"
                             className="absolute inset-0 h-full w-full object-cover opacity-30"
                         />
                         <div className="absolute inset-0 bg-gradient-to-br from-white/80 via-[#eef5ed]/82 to-white/70" />
@@ -330,7 +328,7 @@ export default function EcoParkTreasureGame() {
                                         {done ? (
                                             <CheckCircle2 className="size-5" />
                                         ) : (
-                                            index + 1
+                                            formatFa(index + 1)
                                         )}
                                     </span>
                                     <span className="max-w-28 rounded-full border border-zinc-200 bg-white/95 px-2 py-1 text-center text-[11px] leading-4 font-medium text-zinc-950 shadow-sm backdrop-blur">
@@ -356,7 +354,7 @@ export default function EcoParkTreasureGame() {
                                         {selectedNode.clue}
                                     </p>
                                     <p className="mt-2 text-sm leading-6 text-zinc-900">
-                                        Mission: {selectedNode.mission}
+                                        مأموریت: {selectedNode.mission}
                                     </p>
                                 </div>
                                 <button
@@ -367,7 +365,7 @@ export default function EcoParkTreasureGame() {
                                     className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white hover:bg-zinc-800"
                                 >
                                     <BadgeCheck className="size-4" />
-                                    Collect clue
+                                    دریافت سرنخ
                                 </button>
                             </div>
                         </div>
@@ -379,7 +377,7 @@ export default function EcoParkTreasureGame() {
                         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-200 pb-4">
                             <div>
                                 <p className="text-sm text-zinc-500">
-                                    Continuation code
+                                    کد ادامه مسیر
                                 </p>
                                 <h2
                                     className="mt-1 font-mono text-2xl font-semibold"
@@ -390,8 +388,8 @@ export default function EcoParkTreasureGame() {
                             </div>
                             <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium">
                                 {mode === 'home'
-                                    ? 'home optional start'
-                                    : 'onsite start'}
+                                    ? 'شروع اختیاری از خانه'
+                                    : 'شروع در محل'}
                             </span>
                         </div>
                         <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -410,14 +408,14 @@ export default function EcoParkTreasureGame() {
                                         </div>
                                         <p className="mt-1 text-sm text-zinc-500">
                                             {node.title} ·{' '}
-                                            {formatFa(node.points)} points
+                                            {formatFa(node.points)} امتیاز
                                         </p>
                                     </div>
                                 ))}
                             {completed.length === 0 && (
                                 <p className="text-sm leading-7 text-zinc-500">
-                                    Collected rewards will appear here after the
-                                    first clue is completed.
+                                    پس از تکمیل نخستین سرنخ، پاداش‌های
+                                    جمع‌آوری‌شده اینجا نمایش داده می‌شوند.
                                 </p>
                             )}
                         </div>
@@ -427,7 +425,7 @@ export default function EcoParkTreasureGame() {
                         <div className="flex items-center gap-2">
                             <Trophy className="size-5 text-amber-600" />
                             <h2 className="font-semibold">
-                                Prize basket ladder
+                                سطح‌بندی سبدهای جایزه
                             </h2>
                         </div>
                         <div className="mt-4 grid gap-2">

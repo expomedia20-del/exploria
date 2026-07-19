@@ -357,12 +357,6 @@ export default function HubDashboard({
                             className="grid gap-1 px-4 py-3 text-sm"
                         >
                             <p className="font-medium">{hub.name}</p>
-                            <p
-                                className="text-xs text-muted-foreground"
-                                dir="ltr"
-                            >
-                                {hub.code} · {hub.hubType}
-                            </p>
                             <p className="text-xs text-muted-foreground">
                                 {hub.venueName ?? '-'}
                             </p>
@@ -389,16 +383,8 @@ export default function HubDashboard({
                                         {labelForStatus(partner.status)}
                                     </span>
                                 </div>
-                                <p
-                                    className="truncate text-xs text-muted-foreground"
-                                    dir="ltr"
-                                >
-                                    {partner.code ?? '-'} ·{' '}
-                                    {partner.partnerType ?? '-'}
-                                </p>
                                 <p className="text-xs text-muted-foreground">
-                                    {partner.hubName ?? '-'} · نقش در محدوده:{' '}
-                                    {partner.locationRole}
+                                    محدوده: {partner.hubName ?? '-'}
                                 </p>
                             </article>
                         ))}
@@ -422,12 +408,6 @@ export default function HubDashboard({
                                         {labelForStatus(device.status)}
                                     </span>
                                 </div>
-                                <p
-                                    className="truncate text-xs text-muted-foreground"
-                                    dir="ltr"
-                                >
-                                    {device.code} · {device.deviceType}
-                                </p>
                                 <p className="text-xs text-muted-foreground">
                                     {device.hubName ?? '-'}
                                 </p>
@@ -453,13 +433,6 @@ export default function HubDashboard({
                                     <div className="min-w-0">
                                         <p className="truncate font-medium">
                                             {adRequest.title}
-                                        </p>
-                                        <p
-                                            className="mt-1 truncate text-xs text-muted-foreground"
-                                            dir="ltr"
-                                        >
-                                            {adRequest.code} ·{' '}
-                                            {adRequest.creativeType ?? '-'}
                                         </p>
                                     </div>
                                     <span className="w-fit shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
@@ -511,12 +484,6 @@ export default function HubDashboard({
                                     <div className="min-w-0">
                                         <p className="truncate font-medium">
                                             {reward.name}
-                                        </p>
-                                        <p
-                                            className="mt-1 truncate text-xs text-muted-foreground"
-                                            dir="ltr"
-                                        >
-                                            {reward.code} · {reward.rewardType}
                                         </p>
                                     </div>
                                     <span className="w-fit shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">

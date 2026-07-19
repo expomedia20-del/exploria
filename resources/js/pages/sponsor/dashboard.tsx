@@ -165,12 +165,6 @@ function ProposalSummary({
                         <FileCheck2 className="size-4 shrink-0 text-muted-foreground" />
                         <p className="truncate font-medium">{proposal.title}</p>
                     </div>
-                    <p
-                        className="mt-1 truncate text-xs text-muted-foreground"
-                        dir="ltr"
-                    >
-                        {proposal.code}
-                    </p>
                     {proposal.reviewNotes ? (
                         <p className="mt-1 line-clamp-2 text-xs text-orange-700 dark:text-orange-300">
                             یادداشت اصلاح: {proposal.reviewNotes}
@@ -341,12 +335,6 @@ export default function SponsorDashboard({
                             </div>
                         </div>
                         <div className="grid gap-3 p-4 text-sm">
-                            <p>
-                                <span className="text-muted-foreground">
-                                    کد:{' '}
-                                </span>
-                                <span dir="ltr">{sponsor.code}</span>
-                            </p>
                             <p>
                                 <span className="text-muted-foreground">
                                     وضعیت:{' '}
@@ -1068,12 +1056,6 @@ export default function SponsorDashboard({
                                                     {proposal.title}
                                                 </p>
                                             </div>
-                                            <p
-                                                className="mt-1 truncate text-xs text-muted-foreground"
-                                                dir="ltr"
-                                            >
-                                                {proposal.code}
-                                            </p>
                                             {proposal.reviewNotes ? (
                                                 <p className="mt-1 line-clamp-2 text-xs text-orange-700 dark:text-orange-300">
                                                     یادداشت اصلاح:{' '}

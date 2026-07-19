@@ -377,7 +377,7 @@ export default function PartnerDashboard({
                             {partner.name}
                         </h1>
                         <p className="mt-1 text-sm text-muted-foreground">
-                            {partner.venueName} · {partner.partnerType}
+                            {partner.venueName}
                         </p>
                     </div>
                     <div className="grid w-full grid-cols-2 gap-2 text-sm sm:grid-cols-3 md:w-auto xl:grid-cols-6">
@@ -429,14 +429,6 @@ export default function PartnerDashboard({
                                 است.
                             </p>
                         </div>
-                        {proposalContext.campaign ? (
-                            <span
-                                className="rounded-full bg-background px-3 py-1 text-xs"
-                                dir="ltr"
-                            >
-                                {proposalContext.campaign.code}
-                            </span>
-                        ) : null}
                     </div>
                     <div className="mt-4 flex flex-col gap-2 rounded-lg border border-primary/20 bg-background/80 p-3 md:flex-row md:items-center md:justify-between">
                         <div>
@@ -472,7 +464,8 @@ export default function PartnerDashboard({
                             >
                                 <div className="flex items-start justify-between gap-2">
                                     <p className="font-medium">
-                                        {index + 1}. {step.title}
+                                        {(index + 1).toLocaleString('fa-IR')}.{' '}
+                                        {step.title}
                                     </p>
                                     <span
                                         className={
@@ -1078,13 +1071,6 @@ export default function PartnerDashboard({
                                         <p className="truncate font-medium">
                                             {adRequest.title}
                                         </p>
-                                        <p
-                                            className="mt-1 truncate text-xs text-muted-foreground"
-                                            dir="ltr"
-                                        >
-                                            {adRequest.code} ·{' '}
-                                            {adRequest.creativeType ?? '-'}
-                                        </p>
                                     </div>
                                     <p className="text-xs text-muted-foreground">
                                         وضعیت:{' '}
@@ -1138,13 +1124,6 @@ export default function PartnerDashboard({
                                             <div className="min-w-0">
                                                 <p className="truncate font-medium">
                                                     {reward.name}
-                                                </p>
-                                                <p
-                                                    className="mt-1 truncate text-xs text-muted-foreground"
-                                                    dir="ltr"
-                                                >
-                                                    {reward.code} ·{' '}
-                                                    {reward.rewardType}
                                                 </p>
                                             </div>
                                             <span className="w-fit shrink-0 text-xs text-muted-foreground">
