@@ -124,4 +124,17 @@ jobs:
         run: php artisan migrate:fresh --force --no-interaction
 
       - name: Run PostgreSQL Tests
-        run: php vendor/bin/phpunit -c phpunit.pgsql.xml
+        shell: bash
+        run: |
+          set -o pipefail
+          php vendor/bin/phpunit -c phpunit.pgsql.xml 2>&1 | tee postgresql-test.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            {
+              echo '### PostgreSQL test failure'
+              echo '```text'
+              tail -n 200 postgresql-test.log
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          exit "$status"
