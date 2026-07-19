@@ -4,6 +4,7 @@ namespace Tests\Feature\Admin;
 
 use App\Enums\RecordStatus;
 use App\Enums\UserRole;
+use App\Models\EventLog;
 use App\Models\User;
 use App\Models\UserAccessScope;
 use App\Models\Venue;
@@ -92,6 +93,12 @@ class UserManagementPageTest extends TestCase
             ->assertRedirect();
 
         $this->assertSame(UserRole::Operator, $user->fresh()->role);
+        $this->assertDatabaseHas('event_log', [
+            'event_type' => 'audit.user_role_updated',
+            'actor_user_id' => $admin->id,
+            'object_type' => 'user',
+            'object_id' => (string) $user->id,
+        ]);
     }
 
     public function test_admin_can_deactivate_all_active_user_access_scopes(): void
@@ -117,6 +124,11 @@ class UserManagementPageTest extends TestCase
             'role_key' => 'project_admin',
             'status' => RecordStatus::Inactive->value,
         ]);
+        $this->assertDatabaseHas('event_log', [
+            'event_type' => 'audit.user_access_deactivated',
+            'actor_user_id' => $admin->id,
+            'object_id' => (string) $operator->id,
+        ]);
     }
 
     public function test_admin_cannot_delete_user_with_operational_history(): void
@@ -138,6 +150,34 @@ class UserManagementPageTest extends TestCase
             ->assertSessionHasErrors('delete');
 
         $this->assertDatabaseHas('users', ['id' => $operator->id]);
+        $this->assertDatabaseMissing('event_log', [
+            'event_type' => 'audit.user_deleted',
+            'object_id' => (string) $operator->id,
+        ]);
+    }
+
+    public function test_admin_can_delete_user_without_history_and_audit_contains_no_pii(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $user = User::factory()->create(['role' => UserRole::Viewer]);
+        $email = $user->email;
+
+        $this->actingAs($admin)
+            ->delete(route('admin.users.destroy', $user))
+            ->assertRedirect();
+
+        $this->assertDatabaseMissing('users', ['id' => $user->id]);
+        $event = EventLog::query()->where('event_type', 'audit.user_deleted')->firstOrFail();
+        $this->assertSame((string) $user->id, $event->object_id);
+        $this->assertArrayNotHasKey('email', $event->payload_json ?? []);
+        $this->assertStringNotContainsString((string) $email, json_encode($event->payload_json, JSON_THROW_ON_ERROR));
+
+        $this->actingAs($admin)
+            ->getJson(route('admin.events.scan-log.index', ['event_type' => 'audit.user_deleted']))
+            ->assertOk()
+            ->assertJsonPath('data.items.0.objectType', 'user')
+            ->assertJsonPath('data.items.0.objectId', (string) $user->id)
+            ->assertJsonMissingPath('data.items.0.email');
     }
 
     public function test_viewer_cannot_mutate_users(): void

@@ -465,6 +465,12 @@ class PartnerRewardRedemptionTest extends TestCase
         $this->assertSame('active', $offer->status->value);
         $this->assertSame('approved', $offer->metadata['approval_status']);
         $this->assertSame($admin->id, $offer->metadata['approved_by_user_id']);
+        $this->assertDatabaseHas('event_log', [
+            'event_type' => 'audit.reward_approved',
+            'actor_user_id' => $admin->id,
+            'object_type' => 'reward',
+            'object_id' => $offer->id,
+        ]);
     }
 
     public function test_hub_manager_can_reject_partner_offer_and_viewer_cannot_approve_it(): void
@@ -492,6 +498,11 @@ class PartnerRewardRedemptionTest extends TestCase
         $this->assertSame('inactive', $offer->status->value);
         $this->assertSame('rejected', $offer->metadata['approval_status']);
         $this->assertSame('Offer needs clearer redemption terms.', $offer->metadata['review_notes']);
+        $this->assertDatabaseHas('event_log', [
+            'event_type' => 'audit.reward_rejected',
+            'actor_user_id' => $manager->id,
+            'object_id' => $offer->id,
+        ]);
     }
 
     public function test_admin_can_request_partner_offer_revision(): void
@@ -513,6 +524,27 @@ class PartnerRewardRedemptionTest extends TestCase
         $this->assertSame('draft', $offer->status->value);
         $this->assertSame('revision_requested', $offer->metadata['approval_status']);
         $this->assertSame($admin->id, $offer->metadata['revision_requested_by_user_id']);
+        $this->assertDatabaseHas('event_log', [
+            'event_type' => 'audit.reward_revision_requested',
+            'actor_user_id' => $admin->id,
+            'object_id' => $offer->id,
+        ]);
+    }
+
+    public function test_reward_review_notes_are_validated_by_form_request(): void
+    {
+        $offer = $this->submitPartnerOffer();
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.rewards.api.approve', $offer), ['notes' => str_repeat('x', 1001)])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('notes');
+
+        $this->assertDatabaseMissing('event_log', [
+            'event_type' => 'audit.reward_approved',
+            'object_id' => $offer->id,
+        ]);
     }
 
     public function test_hub_manager_cannot_review_offer_outside_managed_hub(): void

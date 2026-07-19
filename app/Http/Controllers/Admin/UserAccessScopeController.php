@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Actions\Events\RecordAdminAuditAction;
 use App\Enums\RecordStatus;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StoreAdminAccountRequest;
+use App\Http\Requests\Admin\StoreUserAccessScopeRequest;
 use App\Models\Hub;
 use App\Models\PartnerAccount;
 use App\Models\User;
@@ -12,6 +15,7 @@ use App\Models\UserAccessScope;
 use App\Models\Venue;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -31,18 +35,13 @@ class UserAccessScopeController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StoreUserAccessScopeRequest $request, RecordAdminAuditAction $audit): RedirectResponse
     {
-        $data = $request->validate([
-            'user_id' => ['required', 'integer', Rule::exists('users', 'id')],
-            'role_key' => ['required', 'string', Rule::in(array_keys(config('exploria_roles.roles', [])))],
-            'scope_type' => ['required', 'string', Rule::in(config('exploria_roles.scope_types', []))],
-            'scope_id' => ['nullable', 'string', 'max:64'],
-        ]);
+        $data = $request->validated();
 
         $this->validateScopeId($data['scope_type'], $data['scope_id'] ?? null);
 
-        UserAccessScope::query()->updateOrCreate(
+        $scope = UserAccessScope::query()->updateOrCreate(
             [
                 'user_id' => $data['user_id'],
                 'role_key' => $data['role_key'],
@@ -54,33 +53,46 @@ class UserAccessScopeController extends Controller
                 'metadata' => ['source' => 'admin_access_scope_page'],
             ],
         );
+        $audit->execute($request->user(), $scope->wasRecentlyCreated ? 'access_scope_created' : 'access_scope_reactivated', 'access_scope', $scope->id, $request->session()->getId(), [
+            'target_user_id' => $scope->user_id,
+            'role_key' => $scope->role_key,
+            'scope_type' => $scope->scope_type,
+            'scope_id' => $scope->scope_id,
+            'status' => $scope->status->value,
+        ]);
 
         return back()->with('success', 'دامنه دسترسی کاربر ثبت شد.');
     }
 
-    public function deactivate(UserAccessScope $accessScope): RedirectResponse
+    public function deactivate(Request $request, UserAccessScope $accessScope, RecordAdminAuditAction $audit): RedirectResponse
     {
         $accessScope->update(['status' => RecordStatus::Inactive]);
+        $audit->execute($request->user(), 'access_scope_deactivated', 'access_scope', $accessScope->id, $request->session()->getId(), [
+            'target_user_id' => $accessScope->user_id,
+            'role_key' => $accessScope->role_key,
+            'scope_type' => $accessScope->scope_type,
+            'scope_id' => $accessScope->scope_id,
+            'status' => $accessScope->status->value,
+        ]);
 
         return back()->with('success', 'دامنه دسترسی غیرفعال شد.');
     }
 
-    public function storeAccount(Request $request): RedirectResponse
+    public function storeAccount(StoreAdminAccountRequest $request, RecordAdminAuditAction $audit): RedirectResponse
     {
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:120'],
-            'email' => ['required', 'email', 'max:180', Rule::unique('users', 'email')],
-            'role' => ['required', 'string', Rule::enum(UserRole::class)],
-        ]);
+        $data = $request->validated();
 
-        User::query()->create([
+        $user = User::query()->create([
             'name' => $data['name'],
             'email' => $data['email'],
-            'password' => 'password',
+            'password' => Str::password(48),
             'role' => UserRole::from($data['role']),
         ]);
+        $audit->execute($request->user(), 'user_created', 'user', (string) $user->id, $request->session()->getId(), [
+            'role' => $user->role->value,
+        ]);
 
-        return back()->with('success', 'اکانت جدید ساخته شد و حالا می‌توانید برای آن دسترسی تعریف کنید.');
+        return back()->with('success', 'اکانت جدید ساخته شد. دسترسی را تعریف کنید و از کاربر بخواهید رمز خود را از مسیر بازیابی رمز تعیین کند.');
     }
 
     /** @return array<int, array<string, mixed>> */

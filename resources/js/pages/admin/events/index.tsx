@@ -10,6 +10,7 @@ type ScanEventItem = {
     riskFlag: boolean;
     riskReason: string | null;
     objectType: string | null;
+    objectId: string | null;
     objectCode: string | null;
     objectLabel: string | null;
     actorLabel: string;
@@ -51,6 +52,8 @@ const objectTypeLabels: Record<string, string> = {
     campaign: 'کمپین',
     mission: 'مأموریت',
     reward: 'پاداش',
+    user: 'کاربر',
+    access_scope: 'دامنه دسترسی',
     consent_version: 'نسخه رضایت‌نامه',
 };
 
@@ -171,6 +174,36 @@ export default function ScanEventIndex({ items, summary, filters }: Props) {
                                 <option value="audit.reward_deleted">
                                     حذف پاداش
                                 </option>
+                                <option value="audit.reward_approved">
+                                    تأیید پاداش
+                                </option>
+                                <option value="audit.reward_rejected">
+                                    رد پاداش
+                                </option>
+                                <option value="audit.reward_revision_requested">
+                                    درخواست بازنگری پاداش
+                                </option>
+                                <option value="audit.user_created">
+                                    ساخت حساب مدیریتی
+                                </option>
+                                <option value="audit.user_role_updated">
+                                    تغییر نقش کاربر
+                                </option>
+                                <option value="audit.user_access_deactivated">
+                                    قطع دسترسی‌های کاربر
+                                </option>
+                                <option value="audit.user_deleted">
+                                    حذف کاربر
+                                </option>
+                                <option value="audit.access_scope_created">
+                                    ایجاد دامنه دسترسی
+                                </option>
+                                <option value="audit.access_scope_reactivated">
+                                    فعال‌سازی مجدد دامنه
+                                </option>
+                                <option value="audit.access_scope_deactivated">
+                                    غیرفعال‌سازی دامنه
+                                </option>
                             </select>
                         </label>
                         <label className="grid gap-2 text-sm">
@@ -247,7 +280,7 @@ export default function ScanEventIndex({ items, summary, filters }: Props) {
                                         dir="ltr"
                                     >
                                         {event.objectType
-                                            ? `${objectTypeLabels[event.objectType] ?? event.objectType}: ${event.objectCode ?? '-'}`
+                                            ? `${objectTypeLabels[event.objectType] ?? event.objectType}: ${event.objectCode ?? event.objectId ?? '-'}`
                                             : '-'}
                                     </p>
                                 </div>

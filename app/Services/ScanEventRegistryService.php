@@ -40,6 +40,7 @@ class ScanEventRegistryService
                 'riskFlag' => (bool) ($payload['risk_flag'] ?? false),
                 'riskReason' => $payload['risk_reason'] ?? null,
                 'objectType' => $event->object_type,
+                'objectId' => $event->object_id,
                 'objectCode' => $qrCode ?? $payloadCode,
                 'objectLabel' => $qrLabel ?? $payloadName,
                 'actorLabel' => $event->actor_user_id ? 'کاربر #'.$event->actor_user_id : 'نشست ناشناس',

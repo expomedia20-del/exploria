@@ -2,20 +2,21 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Actions\Events\RecordAdminAuditAction;
 use App\Enums\RecordStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\ReviewRewardRequest;
 use App\Models\RewardDefinition;
 use App\Services\HubManagerAccessService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 
 class RewardApprovalController extends Controller
 {
-    public function approve(Request $request, RewardDefinition $reward, HubManagerAccessService $access): JsonResponse|RedirectResponse
+    public function approve(ReviewRewardRequest $request, RewardDefinition $reward, HubManagerAccessService $access, RecordAdminAuditAction $audit): JsonResponse|RedirectResponse
     {
         $access->ensureCanReviewReward($request->user(), $reward);
-        $data = $this->validatedReviewData($request);
+        $data = $request->validated();
 
         $reward->update([
             'status' => RecordStatus::Active,
@@ -24,9 +25,10 @@ class RewardApprovalController extends Controller
                 'approval_status' => 'approved',
                 'approved_by_user_id' => $request->user()?->id,
                 'approved_at' => now()->toIso8601String(),
-                'review_notes' => $data['notes'],
+                'review_notes' => $data['notes'] ?? null,
             ],
         ]);
+        $this->audit($request, $reward, $audit, 'reward_approved');
 
         if ($request->expectsJson()) {
             return response()->json(['status' => 'success', 'data' => $this->serialize($reward->fresh())]);
@@ -35,10 +37,10 @@ class RewardApprovalController extends Controller
         return back()->with('success', 'پیشنهاد فروشگاه تایید و فعال شد.');
     }
 
-    public function reject(Request $request, RewardDefinition $reward, HubManagerAccessService $access): JsonResponse|RedirectResponse
+    public function reject(ReviewRewardRequest $request, RewardDefinition $reward, HubManagerAccessService $access, RecordAdminAuditAction $audit): JsonResponse|RedirectResponse
     {
         $access->ensureCanReviewReward($request->user(), $reward);
-        $data = $this->validatedReviewData($request);
+        $data = $request->validated();
 
         $reward->update([
             'status' => RecordStatus::Inactive,
@@ -47,9 +49,10 @@ class RewardApprovalController extends Controller
                 'approval_status' => 'rejected',
                 'rejected_by_user_id' => $request->user()?->id,
                 'rejected_at' => now()->toIso8601String(),
-                'review_notes' => $data['notes'],
+                'review_notes' => $data['notes'] ?? null,
             ],
         ]);
+        $this->audit($request, $reward, $audit, 'reward_rejected');
 
         if ($request->expectsJson()) {
             return response()->json(['status' => 'success', 'data' => $this->serialize($reward->fresh())]);
@@ -58,10 +61,10 @@ class RewardApprovalController extends Controller
         return back()->with('success', 'پیشنهاد فروشگاه رد شد.');
     }
 
-    public function requestRevision(Request $request, RewardDefinition $reward, HubManagerAccessService $access): JsonResponse|RedirectResponse
+    public function requestRevision(ReviewRewardRequest $request, RewardDefinition $reward, HubManagerAccessService $access, RecordAdminAuditAction $audit): JsonResponse|RedirectResponse
     {
         $access->ensureCanReviewReward($request->user(), $reward);
-        $data = $this->validatedReviewData($request);
+        $data = $request->validated();
 
         $reward->update([
             'status' => RecordStatus::Draft,
@@ -70,9 +73,10 @@ class RewardApprovalController extends Controller
                 'approval_status' => 'revision_requested',
                 'revision_requested_by_user_id' => $request->user()?->id,
                 'revision_requested_at' => now()->toIso8601String(),
-                'review_notes' => $data['notes'],
+                'review_notes' => $data['notes'] ?? null,
             ],
         ]);
+        $this->audit($request, $reward, $audit, 'reward_revision_requested');
 
         if ($request->expectsJson()) {
             return response()->json(['status' => 'success', 'data' => $this->serialize($reward->fresh())]);
@@ -81,14 +85,14 @@ class RewardApprovalController extends Controller
         return back()->with('success', 'پیشنهاد برای اصلاح به فروشگاه/اسپانسر برگردانده شد.');
     }
 
-    /** @return array{notes: string|null} */
-    private function validatedReviewData(Request $request): array
+    private function audit(ReviewRewardRequest $request, RewardDefinition $reward, RecordAdminAuditAction $audit, string $action): void
     {
-        $data = $request->validate([
-            'notes' => ['nullable', 'string', 'max:1000'],
+        $audit->execute($request->user(), $action, 'reward', $reward->id, $request->session()->getId(), [
+            'code' => $reward->code,
+            'name' => $reward->name,
+            'status' => $reward->status->value,
+            'decision' => $reward->metadata['approval_status'] ?? null,
         ]);
-
-        return ['notes' => isset($data['notes']) ? (string) $data['notes'] : null];
     }
 
     /** @return array<string, mixed> */

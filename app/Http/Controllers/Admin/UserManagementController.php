@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Actions\Events\RecordAdminAuditAction;
 use App\Enums\RecordStatus;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\UpdateUserRoleRequest;
 use App\Models\Hub;
 use App\Models\PartnerAccount;
 use App\Models\User;
@@ -12,7 +14,6 @@ use App\Models\UserAccessScope;
 use App\Models\Venue;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -28,11 +29,9 @@ class UserManagementController extends Controller
         ]);
     }
 
-    public function updateRole(Request $request, User $user): RedirectResponse
+    public function updateRole(UpdateUserRoleRequest $request, User $user, RecordAdminAuditAction $audit): RedirectResponse
     {
-        $data = $request->validate([
-            'role' => ['required', Rule::enum(UserRole::class)],
-        ]);
+        $data = $request->validated();
 
         if ($request->user()?->is($user) && $data['role'] !== UserRole::Admin->value) {
             return back()->withErrors([
@@ -40,17 +39,28 @@ class UserManagementController extends Controller
             ]);
         }
 
+        $previousRole = $user->role->value;
         $user->update(['role' => UserRole::from($data['role'])]);
+        $audit->execute($request->user(), 'user_role_updated', 'user', (string) $user->id, $request->session()->getId(), [
+            'previous_role' => $previousRole,
+            'new_role' => $user->role->value,
+        ]);
 
         return back()->with('success', 'نقش پایه کاربر به‌روزرسانی شد.');
     }
 
-    public function deactivateAccess(User $user): RedirectResponse
+    public function deactivateAccess(Request $request, User $user, RecordAdminAuditAction $audit): RedirectResponse
     {
         $updated = UserAccessScope::query()
             ->where('user_id', $user->id)
             ->where('status', RecordStatus::Active)
             ->update(['status' => RecordStatus::Inactive]);
+
+        if ($updated > 0) {
+            $audit->execute($request->user(), 'user_access_deactivated', 'user', (string) $user->id, $request->session()->getId(), [
+                'scopes_deactivated' => $updated,
+            ]);
+        }
 
         return back()->with(
             'success',
@@ -60,7 +70,7 @@ class UserManagementController extends Controller
         );
     }
 
-    public function destroy(Request $request, User $user): RedirectResponse
+    public function destroy(Request $request, User $user, RecordAdminAuditAction $audit): RedirectResponse
     {
         if ($request->user()?->is($user)) {
             return back()->withErrors([
@@ -76,7 +86,10 @@ class UserManagementController extends Controller
             ]);
         }
 
+        $userId = (string) $user->id;
+        $role = $user->role->value;
         $user->delete();
+        $audit->execute($request->user(), 'user_deleted', 'user', $userId, $request->session()->getId(), ['role' => $role]);
 
         return back()->with('success', 'کاربر بدون سابقه عملیاتی حذف شد.');
     }

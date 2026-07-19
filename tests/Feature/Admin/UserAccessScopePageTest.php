@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\UserAccessScope;
 use Database\Seeders\PilotLocationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -64,6 +65,14 @@ class UserAccessScopePageTest extends TestCase
             'email' => 'cafe.eco.evening@example.test',
             'role' => UserRole::ShopPartner->value,
         ]);
+        $created = User::query()->where('email', 'cafe.eco.evening@example.test')->firstOrFail();
+        $this->assertFalse(Hash::check('password', $created->password));
+        $this->assertDatabaseHas('event_log', [
+            'event_type' => 'audit.user_created',
+            'actor_user_id' => $admin->id,
+            'object_type' => 'user',
+            'object_id' => (string) $created->id,
+        ]);
     }
 
     public function test_admin_can_create_hub_access_scope(): void
@@ -88,6 +97,13 @@ class UserAccessScopePageTest extends TestCase
             'scope_id' => $hub->id,
             'status' => 'active',
         ]);
+        $scope = UserAccessScope::query()->where('user_id', $operator->id)->where('role_key', 'project_admin')->firstOrFail();
+        $this->assertDatabaseHas('event_log', [
+            'event_type' => 'audit.access_scope_created',
+            'actor_user_id' => $admin->id,
+            'object_type' => 'access_scope',
+            'object_id' => $scope->id,
+        ]);
     }
 
     public function test_admin_can_deactivate_access_scope(): void
@@ -100,6 +116,11 @@ class UserAccessScopePageTest extends TestCase
             ->assertRedirect();
 
         $this->assertSame(RecordStatus::Inactive, $scope->fresh()->status);
+        $this->assertDatabaseHas('event_log', [
+            'event_type' => 'audit.access_scope_deactivated',
+            'actor_user_id' => $admin->id,
+            'object_id' => $scope->id,
+        ]);
     }
 
     public function test_viewer_cannot_mutate_access_scopes(): void
