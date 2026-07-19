@@ -74,9 +74,17 @@ class MissionRewardRegistryController extends Controller
         return back()->with('success', 'پاداش کمپین ثبت شد.');
     }
 
-    public function storeTreasure(StoreTreasureRequest $request, MissionRewardRegistryService $service): JsonResponse|RedirectResponse
+    public function storeTreasure(StoreTreasureRequest $request, MissionRewardRegistryService $service, RecordAdminAuditAction $audit): JsonResponse|RedirectResponse
     {
         $treasure = $service->createTreasure($request->validated());
+        $audit->execute($request->user(), $treasure->wasRecentlyCreated ? 'treasure_created' : 'treasure_updated', 'treasure', $treasure->id, $request->session()->getId(), [
+            'code' => $treasure->code,
+            'name' => $treasure->name,
+            'status' => $treasure->status->value,
+        ], [
+            'venue_id' => $treasure->venue_id,
+            'campaign_id' => $treasure->campaign_id,
+        ]);
 
         if ($request->expectsJson()) {
             return response()->json(['status' => 'success', 'data' => ['id' => $treasure->id, 'code' => $treasure->code]], 201);
@@ -124,9 +132,13 @@ class MissionRewardRegistryController extends Controller
         return back()->with('success', 'پاداش کمپین حذف شد.');
     }
 
-    public function destroyTreasure(Request $request, Treasure $treasure, MissionRewardRegistryService $service): JsonResponse|RedirectResponse
+    public function destroyTreasure(Request $request, Treasure $treasure, MissionRewardRegistryService $service, RecordAdminAuditAction $audit): JsonResponse|RedirectResponse
     {
+        $treasureId = $treasure->id;
+        $payload = ['code' => $treasure->code, 'name' => $treasure->name];
+        $attribution = ['venue_id' => $treasure->venue_id, 'campaign_id' => $treasure->campaign_id];
         $service->deleteTreasure($treasure);
+        $audit->execute($request->user(), 'treasure_deleted', 'treasure', $treasureId, $request->session()->getId(), $payload, $attribution);
 
         if ($request->expectsJson()) {
             return response()->json(['status' => 'success']);

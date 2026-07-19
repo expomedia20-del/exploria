@@ -401,6 +401,12 @@ class CampaignQrCoreTest extends TestCase
         $this->assertSame('bronze', $treasure->metadata['treasure_tier']);
         $this->assertSame(1, $treasure->metadata['cycle_step_index']);
         $this->assertSame('after_step_completion', $treasure->reveal_rule['reveal_mode']);
+        $this->assertDatabaseHas('event_log', [
+            'event_type' => 'audit.treasure_created',
+            'actor_user_id' => $operator->id,
+            'object_type' => 'treasure',
+            'object_id' => $treasure->id,
+        ]);
 
         $this->actingAs($operator)
             ->from(route('admin.missions.page', ['campaign' => $campaign->code]))
@@ -428,6 +434,11 @@ class CampaignQrCoreTest extends TestCase
         $this->assertSame('builder treasure edited', $treasure->name);
         $this->assertSame('hidden_qr', $treasure->reveal_rule['reveal_mode']);
         $this->assertSame(1, Treasure::query()->where('campaign_id', $campaign->id)->where('metadata->cycle_step_index', 1)->count());
+        $this->assertDatabaseHas('event_log', [
+            'event_type' => 'audit.treasure_updated',
+            'actor_user_id' => $operator->id,
+            'object_id' => $treasure->id,
+        ]);
 
         $this->actingAs($operator)
             ->from(route('admin.missions.page', ['campaign' => $campaign->code]))
@@ -436,6 +447,11 @@ class CampaignQrCoreTest extends TestCase
 
         $this->assertDatabaseMissing('treasures', [
             'id' => $treasure->id,
+        ]);
+        $this->assertDatabaseHas('event_log', [
+            'event_type' => 'audit.treasure_deleted',
+            'actor_user_id' => $operator->id,
+            'object_id' => $treasure->id,
         ]);
     }
 

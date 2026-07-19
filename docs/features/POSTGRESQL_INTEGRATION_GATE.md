@@ -30,7 +30,7 @@ Secret باید فقط در Environment محلی قرار گیرد و نباید
 - نصب Runtime و سرویس PostgreSQL: PASS.
 - آمادگی پیکربندی تست و کنترل ایمنی: PASS.
 - Migration و PHPUnit واقعی روی PostgreSQL: BLOCKED BY LOCAL DATABASE CREDENTIAL؛ پس از Provision نقش/دیتابیس آزمایشی اجرا شود.
-- PHPUnit فعلی SQLite: 251 تست و 2,211 Assertion — PASS.
+- PHPUnit فعلی SQLite: 251 تست و 2,218 Assertion — PASS.
 - PHPStan، Pint، ESLint، Prettier، TypeScript و Production Build — PASS.
 
 ## نکته Governance

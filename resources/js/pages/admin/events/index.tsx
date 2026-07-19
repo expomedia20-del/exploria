@@ -59,6 +59,8 @@ const objectTypeLabels: Record<string, string> = {
     ad_request: 'درخواست تبلیغ',
     sponsor_proposal: 'پیشنهاد اسپانسر',
     sponsor_proposal_activation: 'فعال‌سازی اسپانسر',
+    partner: 'شریک تجاری',
+    treasure: 'گنج',
     user: 'کاربر',
     access_scope: 'دامنه دسترسی',
     consent_version: 'نسخه رضایت‌نامه',
@@ -237,6 +239,24 @@ export default function ScanEventIndex({ items, summary, filters }: Props) {
                                 </option>
                                 <option value="audit.sponsor_proposal_activated">
                                     فعال‌سازی پیشنهاد اسپانسر
+                                </option>
+                                <option value="audit.partner_profile_updated">
+                                    ویرایش پروفایل شریک
+                                </option>
+                                <option value="audit.partner_offer_created">
+                                    ثبت پیشنهاد شریک
+                                </option>
+                                <option value="audit.partner_offer_updated">
+                                    ویرایش پیشنهاد شریک
+                                </option>
+                                <option value="audit.treasure_created">
+                                    ساخت گنج
+                                </option>
+                                <option value="audit.treasure_updated">
+                                    ویرایش گنج
+                                </option>
+                                <option value="audit.treasure_deleted">
+                                    حذف گنج
                                 </option>
                             </select>
                         </label>

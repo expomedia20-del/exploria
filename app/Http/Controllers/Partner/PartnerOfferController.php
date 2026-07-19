@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Partner;
 
+use App\Actions\Events\RecordAdminAuditAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Partner\StorePartnerOfferRequest;
 use App\Http\Requests\Partner\UpdatePartnerOfferRequest;
@@ -12,9 +13,10 @@ use Illuminate\Http\RedirectResponse;
 
 class PartnerOfferController extends Controller
 {
-    public function store(StorePartnerOfferRequest $request, PartnerDashboardService $service): JsonResponse|RedirectResponse
+    public function store(StorePartnerOfferRequest $request, PartnerDashboardService $service, RecordAdminAuditAction $audit): JsonResponse|RedirectResponse
     {
         $reward = $service->createOffer($request->user(), $request->validated());
+        $this->audit($request, $reward, $audit, 'partner_offer_created');
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -31,9 +33,10 @@ class PartnerOfferController extends Controller
         return back()->with('success', 'پیشنهاد پاداش برای بررسی ادمین ثبت شد.');
     }
 
-    public function update(UpdatePartnerOfferRequest $request, RewardDefinition $reward, PartnerDashboardService $service): JsonResponse|RedirectResponse
+    public function update(UpdatePartnerOfferRequest $request, RewardDefinition $reward, PartnerDashboardService $service, RecordAdminAuditAction $audit): JsonResponse|RedirectResponse
     {
         $reward = $service->updateOffer($request->user(), $reward, $request->validated());
+        $this->audit($request, $reward, $audit, 'partner_offer_updated');
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -43,5 +46,17 @@ class PartnerOfferController extends Controller
         }
 
         return back()->with('success', 'تنظیمات پیشنهاد پاداش ذخیره شد.');
+    }
+
+    private function audit(StorePartnerOfferRequest|UpdatePartnerOfferRequest $request, RewardDefinition $reward, RecordAdminAuditAction $audit, string $action): void
+    {
+        $audit->execute($request->user(), $action, 'reward', $reward->id, $request->session()->getId(), [
+            'code' => $reward->code,
+            'name' => $reward->name,
+            'status' => $reward->status->value,
+        ], [
+            'venue_id' => $reward->venue_id,
+            'campaign_id' => $reward->campaign_id,
+        ]);
     }
 }

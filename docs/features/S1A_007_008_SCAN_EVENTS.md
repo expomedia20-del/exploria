@@ -40,7 +40,7 @@
 - تست Dashboard برای کل اسکن‌ها و اسکن‌های پذیرفته‌شده — PASS.
 - تست Eventهای OTP/Consent، ثبت `consent_viewed`، عدم نشت موبایل و کد OTP، فیلتر نوع/تاریخ Event Monitor و Authorization — PASS.
 - تست Audit ایجاد، ویرایش و حذف QR و نمایش فقط‌خواندنی آن در Event Monitor — PASS.
-- PHPUnit کامل: 251 تست و 2,211 Assertion — PASS.
+- PHPUnit کامل: 251 تست و 2,218 Assertion — PASS.
 - PHPStan کل پروژه: صفر Finding — PASS.
 - Pint، ESLint، Prettier، TypeScript و Production Build — PASS.
-- Production Build: 2,335 module و chunk مستقل Event Monitor حدود 8.92 kB — PASS.
+- Production Build: 2,335 module و chunk مستقل Event Monitor حدود 9.52 kB — PASS.

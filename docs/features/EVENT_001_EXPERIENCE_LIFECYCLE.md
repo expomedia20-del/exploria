@@ -38,6 +38,6 @@
 
 ## Verification
 
-- PHPUnit کامل: 251 تست و 2,211 Assertion — PASS.
+- PHPUnit کامل: 251 تست و 2,218 Assertion — PASS.
 - PHPStan، Pint، ESLint، Prettier و TypeScript — PASS.
 - Production Build با 2,335 module — PASS.

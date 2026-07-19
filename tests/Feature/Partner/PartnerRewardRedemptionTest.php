@@ -342,6 +342,14 @@ class PartnerRewardRedemptionTest extends TestCase
         $this->assertSame($rewardStep['cycle_step_index'], $offer->metadata['cycle_step_index']);
         $this->assertSame($rewardStep['reward_tier'], $offer->metadata['reward_tier']);
         $this->assertSame($rewardStep['reward_option'], $offer->metadata['reward_option']);
+        $this->assertDatabaseHas('event_log', [
+            'event_type' => 'audit.partner_offer_created',
+            'actor_user_id' => $partnerUser->id,
+            'object_type' => 'reward',
+            'object_id' => $offer->id,
+            'venue_id' => $offer->venue_id,
+            'campaign_id' => $offer->campaign_id,
+        ]);
     }
 
     public function test_partner_dashboard_uses_campaign_query_for_draft_reward_proposals(): void
@@ -406,6 +414,11 @@ class PartnerRewardRedemptionTest extends TestCase
             ->assertJsonPath('data.partner.name', 'Cafe Eco Updated')
             ->assertJsonPath('data.partner.contactMobile', '09123334444')
             ->assertJsonPath('data.partner.operatingNotes', 'Open during the family route pilot hours.');
+
+        $partner = PartnerAccount::query()->where('code', 'cafe-eco')->firstOrFail();
+        $event = EventLog::query()->where('event_type', 'audit.partner_profile_updated')->firstOrFail();
+        $this->assertSame($partner->id, $event->object_id);
+        $this->assertArrayNotHasKey('contact_mobile', $event->payload_json ?? []);
     }
 
     public function test_partner_can_update_own_offer_inventory_and_pause_status(): void
@@ -440,6 +453,11 @@ class PartnerRewardRedemptionTest extends TestCase
         $this->assertSame('inactive', $offer->status->value);
         $this->assertSame(25, $offer->stock_quantity);
         $this->assertSame('paused', $offer->metadata['availability_status']);
+        $this->assertDatabaseHas('event_log', [
+            'event_type' => 'audit.partner_offer_updated',
+            'actor_user_id' => $partnerUser->id,
+            'object_id' => $offer->id,
+        ]);
     }
 
     public function test_partner_cannot_update_foreign_offer_inventory(): void
