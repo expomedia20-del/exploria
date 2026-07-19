@@ -1,4 +1,4 @@
-import { Link, router, usePage } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { LogOut, Settings } from 'lucide-react';
 import { UserInfo } from '@/components/user-info';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
@@ -21,11 +21,6 @@ export function NavUser() {
         return null;
     }
 
-    const handleLogout = () => {
-        cleanup();
-        router.post(logout().url);
-    };
-
     return (
         <SidebarMenu>
             <SidebarMenuItem className="rounded-lg border border-sidebar-border/70 bg-sidebar-accent/30">
@@ -46,15 +41,16 @@ export function NavUser() {
                         <Settings className="size-3.5" />
                         <span>تنظیمات</span>
                     </Link>
-                    <button
-                        type="button"
-                        onClick={handleLogout}
+                    <Link
+                        href={logout()}
+                        as="button"
+                        onClick={cleanup}
                         data-test="logout-button"
                         className={actionClassName}
                     >
                         <LogOut className="size-3.5" />
                         <span>خروج</span>
-                    </button>
+                    </Link>
                 </div>
             </SidebarMenuItem>
         </SidebarMenu>
