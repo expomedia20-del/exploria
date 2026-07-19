@@ -38,13 +38,47 @@ class ScanEventMonitorTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('admin/events/index')
-                ->where('summary.accepted', 1)
+                ->where('summary.consent', 1)
                 ->where('filters.result', 'accepted')
                 ->has('items', 1)
                 ->where('items.0.result', 'accepted')
                 ->missing('items.0.mobile')
                 ->missing('items.0.ipHash')
                 ->missing('items.0.sessionHash'));
+    }
+
+    public function test_monitor_records_consent_view_and_filters_unified_events_by_type_and_date(): void
+    {
+        $this->withoutVite();
+        $visitor = User::factory()->create();
+
+        $this->actingAs($visitor)
+            ->getJson('/api/v1/consents/current?language=fa&source=pwa')
+            ->assertOk();
+
+        $this->assertDatabaseHas('event_log', [
+            'event_type' => 'consent_viewed',
+            'actor_user_id' => $visitor->id,
+            'object_type' => 'consent_version',
+        ]);
+
+        $viewer = User::factory()->create(['role' => UserRole::Viewer]);
+        $today = now()->toDateString();
+
+        $this->actingAs($viewer)
+            ->get(route('admin.events.scan-log.page', [
+                'event_type' => 'consent_viewed',
+                'from' => $today,
+                'to' => $today,
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('summary.consent', 1)
+                ->where('filters.eventType', 'consent_viewed')
+                ->where('filters.from', $today)
+                ->where('filters.to', $today)
+                ->has('items', 1)
+                ->where('items.0.eventType', 'consent_viewed'));
     }
 
     public function test_scan_log_requires_internal_read_access(): void
@@ -63,5 +97,14 @@ class ScanEventMonitorTest extends TestCase
             ->getJson(route('admin.events.scan-log.index', ['result' => 'other']))
             ->assertUnprocessable()
             ->assertJsonPath('errors.result.0', 'فیلتر نتیجه اسکن معتبر نیست.');
+    }
+
+    public function test_scan_log_rejects_an_inverted_date_range(): void
+    {
+        $viewer = User::factory()->create(['role' => UserRole::Viewer]);
+
+        $this->actingAs($viewer)
+            ->getJson(route('admin.events.scan-log.index', ['from' => '2026-07-20', 'to' => '2026-07-19']))
+            ->assertUnprocessable();
     }
 }

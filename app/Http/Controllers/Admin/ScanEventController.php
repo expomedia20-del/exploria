@@ -13,11 +13,11 @@ class ScanEventController extends Controller
 {
     public function page(ScanEventIndexRequest $request, ScanEventRegistryService $registry): Response
     {
-        return Inertia::render('admin/events/index', $registry->registry($request->validated('result')));
+        return Inertia::render('admin/events/index', $registry->registry($request->validated()));
     }
 
     public function index(ScanEventIndexRequest $request, ScanEventRegistryService $registry): JsonResponse
     {
-        return response()->json(['status' => 'success', 'data' => $registry->registry($request->validated('result'))]);
+        return response()->json(['status' => 'success', 'data' => $registry->registry($request->validated())]);
     }
 }

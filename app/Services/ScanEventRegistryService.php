@@ -2,49 +2,58 @@
 
 namespace App\Services;
 
-use App\Models\ScanEvent;
+use App\Models\EventLog;
+use App\Models\QrCode;
 
 class ScanEventRegistryService
 {
-    /** @return array{items: list<array<string, mixed>>, summary: array<string, int>, filters: array{result: string|null}} */
-    public function registry(?string $result = null): array
+    /**
+     * @param  array<string, mixed>  $filters
+     * @return array{items: list<array<string, mixed>>, summary: array<string, int>, filters: array<string, mixed>}
+     */
+    public function registry(array $filters = []): array
     {
-        $items = array_values(ScanEvent::query()
-            ->with(['qrCode:id,code,label'])
-            ->when($result, fn ($query) => $query->where('result', $result))
-            ->latest('scanned_at')
-            ->limit(100)
-            ->get()
-            ->map(fn (ScanEvent $event): array => [
+        $result = is_string($filters['result'] ?? null) ? $filters['result'] : null;
+        $eventType = is_string($filters['event_type'] ?? null) ? $filters['event_type'] : null;
+        $from = is_string($filters['from'] ?? null) ? $filters['from'] : null;
+        $to = is_string($filters['to'] ?? null) ? $filters['to'] : null;
+        $events = EventLog::query()
+            ->when($result, fn ($query) => $query->where('payload_json->result', $result))
+            ->when($eventType, fn ($query) => $query->where('event_type', $eventType))
+            ->when($from, fn ($query) => $query->whereDate('occurred_at', '>=', $from))
+            ->when($to, fn ($query) => $query->whereDate('occurred_at', '<=', $to))
+            ->latest('occurred_at')->limit(100)->get();
+        $qrCodes = QrCode::query()->whereIn('id', $events->where('object_type', 'qr_code')->pluck('object_id')->filter())->get()->keyBy('id');
+
+        $items = array_values($events->map(function (EventLog $event) use ($qrCodes): array {
+            $qr = $event->object_type === 'qr_code' ? $qrCodes->get($event->object_id) : null;
+            $payload = $event->payload_json ?? [];
+            $qrCode = $qr instanceof QrCode ? $qr->code : null;
+            $qrLabel = $qr instanceof QrCode ? $qr->label : null;
+
+            return [
                 'id' => $event->id,
-                'eventType' => match ($event->result) {
-                    'accepted' => 'qr_scanned',
-                    'duplicate' => 'duplicate_scan_flagged',
-                    default => 'invalid_scan',
-                },
-                'result' => $event->result,
-                'riskFlag' => $event->risk_flag,
-                'riskReason' => $event->risk_reason,
-                'qrCode' => $event->qrCode?->code,
-                'qrLabel' => $event->qrCode?->label,
-                'venueId' => $event->venue_id,
-                'touchpointId' => $event->touchpoint_id,
-                'campaignId' => $event->campaign_id,
-                'actorLabel' => $event->user_id ? 'کاربر #'.$event->user_id : 'نشست ناشناس',
-                'scannedAt' => $event->scanned_at->toIso8601String(),
-            ])
-            ->values()
-            ->all());
+                'eventType' => $event->event_type,
+                'result' => $payload['result'] ?? null,
+                'riskFlag' => (bool) ($payload['risk_flag'] ?? false),
+                'riskReason' => $payload['risk_reason'] ?? null,
+                'qrCode' => $qrCode ?? (is_string($payload['code'] ?? null) ? $payload['code'] : null),
+                'qrLabel' => $qrLabel,
+                'actorLabel' => $event->actor_user_id ? 'کاربر #'.$event->actor_user_id : 'نشست ناشناس',
+                'occurredAt' => $event->occurred_at->toIso8601String(),
+            ];
+        })->values()->all());
 
         return [
             'items' => $items,
             'summary' => [
-                'total' => ScanEvent::query()->count(),
-                'accepted' => ScanEvent::query()->where('result', 'accepted')->count(),
-                'invalid' => ScanEvent::query()->where('result', 'invalid')->count(),
-                'duplicate' => ScanEvent::query()->where('result', 'duplicate')->count(),
+                'total' => EventLog::query()->count(),
+                'scans' => EventLog::query()->whereIn('event_type', ['qr_scanned', 'invalid_scan', 'duplicate_scan_flagged'])->count(),
+                'auth' => EventLog::query()->whereIn('event_type', ['otp_requested', 'otp_verified'])->count(),
+                'consent' => EventLog::query()->whereIn('event_type', ['consent_viewed', 'consent_accepted'])->count(),
+                'audit' => EventLog::query()->where('event_type', 'like', 'audit.%')->count(),
             ],
-            'filters' => ['result' => $result],
+            'filters' => ['result' => $result, 'eventType' => $eventType, 'from' => $from, 'to' => $to],
         ];
     }
 }

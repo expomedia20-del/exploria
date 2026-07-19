@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Consent\AcceptConsentAction;
+use App\Actions\Events\RecordDomainEventAction;
 use App\Actions\Visits\RecordVisitAction;
 use App\Http\Requests\Consent\AcceptConsentRequest;
 use App\Models\ConsentVersion;
@@ -11,7 +12,7 @@ use Illuminate\Http\Request;
 
 class ConsentController extends Controller
 {
-    public function current(Request $request): JsonResponse
+    public function current(Request $request, RecordDomainEventAction $recordEvent): JsonResponse
     {
         $language = $request->string('language', 'fa')->toString();
         $version = ConsentVersion::query()
@@ -27,6 +28,12 @@ class ConsentController extends Controller
                 'data' => null,
             ], 404);
         }
+
+        $recordEvent->execute('consent_viewed', $request->user(), $request->session()->getId(), 'consent_version', $version->id, [
+            'consent_version_id' => $version->id,
+            'language' => $version->language,
+            'source' => $request->string('source', 'pwa')->toString(),
+        ]);
 
         return response()->json([
             'status' => 'success',

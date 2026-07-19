@@ -6,30 +6,43 @@ import { Spinner } from '@/components/ui/spinner';
 type ScanEventItem = {
     id: string;
     eventType: string;
-    result: 'accepted' | 'invalid' | 'duplicate';
+    result: 'accepted' | 'invalid' | 'duplicate' | null;
     riskFlag: boolean;
     riskReason: string | null;
     qrCode: string | null;
     qrLabel: string | null;
     actorLabel: string;
-    scannedAt: string;
+    occurredAt: string;
 };
 
 type Props = {
     items: ScanEventItem[];
     summary: {
         total: number;
-        accepted: number;
-        invalid: number;
-        duplicate: number;
+        scans: number;
+        auth: number;
+        consent: number;
+        audit: number;
     };
-    filters: { result: string | null };
+    filters: {
+        result: string | null;
+        eventType: string | null;
+        from: string | null;
+        to: string | null;
+    };
 };
 
 const resultLabels = {
     accepted: 'پذیرفته',
     invalid: 'نامعتبر',
     duplicate: 'تکراری',
+};
+const summaryLabels = {
+    total: 'کل رویدادها',
+    scans: 'اسکن‌ها',
+    auth: 'ورود و OTP',
+    consent: 'رضایت‌نامه',
+    audit: 'Audit مدیریتی',
 };
 
 export default function ScanEventIndex({ items, summary, filters }: Props) {
@@ -38,31 +51,27 @@ export default function ScanEventIndex({ items, summary, filters }: Props) {
             className="flex h-full flex-1 flex-col gap-6 overflow-x-auto p-4"
             dir="rtl"
         >
-            <Head title="پایش رویدادهای اسکن" />
+            <Head title="پایش جامع رویدادها" />
             <header>
                 <p className="text-sm text-muted-foreground">
                     Event Monitor · فقط‌خواندنی
                 </p>
                 <h1 className="mt-1 text-2xl font-semibold">
-                    پایش رویدادهای اسکن
+                    پایش جامع رویدادها
                 </h1>
                 <p className="mt-2 text-sm text-muted-foreground">
                     نمایش ۱۰۰ رویداد آخر بدون موبایل، IP یا شناسه نشست خام.
                 </p>
             </header>
 
-            <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
                 {Object.entries(summary).map(([key, value]) => (
                     <article
                         key={key}
                         className="rounded-lg border bg-background p-4"
                     >
                         <p className="text-sm text-muted-foreground">
-                            {key === 'total'
-                                ? 'کل رویدادها'
-                                : resultLabels[
-                                      key as keyof typeof resultLabels
-                                  ]}
+                            {summaryLabels[key as keyof typeof summaryLabels]}
                         </p>
                         <p className="mt-2 text-3xl font-semibold">
                             {value.toLocaleString('fa-IR')}
@@ -91,10 +100,65 @@ export default function ScanEventIndex({ items, summary, filters }: Props) {
                                 <option value="duplicate">تکراری</option>
                             </select>
                         </label>
+                        <label className="grid gap-2 text-sm">
+                            نوع رویداد
+                            <select
+                                name="event_type"
+                                defaultValue={filters.eventType ?? ''}
+                                className="h-10 min-w-52 rounded-md border bg-background px-3"
+                            >
+                                <option value="">همه رویدادها</option>
+                                <option value="otp_requested">
+                                    درخواست OTP
+                                </option>
+                                <option value="otp_verified">تأیید OTP</option>
+                                <option value="consent_viewed">
+                                    نمایش رضایت‌نامه
+                                </option>
+                                <option value="consent_accepted">
+                                    پذیرش رضایت‌نامه
+                                </option>
+                                <option value="qr_scanned">اسکن پذیرفته</option>
+                                <option value="invalid_scan">
+                                    اسکن نامعتبر
+                                </option>
+                                <option value="duplicate_scan_flagged">
+                                    اسکن تکراری
+                                </option>
+                                <option value="audit.qr_created">
+                                    ساخت QR
+                                </option>
+                                <option value="audit.qr_updated">
+                                    ویرایش QR
+                                </option>
+                                <option value="audit.qr_deleted">حذف QR</option>
+                            </select>
+                        </label>
+                        <label className="grid gap-2 text-sm">
+                            از تاریخ
+                            <input
+                                type="date"
+                                name="from"
+                                defaultValue={filters.from ?? ''}
+                                className="h-10 rounded-md border bg-background px-3"
+                            />
+                        </label>
+                        <label className="grid gap-2 text-sm">
+                            تا تاریخ
+                            <input
+                                type="date"
+                                name="to"
+                                defaultValue={filters.to ?? ''}
+                                className="h-10 rounded-md border bg-background px-3"
+                            />
+                        </label>
                         <Button disabled={processing}>
                             {processing && <Spinner />}اعمال فیلتر
                         </Button>
-                        {filters.result ? (
+                        {filters.result ||
+                        filters.eventType ||
+                        filters.from ||
+                        filters.to ? (
                             <Button asChild variant="outline">
                                 <Link href="/admin/events/scan-log">
                                     پاک کردن
@@ -125,7 +189,9 @@ export default function ScanEventIndex({ items, summary, filters }: Props) {
                                     )}
                                     <div>
                                         <p className="font-medium">
-                                            {resultLabels[event.result]}
+                                            {event.result
+                                                ? resultLabels[event.result]
+                                                : 'رویداد سیستمی'}
                                         </p>
                                         <p
                                             className="text-xs text-muted-foreground"
@@ -136,7 +202,12 @@ export default function ScanEventIndex({ items, summary, filters }: Props) {
                                     </div>
                                 </div>
                                 <div>
-                                    <p>{event.qrLabel ?? 'QR بدون عنوان'}</p>
+                                    <p>
+                                        {event.qrLabel ??
+                                            (event.qrCode
+                                                ? 'QR بدون عنوان'
+                                                : 'بدون QR')}
+                                    </p>
                                     <p
                                         className="text-xs text-muted-foreground"
                                         dir="ltr"
@@ -149,7 +220,7 @@ export default function ScanEventIndex({ items, summary, filters }: Props) {
                                     {new Intl.DateTimeFormat('fa-IR', {
                                         dateStyle: 'medium',
                                         timeStyle: 'short',
-                                    }).format(new Date(event.scannedAt))}
+                                    }).format(new Date(event.occurredAt))}
                                 </time>
                             </article>
                         ))}
@@ -162,6 +233,6 @@ export default function ScanEventIndex({ items, summary, filters }: Props) {
 
 ScanEventIndex.layout = {
     breadcrumbs: [
-        { title: 'پایش رویدادهای اسکن', href: '/admin/events/scan-log' },
+        { title: 'پایش جامع رویدادها', href: '/admin/events/scan-log' },
     ],
 };

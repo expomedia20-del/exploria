@@ -664,6 +664,18 @@ class CampaignQrCoreTest extends TestCase
         $this->assertSame(url('/scan/ep1405-main-gate-extra'), $qr->destination_url);
         $this->assertSame(2, $qr->max_scans_per_user_per_window);
         $this->assertSame(600, $qr->duplicate_window_seconds);
+        $this->assertDatabaseHas('event_log', [
+            'event_type' => 'audit.qr_created',
+            'actor_user_id' => $operator->id,
+            'object_type' => 'qr_code',
+            'object_id' => $qr->id,
+        ]);
+        $this->actingAs($operator)
+            ->getJson(route('admin.events.scan-log.index', ['event_type' => 'audit.qr_created']))
+            ->assertOk()
+            ->assertJsonCount(1, 'data.items')
+            ->assertJsonPath('data.items.0.eventType', 'audit.qr_created')
+            ->assertJsonMissingPath('data.items.0.sessionHash');
     }
 
     public function test_operator_can_update_and_delete_unused_qr(): void
@@ -709,6 +721,11 @@ class CampaignQrCoreTest extends TestCase
             'status' => 'inactive',
             'duplicate_window_seconds' => 600,
         ]);
+        $this->assertDatabaseHas('event_log', [
+            'event_type' => 'audit.qr_updated',
+            'actor_user_id' => $operator->id,
+            'object_id' => $qr->id,
+        ]);
 
         $this->actingAs($operator)
             ->from(route('admin.qr-codes.page'))
@@ -716,6 +733,11 @@ class CampaignQrCoreTest extends TestCase
             ->assertRedirect(route('admin.qr-codes.page'));
 
         $this->assertDatabaseMissing('qr_codes', ['id' => $qr->id]);
+        $this->assertDatabaseHas('event_log', [
+            'event_type' => 'audit.qr_deleted',
+            'actor_user_id' => $operator->id,
+            'object_id' => $qr->id,
+        ]);
     }
 
     public function test_qr_creation_rejects_cross_venue_campaign(): void

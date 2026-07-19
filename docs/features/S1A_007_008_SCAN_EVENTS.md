@@ -13,10 +13,11 @@
 - ثبت `qr_scanned` پس از Consent و پذیرش اسکن معتبر.
 - ثبت `invalid_scan` برای QR ناشناخته، غیرفعال، منقضی یا خارج از بازه اعتبار.
 - ثبت `duplicate_scan_flagged` برای عبور از سقف اسکن کاربر در پنجره زمانی QR.
-- ثبت امن `otp_requested`، `otp_verified` و `consent_accepted` در Event Log.
+- ثبت امن `otp_requested`، `otp_verified`، `consent_viewed` و `consent_accepted` در Event Log.
+- ثبت Audit append-only برای ایجاد، ویرایش و حذف QR همراه با شناسه عامل و شیء، بدون داده حساس خام.
 - جلوگیری از ساخت Visit یا Progress تکراری برای همان کاربر و QR.
 - نمایش تعداد کل اسکن‌ها و اسکن‌های پذیرفته‌شده در Dashboard مدیریتی.
-- صفحه و API فقط‌خواندنی Scan Log برای Admin، Operator و Viewer با فیلتر نتیجه و سقف ۱۰۰ رکورد آخر.
+- صفحه و API فقط‌خواندنی Event Monitor برای Admin، Operator و Viewer با نمایش یکپارچه اسکن، OTP، رضایت‌نامه و Audit؛ فیلتر نتیجه، نوع رویداد و بازه تاریخ؛ و سقف ۱۰۰ رکورد آخر.
 
 ## امنیت و حریم خصوصی
 
@@ -36,8 +37,9 @@
 - تست Accepted، Invalid، Duplicate، Attribution، Hashing و Append-only — PASS.
 - Migration Rollback و Reapply ایزوله — PASS.
 - تست Dashboard برای کل اسکن‌ها و اسکن‌های پذیرفته‌شده — PASS.
-- تست Eventهای OTP/Consent، عدم نشت موبایل و کد OTP، فیلتر Scan Log و Authorization — PASS.
-- PHPUnit کامل: 246 تست و 2,123 Assertion — PASS.
+- تست Eventهای OTP/Consent، ثبت `consent_viewed`، عدم نشت موبایل و کد OTP، فیلتر نوع/تاریخ Event Monitor و Authorization — PASS.
+- تست Audit ایجاد، ویرایش و حذف QR و نمایش فقط‌خواندنی آن در Event Monitor — PASS.
+- PHPUnit کامل: 248 تست و 2,152 Assertion — PASS.
 - PHPStan کل پروژه: صفر Finding — PASS.
 - Pint، ESLint، Prettier، TypeScript و Production Build — PASS.
-- Production Build: 2,335 module و chunk مستقل Event Monitor حدود 3.99 kB — PASS.
+- Production Build: 2,335 module و chunk مستقل Event Monitor حدود 5.75 kB — PASS.
