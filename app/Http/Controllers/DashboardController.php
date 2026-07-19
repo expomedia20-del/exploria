@@ -9,6 +9,7 @@ use App\Models\MissionInstance;
 use App\Models\OtpRequest;
 use App\Models\QrCode;
 use App\Models\RewardRedemption;
+use App\Models\ScanEvent;
 use App\Models\UserMissionProgress;
 use App\Models\UserReward;
 use App\Models\Venue;
@@ -161,6 +162,8 @@ class DashboardController extends Controller
                 'activeQrCodes' => QrCode::query()->where('status', 'active')->count(),
                 'otpRequests' => OtpRequest::query()->count(),
                 'consents' => ConsentLog::query()->count(),
+                'scans' => ScanEvent::query()->count(),
+                'acceptedScans' => ScanEvent::query()->where('result', 'accepted')->count(),
                 'visits' => Visit::query()->count(),
                 'activeCampaigns' => Campaign::query()->where('status', 'active')->count(),
                 'missionCompletions' => UserMissionProgress::query()->where('status', 'completed')->count(),

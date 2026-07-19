@@ -55,7 +55,14 @@ class ConsentController extends Controller
         );
         $sourceQrCode = $request->string('sourceQrCode')->toString();
         $visit = $sourceQrCode !== ''
-            ? $recordVisit->execute($request->user(), $sourceQrCode, $log, $request->session()->getId())
+            ? $recordVisit->execute(
+                $request->user(),
+                $sourceQrCode,
+                $log,
+                $request->session()->getId(),
+                $request->ip(),
+                $request->userAgent(),
+            )
             : null;
 
         return response()->json([

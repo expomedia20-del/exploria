@@ -2,23 +2,43 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Events\RecordQrScanEventAction;
 use App\Enums\RecordStatus;
 use App\Models\MissionInstance;
 use App\Models\QrCode;
 use App\Models\RewardDefinition;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ScanLandingController extends Controller
 {
-    public function __invoke(string $code): Response
+    public function __invoke(Request $request, string $code, RecordQrScanEventAction $recordQrScan): Response
     {
         $qr = QrCode::query()
             ->with(['venue', 'touchpoint.hub.zone', 'campaign'])
             ->where('code', $code)
-            ->firstOrFail();
+            ->first();
 
-        abort_unless($qr->isAvailableForLanding(), 404);
+        if (! $qr) {
+            $recordQrScan->recordUnknown($code, $request->session()->getId(), $request->ip(), $request->userAgent());
+
+            abort(404);
+        }
+
+        if (! $qr->isAvailableForLanding()) {
+            $recordQrScan->record(
+                $qr,
+                $request->user(),
+                'invalid',
+                $request->session()->getId(),
+                $request->ip(),
+                $request->userAgent(),
+                'unavailable_qr',
+            );
+
+            abort(404);
+        }
 
         $venue = $qr->venue;
         $touchpoint = $qr->touchpoint;

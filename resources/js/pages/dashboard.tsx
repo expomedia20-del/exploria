@@ -7,6 +7,8 @@ type Stats = {
     activeQrCodes: number;
     otpRequests: number;
     consents: number;
+    scans: number;
+    acceptedScans: number;
     visits: number;
     activeCampaigns: number;
     missionCompletions: number;
@@ -76,6 +78,8 @@ const statLabels: Array<[keyof Stats, string, string]> = [
     ['activeQrCodes', 'QR فعال', 'کدهای آماده برای اسکن و ورود'],
     ['otpRequests', 'درخواست OTP', 'تعداد تلاش‌های ورود سریع'],
     ['consents', 'رضایت ثبت‌شده', 'پذیرش‌های معتبر رضایت‌نامه'],
+    ['scans', 'کل اسکن‌ها', 'اسکن‌های معتبر، نامعتبر و تکراری ثبت‌شده'],
+    ['acceptedScans', 'اسکن پذیرفته‌شده', 'اسکن‌های معتبر پس از رضایت کاربر'],
     ['visits', 'بازدید ثبت‌شده', 'رخدادهای تاییدشده پس از رضایت'],
     ['activeCampaigns', 'کمپین فعال', 'کمپین‌هایی که وارد مرحله اجرا شده‌اند'],
     ['activeMissions', 'مأموریت فعال', 'مأموریت‌های قابل اجرا برای کاربران'],
@@ -105,6 +109,7 @@ const dashboardChartItems: Array<[keyof Stats, string, string]> = [
     ['venues', 'مکان پایلوت', '#0f766e'],
     ['activeCampaigns', 'کمپین فعال', '#0891b2'],
     ['activeQrCodes', 'QR فعال', '#d97706'],
+    ['scans', 'کل اسکن', '#0284c7'],
     ['visits', 'بازدید', '#e11d48'],
     ['activeMissions', 'ماموریت فعال', '#4f46e5'],
     ['missionCompletions', 'تکمیل ماموریت', '#16a34a'],

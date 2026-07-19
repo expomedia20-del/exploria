@@ -220,6 +220,8 @@ class DashboardTest extends TestCase
                 ->where('stats.venues', 3)
                 ->where('stats.activeQrCodes', 1)
                 ->where('stats.consents', 1)
+                ->where('stats.scans', 1)
+                ->where('stats.acceptedScans', 1)
                 ->where('stats.visits', 1)
                 ->where('stats.activeCampaigns', 1)
                 ->where('stats.activeMissions', 4)

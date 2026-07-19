@@ -14,7 +14,13 @@ class OtpController extends Controller
 {
     public function request(RequestOtpRequest $request, RequestOtpAction $action): JsonResponse
     {
-        $otp = $action->execute($request->string('mobile')->toString(), $request->input('sourceQrCode'));
+        $otp = $action->execute(
+            $request->string('mobile')->toString(),
+            $request->input('sourceQrCode'),
+            $request->session()->getId(),
+            $request->ip(),
+            $request->userAgent(),
+        );
 
         return response()->json(['status' => 'success', 'message' => 'کد تأیید ارسال شد.', 'data' => ['otpRequestId' => $otp->id, 'expiresAt' => $otp->expires_at->toIso8601String(), 'status' => 'pending']]);
     }
@@ -26,7 +32,13 @@ class OtpController extends Controller
     ): JsonResponse {
         $otpRequestId = $request->string('otpRequestId')->toString();
         $user = $action->execute($otpRequestId, $request->string('code')->toString());
-        $destination = $resolveDestination->execute($user, $otpRequestId, $request->session()->getId());
+        $destination = $resolveDestination->execute(
+            $user,
+            $otpRequestId,
+            $request->session()->getId(),
+            $request->ip(),
+            $request->userAgent(),
+        );
 
         return response()->json([
             'status' => 'success',

@@ -12,8 +12,13 @@ class ResolvePostOtpDestinationAction
     public function __construct(private readonly RecordVisitAction $recordVisit) {}
 
     /** @return array{consentRequired: bool, nextUrl: string} */
-    public function execute(User $user, string $otpRequestId, string $sessionId): array
-    {
+    public function execute(
+        User $user,
+        string $otpRequestId,
+        string $sessionId,
+        ?string $ipAddress = null,
+        ?string $userAgent = null,
+    ): array {
         $otp = OtpRequest::query()->findOrFail($otpRequestId);
         $sourceQrCode = $otp->source_qr_code;
         $consentVersion = ConsentVersion::query()
@@ -33,7 +38,7 @@ class ResolvePostOtpDestinationAction
         }
 
         if ($sourceQrCode) {
-            $visit = $this->recordVisit->execute($user, $sourceQrCode, $consentLog, $sessionId);
+            $visit = $this->recordVisit->execute($user, $sourceQrCode, $consentLog, $sessionId, $ipAddress, $userAgent);
 
             return [
                 'consentRequired' => false,
