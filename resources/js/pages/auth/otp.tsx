@@ -105,9 +105,13 @@ export default function OtpAccess() {
                 code,
             });
 
-            window.location.assign(
-                response.data?.nextUrl ?? consentUrl(sourceQrCode),
-            );
+            const nextUrl =
+                response.data?.nextUrl ??
+                (response.data?.consentRequired === false
+                    ? '/dashboard'
+                    : consentUrl(sourceQrCode));
+
+            window.location.assign(nextUrl);
         } catch (verifyError) {
             setError(
                 verifyError instanceof Error

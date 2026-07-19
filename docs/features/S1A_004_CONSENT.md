@@ -12,6 +12,9 @@
 - ثبت پذیرش فقط برای کاربر دارای Laravel Session از `POST /api/v1/consents/accept`.
 - صفحه فارسی و RTL در `/consent` با حالت‌های Loading، Empty، Error و Success.
 - ثبت Version، User، Timestamp، Hash نشست و Source؛ پذیرش تکراری همان نسخه رکورد جدید نمی‌سازد.
+- هدایت خودکار کاربر جدید پس از OTP به رضایت‌نامه فعال.
+- عبور خودکار کاربر بازگشتی از رضایت‌نامه‌ای که همان نسخه فعال را قبلاً پذیرفته است.
+- ادامه مستقیم کاربر بازگشتی از QR به بازدید متناظر، بدون ایجاد ConsentLog تکراری.
 
 ## امنیت و حریم خصوصی
 
@@ -23,7 +26,9 @@
 
 - Migration و Rollback: PASS
 - Seed نسخه `pilot-fa-0.1`: PASS
-- PHPUnit: 54 تست و 196 Assertion — PASS
+- تست‌های هدفمند Auth، Consent، QR و Visit: 32 تست و 178 Assertion — PASS
+- PHPUnit کامل: 231 تست و 2,031 Assertion — PASS
+- PHPStan کل پروژه: صفر Finding — PASS
 - TypeScript، ESLint و Production Build — PASS
 
 ## محدودیت باز

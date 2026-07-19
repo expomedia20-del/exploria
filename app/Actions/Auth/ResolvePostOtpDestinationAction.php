@@ -1,0 +1,49 @@
+<?php
+
+namespace App\Actions\Auth;
+
+use App\Actions\Visits\RecordVisitAction;
+use App\Models\ConsentVersion;
+use App\Models\OtpRequest;
+use App\Models\User;
+
+class ResolvePostOtpDestinationAction
+{
+    public function __construct(private readonly RecordVisitAction $recordVisit) {}
+
+    /** @return array{consentRequired: bool, nextUrl: string} */
+    public function execute(User $user, string $otpRequestId, string $sessionId): array
+    {
+        $otp = OtpRequest::query()->findOrFail($otpRequestId);
+        $sourceQrCode = $otp->source_qr_code;
+        $consentVersion = ConsentVersion::query()
+            ->where('language', 'fa')
+            ->where('is_active', true)
+            ->latest('published_at')
+            ->first();
+        $consentLog = $consentVersion
+            ? $user->consentLogs()->where('consent_version_id', $consentVersion->id)->first()
+            : null;
+
+        if (! $consentLog) {
+            return [
+                'consentRequired' => true,
+                'nextUrl' => route('visitor.consent', array_filter(['sourceQrCode' => $sourceQrCode])),
+            ];
+        }
+
+        if ($sourceQrCode) {
+            $visit = $this->recordVisit->execute($user, $sourceQrCode, $consentLog, $sessionId);
+
+            return [
+                'consentRequired' => false,
+                'nextUrl' => route('visits.show', $visit),
+            ];
+        }
+
+        return [
+            'consentRequired' => false,
+            'nextUrl' => route('dashboard'),
+        ];
+    }
+}

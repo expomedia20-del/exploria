@@ -4,8 +4,13 @@ namespace Tests\Feature\Auth;
 
 use App\Enums\UserRole;
 use App\Infrastructure\Otp\LocalFixedOtpProvider;
+use App\Models\ConsentVersion;
 use App\Models\OtpRequest;
+use App\Models\Visit;
+use Database\Seeders\ConsentVersionSeeder;
+use Database\Seeders\PilotLocationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -40,11 +45,66 @@ class OtpAuthenticationTest extends TestCase
         $otpId = $this->postJson('/api/v1/auth/otp/request', ['mobile' => '09120000000'])->json('data.otpRequestId');
 
         $this->postJson('/api/v1/auth/otp/verify', ['otpRequestId' => $otpId, 'code' => '123456'])
-            ->assertOk()->assertJsonPath('data.consentRequired', true);
+            ->assertOk()
+            ->assertJsonPath('data.consentRequired', true)
+            ->assertJsonPath('data.nextUrl', route('visitor.consent'));
 
         $this->assertAuthenticated();
         $this->assertSame(UserRole::Visitor, auth()->user()->role);
         $this->assertNotNull(OtpRequest::find($otpId)->verified_at);
+    }
+
+    public function test_returning_user_skips_an_already_accepted_active_consent(): void
+    {
+        $this->seed(ConsentVersionSeeder::class);
+        $firstOtpId = $this->postJson('/api/v1/auth/otp/request', ['mobile' => '09120000000'])
+            ->json('data.otpRequestId');
+        $this->postJson('/api/v1/auth/otp/verify', ['otpRequestId' => $firstOtpId, 'code' => '123456'])
+            ->assertOk();
+        $version = ConsentVersion::query()->where('is_active', true)->firstOrFail();
+        $this->postJson('/api/v1/consents/accept', [
+            'consentVersionId' => $version->id,
+            'source' => 'pwa',
+        ])->assertCreated();
+        Auth::logout();
+
+        $returningOtpId = $this->postJson('/api/v1/auth/otp/request', ['mobile' => '09120000000'])
+            ->json('data.otpRequestId');
+
+        $this->postJson('/api/v1/auth/otp/verify', ['otpRequestId' => $returningOtpId, 'code' => '123456'])
+            ->assertOk()
+            ->assertJsonPath('data.consentRequired', false)
+            ->assertJsonPath('data.nextUrl', route('dashboard'));
+
+        $this->assertDatabaseCount('consent_logs', 1);
+    }
+
+    public function test_returning_user_with_qr_skips_consent_and_continues_to_visit(): void
+    {
+        $this->seed([ConsentVersionSeeder::class, PilotLocationSeeder::class]);
+        $firstOtpId = $this->postJson('/api/v1/auth/otp/request', ['mobile' => '09120000000'])
+            ->json('data.otpRequestId');
+        $this->postJson('/api/v1/auth/otp/verify', ['otpRequestId' => $firstOtpId, 'code' => '123456'])
+            ->assertOk();
+        $version = ConsentVersion::query()->where('is_active', true)->firstOrFail();
+        $this->postJson('/api/v1/consents/accept', [
+            'consentVersionId' => $version->id,
+            'source' => 'pwa',
+        ])->assertCreated();
+        Auth::logout();
+
+        $returningOtpId = $this->postJson('/api/v1/auth/otp/request', [
+            'mobile' => '09120000000',
+            'sourceQrCode' => PilotLocationSeeder::DEMO_QR_CODE,
+        ])->json('data.otpRequestId');
+        $response = $this->postJson('/api/v1/auth/otp/verify', [
+            'otpRequestId' => $returningOtpId,
+            'code' => '123456',
+        ])->assertOk()->assertJsonPath('data.consentRequired', false);
+
+        $visit = Visit::query()->sole();
+        $response->assertJsonPath('data.nextUrl', route('visits.show', $visit));
+        $this->assertDatabaseCount('consent_logs', 1);
     }
 
     public function test_wrong_code_is_rejected_and_does_not_create_a_session(): void
