@@ -23,7 +23,7 @@ export function NavUser() {
 
     const handleLogout = () => {
         cleanup();
-        router.flushAll();
+        router.post(logout().url);
     };
 
     return (
@@ -46,16 +46,15 @@ export function NavUser() {
                         <Settings className="size-3.5" />
                         <span>تنظیمات</span>
                     </Link>
-                    <Link
-                        href={logout()}
-                        as="button"
+                    <button
+                        type="button"
                         onClick={handleLogout}
                         data-test="logout-button"
                         className={actionClassName}
                     >
                         <LogOut className="size-3.5" />
                         <span>خروج</span>
-                    </Link>
+                    </button>
                 </div>
             </SidebarMenuItem>
         </SidebarMenu>
