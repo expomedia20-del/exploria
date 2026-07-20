@@ -59,6 +59,48 @@ class ProductionReadinessTest extends TestCase
         $this->assertSame('UnavailableOtpProvider', $otpCheck['actual']);
     }
 
+    public function test_http_otp_driver_requires_secure_runtime_configuration(): void
+    {
+        config(['otp.driver' => 'http']);
+        $this->app->forgetInstance(OtpProvider::class);
+        $this->app->forgetInstance(ProductionReadinessService::class);
+
+        $report = app(ProductionReadinessService::class)->report('staging', false);
+        $otpCheck = collect($report['checks'])->firstWhere('key', 'otp');
+
+        $this->assertIsArray($otpCheck);
+        $this->assertSame('fail', $otpCheck['status']);
+        $this->assertSame('HttpOtpProvider', $otpCheck['actual']['provider']);
+        $this->assertSame('missing', $otpCheck['actual']['endpoint']);
+        $this->assertSame('missing', $otpCheck['actual']['token']);
+    }
+
+    public function test_configured_http_otp_driver_can_satisfy_staging_readiness(): void
+    {
+        config([
+            'app.debug' => false,
+            'app.key' => 'base64:test-only-readiness-key',
+            'app.url' => 'https://staging.exploria.test',
+            'database.default' => 'pgsql',
+            'otp.driver' => 'http',
+            'otp.http.endpoint' => 'https://sms-provider.example.test/otp',
+            'otp.http.token' => 'configured-outside-repository',
+            'queue.default' => 'database',
+            'cache.default' => 'database',
+            'session.driver' => 'database',
+            'session.secure' => true,
+            'session.http_only' => true,
+            'logging.default' => 'stack',
+        ]);
+        $this->app->forgetInstance(OtpProvider::class);
+        $this->app->forgetInstance(ProductionReadinessService::class);
+
+        $report = app(ProductionReadinessService::class)->report('staging', false);
+
+        $this->assertTrue($report['summary']['ready']);
+        $this->assertSame(0, $report['summary']['failCount']);
+    }
+
     public function test_readiness_command_returns_failure_for_test_environment(): void
     {
         $this->artisan('exploria:production-readiness', ['--json' => true])

@@ -3,12 +3,14 @@ import {
     CheckCircle2,
     Gift,
     Lock,
+    LogOut,
     MapPin,
     Play,
     Sparkles,
     Trophy,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { logout } from '@/routes';
 
 type Visit = {
     id: string;
@@ -145,6 +147,22 @@ export default function VisitShow({ visit, missionFlow }: Props) {
             className="min-h-screen bg-slate-50 px-4 py-10 text-slate-950 dark:bg-slate-950 dark:text-slate-50"
         >
             <Head title={`بازدید ${visit.venueName ?? 'پایلوت'}`} />
+
+            <div className="mx-auto mb-3 flex w-full max-w-5xl justify-end">
+                <Form {...logout.form()}>
+                    {({ processing }) => (
+                        <Button
+                            type="submit"
+                            variant="outline"
+                            disabled={processing}
+                            data-test="logout-button"
+                        >
+                            <LogOut className="size-4" />
+                            خروج
+                        </Button>
+                    )}
+                </Form>
+            </div>
 
             <section className="mx-auto w-full max-w-5xl rounded-lg border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900">
                 <div className="flex flex-wrap items-center gap-2">

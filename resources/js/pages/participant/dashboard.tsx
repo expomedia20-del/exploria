@@ -6,6 +6,7 @@ import {
     Gem,
     Gift,
     History,
+    LogOut,
     MapPin,
     Play,
     QrCode,
@@ -15,6 +16,7 @@ import {
     UsersRound,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { logout } from '@/routes';
 
 type Participant = {
     name: string;
@@ -283,6 +285,22 @@ export default function ParticipantDashboard({
             className="flex h-full flex-1 flex-col gap-5 overflow-x-auto p-4"
         >
             <Head title="پنل مشارکت‌کننده" />
+
+            <div className="flex justify-end">
+                <Form {...logout.form()}>
+                    {({ processing }) => (
+                        <Button
+                            type="submit"
+                            variant="outline"
+                            disabled={processing}
+                            data-test="logout-button"
+                        >
+                            <LogOut className="size-4" />
+                            خروج
+                        </Button>
+                    )}
+                </Form>
+            </div>
 
             {flash?.success && (
                 <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">

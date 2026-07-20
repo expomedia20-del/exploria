@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Contracts\OtpProvider;
+use App\Infrastructure\Otp\HttpOtpProvider;
 use App\Infrastructure\Otp\LocalFixedOtpProvider;
 use App\Infrastructure\Otp\UnavailableOtpProvider;
 use Illuminate\Database\DatabaseManager;
@@ -28,6 +29,7 @@ class ProductionReadinessService
     {
         $environment ??= app()->environment();
         [$databaseRuntimeReady, $databaseRuntimeStatus] = $this->databaseRuntimeStatus($checkDatabaseRuntime);
+        [$otpProviderReady, $otpProviderStatus] = $this->otpProviderStatus();
 
         $checks = [
             $this->check(
@@ -75,9 +77,8 @@ class ProductionReadinessService
             $this->check(
                 'otp',
                 'ارسال‌کننده OTP',
-                ! $this->otpProvider instanceof LocalFixedOtpProvider
-                    && ! $this->otpProvider instanceof UnavailableOtpProvider,
-                class_basename($this->otpProvider),
+                $otpProviderReady,
+                $otpProviderStatus,
                 'یک Provider واقعی و غیرمحلی باید برای OtpProvider ثبت شده باشد.',
             ),
             $this->check(
@@ -181,5 +182,31 @@ class ProductionReadinessService
         } catch (Throwable) {
             return [false, 'connection-failed'];
         }
+    }
+
+    /**
+     * @return array{bool, mixed}
+     */
+    private function otpProviderStatus(): array
+    {
+        if ($this->otpProvider instanceof LocalFixedOtpProvider || $this->otpProvider instanceof UnavailableOtpProvider) {
+            return [false, class_basename($this->otpProvider)];
+        }
+
+        if ($this->otpProvider instanceof HttpOtpProvider) {
+            $endpointConfigured = is_string(config('otp.http.endpoint')) && trim((string) config('otp.http.endpoint')) !== '';
+            $tokenConfigured = is_string(config('otp.http.token')) && trim((string) config('otp.http.token')) !== '';
+
+            return [
+                $endpointConfigured && $tokenConfigured,
+                [
+                    'provider' => class_basename($this->otpProvider),
+                    'endpoint' => $endpointConfigured ? 'configured' : 'missing',
+                    'token' => $tokenConfigured ? 'configured' : 'missing',
+                ],
+            ];
+        }
+
+        return [true, class_basename($this->otpProvider)];
     }
 }

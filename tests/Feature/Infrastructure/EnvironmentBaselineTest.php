@@ -15,6 +15,8 @@ class EnvironmentBaselineTest extends TestCase
         $this->assertStringContainsString('APP_LOCALE=fa', $exampleEnvironment);
         $this->assertStringContainsString('DB_CONNECTION=pgsql', $exampleEnvironment);
         $this->assertStringContainsString('DB_PORT=5432', $exampleEnvironment);
+        $this->assertStringContainsString('OTP_HTTP_ENDPOINT=', $exampleEnvironment);
+        $this->assertStringContainsString('OTP_HTTP_TOKEN=', $exampleEnvironment);
     }
 
     public function test_automated_tests_use_an_isolated_in_memory_database(): void
