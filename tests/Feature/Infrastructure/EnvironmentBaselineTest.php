@@ -57,15 +57,24 @@ class EnvironmentBaselineTest extends TestCase
     {
         $backupScript = file_get_contents(base_path('scripts/backup-postgresql.ps1'));
         $restoreScript = file_get_contents(base_path('scripts/test-postgresql-restore.ps1'));
+        $launchAssuranceScript = file_get_contents(base_path('scripts/run-launch-assurance.ps1'));
 
         $this->assertIsString($backupScript);
         $this->assertIsString($restoreScript);
+        $this->assertIsString($launchAssuranceScript);
         $this->assertStringContainsString('$pgRestore --list', $backupScript);
         $this->assertStringContainsString('EXPLORIA_PG_BIN', $backupScript);
         $this->assertStringContainsString('EXPLORIA_PG_BIN', $restoreScript);
         $this->assertStringContainsString('must end with _restore_test or -restore-test', $restoreScript);
         $this->assertStringContainsString('--clean --if-exists --exit-on-error', $restoreScript);
+        $this->assertStringContainsString('exploria:campaign-assurance', $launchAssuranceScript);
+        $this->assertStringContainsString('exploria:production-readiness', $launchAssuranceScript);
+        $this->assertStringContainsString('scripts\test-postgresql.ps1', $launchAssuranceScript);
+        $this->assertStringContainsString('scripts\backup-postgresql.ps1', $launchAssuranceScript);
+        $this->assertStringContainsString('scripts\test-postgresql-restore.ps1', $launchAssuranceScript);
+        $this->assertStringContainsString('PostgreSQL gate skipped', $launchAssuranceScript);
         $this->assertStringNotContainsString('PGPASSWORD = \'', $backupScript);
         $this->assertStringNotContainsString('PGPASSWORD = \'', $restoreScript);
+        $this->assertStringNotContainsString('PGPASSWORD = \'', $launchAssuranceScript);
     }
 }
