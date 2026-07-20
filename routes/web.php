@@ -43,6 +43,7 @@ use App\Http\Controllers\VisitMissionController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
+Route::get('/health', fn () => response('Application up'))->name('health');
 Route::inertia('/board', 'demo/board')->name('demo.board');
 Route::inertia('/demo', 'welcome')->name('demo');
 Route::inertia('/demo/ecosystem', 'demo/ecosystem')->name('demo.ecosystem');
