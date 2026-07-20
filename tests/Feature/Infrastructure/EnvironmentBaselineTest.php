@@ -9,14 +9,26 @@ class EnvironmentBaselineTest extends TestCase
     public function test_example_environment_uses_the_approved_database_and_locale(): void
     {
         $exampleEnvironment = file_get_contents(base_path('.env.example'));
+        $stagingEnvironment = file_get_contents(base_path('.env.staging.example'));
 
         $this->assertIsString($exampleEnvironment);
+        $this->assertIsString($stagingEnvironment);
         $this->assertStringContainsString('APP_NAME=EXPLORIA', $exampleEnvironment);
         $this->assertStringContainsString('APP_LOCALE=fa', $exampleEnvironment);
         $this->assertStringContainsString('DB_CONNECTION=pgsql', $exampleEnvironment);
         $this->assertStringContainsString('DB_PORT=5432', $exampleEnvironment);
         $this->assertStringContainsString('OTP_HTTP_ENDPOINT=', $exampleEnvironment);
         $this->assertStringContainsString('OTP_HTTP_TOKEN=', $exampleEnvironment);
+        $this->assertStringContainsString('APP_ENV=staging', $stagingEnvironment);
+        $this->assertStringContainsString('APP_DEBUG=false', $stagingEnvironment);
+        $this->assertStringContainsString('APP_URL=https://', $stagingEnvironment);
+        $this->assertStringContainsString('DB_CONNECTION=pgsql', $stagingEnvironment);
+        $this->assertStringContainsString('QUEUE_CONNECTION=database', $stagingEnvironment);
+        $this->assertStringContainsString('SESSION_DRIVER=database', $stagingEnvironment);
+        $this->assertStringContainsString('SESSION_SECURE_COOKIE=true', $stagingEnvironment);
+        $this->assertStringContainsString('OTP_DRIVER=http', $stagingEnvironment);
+        $this->assertStringContainsString('OTP_HTTP_TOKEN=', $stagingEnvironment);
+        $this->assertStringNotContainsString('OTP_HTTP_TOKEN=sk_', $stagingEnvironment);
     }
 
     public function test_automated_tests_use_an_isolated_in_memory_database(): void
@@ -35,6 +47,8 @@ class EnvironmentBaselineTest extends TestCase
         $this->assertIsString($configuration);
         $this->assertStringContainsString('must end with _test, -test, _testing, or -testing', $script);
         $this->assertStringContainsString('select current_database()', $script);
+        $this->assertStringContainsString('EXPLORIA_PG_BIN', $script);
+        $this->assertStringContainsString('Required PostgreSQL tool', $script);
         $this->assertStringContainsString('<env name="DB_CONNECTION" value="pgsql"/>', $configuration);
         $this->assertStringNotContainsString('DB_PASSWORD" value=', $configuration);
     }
@@ -46,7 +60,9 @@ class EnvironmentBaselineTest extends TestCase
 
         $this->assertIsString($backupScript);
         $this->assertIsString($restoreScript);
-        $this->assertStringContainsString('pg_restore --list', $backupScript);
+        $this->assertStringContainsString('$pgRestore --list', $backupScript);
+        $this->assertStringContainsString('EXPLORIA_PG_BIN', $backupScript);
+        $this->assertStringContainsString('EXPLORIA_PG_BIN', $restoreScript);
         $this->assertStringContainsString('must end with _restore_test or -restore-test', $restoreScript);
         $this->assertStringContainsString('--clean --if-exists --exit-on-error', $restoreScript);
         $this->assertStringNotContainsString('PGPASSWORD = \'', $backupScript);

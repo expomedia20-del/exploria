@@ -8,6 +8,24 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+function Get-PostgresTool {
+    param([Parameter(Mandatory = $true)][string]$Name)
+
+    if ($env:EXPLORIA_PG_BIN) {
+        $candidate = Join-Path $env:EXPLORIA_PG_BIN $Name
+        if (Test-Path -LiteralPath $candidate -PathType Leaf) {
+            return $candidate
+        }
+    }
+
+    $command = Get-Command $Name -ErrorAction SilentlyContinue
+    if ($command) {
+        return $command.Source
+    }
+
+    throw "Required PostgreSQL tool '$Name' was not found. Install PostgreSQL client tools or set EXPLORIA_PG_BIN to the folder that contains psql.exe, pg_dump.exe, and pg_restore.exe."
+}
+
 if ([string]::IsNullOrWhiteSpace($Database) -or [string]::IsNullOrWhiteSpace($Username)) {
     throw 'EXPLORIA_PG_DATABASE and EXPLORIA_PG_USERNAME are required.'
 }
@@ -16,8 +34,10 @@ if ($Database -notmatch '(^|[_-])test(ing)?$') {
     throw "Refusing destructive test setup: database '$Database' must end with _test, -test, _testing, or -testing."
 }
 
+$psql = Get-PostgresTool 'psql.exe'
+
 $env:PGPASSWORD = $Password
-$resolvedDatabase = (& psql -w -h $HostName -p $Port -U $Username -d $Database -tAc 'select current_database();').Trim()
+$resolvedDatabase = (& $psql -w -h $HostName -p $Port -U $Username -d $Database -tAc 'select current_database();').Trim()
 
 if ($LASTEXITCODE -ne 0 -or $resolvedDatabase -ne $Database) {
     throw "PostgreSQL connection verification failed for '$Database'."
