@@ -1,4 +1,4 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Form, Link, usePage } from '@inertiajs/react';
 import { LogOut, Settings } from 'lucide-react';
 import { UserInfo } from '@/components/user-info';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
@@ -47,16 +47,20 @@ export function NavUser() {
                         <Settings className="size-3.5" />
                         <span>تنظیمات</span>
                     </Link>
-                    <Link
-                        href={logout()}
-                        as="button"
-                        onClick={cleanup}
-                        data-test="logout-button"
-                        className={actionClassName}
-                    >
-                        <LogOut className="size-3.5" />
-                        <span>خروج</span>
-                    </Link>
+                    <Form {...logout.form()} className="flex min-w-0 flex-1">
+                        {({ processing }) => (
+                            <button
+                                type="submit"
+                                onClick={cleanup}
+                                disabled={processing}
+                                data-test="logout-button"
+                                className={actionClassName}
+                            >
+                                <LogOut className="size-3.5" />
+                                <span>خروج</span>
+                            </button>
+                        )}
+                    </Form>
                 </div>
             </SidebarMenuItem>
         </SidebarMenu>

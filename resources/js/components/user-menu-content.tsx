@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react';
+import { Form, Link } from '@inertiajs/react';
 import { LogOut, Settings } from 'lucide-react';
 import {
     DropdownMenuGroup,
@@ -42,16 +42,20 @@ export function UserMenuContent({ user }: Props) {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-                <Link
-                    className="block w-full cursor-pointer"
-                    href={logout()}
-                    as="button"
-                    onClick={cleanup}
-                    data-test="logout-button"
-                >
-                    <LogOut className="mr-2" />
-                    خروج
-                </Link>
+                <Form {...logout.form()} className="w-full">
+                    {({ processing }) => (
+                        <button
+                            type="submit"
+                            className="flex w-full cursor-pointer items-center"
+                            onClick={cleanup}
+                            disabled={processing}
+                            data-test="logout-button"
+                        >
+                            <LogOut className="mr-2" />
+                            خروج
+                        </button>
+                    )}
+                </Form>
             </DropdownMenuItem>
         </>
     );
