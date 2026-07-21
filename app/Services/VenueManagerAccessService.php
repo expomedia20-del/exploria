@@ -21,6 +21,24 @@ class VenueManagerAccessService
                 ->values();
         }
 
+        if ($user->role === UserRole::RegionalAdmin) {
+            $regions = UserAccessScope::query()
+                ->where('user_id', $user->id)
+                ->where('scope_type', 'region')
+                ->where('status', RecordStatus::Active)
+                ->where('role_key', 'regional_admin')
+                ->pluck('scope_id')
+                ->filter()
+                ->unique()
+                ->values();
+
+            return Venue::query()
+                ->where('status', RecordStatus::Active)
+                ->whereIn('city', $regions)
+                ->pluck('id')
+                ->values();
+        }
+
         return UserAccessScope::query()
             ->where('user_id', $user->id)
             ->where('scope_type', 'venue')

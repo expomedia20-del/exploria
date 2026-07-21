@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import {
     Building2,
     CalendarCheck2,
@@ -25,6 +25,11 @@ type RoleItem = {
     reportsTo: string | null;
     responsibilities: string[];
     dailyOperations: string[];
+    accountRole: string;
+    accountRoleLabel: string;
+    entryHref: string;
+    entryLabel: string;
+    panelMode: string;
 };
 
 type AuthorityGuide = {
@@ -73,6 +78,15 @@ const scopeLabels: Record<string, string> = {
     campaign: 'کمپین',
     display_network: 'شبکه نمایشگرها',
     team: 'تیم یا خانواده',
+};
+
+const panelModeLabels: Record<string, string> = {
+    internal_shared: 'پنل مشترک داخلی اکسپلوریا',
+    venue_panel: 'پنل اختصاصی مدیر مکان',
+    hub_panel: 'پنل اختصاصی رواق/هاب',
+    partner_panel: 'پنل اختصاصی فروشگاه/واحد شریک',
+    sponsor_panel: 'پنل اختصاصی اسپانسر',
+    public_panel: 'پنل عمومی مشارکت‌کننده',
 };
 
 const roleLabels: Record<string, string> = {
@@ -381,6 +395,9 @@ function RoleCard({ role }: { role: RoleItem }) {
                     </p>
                 </div>
                 <div className="flex flex-wrap gap-2 text-xs">
+                    <span className="rounded-full bg-violet-100 px-2.5 py-1 font-medium text-violet-800 dark:bg-violet-950 dark:text-violet-200">
+                        {role.accountRoleLabel}
+                    </span>
                     <span className="rounded-full bg-emerald-100 px-2.5 py-1 font-medium text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">
                         {labelForScope(role.scope)}
                     </span>
@@ -390,6 +407,35 @@ function RoleCard({ role }: { role: RoleItem }) {
                             ? labelForRole(role.reportsTo)
                             : 'مستقل'}
                     </span>
+                </div>
+            </div>
+
+            <div className="mt-4 grid gap-3 rounded-md border border-sidebar-border/70 bg-muted/30 p-3 text-sm dark:border-sidebar-border md:grid-cols-3">
+                <div>
+                    <p className="text-xs text-muted-foreground">
+                        نوع اکانت ورود
+                    </p>
+                    <p className="mt-1 font-medium">{role.accountRoleLabel}</p>
+                </div>
+                <div>
+                    <p className="text-xs text-muted-foreground">نوع پنل</p>
+                    <p className="mt-1 font-medium">
+                        {panelModeLabels[role.panelMode] ?? role.panelMode}
+                    </p>
+                </div>
+                <div className="flex flex-col items-start gap-2">
+                    <div>
+                        <p className="text-xs text-muted-foreground">
+                            مسیر شروع
+                        </p>
+                        <p className="mt-1 font-medium">{role.entryLabel}</p>
+                    </div>
+                    <Link
+                        href={role.entryHref}
+                        className="rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium"
+                    >
+                        مشاهده پنل
+                    </Link>
                 </div>
             </div>
 

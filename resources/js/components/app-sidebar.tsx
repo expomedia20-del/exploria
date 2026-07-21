@@ -164,7 +164,7 @@ const mainNavItems: RoleAwareNavItem[] = [
         href: '/venue/dashboard',
         icon: Building2,
         group: 'مدیریت مکان و زون‌ها',
-        roles: ['admin', 'operator', 'viewer'],
+        roles: ['admin', 'regional_admin', 'operator', 'viewer'],
     },
     {
         title: 'پنل مدیر رواق تجاری',

@@ -102,6 +102,7 @@ class InternalOperationsController extends Controller
     private function entryHref(string $roleKey): string
     {
         return match ($roleKey) {
+            'super_admin', 'regional_admin' => '/dashboard',
             'display_ads_manager' => '/admin/display-operations',
             'field_operator', 'treasure_assistant' => '/admin/campaign-operations',
             default => '/admin/internal-operations',
@@ -111,6 +112,7 @@ class InternalOperationsController extends Controller
     private function entryLabel(string $roleKey): string
     {
         return match ($roleKey) {
+            'super_admin', 'regional_admin' => 'داشبورد مدیریتی',
             'display_ads_manager' => 'عملیات تبلیغات و نمایشگرها',
             'field_operator', 'treasure_assistant' => 'نقشه عملیات کمپین',
             default => 'پنل عملیات داخلی',
@@ -121,8 +123,9 @@ class InternalOperationsController extends Controller
     {
         return match ($roleKey) {
             'super_admin' => 'admin',
-            'regional_admin', 'project_admin', 'field_operator', 'display_ads_manager' => 'operator',
-            'treasure_assistant' => 'viewer یا operator محدود',
+            'regional_admin' => 'regional_admin',
+            'project_admin', 'field_operator', 'display_ads_manager' => 'operator',
+            'treasure_assistant' => 'viewer',
             default => 'operator',
         };
     }

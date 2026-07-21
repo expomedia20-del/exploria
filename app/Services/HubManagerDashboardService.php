@@ -128,6 +128,16 @@ class HubManagerDashboardService
             ]);
 
         return [
+            'panelContext' => [
+                'title' => $ravaqOnly ? 'پنل مدیر رواق تجاری' : 'پنل مدیر هاب',
+                'subtitle' => $ravaqOnly
+                    ? 'نظارت اجرایی بر رواق، فودکورت و واحدهای داخل محدوده'
+                    : 'نظارت اجرایی بر هاب‌ها، مجموعه‌های تخصصی و واحدهای وابسته',
+                'areaLabel' => $ravaqOnly ? 'رواق' : 'هاب',
+                'scopeNote' => $ravaqOnly
+                    ? 'در این نما فقط محدوده‌های رواق تجاری و فودکورت نمایش داده می‌شوند.'
+                    : 'در این نما همه هاب‌های تحت مدیریت همین حساب نمایش داده می‌شوند.',
+            ],
             'stats' => [
                 'hubs' => $hubs->count(),
                 'partners' => $partners->count(),

@@ -102,7 +102,7 @@ Route::middleware('auth')->group(function () {
         ->middleware('role:admin,hub_manager')
         ->name('ravaq.dashboard');
     Route::get('/venue/dashboard', [VenueManagerDashboardController::class, 'page'])
-        ->middleware('role:admin,operator,viewer')
+        ->middleware('role:admin,regional_admin,operator,viewer')
         ->name('venue.dashboard');
     Route::post('/hub/ads/{adRequest}/schedule', [HubAdScheduleController::class, 'store'])
         ->middleware('role:admin,hub_manager')
@@ -134,7 +134,7 @@ Route::get('/api/v1/sponsor/dashboard', [SponsorDashboardController::class, 'ind
     ->middleware(['auth', 'role:admin,operator,sponsor'])
     ->name('sponsor.dashboard.index');
 Route::get('/api/v1/venue/dashboard', [VenueManagerDashboardController::class, 'index'])
-    ->middleware(['auth', 'role:admin,operator,viewer'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator,viewer'])
     ->name('venue.dashboard.index');
 Route::get('/api/v1/ravaq/dashboard', [HubManagerDashboardController::class, 'index'])
     ->middleware(['auth', 'role:admin,hub_manager'])

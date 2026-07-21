@@ -91,6 +91,12 @@ type DisplayScheduleItem = {
 };
 
 type Props = {
+    panelContext?: {
+        title: string;
+        subtitle: string;
+        areaLabel: string;
+        scopeNote: string;
+    };
     stats: {
         hubs: number;
         partners: number;
@@ -286,6 +292,12 @@ function DisplayScheduleQueue({ items }: { items: DisplayScheduleItem[] }) {
 }
 
 export default function HubDashboard({
+    panelContext = {
+        title: 'پنل مدیر هاب',
+        subtitle: 'نظارت اجرایی بر هاب‌ها، مجموعه‌های تخصصی و واحدهای وابسته',
+        areaLabel: 'هاب',
+        scopeNote: 'در این نما همه هاب‌های تحت مدیریت همین حساب نمایش داده می‌شوند.',
+    },
     stats,
     hubs,
     partners,
@@ -296,7 +308,7 @@ export default function HubDashboard({
 }: Props) {
     return (
         <>
-            <Head title="پنل مدیر رواق تجاری" />
+            <Head title={panelContext.title} />
             <div
                 dir="rtl"
                 className="flex h-full min-w-0 flex-1 flex-col gap-5 overflow-x-hidden p-3 sm:p-4"
@@ -304,10 +316,10 @@ export default function HubDashboard({
                 <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                     <div className="min-w-0">
                         <p className="text-sm text-muted-foreground">
-                            نظارت اجرایی بر رواق، فودکورت و واحدهای داخل محدوده
+                            {panelContext.subtitle}
                         </p>
                         <h1 className="mt-1 text-2xl leading-tight font-semibold">
-                            پنل مدیر رواق تجاری
+                            {panelContext.title}
                         </h1>
                     </div>
                     <div className="grid w-full grid-cols-2 gap-2 text-sm sm:grid-cols-3 md:w-auto xl:grid-cols-5">
@@ -341,14 +353,14 @@ export default function HubDashboard({
 
                 <OperationalBoundaryNote title="تعریف نقش این پنل">
                     این پنل برای نظم، آمادگی، هماهنگی و اعلام مغایرت‌های اجرایی
-                    رواق است. تصمیم تجاری هر فروشگاه، قیمت‌گذاری، درآمد، نوع
-                    پاداش، قرارداد اسپانسر و تایید نهایی تبلیغ از این پنل انجام
-                    نمی‌شود.
+                    {` ${panelContext.areaLabel} `}است. تصمیم تجاری هر
+                    فروشگاه، قیمت‌گذاری، درآمد، نوع پاداش، قرارداد اسپانسر و
+                    تایید نهایی تبلیغ از این پنل انجام نمی‌شود.
                 </OperationalBoundaryNote>
 
                 <Panel
                     title="محدوده‌های تحت مدیریت"
-                    description="در پایلوت اکوپارک فقط رواق تجاری و فودکورت زیرمجموعه مدیر رواق نمایش داده می‌شود."
+                    description={panelContext.scopeNote}
                     isEmpty={hubs.length === 0}
                 >
                     {hubs.map((hub) => (
@@ -420,8 +432,8 @@ export default function HubDashboard({
 
                 <section className="grid gap-4 lg:grid-cols-2">
                     <Panel
-                        title="تبلیغات محدوده رواق - پایش اجرایی"
-                        description="مدیر رواق مغایرت با قوانین مجموعه و مشکلات اجرایی را اعلام می‌کند؛ تایید نهایی تبلیغ با اکسپلوریا است."
+                        title={`تبلیغات محدوده ${panelContext.areaLabel} - پایش اجرایی`}
+                        description={`مدیر ${panelContext.areaLabel} مغایرت با قوانین مجموعه و مشکلات اجرایی را اعلام می‌کند؛ تایید نهایی تبلیغ با اکسپلوریا است.`}
                         isEmpty={adRequests.length === 0}
                     >
                         {adRequests.map((adRequest) => (
@@ -456,10 +468,11 @@ export default function HubDashboard({
                                         tone="warning"
                                         title="نیازمند بررسی اکسپلوریا"
                                     >
-                                        مدیر رواق فقط محدودیت‌های اجرایی، تعارض
-                                        با قوانین مجموعه، ازدحام یا مشکل محل
-                                        نمایش را گزارش می‌کند. تایید یا رد تبلیغ
-                                        تصمیم تجاری این پنل نیست.
+                                        مدیر {panelContext.areaLabel} فقط
+                                        محدودیت‌های اجرایی، تعارض با قوانین
+                                        مجموعه، ازدحام یا مشکل محل نمایش را
+                                        گزارش می‌کند. تایید یا رد تبلیغ تصمیم
+                                        تجاری این پنل نیست.
                                     </OperationalBoundaryNote>
                                 ) : null}
                                 <ReviewTrail
@@ -471,8 +484,8 @@ export default function HubDashboard({
                     </Panel>
 
                     <Panel
-                        title="پیشنهادها و پاداش‌های واحدها - پایش مقررات رواق"
-                        description="مدیر رواق مالک نوع پاداش یا ارزش اقتصادی پیشنهاد نیست؛ فقط آمادگی و مغایرت اجرایی را پایش می‌کند."
+                        title={`پیشنهادها و پاداش‌های واحدها - پایش مقررات ${panelContext.areaLabel}`}
+                        description={`مدیر ${panelContext.areaLabel} مالک نوع پاداش یا ارزش اقتصادی پیشنهاد نیست؛ فقط آمادگی و مغایرت اجرایی را پایش می‌کند.`}
                         isEmpty={rewards.length === 0}
                     >
                         {rewards.map((reward) => (
@@ -501,8 +514,9 @@ export default function HubDashboard({
                                     >
                                         نوع پاداش، ارزش اقتصادی و شرایط فروشگاهی
                                         در اختیار واحد تجاری و اکسپلوریا است.
-                                        مدیر رواق فقط مغایرت با مقررات مجموعه یا
-                                        مانع اجرایی را اعلام می‌کند.
+                                        مدیر {panelContext.areaLabel} فقط
+                                        مغایرت با مقررات مجموعه یا مانع اجرایی
+                                        را اعلام می‌کند.
                                     </OperationalBoundaryNote>
                                 ) : null}
                                 <ReviewTrail
@@ -521,8 +535,8 @@ export default function HubDashboard({
 HubDashboard.layout = {
     breadcrumbs: [
         {
-            title: 'پنل مدیر رواق تجاری',
-            href: '/ravaq/dashboard',
+            title: 'پنل مدیر هاب / رواق',
+            href: '/hub/dashboard',
         },
     ],
 };

@@ -34,6 +34,7 @@ class HubManagerDashboardTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('hub/dashboard')
+                ->where('panelContext.title', 'پنل مدیر هاب')
                 ->where('stats.hubs', 2)
                 ->where('stats.partners', 2)
                 ->where('stats.displayDevices', 1)
@@ -52,6 +53,7 @@ class HubManagerDashboardTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('hub/dashboard')
+                ->where('panelContext.title', 'پنل مدیر رواق تجاری')
                 ->where('stats.hubs', 2)
                 ->where('hubs.0.code', 'ravaq-commercial-hub')
                 ->where('hubs.1.code', 'foodcourt-family-hub'));

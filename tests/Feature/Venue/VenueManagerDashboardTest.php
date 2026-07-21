@@ -76,6 +76,45 @@ class VenueManagerDashboardTest extends TestCase
             ->assertJsonCount(0, 'data.venues');
     }
 
+    public function test_regional_admin_can_open_venue_dashboard_for_assigned_region_only(): void
+    {
+        $this->withoutVite();
+
+        $regionalAdmin = User::factory()->create(['role' => UserRole::RegionalAdmin]);
+        Venue::query()->create([
+            'code' => 'isfahan-demo-venue',
+            'name' => 'مکان نمونه اصفهان',
+            'city' => 'اصفهان',
+            'status' => RecordStatus::Active,
+            'profile_status' => RecordStatus::Active,
+            'metadata' => ['is_test' => true],
+        ]);
+
+        UserAccessScope::query()->create([
+            'user_id' => $regionalAdmin->id,
+            'role_key' => 'regional_admin',
+            'scope_type' => 'region',
+            'scope_id' => 'تهران',
+            'status' => RecordStatus::Active,
+            'metadata' => ['source' => 'test'],
+        ]);
+
+        $this->actingAs($regionalAdmin)
+            ->get(route('venue.dashboard'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('venue/dashboard')
+                ->where('stats.venues', 1)
+                ->where('venues.0.code', 'ecopark-abbasabad'));
+
+        $this->actingAs($regionalAdmin)
+            ->getJson(route('venue.dashboard.index'))
+            ->assertOk()
+            ->assertJsonPath('data.stats.venues', 1)
+            ->assertJsonPath('data.venues.0.code', 'ecopark-abbasabad')
+            ->assertJsonMissing(['code' => 'isfahan-demo-venue']);
+    }
+
     public function test_admin_can_open_venue_dashboard_for_support(): void
     {
         $this->withoutVite();

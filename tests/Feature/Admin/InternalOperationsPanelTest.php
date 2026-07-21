@@ -71,4 +71,31 @@ class InternalOperationsPanelTest extends TestCase
                 ->where('teamMembers.1.reportsToKey', 'project_admin')
                 ->has('supervisionLines'));
     }
+
+    public function test_role_operations_panel_exposes_account_role_and_entry_panel_map(): void
+    {
+        $this->withoutVite();
+
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.role-operations.page'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('admin/role-operations/index')
+                ->where('roles.0.key', 'super_admin')
+                ->where('roles.0.accountRole', 'admin')
+                ->where('roles.0.entryHref', '/dashboard')
+                ->where('roles.1.key', 'regional_admin')
+                ->where('roles.1.accountRole', 'regional_admin')
+                ->where('roles.1.entryHref', '/dashboard')
+                ->where('roles.6.key', 'venue_executive')
+                ->where('roles.6.accountRole', 'viewer')
+                ->where('roles.6.entryHref', '/venue/dashboard')
+                ->where('roles.9.key', 'shop_manager')
+                ->where('roles.9.accountRole', 'shop_partner')
+                ->where('roles.9.entryHref', '/partner/dashboard')
+                ->where('roles.12.key', 'participant')
+                ->where('roles.12.entryHref', '/participant/dashboard'));
+    }
 }
