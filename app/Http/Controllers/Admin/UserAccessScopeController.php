@@ -8,6 +8,7 @@ use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreAdminAccountRequest;
 use App\Http\Requests\Admin\StoreUserAccessScopeRequest;
+use App\Models\Campaign;
 use App\Models\Hub;
 use App\Models\PartnerAccount;
 use App\Models\User;
@@ -158,7 +159,7 @@ class UserAccessScopeController extends Controller
             ->all();
     }
 
-    /** @return array<int, array{key: string, label: string, defaultScope: string, governance: array<string, string>}> */
+    /** @return array<int, array{key: string, group: string, label: string, defaultScope: string, reportsTo: string|null, governance: array<string, string>}> */
     private function roleOptions(): array
     {
         $configuredRoles = config('exploria_roles.roles', []);
@@ -166,8 +167,10 @@ class UserAccessScopeController extends Controller
         return collect(is_array($configuredRoles) ? $configuredRoles : [])
             ->map(fn (array $role, string $key): array => [
                 'key' => $key,
+                'group' => $role['group'],
                 'label' => $this->roleLabel($key),
                 'defaultScope' => $role['scope'],
+                'reportsTo' => $role['reports_to'],
                 'governance' => $this->roleGovernance($key),
             ])
             ->values()
@@ -200,6 +203,9 @@ class UserAccessScopeController extends Controller
             'partner' => PartnerAccount::query()->with('venue:id,name')->orderBy('name')->get(['id', 'venue_id', 'name', 'code'])->map(
                 fn (PartnerAccount $partner): array => ['id' => $partner->id, 'label' => "{$partner->name} - {$partner->venue?->name}"],
             )->all(),
+            'campaign' => Campaign::query()->with('venue:id,name')->orderBy('name')->get(['id', 'venue_id', 'name', 'code'])->map(
+                fn (Campaign $campaign): array => ['id' => $campaign->id, 'label' => "{$campaign->name} - {$campaign->venue?->name}"],
+            )->all(),
             'region' => Venue::query()
                 ->whereNotNull('city')
                 ->distinct()
@@ -210,7 +216,6 @@ class UserAccessScopeController extends Controller
                 ->values()
                 ->all(),
             'project' => [],
-            'campaign' => [],
             'display_network' => [],
             'team' => [],
         ];
@@ -261,6 +266,9 @@ class UserAccessScopeController extends Controller
             'venue' => ($venue = Venue::query()->where('code', $scopeCode)->first(['id', 'name', 'code']))
                 ? ['id' => (string) $venue->id, 'label' => "{$venue->name} ({$venue->code})"]
                 : null,
+            'campaign' => ($campaign = Campaign::query()->with('venue:id,name')->where('code', $scopeCode)->first(['id', 'venue_id', 'name', 'code']))
+                ? ['id' => (string) $campaign->id, 'label' => "{$campaign->name} - {$campaign->venue?->name}"]
+                : null,
             'hub' => ($hub = Hub::query()->with('zone.venue:id,name')->where('code', $scopeCode)->first(['id', 'zone_id', 'name', 'code']))
                 ? ['id' => (string) $hub->id, 'label' => "{$hub->name} - {$hub->zone?->venue?->name}"]
                 : null,
@@ -282,6 +290,7 @@ class UserAccessScopeController extends Controller
             ['scope_id' => ['required', 'string', match ($scopeType) {
                 'venue' => Rule::exists('venues', 'id'),
                 'region' => Rule::exists('venues', 'city'),
+                'campaign' => Rule::exists('campaigns', 'id'),
                 'hub' => Rule::exists('hubs', 'id'),
                 'partner' => Rule::exists('partner_accounts', 'id'),
                 default => 'max:64',
@@ -297,6 +306,7 @@ class UserAccessScopeController extends Controller
 
         return match ($scopeType) {
             'venue' => Venue::query()->whereKey($scopeId)->value('name') ?? $scopeId ?? '-',
+            'campaign' => Campaign::query()->whereKey($scopeId)->value('name') ?? $scopeId ?? '-',
             'hub' => Hub::query()->whereKey($scopeId)->value('name') ?? $scopeId ?? '-',
             'partner' => PartnerAccount::query()->whereKey($scopeId)->value('name') ?? $scopeId ?? '-',
             default => $scopeId ?? '-',

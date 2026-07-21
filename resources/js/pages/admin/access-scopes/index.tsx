@@ -30,8 +30,10 @@ type UserOption = {
 
 type RoleOption = {
     key: string;
+    group: string;
     label: string;
     defaultScope: string;
+    reportsTo: string | null;
     governance: RoleGovernance;
 };
 
@@ -92,10 +94,6 @@ type Props = {
         global: number;
     };
     userOptions: UserOption[];
-    accountRoleOptions: {
-        key: string;
-        label: string;
-    }[];
     roleOptions: RoleOption[];
     scopeOptions: Record<string, ScopeOption[]>;
     assignmentTemplates: AssignmentTemplate[];
@@ -126,6 +124,7 @@ const scopeTypeLabels: Record<string, string> = {
 
 const userRoleLabels: Record<string, string> = {
     admin: 'ادمین',
+    regional_admin: 'ادمین استانی / منطقه‌ای',
     operator: 'اپراتور',
     viewer: 'مشاهده‌گر',
     visitor: 'بازدیدکننده',
@@ -134,9 +133,17 @@ const userRoleLabels: Record<string, string> = {
     sponsor: 'اسپانسر',
 };
 
+const roleGroupLabels: Record<string, string> = {
+    exploria_team: 'تیم داخلی اکسپلوریا',
+    venue_management: 'مدیریت مکان، رواق و هاب',
+    commercial_partner: 'واحدهای تجاری و اسپانسرها',
+    public: 'بازدیدکنندگان و مشارکت‌کنندگان',
+};
+
 const accountRoleCompatibility: Record<string, string[]> = {
     admin: ['admin'],
-    operator: ['admin', 'operator'],
+    regional_admin: ['regional_admin'],
+    operator: ['operator'],
     viewer: ['viewer'],
     visitor: ['visitor'],
     shop_partner: ['shop_partner'],
@@ -240,7 +247,6 @@ export default function AccessScopesIndex({
     accessScopes,
     stats,
     userOptions,
-    accountRoleOptions,
     roleOptions,
     scopeOptions,
     assignmentTemplates,
@@ -254,6 +260,15 @@ export default function AccessScopesIndex({
         roleOptions[0]?.key ?? '',
     );
     const [selectedUserId, setSelectedUserId] = useState('');
+    const [selectedScopeType, setSelectedScopeType] = useState(
+        roleOptions[0]?.defaultScope ?? 'global',
+    );
+    const [selectedScopeId, setSelectedScopeId] = useState('');
+    const [selectedAccountRoleKey, setSelectedAccountRoleKey] = useState(
+        roleOptions.find((role) => role.key === 'project_admin')?.key ??
+            roleOptions[0]?.key ??
+            '',
+    );
     const selectedRole = useMemo(
         () =>
             roleOptions.find((role) => role.key === selectedRoleKey) ??
@@ -263,6 +278,20 @@ export default function AccessScopesIndex({
     const eligibleManualUsers = useMemo(
         () => compatibleUsersForRole(userOptions, selectedRole),
         [userOptions, selectedRole],
+    );
+    const selectedAccountRole = useMemo(
+        () =>
+            roleOptions.find((role) => role.key === selectedAccountRoleKey) ??
+            roleOptions[0],
+        [roleOptions, selectedAccountRoleKey],
+    );
+    const selectedScopeOptions = scopeOptions[selectedScopeType] ?? [];
+    const roleLabelByKey = useMemo(
+        () =>
+            Object.fromEntries(
+                roleOptions.map((role) => [role.key, role.label]),
+            ) as Record<string, string>,
+        [roleOptions],
     );
     const manualUserValue = eligibleManualUsers.some(
         (user) => String(user.id) === selectedUserId,
@@ -315,6 +344,65 @@ export default function AccessScopesIndex({
                         <AlertDescription>{flash.success}</AlertDescription>
                     </Alert>
                 ) : null}
+
+                <section className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
+                    <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <Layers3 className="size-4 text-muted-foreground" />
+                                <h2 className="font-semibold">
+                                    نقشه واحد نقش‌ها برای ساخت اکانت و دسترسی
+                                </h2>
+                            </div>
+                            <p className="mt-1 max-w-4xl text-sm leading-7 text-muted-foreground">
+                                همین ترتیب، منبع مشترک سه صفحه ساختار نقش‌ها،
+                                مدیریت کاربران و تخصیص دسترسی است. برای هر نفر
+                                اول سطح واقعی مسئولیت را انتخاب کنید؛ نوع اکانت
+                                ورود و دامنه پیشنهادی از همان سطح مشخص می‌شود.
+                            </p>
+                        </div>
+                    </div>
+                    <div className="mt-4 grid gap-2 lg:grid-cols-2 xl:grid-cols-3">
+                        {roleOptions.map((role, index) => (
+                            <div
+                                key={role.key}
+                                className="rounded-md border border-sidebar-border/70 p-3 text-sm dark:border-sidebar-border"
+                            >
+                                <div className="flex items-start gap-3">
+                                    <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold">
+                                        {(index + 1).toLocaleString('fa-IR')}
+                                    </span>
+                                    <div className="min-w-0">
+                                        <p className="font-medium">
+                                            {role.label}
+                                        </p>
+                                        <p className="mt-1 text-xs leading-6 text-muted-foreground">
+                                            {roleGroupLabels[role.group] ??
+                                                role.group}{' '}
+                                            · دامنه پیشنهادی:{' '}
+                                            {scopeTypeLabels[
+                                                role.defaultScope
+                                            ] ?? role.defaultScope}
+                                        </p>
+                                        <p className="mt-1 text-xs leading-6 text-muted-foreground">
+                                            گزارش به:{' '}
+                                            {role.reportsTo
+                                                ? roleLabelByKey[
+                                                      role.reportsTo
+                                                  ] ?? role.reportsTo
+                                                : 'سطح مستقل / بالاترین سطح'}
+                                        </p>
+                                        <div className="mt-2">
+                                            <GovernancePill
+                                                governance={role.governance}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </section>
 
                 <section className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
                     <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
@@ -587,6 +675,14 @@ export default function AccessScopesIndex({
                         >
                             {({ processing, errors }) => (
                                 <>
+                                    <input
+                                        type="hidden"
+                                        name="role"
+                                        value={
+                                            selectedAccountRole?.governance
+                                                .accountRole ?? 'viewer'
+                                        }
+                                    />
                                     <div className="grid gap-2 lg:col-span-1">
                                         <Label htmlFor="account-name">
                                             نام اکانت
@@ -617,17 +713,21 @@ export default function AccessScopesIndex({
                                         <InputError message={errors.email} />
                                     </div>
                                     <div className="grid gap-2 lg:col-span-1">
-                                        <Label htmlFor="account-role">
-                                            نوع اکانت
+                                        <Label htmlFor="account-role-key">
+                                            سطح عملیاتی اکانت
                                         </Label>
                                         <select
-                                            id="account-role"
-                                            name="role"
+                                            id="account-role-key"
                                             required
-                                            defaultValue="hub_manager"
+                                            value={selectedAccountRoleKey}
+                                            onChange={(event) =>
+                                                setSelectedAccountRoleKey(
+                                                    event.target.value,
+                                                )
+                                            }
                                             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                         >
-                                            {accountRoleOptions.map((role) => (
+                                            {roleOptions.map((role) => (
                                                 <option
                                                     key={role.key}
                                                     value={role.key}
@@ -637,6 +737,25 @@ export default function AccessScopesIndex({
                                             ))}
                                         </select>
                                         <InputError message={errors.role} />
+                                        {selectedAccountRole ? (
+                                            <div className="rounded-md bg-muted/30 p-2 text-xs leading-6 text-muted-foreground">
+                                                اکانت ورود:{' '}
+                                                <strong>
+                                                    {
+                                                        selectedAccountRole
+                                                            .governance
+                                                            .accountRoleLabel
+                                                    }
+                                                </strong>
+                                                <div className="mt-2">
+                                                    <GovernancePill
+                                                        governance={
+                                                            selectedAccountRole.governance
+                                                        }
+                                                    />
+                                                </div>
+                                            </div>
+                                        ) : null}
                                     </div>
                                     <div className="flex flex-col justify-end gap-2 lg:col-span-1">
                                         <Button
@@ -725,10 +844,21 @@ export default function AccessScopesIndex({
                                             required
                                             value={selectedRoleKey}
                                             onChange={(event) => {
-                                                setSelectedRoleKey(
-                                                    event.target.value,
-                                                );
+                                                const nextRoleKey =
+                                                    event.target.value;
+                                                const nextRole =
+                                                    roleOptions.find(
+                                                        (role) =>
+                                                            role.key ===
+                                                            nextRoleKey,
+                                                    );
+                                                setSelectedRoleKey(nextRoleKey);
                                                 setSelectedUserId('');
+                                                setSelectedScopeType(
+                                                    nextRole?.defaultScope ??
+                                                        'global',
+                                                );
+                                                setSelectedScopeId('');
                                             }}
                                             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                         >
@@ -761,7 +891,13 @@ export default function AccessScopesIndex({
                                             id="scope_type"
                                             name="scope_type"
                                             required
-                                            defaultValue="hub"
+                                            value={selectedScopeType}
+                                            onChange={(event) => {
+                                                setSelectedScopeType(
+                                                    event.target.value,
+                                                );
+                                                setSelectedScopeId('');
+                                            }}
                                             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                         >
                                             {Object.keys(scopeOptions).map(
@@ -789,33 +925,33 @@ export default function AccessScopesIndex({
                                         <select
                                             id="scope_id"
                                             name="scope_id"
-                                            defaultValue=""
+                                            value={selectedScopeId}
+                                            onChange={(event) =>
+                                                setSelectedScopeId(
+                                                    event.target.value,
+                                                )
+                                            }
                                             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                         >
-                                            <option value="">
-                                                کل سیستم یا انتخاب دستی
-                                            </option>
-                                            {Object.entries(
-                                                scopeOptions,
-                                            ).flatMap(([scopeType, options]) =>
-                                                options
-                                                    .filter(
-                                                        (option) => option.id,
-                                                    )
-                                                    .map((option) => (
-                                                        <option
-                                                            key={`${scopeType}-${option.id}`}
-                                                            value={
-                                                                option.id ?? ''
-                                                            }
-                                                        >
-                                                            {scopeTypeLabels[
-                                                                scopeType
-                                                            ] ?? scopeType}
-                                                            : {option.label}
-                                                        </option>
-                                                    )),
+                                            {selectedScopeType === 'global' ? (
+                                                <option value="">
+                                                    کل اکسپلوریا
+                                                </option>
+                                            ) : (
+                                                <option value="">
+                                                    محدوده را انتخاب کنید
+                                                </option>
                                             )}
+                                            {selectedScopeOptions
+                                                .filter((option) => option.id)
+                                                .map((option) => (
+                                                    <option
+                                                        key={`${selectedScopeType}-${option.id}`}
+                                                        value={option.id ?? ''}
+                                                    >
+                                                        {option.label}
+                                                    </option>
+                                                ))}
                                         </select>
                                         <InputError message={errors.scope_id} />
                                     </div>
@@ -825,7 +961,11 @@ export default function AccessScopesIndex({
                                             type="submit"
                                             disabled={
                                                 processing ||
-                                                eligibleManualUsers.length === 0
+                                                eligibleManualUsers.length ===
+                                                    0 ||
+                                                (selectedScopeType !==
+                                                    'global' &&
+                                                    selectedScopeId === '')
                                             }
                                         >
                                             ثبت دسترسی
@@ -834,18 +974,7 @@ export default function AccessScopesIndex({
 
                                     <div className="lg:col-span-5">
                                         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                                            {roleOptions
-                                                .filter((role) =>
-                                                    [
-                                                        'super_admin',
-                                                        'project_admin',
-                                                        'field_operator',
-                                                        'display_ads_manager',
-                                                        'shop_manager',
-                                                        'external_sponsor',
-                                                    ].includes(role.key),
-                                                )
-                                                .map((role) => (
+                                            {roleOptions.map((role) => (
                                                     <div
                                                         key={role.key}
                                                         className="rounded-md border border-sidebar-border/70 p-3 dark:border-sidebar-border"

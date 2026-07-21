@@ -182,12 +182,26 @@ export default function AdminUsersIndex({
                         دسترسی تعریف می‌شود.
                     </p>
                     <div className="mt-4">
-                        <Link
-                            href="/admin/users/guide"
-                            className="inline-flex rounded-md border border-input bg-background px-3 py-2 text-sm font-medium"
-                        >
-                            مشاهده دستورالعمل مدیریت کاربران
-                        </Link>
+                        <div className="flex flex-wrap gap-2">
+                            <Link
+                                href="/admin/role-operations"
+                                className="inline-flex rounded-md border border-input bg-background px-3 py-2 text-sm font-medium"
+                            >
+                                نقشه نقش‌ها
+                            </Link>
+                            <Link
+                                href="/admin/access-scopes"
+                                className="inline-flex rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground"
+                            >
+                                ساخت و تخصیص دسترسی
+                            </Link>
+                            <Link
+                                href="/admin/users/guide"
+                                className="inline-flex rounded-md border border-input bg-background px-3 py-2 text-sm font-medium"
+                            >
+                                راهنمای نقش و کاربر
+                            </Link>
+                        </div>
                     </div>
                 </section>
 

@@ -239,12 +239,36 @@ return [
 
     'assignment_templates' => [
         [
+            'key' => 'tehran_regional_admin',
+            'title' => 'مدیر استانی / منطقه‌ای اکسپلوریا برای تهران',
+            'role_key' => 'regional_admin',
+            'scope_type' => 'region',
+            'scope_code' => 'تهران',
+            'description' => 'برای نماینده اکسپلوریا در سطح استان یا منطقه که روی مکان‌ها، پروژه‌ها و تیم‌های اجرایی همان محدوده نظارت می‌کند.',
+        ],
+        [
             'key' => 'ecopark_project_admin',
             'title' => 'مدیر پروژه مکانی اکسپلوریا برای اکوپارک',
             'role_key' => 'project_admin',
             'scope_type' => 'venue',
             'scope_code' => 'ecopark-abbasabad',
             'description' => 'برای کاربر داخلی اکسپلوریا که اجرای پایلوت اکوپارک را از سمت اکسپلوریا مدیریت می‌کند.',
+        ],
+        [
+            'key' => 'ecopark_field_operator',
+            'title' => 'مجری میدانی کمپین اکوپارک',
+            'role_key' => 'field_operator',
+            'scope_type' => 'campaign',
+            'scope_code' => 'ecopark-pilot-1405',
+            'description' => 'برای عضو تیم اجرایی که در محل، مسیر QR، ازدحام، خطاهای میدانی و راهنمایی اولیه بازدیدکنندگان را پیگیری می‌کند.',
+        ],
+        [
+            'key' => 'ecopark_treasure_assistant',
+            'title' => 'یاریگر کاربران و مشارکت‌کنندگان اکوپارک',
+            'role_key' => 'treasure_assistant',
+            'scope_type' => 'campaign',
+            'scope_code' => 'ecopark-pilot-1405',
+            'description' => 'برای نیروی راهنمای کاربر که به شروع مسیر، فهم ماموریت، گنج و پاداش کمک می‌کند اما تنظیمات مدیریتی را تغییر نمی‌دهد.',
         ],
         [
             'key' => 'ecopark_venue_manager',
@@ -277,6 +301,22 @@ return [
             'scope_type' => 'partner',
             'scope_code' => 'cafe-eco',
             'description' => 'برای مدیر فروشگاه/واحد شریک که پیشنهاد، مصرف کد، موجودی، تبلیغ و گزارش عملکرد خودش را مدیریت می‌کند.',
+        ],
+        [
+            'key' => 'ecopark_internal_sponsor',
+            'title' => 'اسپانسر داخل مکان یا مجموعه برای مسیر خانوادگی',
+            'role_key' => 'internal_sponsor',
+            'scope_type' => 'partner',
+            'scope_code' => 'family-route-sponsor',
+            'description' => 'برای اسپانسری که داخل پروژه یا محدوده اکوپارک فعالیت می‌کند و بسته پاداش، حمایت مسیر یا محتوای اسپانسری خود را مدیریت می‌کند.',
+        ],
+        [
+            'key' => 'tehran_external_sponsor',
+            'title' => 'اسپانسر مستقل / بیرونی در سطح منطقه',
+            'role_key' => 'external_sponsor',
+            'scope_type' => 'region',
+            'scope_code' => 'تهران',
+            'description' => 'برای اسپانسر بیرونی که ممکن است چند مکان یا یک منطقه را هدف بگیرد و بسته تبلیغاتی یا ROI مستقل خود را دنبال کند.',
         ],
         [
             'key' => 'ecopark_display_manager',
