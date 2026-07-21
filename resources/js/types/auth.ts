@@ -3,6 +3,7 @@ export type User = {
     name: string;
     email: string;
     role: string;
+    active_access_roles?: string[];
     avatar?: string;
     email_verified_at: string | null;
     /* @chisel-2fa */

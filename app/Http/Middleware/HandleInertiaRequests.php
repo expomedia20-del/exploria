@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\RecordStatus;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -47,6 +48,11 @@ class HandleInertiaRequests extends Middleware
                     'email' => $user->email,
                     'email_verified_at' => $user->email_verified_at?->toIso8601String(),
                     'role' => $user->role->value,
+                    'active_access_roles' => $user->accessScopes()
+                        ->where('status', RecordStatus::Active)
+                        ->pluck('role_key')
+                        ->values()
+                        ->all(),
                     'created_at' => $user->created_at?->toIso8601String(),
                     'updated_at' => $user->updated_at?->toIso8601String(),
                 ] : null,

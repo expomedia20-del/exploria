@@ -75,6 +75,32 @@ class RolePanelJourneyTest extends TestCase
         }
     }
 
+    public function test_role_panel_pages_share_active_operational_roles_with_the_sidebar(): void
+    {
+        $this->withoutVite();
+
+        $journeys = [
+            'regional@example.test' => [route('dashboard', absolute: false), 'regional_admin'],
+            'ravaq.manager@example.test' => [route('ravaq.dashboard', absolute: false), 'ravaq_manager'],
+            'venue.manager.ecopark@example.test' => [route('venue.dashboard', absolute: false), 'venue_executive'],
+            'cafe.eco@example.test' => [route('partner.dashboard', absolute: false), 'shop_manager'],
+            'family.sponsor@example.test' => [route('sponsor.dashboard', absolute: false), 'internal_sponsor'],
+        ];
+
+        foreach ($journeys as $email => [$path, $roleKey]) {
+            $user = User::query()->where('email', $email)->firstOrFail();
+
+            $this->actingAs($user)
+                ->get($path)
+                ->assertOk()
+                ->assertInertia(fn (Assert $page) => $page
+                    ->where('auth.user.email', $email)
+                    ->where('auth.user.active_access_roles.0', $roleKey));
+
+            $this->app['auth']->guard()->logout();
+        }
+    }
+
     public function test_external_and_read_only_accounts_cannot_open_central_admin_mutations(): void
     {
         $shopPartner = User::query()->where('email', 'cafe.eco@example.test')->firstOrFail();

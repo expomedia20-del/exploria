@@ -48,6 +48,21 @@ type UserRole =
     | 'hub_manager'
     | 'sponsor';
 
+type OperationalRole =
+    | 'super_admin'
+    | 'regional_admin'
+    | 'project_admin'
+    | 'field_operator'
+    | 'treasure_assistant'
+    | 'display_ads_manager'
+    | 'venue_executive'
+    | 'hub_manager'
+    | 'ravaq_manager'
+    | 'shop_manager'
+    | 'internal_sponsor'
+    | 'external_sponsor'
+    | 'participant';
+
 type RoleAwareNavItem = NavItem & {
     roles?: UserRole[];
 };
@@ -56,8 +71,103 @@ type SharedProps = {
     auth?: {
         user?: {
             role?: UserRole;
+            active_access_roles?: OperationalRole[];
         };
     };
+};
+
+const scopedMenuAccountRoles: UserRole[] = [
+    'operator',
+    'viewer',
+    'hub_manager',
+    'shop_partner',
+    'sponsor',
+];
+
+const operationalRoleMenus: Record<OperationalRole, string[]> = {
+    super_admin: [],
+    regional_admin: [],
+    project_admin: [
+        '/dashboard',
+        '/admin/internal-operations',
+        '/venue/dashboard',
+        '/admin/campaigns',
+        '/admin/campaign-builder',
+        '/admin/campaign-operations',
+        '/admin/partners',
+        '/admin/campaign-participants',
+        '/admin/sponsors',
+        '/admin/ads',
+        '/admin/qr-codes',
+        '/admin/events/scan-log',
+        '/admin/support',
+    ],
+    field_operator: [
+        '/admin/campaign-operations',
+        '/admin/qr-codes',
+        '/admin/events/scan-log',
+        '/participant/dashboard',
+        '/admin/support',
+    ],
+    treasure_assistant: [
+        '/admin/campaign-operations',
+        '/participant/dashboard',
+        '/admin/support',
+    ],
+    display_ads_manager: [
+        '/admin/display-operations',
+        '/admin/ads',
+        '/admin/campaigns',
+        '/admin/support',
+    ],
+    venue_executive: [
+        '/venue/dashboard',
+        '/admin/campaign-operations',
+        '/admin/campaigns',
+        '/admin/partners',
+        '/admin/campaign-participants',
+        '/admin/sponsors',
+        '/admin/ads',
+        '/admin/support',
+    ],
+    hub_manager: [
+        '/hub/dashboard',
+        '/admin/campaign-operations',
+        '/admin/campaigns',
+        '/admin/partners',
+        '/admin/campaign-participants',
+        '/admin/sponsors',
+        '/admin/ads',
+        '/admin/support',
+    ],
+    ravaq_manager: [
+        '/ravaq/dashboard',
+        '/admin/campaign-operations',
+        '/admin/campaigns',
+        '/admin/partners',
+        '/admin/campaign-participants',
+        '/admin/sponsors',
+        '/admin/ads',
+        '/admin/support',
+    ],
+    shop_manager: ['/partner/dashboard', '/partner/ads', '/admin/support'],
+    internal_sponsor: ['/sponsor/dashboard', '/admin/support'],
+    external_sponsor: ['/sponsor/dashboard', '/admin/support'],
+    participant: ['/participant/dashboard'],
+};
+
+const operationalHomeHrefs: Partial<Record<OperationalRole, string>> = {
+    project_admin: '/admin/internal-operations',
+    field_operator: '/admin/campaign-operations',
+    treasure_assistant: '/admin/campaign-operations',
+    display_ads_manager: '/admin/display-operations',
+    venue_executive: '/venue/dashboard',
+    hub_manager: '/hub/dashboard',
+    ravaq_manager: '/ravaq/dashboard',
+    shop_manager: '/partner/dashboard',
+    internal_sponsor: '/sponsor/dashboard',
+    external_sponsor: '/sponsor/dashboard',
+    participant: '/participant/dashboard',
 };
 
 const mainNavItems: RoleAwareNavItem[] = [
@@ -199,7 +309,14 @@ const mainNavItems: RoleAwareNavItem[] = [
         href: '/partner/dashboard',
         icon: ShoppingBag,
         group: 'واحدهای تجاری و اسپانسرها',
-        roles: ['admin', 'shop_partner', 'sponsor'],
+        roles: ['admin', 'shop_partner'],
+    },
+    {
+        title: 'تبلیغات فروشگاه / شریک',
+        href: '/partner/ads',
+        icon: Megaphone,
+        group: 'واحدهای تجاری و اسپانسرها',
+        roles: ['admin', 'shop_partner'],
     },
     {
         title: 'پنل اسپانسر',
@@ -267,11 +384,57 @@ const mainNavItems: RoleAwareNavItem[] = [
     },
 ];
 
-function isVisibleForRole(item: RoleAwareNavItem, role?: UserRole) {
+function hrefToPath(href: NavItem['href']): string {
+    if (typeof href === 'string') {
+        return href;
+    }
+
+    const wayfinder = href as { url?: unknown };
+
+    return typeof wayfinder.url === 'string' ? wayfinder.url : '';
+}
+
+function shouldUseOperationalMenu(
+    role?: UserRole,
+    activeAccessRoles: OperationalRole[] = [],
+) {
+    return (
+        role !== undefined &&
+        scopedMenuAccountRoles.includes(role) &&
+        activeAccessRoles.length > 0
+    );
+}
+
+function isVisibleForRole(
+    item: RoleAwareNavItem,
+    role?: UserRole,
+    activeAccessRoles: OperationalRole[] = [],
+) {
+    if (shouldUseOperationalMenu(role, activeAccessRoles)) {
+        const href = hrefToPath(item.href);
+
+        return activeAccessRoles.some((roleKey) =>
+            operationalRoleMenus[roleKey]?.includes(href),
+        );
+    }
+
     return !item.roles || (role !== undefined && item.roles.includes(role));
 }
 
-function homeHrefForRole(role?: UserRole) {
+function homeHrefForRole(
+    role?: UserRole,
+    activeAccessRoles: OperationalRole[] = [],
+) {
+    if (shouldUseOperationalMenu(role, activeAccessRoles)) {
+        const scopedHome = activeAccessRoles
+            .map((roleKey) => operationalHomeHrefs[roleKey])
+            .find((href): href is string => href !== undefined);
+
+        if (scopedHome !== undefined) {
+            return scopedHome;
+        }
+    }
+
     if (role === 'visitor') {
         return '/participant/dashboard';
     }
@@ -294,8 +457,9 @@ function homeHrefForRole(role?: UserRole) {
 export function AppSidebar() {
     const { auth } = usePage<SharedProps>().props;
     const role = auth?.user?.role;
+    const activeAccessRoles = auth?.user?.active_access_roles ?? [];
     const visibleNavItems = mainNavItems.filter((item) =>
-        isVisibleForRole(item, role),
+        isVisibleForRole(item, role, activeAccessRoles),
     );
 
     return (
@@ -304,7 +468,10 @@ export function AppSidebar() {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href={homeHrefForRole(role)} prefetch>
+                            <Link
+                                href={homeHrefForRole(role, activeAccessRoles)}
+                                prefetch
+                            >
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>
