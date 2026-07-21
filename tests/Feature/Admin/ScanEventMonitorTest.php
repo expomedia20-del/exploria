@@ -89,6 +89,21 @@ class ScanEventMonitorTest extends TestCase
         $this->actingAs($visitor)->getJson(route('admin.events.scan-log.index'))->assertForbidden();
     }
 
+    public function test_scan_log_handles_textual_qr_object_ids_without_uuid_lookup(): void
+    {
+        $this->get('/scan/unknown-textual-qr')->assertNotFound();
+
+        $viewer = User::factory()->create(['role' => UserRole::Viewer]);
+
+        $this->actingAs($viewer)
+            ->getJson(route('admin.events.scan-log.index'))
+            ->assertOk()
+            ->assertJsonPath('data.items.0.eventType', 'invalid_scan')
+            ->assertJsonPath('data.items.0.objectType', 'qr_code')
+            ->assertJsonPath('data.items.0.objectId', 'unknown-textual-qr')
+            ->assertJsonPath('data.items.0.riskReason', 'unknown_qr');
+    }
+
     public function test_scan_log_rejects_unknown_result_filter_in_persian(): void
     {
         $viewer = User::factory()->create(['role' => UserRole::Viewer]);

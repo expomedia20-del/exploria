@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\EventLog;
 use App\Models\QrCode;
+use Illuminate\Support\Str;
 
 class ScanEventRegistryService
 {
@@ -23,7 +24,11 @@ class ScanEventRegistryService
             ->when($from, fn ($query) => $query->whereDate('occurred_at', '>=', $from))
             ->when($to, fn ($query) => $query->whereDate('occurred_at', '<=', $to))
             ->latest('occurred_at')->limit(100)->get();
-        $qrCodes = QrCode::query()->whereIn('id', $events->where('object_type', 'qr_code')->pluck('object_id')->filter())->get()->keyBy('id');
+        $qrCodeIds = $events
+            ->where('object_type', 'qr_code')
+            ->pluck('object_id')
+            ->filter(fn (?string $id): bool => is_string($id) && Str::isUuid($id));
+        $qrCodes = QrCode::query()->whereIn('id', $qrCodeIds)->get()->keyBy('id');
 
         $items = array_values($events->map(function (EventLog $event) use ($qrCodes): array {
             $qr = $event->object_type === 'qr_code' ? $qrCodes->get($event->object_id) : null;
