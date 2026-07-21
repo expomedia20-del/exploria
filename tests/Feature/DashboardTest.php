@@ -9,6 +9,7 @@ use App\Models\RewardRedemption;
 use App\Models\User;
 use App\Models\UserReward;
 use App\Models\Visit;
+use App\Services\SupportKnowledgeBaseService;
 use Database\Seeders\ConsentVersionSeeder;
 use Database\Seeders\PilotLocationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -53,6 +54,8 @@ class DashboardTest extends TestCase
 
         $roles = [
             [UserRole::Admin, 'admin'],
+            [UserRole::Operator, 'operator'],
+            [UserRole::Viewer, 'viewer'],
             [UserRole::ShopPartner, 'shop_partner'],
             [UserRole::Sponsor, 'sponsor'],
             [UserRole::HubManager, 'hub_manager'],
@@ -67,9 +70,33 @@ class DashboardTest extends TestCase
                 ->assertInertia(fn (Assert $page) => $page
                     ->component('admin/support/index')
                     ->where('support.roleContext.key', $expectedKey)
+                    ->has('support.promptGroups', 3)
                     ->has('support.promptGroups.0.prompts', 4)
-                    ->has('support.quickActions', 3)
-                    ->has('support.checklist', 4));
+                    ->has('support.promptGroups.1.prompts', 4)
+                    ->has('support.promptGroups.2.prompts', 4)
+                    ->has('support.quickActions', 4)
+                    ->has('support.checklist', 6)
+                    ->has('support.handoffNotes', 2));
+        }
+    }
+
+    public function test_support_knowledge_base_covers_every_role_without_duplicate_questions(): void
+    {
+        $knowledgeBase = app(SupportKnowledgeBaseService::class);
+
+        foreach (UserRole::cases() as $role) {
+            $user = User::factory()->make(['role' => $role]);
+            $support = $knowledgeBase->forUser($user);
+            $questions = collect($support['promptGroups'])
+                ->flatMap(fn (array $group) => collect($group['prompts'])->pluck('question'));
+
+            $this->assertNotEmpty($support['roleContext']['key'], $role->value);
+            $this->assertGreaterThanOrEqual(3, count($support['promptGroups']), $role->value);
+            $this->assertGreaterThanOrEqual(12, $questions->count(), $role->value);
+            $this->assertSame($questions->count(), $questions->unique()->count(), $role->value);
+            $this->assertGreaterThanOrEqual(4, count($support['quickActions']), $role->value);
+            $this->assertGreaterThanOrEqual(6, count($support['checklist']), $role->value);
+            $this->assertGreaterThanOrEqual(2, count($support['handoffNotes']), $role->value);
         }
     }
 
