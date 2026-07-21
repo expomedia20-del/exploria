@@ -5,9 +5,12 @@ namespace Tests\Feature\Partner;
 use App\Enums\RecordStatus;
 use App\Enums\UserRole;
 use App\Models\EventLog;
+use App\Models\Hub;
 use App\Models\MissionInstance;
 use App\Models\MissionTemplate;
 use App\Models\PartnerAccount;
+use App\Models\PartnerLocation;
+use App\Models\PartnerUser;
 use App\Models\QrCode;
 use App\Models\RewardDefinition;
 use App\Models\RewardInventoryAllocation;
@@ -577,7 +580,8 @@ class PartnerRewardRedemptionTest extends TestCase
 
     public function test_hub_manager_cannot_review_offer_outside_managed_hub(): void
     {
-        $offer = $this->submitPartnerOffer('family.sponsor@example.test', 'Science hub sponsor offer');
+        $foreignPartner = $this->createScienceShopPartnerUser();
+        $offer = $this->submitPartnerOffer($foreignPartner->email, 'Science hub shop offer');
         $manager = User::query()->where('email', 'ravaq.manager@example.test')->firstOrFail();
 
         $this->actingAs($manager)
@@ -634,6 +638,38 @@ class PartnerRewardRedemptionTest extends TestCase
             ->assertCreated();
 
         return RewardDefinition::query()->where('name', $name)->firstOrFail();
+    }
+
+    private function createScienceShopPartnerUser(string $email = 'science.shop@example.test'): User
+    {
+        $hub = Hub::query()->where('code', 'gonbad-mina-science-hub')->with('zone')->firstOrFail();
+        $user = User::factory()->create([
+            'email' => $email,
+            'role' => UserRole::ShopPartner,
+        ]);
+        $partner = PartnerAccount::query()->create([
+            'venue_id' => $hub->zone->venue_id,
+            'code' => 'science-shop-test',
+            'name' => 'Science Shop Test',
+            'partner_type' => 'member_shop',
+            'status' => 'active',
+        ]);
+        PartnerLocation::query()->create([
+            'partner_account_id' => $partner->id,
+            'venue_id' => $hub->zone->venue_id,
+            'zone_id' => $hub->zone_id,
+            'hub_id' => $hub->id,
+            'location_role' => 'shop',
+            'status' => 'active',
+        ]);
+        PartnerUser::query()->create([
+            'partner_account_id' => $partner->id,
+            'user_id' => $user->id,
+            'role' => 'manager',
+            'status' => 'active',
+        ]);
+
+        return $user;
     }
 
     /** @return array{cycle_step_index: int, cycle_step_label: string, reward_tier: string, reward_option: string|null} */

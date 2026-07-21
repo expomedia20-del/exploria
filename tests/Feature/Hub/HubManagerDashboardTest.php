@@ -2,9 +2,13 @@
 
 namespace Tests\Feature\Hub;
 
+use App\Enums\UserRole;
 use App\Models\AdRequest;
 use App\Models\DisplayDevice;
 use App\Models\Hub;
+use App\Models\PartnerAccount;
+use App\Models\PartnerLocation;
+use App\Models\PartnerUser;
 use App\Models\QrCode;
 use App\Models\RewardDefinition;
 use App\Models\User;
@@ -105,8 +109,9 @@ class HubManagerDashboardTest extends TestCase
     public function test_hub_dashboard_api_only_returns_managed_scope(): void
     {
         $manager = User::query()->where('email', 'ravaq.manager@example.test')->firstOrFail();
+        $foreignPartner = $this->createScienceShopPartnerUser();
 
-        $this->submitAdRequest('family.sponsor@example.test', 'Out of scope science sponsor ad');
+        $this->submitAdRequest($foreignPartner->email, 'Out of scope science shop ad');
         $this->submitAdRequest('ravaq.store@example.test', 'Scoped ravaq ad');
         $this->submitPartnerOffer('ravaq.store@example.test', 'Scoped ravaq offer');
 
@@ -116,7 +121,7 @@ class HubManagerDashboardTest extends TestCase
             ->assertJsonPath('data.stats.pendingAds', 1)
             ->assertJsonPath('data.stats.pendingRewards', 1)
             ->assertJsonPath('data.adRequests.0.title', 'Scoped ravaq ad')
-            ->assertJsonMissing(['title' => 'Out of scope science sponsor ad']);
+            ->assertJsonMissing(['title' => 'Out of scope science shop ad']);
 
         $this->assertNotNull(
             collect($response->json('data.rewards'))->firstWhere('name', 'Scoped ravaq offer'),
@@ -287,6 +292,38 @@ class HubManagerDashboardTest extends TestCase
             ->assertCreated();
 
         return RewardDefinition::query()->where('name', $name)->firstOrFail();
+    }
+
+    private function createScienceShopPartnerUser(string $email = 'science.shop@example.test'): User
+    {
+        $hub = Hub::query()->where('code', 'gonbad-mina-science-hub')->with('zone')->firstOrFail();
+        $user = User::factory()->create([
+            'email' => $email,
+            'role' => UserRole::ShopPartner,
+        ]);
+        $partner = PartnerAccount::query()->create([
+            'venue_id' => $hub->zone->venue_id,
+            'code' => 'science-shop-test',
+            'name' => 'Science Shop Test',
+            'partner_type' => 'member_shop',
+            'status' => 'active',
+        ]);
+        PartnerLocation::query()->create([
+            'partner_account_id' => $partner->id,
+            'venue_id' => $hub->zone->venue_id,
+            'zone_id' => $hub->zone_id,
+            'hub_id' => $hub->id,
+            'location_role' => 'shop',
+            'status' => 'active',
+        ]);
+        PartnerUser::query()->create([
+            'partner_account_id' => $partner->id,
+            'user_id' => $user->id,
+            'role' => 'manager',
+            'status' => 'active',
+        ]);
+
+        return $user;
     }
 
     /** @return array{cycle_step_index: int, cycle_step_label: string, reward_tier: string, reward_option: string|null} */

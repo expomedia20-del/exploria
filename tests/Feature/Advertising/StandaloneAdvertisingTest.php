@@ -5,6 +5,10 @@ namespace Tests\Feature\Advertising;
 use App\Enums\UserRole;
 use App\Models\AdRequest;
 use App\Models\DisplayDevice;
+use App\Models\Hub;
+use App\Models\PartnerAccount;
+use App\Models\PartnerLocation;
+use App\Models\PartnerUser;
 use App\Models\User;
 use Database\Seeders\PilotLocationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -75,6 +79,25 @@ class StandaloneAdvertisingTest extends TestCase
         $this->assertSame('pending_review', $adRequest->status);
         $this->assertSame('image', $adRequest->creatives->first()->creative_type);
         $this->assertSame('fixed_display', $adRequest->placements->first()->placement_type);
+    }
+
+    public function test_partner_ad_submission_rejects_sponsor_only_ad_types(): void
+    {
+        $partnerUser = User::query()->where('email', 'cafe.eco@example.test')->firstOrFail();
+
+        $this->actingAs($partnerUser)
+            ->postJson(route('partner.ads.api.store'), [
+                'title' => 'Sponsor style ad from store panel',
+                'ad_type' => 'route_sponsor',
+                'creative_type' => 'image',
+                'placement_type' => 'fixed_display',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('ad_type');
+
+        $this->assertDatabaseMissing('ad_requests', [
+            'title' => 'Sponsor style ad from store panel',
+        ]);
     }
 
     public function test_admin_can_approve_ad_request_and_viewer_cannot_review(): void
@@ -232,7 +255,8 @@ class StandaloneAdvertisingTest extends TestCase
 
     public function test_hub_manager_cannot_review_foreign_ad_request(): void
     {
-        $adRequest = $this->submitAdRequest('family.sponsor@example.test', 'Science hub sponsor ad request');
+        $foreignPartner = $this->createScienceShopPartnerUser();
+        $adRequest = $this->submitAdRequest($foreignPartner->email, 'Science hub shop ad request');
         $manager = User::query()->where('email', 'ravaq.manager@example.test')->firstOrFail();
 
         $this->actingAs($manager)
@@ -257,5 +281,37 @@ class StandaloneAdvertisingTest extends TestCase
             ->assertCreated();
 
         return AdRequest::query()->where('title', $title)->firstOrFail();
+    }
+
+    private function createScienceShopPartnerUser(string $email = 'science.shop@example.test'): User
+    {
+        $hub = Hub::query()->where('code', 'gonbad-mina-science-hub')->with('zone')->firstOrFail();
+        $user = User::factory()->create([
+            'email' => $email,
+            'role' => UserRole::ShopPartner,
+        ]);
+        $partner = PartnerAccount::query()->create([
+            'venue_id' => $hub->zone->venue_id,
+            'code' => 'science-shop-test',
+            'name' => 'Science Shop Test',
+            'partner_type' => 'member_shop',
+            'status' => 'active',
+        ]);
+        PartnerLocation::query()->create([
+            'partner_account_id' => $partner->id,
+            'venue_id' => $hub->zone->venue_id,
+            'zone_id' => $hub->zone_id,
+            'hub_id' => $hub->id,
+            'location_role' => 'shop',
+            'status' => 'active',
+        ]);
+        PartnerUser::query()->create([
+            'partner_account_id' => $partner->id,
+            'user_id' => $user->id,
+            'role' => 'manager',
+            'status' => 'active',
+        ]);
+
+        return $user;
     }
 }

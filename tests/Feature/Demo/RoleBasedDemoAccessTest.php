@@ -105,6 +105,7 @@ class RoleBasedDemoAccessTest extends TestCase
     {
         $visitor = User::query()->where('email', 'visitor.stress-demo@example.test')->firstOrFail();
         $shopPartner = User::query()->where('email', 'cafe.eco@example.test')->firstOrFail();
+        $sponsor = User::query()->where('email', 'family.sponsor@example.test')->firstOrFail();
         $hubManager = User::query()->where('email', 'ravaq.manager@example.test')->firstOrFail();
         $venueManager = User::query()->where('email', 'venue.manager.ecopark@example.test')->firstOrFail();
 
@@ -114,6 +115,14 @@ class RoleBasedDemoAccessTest extends TestCase
 
         $this->actingAs($shopPartner)
             ->get(route('sponsor.dashboard'))
+            ->assertForbidden();
+
+        $this->actingAs($sponsor)
+            ->get(route('partner.dashboard'))
+            ->assertForbidden();
+
+        $this->actingAs($sponsor)
+            ->get(route('partner.ads.page'))
             ->assertForbidden();
 
         $this->actingAs($hubManager)

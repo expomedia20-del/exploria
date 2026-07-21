@@ -66,25 +66,25 @@ Route::middleware('auth')->group(function () {
         ->middleware('role:visitor')
         ->name('participant.participation.start');
     Route::get('/partner/dashboard', [PartnerDashboardController::class, 'page'])
-        ->middleware('role:admin,shop_partner,sponsor')
+        ->middleware('role:admin,shop_partner')
         ->name('partner.dashboard');
     Route::post('/partner/redemptions/confirm', [RewardRedemptionController::class, 'confirm'])
-        ->middleware('role:admin,shop_partner,sponsor')
+        ->middleware('role:admin,shop_partner')
         ->name('partner.redemptions.confirm');
     Route::patch('/partner/profile', [PartnerDashboardController::class, 'update'])
-        ->middleware('role:admin,shop_partner,sponsor')
+        ->middleware('role:admin,shop_partner')
         ->name('partner.profile.update');
     Route::post('/partner/offers', [PartnerOfferController::class, 'store'])
-        ->middleware('role:admin,shop_partner,sponsor')
+        ->middleware('role:admin,shop_partner')
         ->name('partner.offers.store');
     Route::patch('/partner/offers/{reward}', [PartnerOfferController::class, 'update'])
-        ->middleware('role:admin,shop_partner,sponsor')
+        ->middleware('role:admin,shop_partner')
         ->name('partner.offers.update');
     Route::get('/partner/ads', [PartnerAdvertisingController::class, 'page'])
-        ->middleware('role:admin,shop_partner,sponsor')
+        ->middleware('role:admin,shop_partner')
         ->name('partner.ads.page');
     Route::post('/partner/ads', [PartnerAdvertisingController::class, 'store'])
-        ->middleware('role:admin,shop_partner,sponsor')
+        ->middleware('role:admin,shop_partner')
         ->name('partner.ads.store');
     Route::get('/sponsor/dashboard', [SponsorDashboardController::class, 'page'])
         ->middleware('role:admin,operator,sponsor')
@@ -489,25 +489,25 @@ Route::get('/api/v1/rewards/wallet', RewardWalletController::class)
     ->middleware('auth')
     ->name('rewards.wallet');
 Route::get('/api/v1/partner/dashboard', [PartnerDashboardController::class, 'index'])
-    ->middleware(['auth', 'role:admin,shop_partner,sponsor'])
+    ->middleware(['auth', 'role:admin,shop_partner'])
     ->name('partner.dashboard.index');
 Route::post('/api/v1/partner/redemptions/confirm', [RewardRedemptionController::class, 'confirm'])
-    ->middleware(['auth', 'role:admin,shop_partner,sponsor'])
+    ->middleware(['auth', 'role:admin,shop_partner'])
     ->name('partner.redemptions.api.confirm');
 Route::patch('/api/v1/partner/profile', [PartnerDashboardController::class, 'update'])
-    ->middleware(['auth', 'role:admin,shop_partner,sponsor'])
+    ->middleware(['auth', 'role:admin,shop_partner'])
     ->name('partner.profile.api.update');
 Route::post('/api/v1/partner/offers', [PartnerOfferController::class, 'store'])
-    ->middleware(['auth', 'role:admin,shop_partner,sponsor'])
+    ->middleware(['auth', 'role:admin,shop_partner'])
     ->name('partner.offers.api.store');
 Route::patch('/api/v1/partner/offers/{reward}', [PartnerOfferController::class, 'update'])
-    ->middleware(['auth', 'role:admin,shop_partner,sponsor'])
+    ->middleware(['auth', 'role:admin,shop_partner'])
     ->name('partner.offers.api.update');
 Route::get('/api/v1/partner/ads', [PartnerAdvertisingController::class, 'index'])
-    ->middleware(['auth', 'role:admin,shop_partner,sponsor'])
+    ->middleware(['auth', 'role:admin,shop_partner'])
     ->name('partner.ads.index');
 Route::post('/api/v1/partner/ads', [PartnerAdvertisingController::class, 'store'])
-    ->middleware(['auth', 'role:admin,shop_partner,sponsor'])
+    ->middleware(['auth', 'role:admin,shop_partner'])
     ->name('partner.ads.api.store');
 Route::get('/api/v1/hub/dashboard', [HubManagerDashboardController::class, 'index'])
     ->middleware(['auth', 'role:admin,hub_manager'])

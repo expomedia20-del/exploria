@@ -371,7 +371,7 @@ export default function PartnerDashboard({
                 <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                     <div className="min-w-0">
                         <p className="text-sm text-muted-foreground">
-                            پنل شریک تجاری
+                            پنل فروشگاه / واحد تجاری
                         </p>
                         <h1 className="mt-1 text-2xl leading-tight font-semibold">
                             {partner.name}
@@ -418,15 +418,17 @@ export default function PartnerDashboard({
                     <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                         <div>
                             <p className="text-xs text-muted-foreground">
-                                راهنمای مرحله ۴ برای فروشگاه و اسپانسر
+                                راهنمای مرحله ۴ برای فروشگاه / واحد تجاری
                             </p>
                             <h2 className="mt-1 font-semibold">
                                 برای مشارکت در کمپین این کارها را انجام دهید
                             </h2>
                             <p className="mt-1 text-sm text-muted-foreground">
-                                این صفحه برای ثبت پیشنهاد پاداش، پیگیری تایید
-                                ادمین، مدیریت موجودی و تایید مصرف پاداش کاربران
-                                است.
+                                این صفحه برای ثبت پیشنهاد پاداش یا تخفیف،
+                                پیگیری تایید ادمین، مدیریت موجودی و تایید مصرف
+                                پاداش کاربران همان فروشگاه است. پیشنهاد
+                                اسپانسری و قرارداد حمایت از پنل اسپانسر انجام
+                                می‌شود.
                             </p>
                         </div>
                     </div>
@@ -436,8 +438,9 @@ export default function PartnerDashboard({
                                 اقدام اصلی این مرحله: پیشنهاد پاداش یا تخفیف
                             </p>
                             <p className="mt-1 text-xs text-muted-foreground">
-                                ثبت تبلیغ اقدام جداگانه است و بعد از مشخص شدن
-                                نقش پاداش می‌تواند انجام شود.
+                                تبلیغ فروشگاه مسیر جداگانه دارد و فقط برای
+                                پیام، جایگاه و زمان‌بندی همان واحد تجاری ثبت
+                                می‌شود.
                             </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -450,7 +453,7 @@ export default function PartnerDashboard({
                             <Button asChild size="sm" variant="outline">
                                 <Link href="/partner/ads">
                                     <Megaphone className="size-4" />
-                                    تبلیغات جداگانه
+                                    تبلیغات فروشگاه
                                 </Link>
                             </Button>
                         </div>
@@ -915,7 +918,7 @@ export default function PartnerDashboard({
                                                 اعتبار خدمات
                                             </option>
                                             <option value="sponsor_reward">
-                                                پاداش اسپانسری
+                                                پاداش تامین‌شده توسط اسپانسر
                                             </option>
                                         </select>
                                         <p className="text-xs text-muted-foreground">

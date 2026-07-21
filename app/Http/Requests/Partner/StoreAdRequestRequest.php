@@ -21,7 +21,7 @@ class StoreAdRequestRequest extends FormRequest
             'cta_text' => ['nullable', 'string', 'max:80'],
             'target_url' => ['nullable', 'url', 'max:2048'],
             'hub_id' => ['nullable', 'uuid'],
-            'ad_type' => ['required', 'string', Rule::in(['standalone', 'sponsor_message', 'display_takeover', 'route_sponsor', 'reward_moment'])],
+            'ad_type' => ['required', 'string', Rule::in(['standalone', 'display_takeover', 'reward_moment'])],
             'creative_type' => ['required', 'string', Rule::in(['image', 'video', 'text_card', 'display_banner'])],
             'placement_type' => ['required', 'string', Rule::in(['fixed_display', 'mobile_display', 'qr_landing', 'reward_page', 'map_route', 'post_mission'])],
             'asset_url' => ['nullable', 'url', 'max:2048'],

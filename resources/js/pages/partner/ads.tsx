@@ -132,7 +132,7 @@ export default function PartnerAds({
                 <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                     <div className="min-w-0">
                         <p className="text-sm text-muted-foreground">
-                            تبلیغات مستقل
+                            تبلیغات فروشگاه
                         </p>
                         <h1 className="mt-1 text-2xl leading-tight font-semibold">
                             {partner.name}
@@ -170,6 +170,14 @@ export default function PartnerAds({
                         <AlertDescription>{flash.success}</AlertDescription>
                     </Alert>
                 ) : null}
+
+                <Alert>
+                    <AlertDescription>
+                        این صفحه فقط برای تبلیغ مستقل همان فروشگاه یا واحد
+                        تجاری است. درخواست‌های اسپانسری، حمایت از مسیر و
+                        قراردادهای برند از پنل اسپانسر ثبت و پیگیری می‌شوند.
+                    </AlertDescription>
+                </Alert>
 
                 <section className="overflow-hidden rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
                     <div className="mb-4 flex items-center gap-2">
@@ -223,19 +231,13 @@ export default function PartnerAds({
                                         defaultValue="standalone"
                                     >
                                         <option value="standalone">
-                                            مستقل
-                                        </option>
-                                        <option value="sponsor_message">
-                                            پیام اسپانسری
+                                            تبلیغ مستقل فروشگاه
                                         </option>
                                         <option value="display_takeover">
-                                            تصاحب جایگاه نمایش
-                                        </option>
-                                        <option value="route_sponsor">
-                                            اسپانسر مسیر
+                                            جایگاه نمایش فروشگاه
                                         </option>
                                         <option value="reward_moment">
-                                            لحظه پاداش
+                                            پیام کنار پاداش فروشگاه
                                         </option>
                                     </select>
                                     <InputError message={errors.ad_type} />
@@ -359,7 +361,7 @@ export default function PartnerAds({
                                         id="body_copy"
                                         name="body_copy"
                                         className="min-h-24 rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                                        placeholder="پیام تبلیغاتی، توضیح پیشنهاد یا متن اسپانسری"
+                                        placeholder="پیام تبلیغاتی یا توضیح پیشنهاد فروشگاه"
                                     />
                                     <InputError message={errors.body_copy} />
                                 </div>

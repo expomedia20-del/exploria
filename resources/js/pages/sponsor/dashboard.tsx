@@ -326,6 +326,13 @@ export default function SponsorDashboard({
                     </section>
                 ) : null}
 
+                <section className="rounded-lg border border-primary/25 bg-primary/5 px-4 py-3 text-sm text-muted-foreground">
+                    پنل اسپانسر برای ثبت و اصلاح پیشنهاد حمایت، بسته پاداش،
+                    تبلیغ برند و تخصیص پیشنهادی به واحدهای اجراست. تایید نهایی
+                    کمپین، قیمت‌گذاری عملیاتی، زمان‌بندی نمایش و تحویل پاداش در
+                    پنل‌های ادمین، هاب و فروشگاه انجام می‌شود.
+                </section>
+
                 <section className="grid min-w-0 gap-4 xl:grid-cols-[minmax(17rem,0.8fr)_minmax(0,1.2fr)]">
                     <div className="exploria-panel">
                         <div className="border-b border-border/70 px-4 py-3 dark:border-sidebar-border">
