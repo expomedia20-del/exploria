@@ -134,6 +134,31 @@ class DashboardTest extends TestCase
         }
     }
 
+    public function test_sponsor_support_links_stay_on_sponsor_accessible_surfaces(): void
+    {
+        $knowledgeBase = app(SupportKnowledgeBaseService::class);
+        $support = $knowledgeBase->forUser(User::factory()->make(['role' => UserRole::Sponsor]));
+        $allowedPrefixes = ['/sponsor/dashboard', '/admin/support', '/games/ecopark-treasure'];
+
+        $links = collect($support['promptGroups'])
+            ->flatMap(fn (array $group) => collect($group['prompts'])->pluck('routeHref'))
+            ->merge(collect($support['quickActions'])->pluck('href'))
+            ->filter()
+            ->values();
+
+        $this->assertNotEmpty($links);
+
+        foreach ($links as $link) {
+            $this->assertTrue(
+                collect($allowedPrefixes)->contains(fn (string $prefix) => str_starts_with((string) $link, $prefix)),
+                (string) $link,
+            );
+        }
+
+        $this->assertFalse($links->contains('/partner/dashboard'));
+        $this->assertFalse($links->contains('/partner/ads'));
+    }
+
     public function test_central_and_regional_admins_have_expanded_support_coverage(): void
     {
         $knowledgeBase = app(SupportKnowledgeBaseService::class);

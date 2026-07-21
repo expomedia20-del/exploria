@@ -293,9 +293,9 @@ export default function CampaignParticipantsIndex({
                                     کنترل مرحله ۴: عضو آماده + پیشنهاد پاداش
                                 </h2>
                                 <p className="mt-1 text-muted-foreground">
-                                    برای عبور از این مرحله، حداقل یک عضو آماده و
-                                    حداقل یک پیشنهاد پاداش از فروشگاه یا اسپانسر
-                                    لازم است.
+                                    برای عبور از این مرحله، حداقل یک عضو آماده،
+                                    یک پیشنهاد پاداش فروشگاهی یا یک بسته
+                                    اسپانسری تاییدشده لازم است.
                                 </p>
                             </div>
                             <div className="flex flex-wrap gap-2">
@@ -310,7 +310,12 @@ export default function CampaignParticipantsIndex({
                                     <Link
                                         href={`/partner/dashboard?campaign=${selectedCampaign.code}`}
                                     >
-                                        پنل فروشگاه/اسپانسر
+                                        پنل فروشگاه
+                                    </Link>
+                                </Button>
+                                <Button asChild variant="outline" size="sm">
+                                    <Link href="/admin/sponsors">
+                                        مدیریت اسپانسرها
                                     </Link>
                                 </Button>
                             </div>
@@ -370,7 +375,7 @@ export default function CampaignParticipantsIndex({
                                 </h2>
                                 <p className="mt-1 text-muted-foreground">
                                     داده الگو آمده تا مالک پاداش، هاب، فروشگاه
-                                    یا اسپانسر مرتبط با آن مشخص شود.
+                                    یا بسته اسپانسری مرتبط با آن مشخص شود.
                                 </p>
                             </div>
                             <span

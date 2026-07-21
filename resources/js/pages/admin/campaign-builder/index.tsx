@@ -188,7 +188,7 @@ export default function CampaignBuilderIndex({
         {
             title: 'ارسال فرم پیشنهاد فروشگاه',
             description:
-                'فروشگاه یا اسپانسر برای سطوح پاداش همین کمپین پیشنهاد ثبت کند.',
+                'فروشگاه برای سطوح پاداش همین کمپین پیشنهاد ثبت کند؛ پیشنهاد اسپانسر از مدیریت اسپانسرها پیگیری می‌شود.',
             href: selectedCampaign
                 ? `/partner/dashboard?campaign=${selectedCampaign.code}`
                 : '/partner/dashboard',
@@ -206,7 +206,7 @@ export default function CampaignBuilderIndex({
         {
             title: 'آماده‌سازی اعضا و شرکا',
             description:
-                'فروشگاه‌ها، اسپانسرها و نقش‌های اجرایی را آماده کنید.',
+                'فروشگاه‌ها، اسپانسرها و نقش‌های اجرایی را از مسیرهای اختصاصی خود آماده کنید.',
             href: contextHref('/admin/campaign-participants', 'participants'),
             icon: UsersRound,
             tone: counts.readyParticipants > 0 ? 'neutral' : 'primary',

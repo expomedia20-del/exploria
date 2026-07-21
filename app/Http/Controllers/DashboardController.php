@@ -170,8 +170,8 @@ class DashboardController extends Controller
                         'key' => 'pending_redemptions_'.$campaign['id'],
                         'severity' => 'attention',
                         'title' => 'پاداش در انتظار تحویل',
-                        'message' => $campaign['pendingRedemptions'].' پاداش در کمپین '.$campaign['name'].' منتظر تایید فروشگاه یا اسپانسر است.',
-                        'actionLabel' => 'مشاهده پنل شریک',
+                        'message' => $campaign['pendingRedemptions'].' پاداش در کمپین '.$campaign['name'].' منتظر تایید فروشگاه یا واحد تحویل پاداش است.',
+                        'actionLabel' => 'مشاهده پنل فروشگاه',
                         'actionHref' => '/partner/dashboard?campaign='.$campaign['code'],
                     ];
                 }

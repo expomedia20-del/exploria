@@ -105,7 +105,7 @@ const statLabels: Array<[keyof Stats, string, string]> = [
     [
         'pendingRedemptions',
         'در انتظار تحویل',
-        'پاداش‌هایی که فروشگاه یا اسپانسر باید تحویل دهد',
+        'پاداش‌هایی که فروشگاه یا واحد تحویل باید تحویل دهد',
     ],
     [
         'confirmedRedemptions',
@@ -590,8 +590,8 @@ export default function Dashboard({
 
                     {latestRedemptions.length === 0 ? (
                         <div className="p-8 text-center text-sm text-muted-foreground">
-                            هنوز پاداشی برای تحویل به فروشگاه یا اسپانسر نرسیده
-                            است.
+                            هنوز پاداشی برای تحویل به فروشگاه یا واحد تحویل
+                            نرسیده است.
                         </div>
                     ) : (
                         <div className="divide-y divide-border/70">

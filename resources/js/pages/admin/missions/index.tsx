@@ -2691,7 +2691,7 @@ export default function MissionRewardRegistryIndex({
                     <div className="flex flex-col gap-3 border-b border-sidebar-border/70 px-4 py-3 lg:flex-row lg:items-center lg:justify-between dark:border-sidebar-border">
                         <div>
                             <p className="text-xs text-muted-foreground">
-                                مرحله ۴: مشارکت فروشگاه و اسپانسر
+                                مرحله ۴: مشارکت فروشگاه و بسته اسپانسر
                             </p>
                             <h2 className="mt-1 font-semibold">
                                 میز بازبینی پیشنهادهای مشارکت
@@ -2738,10 +2738,10 @@ export default function MissionRewardRegistryIndex({
 
                     {partnerRewardOffers.length === 0 ? (
                         <div className="p-6 text-sm text-muted-foreground">
-                            هنوز پیشنهادی از فروشگاه یا اسپانسر برای این کمپین
-                            ثبت نشده است. از نوار همین کمپین وارد بخش «اعضا و
-                            مشارکت‌کنندگان» یا پنل فروشگاه/اسپانسر شوید و
-                            پیشنهاد مرحله ۴ را ثبت کنید.
+                            هنوز پیشنهاد فروشگاهی یا بسته اسپانسری برای این
+                            کمپین ثبت نشده است. از نوار همین کمپین وارد بخش
+                            «اعضا و مشارکت‌کنندگان»، پنل فروشگاه یا مدیریت
+                            اسپانسرها شوید و پیشنهاد مرحله ۴ را ثبت کنید.
                         </div>
                     ) : (
                         <div className="grid gap-3 p-4 xl:grid-cols-2">

@@ -57,7 +57,7 @@ Pass criteria:
 Operational page:
 
 - `/admin/demo-cycle` shows pending rewards, confirmed/redeemed rewards, and active displays.
-- `/partner/dashboard`, `/admin/ads`, and `/admin/display-operations` are the execution pages for this stage.
+- `/partner/dashboard`, `/partner/ads`, `/sponsor/dashboard`, `/admin/sponsors`, `/admin/ads`, and `/admin/display-operations` are the execution pages for this stage; store advertising and sponsor proposals stay on separate role surfaces.
 
 ## Stage 5: Commercial Report
 

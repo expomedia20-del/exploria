@@ -157,7 +157,7 @@ For a fresh repeat of the same flow, use another valid Iranian-format mobile num
 - Partner dashboard exists for `shop_partner` and `sponsor` roles. It shows the partner's own reward definitions, issued rewards, pending/confirmed redemptions, supports confirming a customer redemption code, and lets the partner submit a new offer/discount for admin review.
 - Admin mission/reward registry can approve or reject partner-submitted offers. Submitted offers remain `draft` until approved and become `active` only after review.
 - Standalone advertising skeleton exists with real tables for ad requests, creatives, display devices, placements, approvals, and events.
-- Partner advertising page exists at `/partner/ads`; a partner or sponsor can submit an ad request for fixed/mobile displays, QR landing, reward page, map/route, or post-mission placement.
+- Partner advertising page exists at `/partner/ads` for store/member-unit advertising only; sponsor proposals, route sponsorship, and brand packages are submitted from `/sponsor/dashboard` and reviewed from `/admin/sponsors`.
 - Admin advertising page exists at `/admin/ads`; admin/operator can approve or reject all pending ad requests, while hub managers are restricted to managed hub/partner scope.
 - Hub/ravaq manager dashboard exists at `/hub/dashboard` with API `/api/v1/hub/dashboard`; it shows only managed hubs, partners, display devices, scoped ad requests, scoped partner offers, review notes, decision times, and scheduling controls for approved display ads.
 - Display publishing API exists at /api/v1/display/{deviceCode}/schedule, and display clients can record ad events at /api/v1/display/{deviceCode}/events.
