@@ -1,4 +1,4 @@
-﻿import { Head, Link } from '@inertiajs/react';
+import { Form, Head, Link } from '@inertiajs/react';
 import {
     ArrowRight,
     BadgeCheck,
@@ -6,7 +6,9 @@ import {
     Compass,
     Gift,
     Home,
+    Lock,
     MapPin,
+    Play,
     QrCode,
     Sparkles,
     Trophy,
@@ -15,17 +17,95 @@ import {
 import { useMemo, useState } from 'react';
 
 type StartMode = 'home' | 'onsite';
-type NodeId =
-    | 'gate'
-    | 'hologram'
-    | 'ravaq'
-    | 'food'
-    | 'mina'
-    | 'ocean'
-    | 'final';
+
+type ServerMissionNode = {
+    id: string;
+    code: string;
+    title: string;
+    place: string | null;
+    clue: string;
+    mission: string | null;
+    reward: string | null;
+    points: number;
+    treasureName: string | null;
+    cycleStep: { index: number | null; label: string | null };
+    unlockMinPoints: number | null;
+};
+
+type MissionFlow = {
+    stats: {
+        totalPoints: number;
+        completedMissions: number;
+        availableMissions: number;
+        rewards: number;
+    };
+    missions: MissionItem[];
+    rewards: UserRewardItem[];
+};
+
+type MissionItem = {
+    id: string;
+    code: string;
+    title: string;
+    description: string | null;
+    completionEvidence: string;
+    successMessage: string | null;
+    status: 'available' | 'started' | 'completed' | 'locked';
+    isLocked: boolean;
+    canStart: boolean;
+    canComplete: boolean;
+    points: number;
+    treasureName: string | null;
+};
+
+type UserRewardItem = {
+    id: string;
+    status: string;
+    redemption: {
+        redemptionCode: string;
+        status: string;
+        partnerName: string | null;
+    } | null;
+    reward: {
+        name: string;
+        partnerName: string | null;
+    } | null;
+};
+
+type GamePayload = {
+    campaign: {
+        id: string;
+        code: string;
+        name: string;
+        venueName: string | null;
+        city: string | null;
+        scanUrl: string | null;
+    } | null;
+    entryQr: {
+        code: string;
+        label: string | null;
+        scanUrl: string;
+    } | null;
+    missionNodes: ServerMissionNode[];
+    latestVisit: {
+        id: string;
+        occurredAt: string;
+        showUrl: string;
+    } | null;
+    missionFlow: MissionFlow | null;
+    visitorState: {
+        isAuthenticated: boolean;
+        hasLinkedVisit: boolean;
+        participantDashboardUrl: string | null;
+    };
+};
+
+type Props = {
+    game: GamePayload;
+};
 
 type TreasureNode = {
-    id: NodeId;
+    id: string;
     title: string;
     place: string;
     clue: string;
@@ -35,9 +115,17 @@ type TreasureNode = {
     x: string;
     y: string;
     accent: string;
+    realMissionId: string | null;
+    realMissionCode: string | null;
+    status: MissionItem['status'] | 'local';
+    isLocked: boolean;
+    canStart: boolean;
+    canComplete: boolean;
+    completionEvidence: string | null;
+    treasureName: string | null;
 };
 
-const nodes: TreasureNode[] = [
+const fallbackNodes: TreasureNode[] = [
     {
         id: 'gate',
         title: 'دروازه اکوپارک',
@@ -49,6 +137,14 @@ const nodes: TreasureNode[] = [
         x: '12%',
         y: '74%',
         accent: 'bg-emerald-400',
+        realMissionId: null,
+        realMissionCode: null,
+        status: 'local',
+        isLocked: false,
+        canStart: false,
+        canComplete: false,
+        completionEvidence: null,
+        treasureName: null,
     },
     {
         id: 'hologram',
@@ -61,6 +157,14 @@ const nodes: TreasureNode[] = [
         x: '25%',
         y: '48%',
         accent: 'bg-cyan-300',
+        realMissionId: null,
+        realMissionCode: null,
+        status: 'local',
+        isLocked: false,
+        canStart: false,
+        canComplete: false,
+        completionEvidence: null,
+        treasureName: null,
     },
     {
         id: 'ravaq',
@@ -73,6 +177,14 @@ const nodes: TreasureNode[] = [
         x: '43%',
         y: '66%',
         accent: 'bg-amber-300',
+        realMissionId: null,
+        realMissionCode: null,
+        status: 'local',
+        isLocked: false,
+        canStart: false,
+        canComplete: false,
+        completionEvidence: null,
+        treasureName: null,
     },
     {
         id: 'food',
@@ -85,6 +197,14 @@ const nodes: TreasureNode[] = [
         x: '57%',
         y: '38%',
         accent: 'bg-rose-300',
+        realMissionId: null,
+        realMissionCode: null,
+        status: 'local',
+        isLocked: false,
+        canStart: false,
+        canComplete: false,
+        completionEvidence: null,
+        treasureName: null,
     },
     {
         id: 'mina',
@@ -97,18 +217,14 @@ const nodes: TreasureNode[] = [
         x: '72%',
         y: '56%',
         accent: 'bg-violet-300',
-    },
-    {
-        id: 'ocean',
-        title: 'مسیر خانوادگی پارک آب‌وآتش',
-        place: 'مسیر کشف خانوادگی',
-        clue: 'گذرنامه خانوادگی پیش از گنج نهایی به یک نشان دیگر نیاز دارد.',
-        mission: 'یک ایستگاه خانوادگی یا خاطره تصویری را کامل کنید.',
-        reward: 'گذرنامه خانوادگی + شانس سبد طلایی',
-        points: 220,
-        x: '84%',
-        y: '27%',
-        accent: 'bg-sky-300',
+        realMissionId: null,
+        realMissionCode: null,
+        status: 'local',
+        isLocked: false,
+        canStart: false,
+        canComplete: false,
+        completionEvidence: null,
+        treasureName: null,
     },
     {
         id: 'final',
@@ -121,7 +237,25 @@ const nodes: TreasureNode[] = [
         x: '91%',
         y: '78%',
         accent: 'bg-yellow-300',
+        realMissionId: null,
+        realMissionCode: null,
+        status: 'local',
+        isLocked: false,
+        canStart: false,
+        canComplete: false,
+        completionEvidence: null,
+        treasureName: null,
     },
+];
+
+const nodeVisuals = [
+    { x: '12%', y: '74%', accent: 'bg-emerald-400' },
+    { x: '25%', y: '48%', accent: 'bg-cyan-300' },
+    { x: '43%', y: '66%', accent: 'bg-amber-300' },
+    { x: '57%', y: '38%', accent: 'bg-rose-300' },
+    { x: '72%', y: '56%', accent: 'bg-violet-300' },
+    { x: '84%', y: '27%', accent: 'bg-sky-300' },
+    { x: '91%', y: '78%', accent: 'bg-yellow-300' },
 ];
 
 const baskets = [
@@ -140,36 +274,105 @@ const baskets = [
     },
 ];
 
+const missionStatusLabels: Record<MissionItem['status'] | 'local', string> = {
+    available: 'آماده شروع',
+    started: 'در حال انجام',
+    completed: 'تکمیل شده',
+    locked: 'قفل',
+    local: 'پیش‌نمایش',
+};
+
 function formatFa(value: number) {
     return value.toLocaleString('fa-IR');
 }
 
-function buildCode(mode: StartMode, completed: NodeId[]) {
+function buildCode(mode: StartMode, completed: string[], visitId?: string) {
+    if (visitId) {
+        return `EXP-VISIT-${visitId.slice(-6).toUpperCase()}`;
+    }
+
     const prefix = mode === 'home' ? 'HOME' : 'PARK';
     const score = completed.length * 17 + (mode === 'home' ? 41 : 64);
 
     return `EXP-${prefix}-1405-${score}`;
 }
 
-export default function EcoParkTreasureGame() {
-    const [mode, setMode] = useState<StartMode>('home');
-    const [selected, setSelected] = useState<NodeId>('gate');
-    const [completed, setCompleted] = useState<NodeId[]>([]);
+function buildNodes(game: GamePayload): TreasureNode[] {
+    if (game.missionNodes.length === 0) {
+        return fallbackNodes;
+    }
 
-    const selectedNode = nodes.find((node) => node.id === selected) ?? nodes[0];
-    const points = useMemo(
-        () =>
-            nodes
-                .filter((node) => completed.includes(node.id))
-                .reduce((sum, node) => sum + node.points, 0),
-        [completed],
+    const flowByCode = new Map(
+        (game.missionFlow?.missions ?? []).map((mission) => [
+            mission.code,
+            mission,
+        ]),
     );
-    const code = buildCode(mode, completed);
-    const progress = Math.round((completed.length / nodes.length) * 100);
 
-    function completeNode(id: NodeId) {
+    return game.missionNodes.map((node, index) => {
+        const visual =
+            nodeVisuals[index] ?? nodeVisuals[nodeVisuals.length - 1];
+        const progress = flowByCode.get(node.code);
+
+        return {
+            id: node.id,
+            title: node.title,
+            place: node.place ?? 'مسیر کمپین',
+            clue: node.clue,
+            mission: progress?.description ?? node.mission ?? node.clue,
+            reward:
+                progress?.successMessage ??
+                node.reward ??
+                (node.treasureName
+                    ? `گنج: ${node.treasureName}`
+                    : 'امتیاز و پیشرفت مسیر'),
+            points: progress?.points ?? node.points,
+            x: visual.x,
+            y: visual.y,
+            accent: visual.accent,
+            realMissionId: progress?.id ?? node.id,
+            realMissionCode: node.code,
+            status: progress?.status ?? 'local',
+            isLocked: progress?.isLocked ?? false,
+            canStart: progress?.canStart ?? false,
+            canComplete: progress?.canComplete ?? false,
+            completionEvidence: progress?.completionEvidence ?? null,
+            treasureName: progress?.treasureName ?? node.treasureName,
+        };
+    });
+}
+
+export default function EcoParkTreasureGame({ game }: Props) {
+    const [mode, setMode] = useState<StartMode>('home');
+    const [selected, setSelected] = useState<string>('gate');
+    const [localCompleted, setLocalCompleted] = useState<string[]>([]);
+
+    const nodes = useMemo(() => buildNodes(game), [game]);
+    const selectedNode =
+        nodes.find((node) => node.id === selected) ??
+        nodes[0] ??
+        fallbackNodes[0];
+    const completed = game.missionFlow
+        ? nodes
+              .filter((node) => node.status === 'completed')
+              .map((node) => node.id)
+        : localCompleted;
+    const points =
+        game.missionFlow?.stats.totalPoints ??
+        nodes
+            .filter((node) => completed.includes(node.id))
+            .reduce((sum, node) => sum + node.points, 0);
+    const code = buildCode(mode, completed, game.latestVisit?.id);
+    const progress =
+        nodes.length > 0
+            ? Math.round((completed.length / nodes.length) * 100)
+            : 0;
+
+    function completeLocalNode(id: string) {
         setSelected(id);
-        setCompleted((items) => (items.includes(id) ? items : [...items, id]));
+        setLocalCompleted((items) =>
+            items.includes(id) ? items : [...items, id],
+        );
     }
 
     return (
@@ -185,13 +388,27 @@ export default function EcoParkTreasureGame() {
                             <ArrowRight className="size-4" />
                             گنجینه الگوهای مأموریت
                         </Link>
-                        <Link
-                            href="/dashboard"
-                            className="inline-flex h-9 items-center gap-2 rounded-md border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-700 hover:bg-zinc-100"
-                        >
-                            <Compass className="size-4" />
-                            داشبورد
-                        </Link>
+                        <div className="flex flex-wrap gap-2">
+                            {game.visitorState.participantDashboardUrl ? (
+                                <Link
+                                    href={
+                                        game.visitorState
+                                            .participantDashboardUrl
+                                    }
+                                    className="inline-flex h-9 items-center gap-2 rounded-md border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-700 hover:bg-zinc-100"
+                                >
+                                    <Compass className="size-4" />
+                                    پنل مشارکت
+                                </Link>
+                            ) : null}
+                            <Link
+                                href="/dashboard"
+                                className="inline-flex h-9 items-center gap-2 rounded-md border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-700 hover:bg-zinc-100"
+                            >
+                                <Compass className="size-4" />
+                                داشبورد
+                            </Link>
+                        </div>
                     </div>
                 </section>
 
@@ -207,16 +424,18 @@ export default function EcoParkTreasureGame() {
                                 <div className="absolute inset-0 bg-gradient-to-l from-zinc-950/85 via-zinc-950/45 to-transparent" />
                                 <div className="relative max-w-xl p-5 text-white sm:p-6">
                                     <p className="text-sm font-semibold text-emerald-200">
-                                        بازی پایلوت اکسپلوریا
+                                        {game.campaign
+                                            ? `${game.campaign.venueName ?? 'اکوپارک'} · ${game.campaign.name}`
+                                            : 'بازی پایلوت اکسپلوریا'}
                                     </p>
                                     <h1 className="mt-3 text-4xl leading-tight font-semibold sm:text-5xl">
                                         نقشه گنج اکوپارک
                                     </h1>
                                     <p className="mt-4 text-sm leading-7 text-zinc-100">
-                                        یک مسیر گنج قابل بازی برای اکوپارک؛ شامل
-                                        شروع از خانه، سرنخ‌های QR در محل،
-                                        کوله‌پشتی هولوگرام، پاداش واحدهای عضو و
-                                        سبدهای جایزه.
+                                        این صفحه اکنون به کمپین، QR شروع،
+                                        مأموریت‌های واقعی و پیشرفت ذخیره‌شده
+                                        بازدیدکننده وصل است. بدون Visit واقعی،
+                                        حالت پیش‌نمایش مسیر را نشان می‌دهد.
                                     </p>
                                 </div>
                             </div>
@@ -247,8 +466,8 @@ export default function EcoParkTreasureGame() {
                                     شروع در اکوپارک
                                 </p>
                                 <p className="mt-1 text-xs opacity-80">
-                                    اسکن QR، نمایشگر محیطی، بازشدن مسیر و
-                                    پاداش‌های زنده.
+                                    اسکن QR، ثبت Visit و ذخیره واقعی امتیاز و
+                                    پاداش.
                                 </p>
                             </button>
                         </div>
@@ -302,17 +521,11 @@ export default function EcoParkTreasureGame() {
                                 stroke="rgba(16,185,129,0.16)"
                                 strokeWidth="8"
                             />
-                            <path
-                                d="M4 28 C28 20, 42 22, 66 15 S84 16, 98 10"
-                                fill="none"
-                                stroke="rgba(14,165,233,0.14)"
-                                strokeWidth="9"
-                            />
                         </svg>
 
                         {nodes.map((node, index) => {
                             const done = completed.includes(node.id);
-                            const active = selected === node.id;
+                            const active = selectedNode.id === node.id;
 
                             return (
                                 <button
@@ -323,10 +536,12 @@ export default function EcoParkTreasureGame() {
                                     style={{ left: node.x, top: node.y }}
                                 >
                                     <span
-                                        className={`flex size-12 items-center justify-center rounded-full border text-sm font-bold shadow-lg ${done ? 'border-emerald-200 bg-emerald-300 text-zinc-950' : active ? 'border-white bg-white text-zinc-950' : `border-white/30 ${node.accent} text-zinc-950`}`}
+                                        className={`flex size-12 items-center justify-center rounded-full border text-sm font-bold shadow-lg ${done ? 'border-emerald-200 bg-emerald-300 text-zinc-950' : node.isLocked ? 'border-white bg-zinc-300 text-zinc-700' : active ? 'border-white bg-white text-zinc-950' : `border-white/30 ${node.accent} text-zinc-950`}`}
                                     >
                                         {done ? (
                                             <CheckCircle2 className="size-5" />
+                                        ) : node.isLocked ? (
+                                            <Lock className="size-5" />
                                         ) : (
                                             formatFa(index + 1)
                                         )}
@@ -342,10 +557,17 @@ export default function EcoParkTreasureGame() {
                             <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
                                 <div>
                                     <div className="flex flex-wrap items-center gap-2">
-                                        <MapPin className="size-4 text-emerald-300" />
+                                        <MapPin className="size-4 text-emerald-500" />
                                         <p className="text-xs text-zinc-500">
                                             {selectedNode.place}
                                         </p>
+                                        <span className="rounded-full bg-zinc-100 px-2 py-1 text-xs">
+                                            {
+                                                missionStatusLabels[
+                                                    selectedNode.status
+                                                ]
+                                            }
+                                        </span>
                                     </div>
                                     <h2 className="mt-2 text-xl font-semibold text-zinc-950">
                                         {selectedNode.title}
@@ -356,17 +578,18 @@ export default function EcoParkTreasureGame() {
                                     <p className="mt-2 text-sm leading-6 text-zinc-900">
                                         مأموریت: {selectedNode.mission}
                                     </p>
+                                    {selectedNode.completionEvidence ? (
+                                        <p className="mt-2 text-xs leading-6 text-zinc-500">
+                                            مدرک انجام:{' '}
+                                            {selectedNode.completionEvidence}
+                                        </p>
+                                    ) : null}
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        completeNode(selectedNode.id)
-                                    }
-                                    className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white hover:bg-zinc-800"
-                                >
-                                    <BadgeCheck className="size-4" />
-                                    دریافت سرنخ
-                                </button>
+                                <MissionAction
+                                    game={game}
+                                    node={selectedNode}
+                                    onLocalComplete={completeLocalNode}
+                                />
                             </div>
                         </div>
                     </div>
@@ -387,9 +610,11 @@ export default function EcoParkTreasureGame() {
                                 </h2>
                             </div>
                             <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium">
-                                {mode === 'home'
-                                    ? 'شروع اختیاری از خانه'
-                                    : 'شروع در محل'}
+                                {game.latestVisit
+                                    ? 'متصل به Visit واقعی'
+                                    : mode === 'home'
+                                      ? 'شروع اختیاری از خانه'
+                                      : 'شروع در محل'}
                             </span>
                         </div>
                         <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -414,7 +639,7 @@ export default function EcoParkTreasureGame() {
                                 ))}
                             {completed.length === 0 && (
                                 <p className="text-sm leading-7 text-zinc-500">
-                                    پس از تکمیل نخستین سرنخ، پاداش‌های
+                                    پس از تکمیل نخستین سرنخ، پاداش‌ها و گنج‌های
                                     جمع‌آوری‌شده اینجا نمایش داده می‌شوند.
                                 </p>
                             )}
@@ -425,45 +650,169 @@ export default function EcoParkTreasureGame() {
                         <div className="flex items-center gap-2">
                             <Trophy className="size-5 text-amber-600" />
                             <h2 className="font-semibold">
-                                سطح‌بندی سبدهای جایزه
+                                کیف پاداش و سطح‌بندی جایزه
                             </h2>
                         </div>
-                        <div className="mt-4 grid gap-2">
-                            {baskets.map((basket, index) => {
-                                const unlocked = completed.length >= index + 1;
-
-                                return (
+                        {game.missionFlow?.rewards.length ? (
+                            <div className="mt-4 grid gap-2">
+                                {game.missionFlow.rewards.map((reward) => (
                                     <div
-                                        key={basket.level}
-                                        className={`rounded-md border p-3 ${unlocked ? 'border-amber-200 bg-amber-50' : 'border-zinc-200 bg-zinc-50'}`}
+                                        key={reward.id}
+                                        className="rounded-md border border-amber-200 bg-amber-50 p-3"
                                     >
-                                        <div className="flex items-center justify-between gap-3">
-                                            <p className="font-medium">
-                                                {basket.level}
+                                        <p className="font-medium">
+                                            {reward.reward?.name ?? 'پاداش'}
+                                        </p>
+                                        <p className="mt-1 text-xs text-zinc-600">
+                                            شریک:{' '}
+                                            {reward.redemption?.partnerName ??
+                                                reward.reward?.partnerName ??
+                                                'اکسپلوریا'}{' '}
+                                            · وضعیت: {reward.status}
+                                        </p>
+                                        {reward.redemption ? (
+                                            <p
+                                                className="mt-2 font-mono text-sm font-semibold"
+                                                dir="ltr"
+                                            >
+                                                {
+                                                    reward.redemption
+                                                        .redemptionCode
+                                                }
                                             </p>
-                                            {unlocked ? (
-                                                <WalletCards className="size-4 text-amber-700" />
-                                            ) : (
-                                                <Sparkles className="size-4 text-zinc-500" />
-                                            )}
-                                        </div>
-                                        <div className="mt-2 flex flex-wrap gap-2">
-                                            {basket.items.map((item) => (
-                                                <span
-                                                    key={item}
-                                                    className="rounded-full bg-zinc-100 px-2 py-1 text-xs text-zinc-700"
-                                                >
-                                                    {item}
-                                                </span>
-                                            ))}
-                                        </div>
+                                        ) : null}
                                     </div>
-                                );
-                            })}
-                        </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="mt-4 grid gap-2">
+                                {baskets.map((basket, index) => {
+                                    const unlocked =
+                                        completed.length >= index + 1;
+
+                                    return (
+                                        <div
+                                            key={basket.level}
+                                            className={`rounded-md border p-3 ${unlocked ? 'border-amber-200 bg-amber-50' : 'border-zinc-200 bg-zinc-50'}`}
+                                        >
+                                            <div className="flex items-center justify-between gap-3">
+                                                <p className="font-medium">
+                                                    {basket.level}
+                                                </p>
+                                                {unlocked ? (
+                                                    <WalletCards className="size-4 text-amber-700" />
+                                                ) : (
+                                                    <Sparkles className="size-4 text-zinc-500" />
+                                                )}
+                                            </div>
+                                            <div className="mt-2 flex flex-wrap gap-2">
+                                                {basket.items.map((item) => (
+                                                    <span
+                                                        key={item}
+                                                        className="rounded-full bg-zinc-100 px-2 py-1 text-xs text-zinc-700"
+                                                    >
+                                                        {item}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </aside>
                 </section>
             </main>
         </>
+    );
+}
+
+function MissionAction({
+    game,
+    node,
+    onLocalComplete,
+}: {
+    game: GamePayload;
+    node: TreasureNode;
+    onLocalComplete: (id: string) => void;
+}) {
+    if (game.latestVisit && node.realMissionId && node.status !== 'local') {
+        if (node.status === 'completed') {
+            return (
+                <button
+                    type="button"
+                    disabled
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-emerald-600 px-4 text-sm font-semibold text-white"
+                >
+                    <CheckCircle2 className="size-4" />
+                    تکمیل شده
+                </button>
+            );
+        }
+
+        if (node.canStart) {
+            return (
+                <Form
+                    action={`/visits/${game.latestVisit.id}/missions/${node.realMissionId}/start`}
+                    method="post"
+                >
+                    {({ processing }) => (
+                        <button
+                            type="submit"
+                            disabled={processing}
+                            className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white hover:bg-zinc-800 disabled:opacity-60"
+                        >
+                            <Play className="size-4" />
+                            شروع واقعی
+                        </button>
+                    )}
+                </Form>
+            );
+        }
+
+        return (
+            <Form
+                action={`/visits/${game.latestVisit.id}/missions/${node.realMissionId}/complete`}
+                method="post"
+            >
+                {({ processing }) => (
+                    <button
+                        type="submit"
+                        disabled={processing || !node.canComplete}
+                        className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        {node.isLocked ? (
+                            <Lock className="size-4" />
+                        ) : (
+                            <BadgeCheck className="size-4" />
+                        )}
+                        ثبت تکمیل
+                    </button>
+                )}
+            </Form>
+        );
+    }
+
+    if (game.entryQr?.scanUrl) {
+        return (
+            <Link
+                href={game.entryQr.scanUrl}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white hover:bg-zinc-800"
+            >
+                <QrCode className="size-4" />
+                شروع واقعی با QR
+            </Link>
+        );
+    }
+
+    return (
+        <button
+            type="button"
+            onClick={() => onLocalComplete(node.id)}
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white hover:bg-zinc-800"
+        >
+            <BadgeCheck className="size-4" />
+            دریافت سرنخ
+        </button>
     );
 }

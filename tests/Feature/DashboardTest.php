@@ -47,6 +47,32 @@ class DashboardTest extends TestCase
                 ->component('admin/support/index'));
     }
 
+    public function test_support_center_uses_role_specific_knowledge_base(): void
+    {
+        $this->withoutVite();
+
+        $roles = [
+            [UserRole::Admin, 'admin'],
+            [UserRole::ShopPartner, 'shop_partner'],
+            [UserRole::Sponsor, 'sponsor'],
+            [UserRole::HubManager, 'hub_manager'],
+        ];
+
+        foreach ($roles as [$role, $expectedKey]) {
+            $user = User::factory()->create(['role' => $role]);
+
+            $this->actingAs($user)
+                ->get(route('admin.support.page'))
+                ->assertOk()
+                ->assertInertia(fn (Assert $page) => $page
+                    ->component('admin/support/index')
+                    ->where('support.roleContext.key', $expectedKey)
+                    ->has('support.promptGroups.0.prompts', 4)
+                    ->has('support.quickActions', 3)
+                    ->has('support.checklist', 4));
+        }
+    }
+
     public function test_internal_users_can_open_demo_cycle_page(): void
     {
         $this->withoutVite();

@@ -4,38 +4,53 @@ import {
     CircleHelp,
     ClipboardCheck,
     MessageSquareText,
+    Route,
     ShieldAlert,
 } from 'lucide-react';
 
-const quickActions = [
-    {
-        title: 'مشکل اجرای کمپین',
-        body: 'اگر QR، ماموریت، پاداش یا مسیر کاربر درست کار نمی‌کند، اول نقشه عملیات کمپین را بررسی کنید.',
-        href: '/admin/campaign-operations',
-        label: 'نقشه عملیات',
-    },
-    {
-        title: 'مشکل نمایشگر یا تبلیغ',
-        body: 'برای خطای پخش، آفلاین بودن نمایشگر، یا تبلیغ تاییدشده بدون زمان‌بندی از این مسیر شروع کنید.',
-        href: '/admin/display-operations',
-        label: 'عملیات نمایشگرها',
-    },
-    {
-        title: 'مشکل کاربر یا دسترسی',
-        body: 'برای تغییر نقش، بستن دسترسی، یا تشخیص کاربر عادی و مشارکت‌کننده به مدیریت کاربران بروید.',
-        href: '/admin/users',
-        label: 'مدیریت کاربران',
-    },
-];
+type SupportPrompt = {
+    question: string;
+    answer: string;
+    routeLabel: string | null;
+    routeHref: string | null;
+};
 
-const botPrompts = [
-    'چرا کاربر بعد از ورود موبایل کمپین فعال نمی‌بیند؟',
-    'کدام تبلیغ تایید شده ولی هنوز روی نمایشگر زمان‌بندی نشده است؟',
-    'برای یک فروشگاه جدید چه اکانت و چه دسترسی باید بسازم؟',
-    'کدام پاداش‌ها در انتظار مصرف یا تایید فروشگاه هستند؟',
-];
+type PromptGroup = {
+    title: string;
+    prompts: SupportPrompt[];
+};
 
-export default function SupportCenterIndex() {
+type QuickAction = {
+    title: string;
+    body: string;
+    href: string | null;
+    label: string | null;
+};
+
+type SupportPayload = {
+    roleContext: {
+        key: string;
+        title: string;
+        summary: string;
+        audience: string;
+    };
+    promptGroups: PromptGroup[];
+    quickActions: QuickAction[];
+    checklist: string[];
+    handoffNotes: string[];
+};
+
+type Props = {
+    support: SupportPayload;
+};
+
+export default function SupportCenterIndex({ support }: Props) {
+    const { roleContext, promptGroups, quickActions, checklist, handoffNotes } =
+        support;
+    const prompts = promptGroups.flatMap((group) =>
+        group.prompts.map((prompt) => ({ ...prompt, groupTitle: group.title })),
+    );
+
     return (
         <>
             <Head title="پشتیبانی و چت‌بات" />
@@ -43,17 +58,22 @@ export default function SupportCenterIndex() {
             <main className="space-y-4 p-4" dir="rtl">
                 <section className="rounded-lg border border-sidebar-border/70 bg-gradient-to-l from-cyan-50 to-background p-4 dark:border-sidebar-border dark:from-cyan-950/30">
                     <p className="text-sm text-muted-foreground">
-                        مرکز پشتیبانی عملیاتی برای دمو، اجرا و رفع خطای سریع
+                        مرکز پشتیبانی عملیاتی متناسب با نقش کاربر
                     </p>
                     <h1 className="mt-1 text-2xl font-semibold">
-                        پشتیبانی و چت‌بات اکسپلوریا
+                        {roleContext.title}
                     </h1>
                     <p className="mt-2 max-w-4xl text-sm leading-7 text-muted-foreground">
-                        این نسخه، مرکز راهنمای سریع و مسیرهای عیب‌یابی را آماده
-                        می‌کند. اتصال چت‌بات هوشمند در مرحله بعد روی همین صفحه
-                        انجام می‌شود تا از داده‌های کمپین، کاربر، پاداش و
-                        نمایشگر پاسخ عملیاتی بدهد.
+                        {roleContext.summary}
                     </p>
+                    <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                        <span className="rounded-full bg-background px-3 py-1 font-medium text-foreground shadow-xs">
+                            مخاطب: {roleContext.audience}
+                        </span>
+                        <span className="rounded-full bg-background px-3 py-1 font-medium text-foreground shadow-xs">
+                            کد نقش: {roleContext.key}
+                        </span>
+                    </div>
                 </section>
 
                 <section className="grid gap-3 lg:grid-cols-[1.2fr_0.8fr]">
@@ -61,7 +81,7 @@ export default function SupportCenterIndex() {
                         <div className="flex items-center gap-2">
                             <BotMessageSquare className="size-5 text-primary" />
                             <h2 className="font-semibold">
-                                جایگاه چت‌بات عملیاتی
+                                پرسش‌های پیشنهادی چت‌بات
                             </h2>
                         </div>
                         <div className="mt-3 rounded-lg border border-dashed border-sidebar-border/70 bg-muted/30 p-4">
@@ -69,27 +89,44 @@ export default function SupportCenterIndex() {
                                 <MessageSquareText className="mt-1 size-5 text-muted-foreground" />
                                 <div>
                                     <p className="font-medium">
-                                        چت‌بات هنوز به موتور پاسخ‌گو وصل نشده
-                                        است.
+                                        پاسخ‌ها از بانک کنترل‌شده نقش فعلی
+                                        انتخاب می‌شوند.
                                     </p>
                                     <p className="mt-2 text-sm leading-7 text-muted-foreground">
-                                        فعلا این صفحه به عنوان نقطه ورود
-                                        پشتیبانی استفاده می‌شود. در نسخه بعد،
-                                        همین بخش می‌تواند به موتور پرسش و پاسخ
-                                        متصل شود و از وضعیت واقعی کمپین‌ها،
-                                        کاربران، پاداش‌ها و نمایشگرها پاسخ بدهد.
+                                        این صفحه هنوز موتور گفت‌وگوی آزاد ندارد؛
+                                        اما سؤال‌ها، پاسخ‌ها و مسیرهای اقدام
+                                        برای هر نقش جدا شده‌اند تا در UAT و
+                                        اتصال چت‌بات هوشمند، محتوای نامرتبط به
+                                        نقش کاربر نمایش داده نشود.
                                     </p>
                                 </div>
                             </div>
                         </div>
-                        <div className="mt-4 grid gap-2 md:grid-cols-2">
-                            {botPrompts.map((prompt) => (
-                                <div
-                                    key={prompt}
+                        <div className="mt-4 grid gap-3 md:grid-cols-2">
+                            {prompts.map((prompt) => (
+                                <article
+                                    key={`${prompt.groupTitle}-${prompt.question}`}
                                     className="rounded-md border border-border/70 bg-background p-3 text-sm"
                                 >
-                                    {prompt}
-                                </div>
+                                    <p className="text-xs font-medium text-muted-foreground">
+                                        {prompt.groupTitle}
+                                    </p>
+                                    <h3 className="mt-2 leading-7 font-semibold">
+                                        {prompt.question}
+                                    </h3>
+                                    <p className="mt-2 leading-7 text-muted-foreground">
+                                        {prompt.answer}
+                                    </p>
+                                    {prompt.routeHref && prompt.routeLabel ? (
+                                        <Link
+                                            href={prompt.routeHref}
+                                            className="mt-3 inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-xs font-medium"
+                                        >
+                                            <Route className="size-3.5" />
+                                            {prompt.routeLabel}
+                                        </Link>
+                                    ) : null}
+                                </article>
                             ))}
                         </div>
                     </article>
@@ -101,21 +138,27 @@ export default function SupportCenterIndex() {
                         </div>
                         <ol className="mt-3 space-y-2 text-sm leading-7 text-muted-foreground">
                             <li>
-                                ۱. خطایی که مانع ورود کاربر یا شروع کمپین
+                                ۱. خطایی که مانع ورود، اسکن QR یا شروع مسیر
                                 می‌شود.
                             </li>
                             <li>
-                                ۲. پاداشی که صادر شده ولی فروشگاه نمی‌تواند مصرف
-                                کند.
+                                ۲. مأموریت، پاداش یا کد مصرفی که وضعیت نامشخص
+                                دارد.
                             </li>
                             <li>
-                                ۳. تبلیغ تاییدشده‌ای که روی نمایشگر پخش نمی‌شود.
+                                ۳. دسترسی، نقش یا محدوده‌ای که با مسئولیت کاربر
+                                همخوان نیست.
                             </li>
                             <li>
-                                ۴. دسترسی مدیریتی یا اکانتی که اشتباه تعریف شده
-                                است.
+                                ۴. تبلیغ، نمایشگر یا گزارش عملیاتی که با اجرای
+                                واقعی نمی‌خواند.
                             </li>
                         </ol>
+                        <div className="mt-4 rounded-md bg-muted/40 p-3 text-sm leading-7 text-muted-foreground">
+                            {handoffNotes.map((note) => (
+                                <p key={note}>{note}</p>
+                            ))}
+                        </div>
                     </article>
                 </section>
 
@@ -132,12 +175,14 @@ export default function SupportCenterIndex() {
                             <p className="mt-2 min-h-20 text-sm leading-7 text-muted-foreground">
                                 {action.body}
                             </p>
-                            <Link
-                                href={action.href}
-                                className="mt-3 inline-flex rounded-md border border-input bg-background px-3 py-2 text-sm font-medium"
-                            >
-                                {action.label}
-                            </Link>
+                            {action.href && action.label ? (
+                                <Link
+                                    href={action.href}
+                                    className="mt-3 inline-flex rounded-md border border-input bg-background px-3 py-2 text-sm font-medium"
+                                >
+                                    {action.label}
+                                </Link>
+                            ) : null}
                         </article>
                     ))}
                 </section>
@@ -150,15 +195,10 @@ export default function SupportCenterIndex() {
                         </h2>
                     </div>
                     <div className="mt-3 grid gap-3 md:grid-cols-4">
-                        {[
-                            'آیا کاربر با نقش درست وارد شده است؟',
-                            'آیا کمپین فعال و دارای QR معتبر است؟',
-                            'آیا پاداش به فروشگاه یا اسپانسر درست وصل شده است؟',
-                            'آیا نمایشگر آنلاین و دارای زمان‌بندی فعال است؟',
-                        ].map((item) => (
+                        {checklist.map((item) => (
                             <div
                                 key={item}
-                                className="rounded-md bg-muted/40 p-3 text-sm"
+                                className="rounded-md bg-muted/40 p-3 text-sm leading-7"
                             >
                                 {item}
                             </div>

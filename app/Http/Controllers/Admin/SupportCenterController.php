@@ -3,13 +3,22 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
+use App\Services\SupportKnowledgeBaseService;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class SupportCenterController extends Controller
 {
-    public function page(): Response
+    public function page(Request $request, SupportKnowledgeBaseService $knowledgeBase): Response
     {
-        return Inertia::render('admin/support/index');
+        $user = $request->user();
+
+        abort_unless($user instanceof User, 401);
+
+        return Inertia::render('admin/support/index', [
+            'support' => $knowledgeBase->forUser($user),
+        ]);
     }
 }
