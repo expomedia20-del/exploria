@@ -10,10 +10,12 @@ use App\Models\OtpRequest;
 use App\Models\QrCode;
 use App\Models\RewardRedemption;
 use App\Models\ScanEvent;
+use App\Models\User;
 use App\Models\UserMissionProgress;
 use App\Models\UserReward;
 use App\Models\Venue;
 use App\Models\Visit;
+use App\Services\UserAccessScopeService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -21,7 +23,7 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function __invoke(Request $request): Response|RedirectResponse
+    public function __invoke(Request $request, UserAccessScopeService $accessScopes): Response|RedirectResponse
     {
         $user = $request->user();
 
@@ -48,8 +50,35 @@ class DashboardController extends Controller
             UserRole::Viewer,
         ], true), 403);
 
+        /** @var User $user */
+        $isGlobalScope = $accessScopes->hasGlobalAccess($user);
+        $venueIds = $isGlobalScope ? collect() : $accessScopes->venueIds($user);
+        $regionIds = $accessScopes->regionIds($user);
+        $campaignIds = $isGlobalScope
+            ? collect()
+            : Campaign::query()
+                ->whereIn('venue_id', $venueIds)
+                ->pluck('id')
+                ->values();
+        $visibleVenueCount = $isGlobalScope
+            ? Venue::query()->count()
+            : $venueIds->count();
+        $visibleCampaignCount = $isGlobalScope
+            ? Campaign::query()->where('status', 'active')->count()
+            : Campaign::query()
+                ->whereIn('id', $campaignIds)
+                ->where('status', 'active')
+                ->count();
+        $scopeLabel = match (true) {
+            $isGlobalScope => 'نمای مرکزی کل اکسپلوریا',
+            $regionIds->isNotEmpty() => 'نمای استان / منطقه: '.$regionIds->implode('، '),
+            $venueIds->isNotEmpty() => 'نمای محدود بر اساس مکان‌های اختصاص‌داده‌شده',
+            default => 'بدون دامنه فعال برای این نقش',
+        };
+
         $latestVisits = Visit::query()
             ->with(['venue', 'touchpoint', 'campaign', 'user'])
+            ->when(! $isGlobalScope, fn ($query) => $query->whereIn('venue_id', $venueIds))
             ->latest('occurred_at')
             ->limit(8)
             ->get()
@@ -64,6 +93,7 @@ class DashboardController extends Controller
             ]);
         $latestRedemptions = RewardRedemption::query()
             ->with(['partnerAccount:id,name', 'user:id,name', 'userReward.rewardDefinition:id,name,campaign_id', 'userReward.campaign:id,code,name'])
+            ->when(! $isGlobalScope, fn ($query) => $query->whereHas('userReward', fn ($rewardQuery) => $rewardQuery->whereIn('campaign_id', $campaignIds)))
             ->latest()
             ->limit(8)
             ->get()
@@ -83,6 +113,7 @@ class DashboardController extends Controller
             ->with('venue:id,name')
             ->withCount(['visits', 'qrCodes', 'missionInstances', 'userRewards'])
             ->where('status', 'active')
+            ->when(! $isGlobalScope, fn ($query) => $query->whereIn('id', $campaignIds))
             ->latest('updated_at')
             ->limit(6)
             ->get()
@@ -162,20 +193,58 @@ class DashboardController extends Controller
             ->values();
 
         return Inertia::render('dashboard', [
+            'scopeSummary' => [
+                'isGlobal' => $isGlobalScope,
+                'label' => $scopeLabel,
+                'regions' => $regionIds->values()->all(),
+                'venuesCount' => $visibleVenueCount,
+                'campaignsCount' => $visibleCampaignCount,
+            ],
             'stats' => [
-                'venues' => Venue::query()->count(),
-                'activeQrCodes' => QrCode::query()->where('status', 'active')->count(),
-                'otpRequests' => OtpRequest::query()->count(),
-                'consents' => ConsentLog::query()->count(),
-                'scans' => ScanEvent::query()->count(),
-                'acceptedScans' => ScanEvent::query()->where('result', 'accepted')->count(),
-                'visits' => Visit::query()->count(),
-                'activeCampaigns' => Campaign::query()->where('status', 'active')->count(),
-                'missionCompletions' => UserMissionProgress::query()->where('status', 'completed')->count(),
-                'issuedRewards' => UserReward::query()->count(),
-                'pendingRedemptions' => RewardRedemption::query()->where('status', 'pending')->count(),
-                'confirmedRedemptions' => RewardRedemption::query()->where('status', 'confirmed')->count(),
-                'activeMissions' => MissionInstance::query()->where('status', 'active')->count(),
+                'venues' => $visibleVenueCount,
+                'activeQrCodes' => QrCode::query()
+                    ->where('status', 'active')
+                    ->when(! $isGlobalScope, fn ($query) => $query->whereIn('venue_id', $venueIds))
+                    ->count(),
+                'otpRequests' => OtpRequest::query()
+                    ->when(! $isGlobalScope, fn ($query) => $query->whereIn(
+                        'source_qr_code',
+                        QrCode::query()->select('code')->whereIn('venue_id', $venueIds),
+                    ))
+                    ->count(),
+                'consents' => ConsentLog::query()
+                    ->when(! $isGlobalScope, fn ($query) => $query->whereIn('venue_id', $venueIds))
+                    ->count(),
+                'scans' => ScanEvent::query()
+                    ->when(! $isGlobalScope, fn ($query) => $query->whereIn('venue_id', $venueIds))
+                    ->count(),
+                'acceptedScans' => ScanEvent::query()
+                    ->where('result', 'accepted')
+                    ->when(! $isGlobalScope, fn ($query) => $query->whereIn('venue_id', $venueIds))
+                    ->count(),
+                'visits' => Visit::query()
+                    ->when(! $isGlobalScope, fn ($query) => $query->whereIn('venue_id', $venueIds))
+                    ->count(),
+                'activeCampaigns' => $visibleCampaignCount,
+                'missionCompletions' => UserMissionProgress::query()
+                    ->where('status', 'completed')
+                    ->when(! $isGlobalScope, fn ($query) => $query->whereHas('missionInstance', fn ($missionQuery) => $missionQuery->whereIn('venue_id', $venueIds)))
+                    ->count(),
+                'issuedRewards' => UserReward::query()
+                    ->when(! $isGlobalScope, fn ($query) => $query->whereIn('campaign_id', $campaignIds))
+                    ->count(),
+                'pendingRedemptions' => RewardRedemption::query()
+                    ->where('status', 'pending')
+                    ->when(! $isGlobalScope, fn ($query) => $query->whereHas('userReward', fn ($rewardQuery) => $rewardQuery->whereIn('campaign_id', $campaignIds)))
+                    ->count(),
+                'confirmedRedemptions' => RewardRedemption::query()
+                    ->where('status', 'confirmed')
+                    ->when(! $isGlobalScope, fn ($query) => $query->whereHas('userReward', fn ($rewardQuery) => $rewardQuery->whereIn('campaign_id', $campaignIds)))
+                    ->count(),
+                'activeMissions' => MissionInstance::query()
+                    ->where('status', 'active')
+                    ->when(! $isGlobalScope, fn ($query) => $query->whereIn('venue_id', $venueIds))
+                    ->count(),
             ],
             'latestVisits' => $latestVisits,
             'latestRedemptions' => $latestRedemptions,

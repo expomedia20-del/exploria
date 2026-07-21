@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { Activity, BarChart3, Gauge } from 'lucide-react';
+import { Activity, BarChart3, Gauge, MapPin } from 'lucide-react';
 import { dashboard } from '@/routes';
 
 type Stats = {
@@ -29,11 +29,20 @@ type LatestVisit = {
 };
 
 type Props = {
+    scopeSummary: ScopeSummary;
     stats: Stats;
     latestVisits: LatestVisit[];
     latestRedemptions: LatestRedemption[];
     operationalAlerts: OperationalAlert[];
     campaignPerformance: CampaignPerformance[];
+};
+
+type ScopeSummary = {
+    isGlobal: boolean;
+    label: string;
+    regions: string[];
+    venuesCount: number;
+    campaignsCount: number;
 };
 
 type OperationalAlert = {
@@ -157,6 +166,7 @@ function formatDate(value: string) {
 }
 
 export default function Dashboard({
+    scopeSummary,
     stats,
     latestVisits,
     latestRedemptions,
@@ -194,6 +204,46 @@ export default function Dashboard({
                         داشبورد عملیاتی اکسپلوریا
                     </h1>
                 </header>
+
+                <section className="flex flex-col gap-3 rounded-lg border border-emerald-200 bg-emerald-50/75 p-4 text-sm dark:border-emerald-900/60 dark:bg-emerald-950/20 md:flex-row md:items-center md:justify-between">
+                    <div className="flex items-start gap-3">
+                        <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-md bg-emerald-600 text-white">
+                            <MapPin className="size-5" />
+                        </span>
+                        <div>
+                            <p className="font-semibold">
+                                {scopeSummary.label}
+                            </p>
+                            <p className="mt-1 leading-6 text-muted-foreground">
+                                داده‌های این داشبورد بر اساس دامنه دسترسی نقش شما
+                                نمایش داده می‌شود؛ ادمین مرکزی نمای کل و ادمین
+                                استانی فقط نمای استان/منطقه خودش را می‌بیند.
+                            </p>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 md:min-w-64">
+                        <div className="rounded-md bg-white/75 p-3 dark:bg-background/45">
+                            <p className="text-xs text-muted-foreground">
+                                مکان‌های قابل مشاهده
+                            </p>
+                            <strong className="mt-1 block text-lg">
+                                {scopeSummary.venuesCount.toLocaleString(
+                                    'fa-IR',
+                                )}
+                            </strong>
+                        </div>
+                        <div className="rounded-md bg-white/75 p-3 dark:bg-background/45">
+                            <p className="text-xs text-muted-foreground">
+                                کمپین‌های فعال
+                            </p>
+                            <strong className="mt-1 block text-lg">
+                                {scopeSummary.campaignsCount.toLocaleString(
+                                    'fa-IR',
+                                )}
+                            </strong>
+                        </div>
+                    </div>
+                </section>
 
                 <section className="grid gap-3 md:grid-cols-4">
                     {[

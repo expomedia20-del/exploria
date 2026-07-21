@@ -2,12 +2,16 @@
 
 namespace Tests\Feature;
 
+use App\Enums\RecordStatus;
 use App\Enums\UserRole;
+use App\Models\Campaign;
 use App\Models\ConsentVersion;
 use App\Models\MissionInstance;
 use App\Models\RewardRedemption;
 use App\Models\User;
+use App\Models\UserAccessScope;
 use App\Models\UserReward;
+use App\Models\Venue;
 use App\Models\Visit;
 use App\Services\SupportKnowledgeBaseService;
 use Database\Seeders\ConsentVersionSeeder;
@@ -171,6 +175,55 @@ class DashboardTest extends TestCase
         $this->actingAs($user)
             ->get(route('admin.mission-blueprints.page'))
             ->assertForbidden();
+    }
+
+    public function test_regional_admin_dashboard_is_limited_to_assigned_region(): void
+    {
+        $this->withoutVite();
+        $this->seed(PilotLocationSeeder::class);
+
+        $outOfRegionVenue = Venue::query()->create([
+            'code' => 'isfahan-demo-venue',
+            'name' => 'مکان نمونه اصفهان',
+            'city' => 'اصفهان',
+            'status' => RecordStatus::Active,
+            'profile_status' => RecordStatus::Active,
+            'metadata' => ['is_test' => true],
+        ]);
+        Campaign::query()->create([
+            'venue_id' => $outOfRegionVenue->id,
+            'code' => 'isfahan-out-of-scope-campaign',
+            'name' => 'کمپین خارج از محدوده تهران',
+            'campaign_type' => 'pilot_visit',
+            'status' => RecordStatus::Active,
+            'start_at' => '2026-06-20 00:00:00',
+            'end_at' => '2027-03-20 23:59:59',
+            'metadata' => ['is_test' => true],
+        ]);
+
+        $user = User::factory()->create(['role' => UserRole::RegionalAdmin]);
+        UserAccessScope::query()->create([
+            'user_id' => $user->id,
+            'role_key' => 'regional_admin',
+            'scope_type' => 'region',
+            'scope_id' => 'تهران',
+            'status' => RecordStatus::Active,
+            'metadata' => ['source' => 'test'],
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('dashboard')
+                ->where('scopeSummary.isGlobal', false)
+                ->where('scopeSummary.regions.0', 'تهران')
+                ->where('stats.venues', 1)
+                ->where('stats.activeCampaigns', 1)
+                ->where('stats.activeQrCodes', 1)
+                ->where('stats.activeMissions', 4)
+                ->has('campaignPerformance', 1)
+                ->where('campaignPerformance.0.code', 'ecopark-pilot-1405'));
     }
 
     public function test_internal_users_can_open_demo_cycle_page(): void

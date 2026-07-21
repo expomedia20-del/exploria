@@ -200,7 +200,15 @@ class UserAccessScopeController extends Controller
             'partner' => PartnerAccount::query()->with('venue:id,name')->orderBy('name')->get(['id', 'venue_id', 'name', 'code'])->map(
                 fn (PartnerAccount $partner): array => ['id' => $partner->id, 'label' => "{$partner->name} - {$partner->venue?->name}"],
             )->all(),
-            'region' => [],
+            'region' => Venue::query()
+                ->whereNotNull('city')
+                ->distinct()
+                ->orderBy('city')
+                ->pluck('city')
+                ->filter()
+                ->map(fn (string $city): array => ['id' => $city, 'label' => $city])
+                ->values()
+                ->all(),
             'project' => [],
             'campaign' => [],
             'display_network' => [],
@@ -273,6 +281,7 @@ class UserAccessScopeController extends Controller
             ['scope_id' => $scopeId],
             ['scope_id' => ['required', 'string', match ($scopeType) {
                 'venue' => Rule::exists('venues', 'id'),
+                'region' => Rule::exists('venues', 'city'),
                 'hub' => Rule::exists('hubs', 'id'),
                 'partner' => Rule::exists('partner_accounts', 'id'),
                 default => 'max:64',

@@ -54,10 +54,26 @@ class DatabaseSeeder extends Seeder
             ],
         );
 
+        User::query()->updateOrCreate(
+            ['email' => 'regional@example.test'],
+            [
+                'name' => 'ادمین استانی / منطقه‌ای اکسپلوریا',
+                'email_verified_at' => now(),
+                'password' => Hash::make('password'),
+                'role' => UserRole::RegionalAdmin,
+            ],
+        );
+
         $admin = User::query()->where('email', 'admin@example.test')->firstOrFail();
+        $regionalAdmin = User::query()->where('email', 'regional@example.test')->firstOrFail();
 
         UserAccessScope::query()->updateOrCreate(
             ['user_id' => $admin->id, 'role_key' => 'super_admin', 'scope_type' => 'global', 'scope_id' => null],
+            ['status' => RecordStatus::Active, 'metadata' => ['source' => 'database_seed']],
+        );
+
+        UserAccessScope::query()->updateOrCreate(
+            ['user_id' => $regionalAdmin->id, 'role_key' => 'regional_admin', 'scope_type' => 'region', 'scope_id' => 'تهران'],
             ['status' => RecordStatus::Active, 'metadata' => ['source' => 'database_seed']],
         );
     }

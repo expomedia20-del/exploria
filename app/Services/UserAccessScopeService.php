@@ -35,7 +35,10 @@ class UserAccessScopeService
                 ->values();
         }
 
-        return $this->directScopeIds($user, 'venue');
+        return $this->directScopeIds($user, 'venue')
+            ->merge($this->regionVenueIds($user))
+            ->unique()
+            ->values();
     }
 
     /** @return Collection<int, string> */
@@ -92,7 +95,11 @@ class UserAccessScopeService
                 ->values();
         }
 
-        $directVenueIds = $this->directScopeIds($user, 'venue');
+        $directVenueIds = $this->directScopeIds($user, 'venue')
+            ->merge($this->regionVenueIds($user))
+            ->filter()
+            ->unique()
+            ->values();
         $hubVenueIds = Hub::query()
             ->whereIn('id', $this->hubIds($user))
             ->whereHas('zone')
@@ -121,9 +128,14 @@ class UserAccessScopeService
                 ->values();
         }
 
+        $directVenueIds = $this->directScopeIds($user, 'venue')
+            ->merge($this->regionVenueIds($user))
+            ->filter()
+            ->unique()
+            ->values();
         $directHubIds = $this->directScopeIds($user, 'hub');
         $venueHubIds = Hub::query()
-            ->whereHas('zone', fn ($query) => $query->whereIn('venue_id', $this->directScopeIds($user, 'venue')))
+            ->whereHas('zone', fn ($query) => $query->whereIn('venue_id', $directVenueIds))
             ->where('status', RecordStatus::Active)
             ->pluck('id');
         $legacyHubIds = HubManagementAssignment::query()
@@ -149,13 +161,18 @@ class UserAccessScopeService
                 ->values();
         }
 
+        $directVenueIds = $this->directScopeIds($user, 'venue')
+            ->merge($this->regionVenueIds($user))
+            ->filter()
+            ->unique()
+            ->values();
         $directPartnerIds = $this->directScopeIds($user, 'partner');
         $hubPartnerIds = PartnerLocation::query()
             ->whereIn('hub_id', $this->hubIds($user))
             ->where('status', RecordStatus::Active)
             ->pluck('partner_account_id');
         $venuePartnerIds = PartnerAccount::query()
-            ->whereIn('venue_id', $this->directScopeIds($user, 'venue'))
+            ->whereIn('venue_id', $directVenueIds)
             ->where('status', RecordStatus::Active)
             ->pluck('id');
         $legacyPartnerIds = PartnerUser::query()
@@ -180,11 +197,44 @@ class UserAccessScopeService
 
         return match ($scopeType) {
             'venue' => $scopeId !== null && $this->venueIds($user)->contains($scopeId),
+            'region' => $scopeId !== null && $this->regionIds($user)->contains($scopeId),
             'hub' => $scopeId !== null && $this->hubIds($user)->contains($scopeId),
             'partner' => $scopeId !== null && $this->partnerIds($user)->contains($scopeId),
             'global' => $this->directScopeIds($user, 'global')->contains('__global__'),
             default => $scopeId !== null && $this->directScopeIds($user, $scopeType)->contains($scopeId),
         };
+    }
+
+    /** @return Collection<int, string> */
+    public function regionIds(User $user): Collection
+    {
+        if ($this->hasGlobalAccess($user)) {
+            return Venue::query()
+                ->whereNotNull('city')
+                ->distinct()
+                ->orderBy('city')
+                ->pluck('city')
+                ->filter()
+                ->values();
+        }
+
+        return $this->directScopeIds($user, 'region');
+    }
+
+    /** @return Collection<int, string> */
+    private function regionVenueIds(User $user): Collection
+    {
+        $regionIds = $this->directScopeIds($user, 'region');
+
+        if ($regionIds->isEmpty()) {
+            return collect();
+        }
+
+        return Venue::query()
+            ->whereIn('city', $regionIds)
+            ->where('status', RecordStatus::Active)
+            ->pluck('id')
+            ->values();
     }
 
     /** @return Collection<int, string> */

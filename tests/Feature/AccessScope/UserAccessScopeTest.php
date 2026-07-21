@@ -8,6 +8,7 @@ use App\Models\Hub;
 use App\Models\PartnerAccount;
 use App\Models\User;
 use App\Models\UserAccessScope;
+use App\Models\Venue;
 use App\Services\UserAccessScopeService;
 use Database\Seeders\PilotLocationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -89,6 +90,31 @@ class UserAccessScopeTest extends TestCase
 
         $this->assertTrue($service->partnerIds($partnerUser)->contains($partner->id));
         $this->assertTrue($service->hasScope($partnerUser, 'partner', $partner->id));
+    }
+
+    public function test_region_scope_expands_to_active_venues_hubs_and_partners(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::RegionalAdmin]);
+        $ecoPark = Venue::query()->where('code', 'ecopark-abbasabad')->firstOrFail();
+
+        UserAccessScope::query()->create([
+            'user_id' => $user->id,
+            'role_key' => 'regional_admin',
+            'scope_type' => 'region',
+            'scope_id' => 'تهران',
+            'status' => RecordStatus::Active,
+        ]);
+
+        $service = app(UserAccessScopeService::class);
+
+        $this->assertTrue($service->regionIds($user)->contains('تهران'));
+        $this->assertTrue($service->venueIds($user)->contains($ecoPark->id));
+        $this->assertTrue($service->hubIds($user)->contains(
+            Hub::query()->where('code', 'visitor-welcome-hub')->value('id'),
+        ));
+        $this->assertTrue($service->partnerIds($user)->contains(
+            PartnerAccount::query()->where('code', 'cafe-eco')->value('id'),
+        ));
     }
 
     public function test_admin_has_global_operational_scope(): void
