@@ -144,18 +144,18 @@ Route::patch('/api/v1/sponsor/proposals/{proposal}', [SponsorDashboardController
     ->name('sponsor.proposals.api.update');
 
 Route::get('/admin/qr-codes', [QrRegistryController::class, 'page'])
-    ->middleware(['auth', 'role:admin,operator,viewer'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator,viewer'])
     ->name('admin.qr-codes.page');
 Route::get('/admin/events/scan-log', [ScanEventController::class, 'page'])
-    ->middleware(['auth', 'role:admin,operator,viewer'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator,viewer'])
     ->name('admin.events.scan-log.page');
 
 Route::get('/admin/internal-operations', [InternalOperationsController::class, 'page'])
-    ->middleware(['auth', 'role:admin,operator,viewer'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator,viewer'])
     ->name('admin.internal-operations.page');
 
 Route::get('/admin/demo-cycle', [DemoCycleController::class, 'page'])
-    ->middleware(['auth', 'role:admin,operator,viewer'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator,viewer'])
     ->name('admin.demo-cycle.page');
 Route::post('/admin/demo-cycle/checklist', [DemoCycleController::class, 'updateChecklistItem'])
     ->middleware(['auth', 'role:admin,operator'])
@@ -165,25 +165,25 @@ Route::post('/admin/demo-cycle/run-stress-demo', [DemoCycleController::class, 'r
     ->name('admin.demo-cycle.run-stress-demo');
 
 Route::get('/admin/commercialization', [CommercializationController::class, 'page'])
-    ->middleware(['auth', 'role:admin,operator,viewer'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator,viewer'])
     ->name('admin.commercialization.page');
 
 Route::get('/admin/finance-wallets', [FinanceWalletController::class, 'page'])
-    ->middleware(['auth', 'role:admin,operator,viewer'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator,viewer'])
     ->name('admin.finance-wallets.page');
 Route::post('/admin/finance-wallets/ledger', [FinanceWalletController::class, 'store'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.finance-wallets.ledger.store');
 
 Route::get('/admin/support', [SupportCenterController::class, 'page'])
-    ->middleware(['auth', 'role:admin,operator,viewer,hub_manager,shop_partner,sponsor'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator,viewer,hub_manager,shop_partner,sponsor'])
     ->name('admin.support.page');
 
 Route::get('/admin/users', [UserManagementController::class, 'page'])
-    ->middleware(['auth', 'role:admin,operator,viewer'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator,viewer'])
     ->name('admin.users.page');
 Route::get('/admin/users/guide', [UserManagementGuideController::class, 'page'])
-    ->middleware(['auth', 'role:admin,operator,viewer'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator,viewer'])
     ->name('admin.users.guide');
 Route::patch('/admin/users/{user}/role', [UserManagementController::class, 'updateRole'])
     ->middleware(['auth', 'role:admin,operator'])
@@ -203,22 +203,22 @@ Route::delete('/admin/qr-codes/{qrCode}', [QrRegistryController::class, 'destroy
     ->name('admin.qr-codes.destroy');
 
 Route::get('/admin/partners', [PartnerRegistryController::class, 'page'])
-    ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator,viewer,hub_manager'])
     ->name('admin.partners.page');
 
 Route::get('/admin/campaigns', [CampaignRegistryController::class, 'page'])
-    ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator,viewer,hub_manager'])
     ->name('admin.campaigns.page');
 
 Route::get('/admin/campaign-builder', [CampaignBuilderController::class, 'page'])
-    ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator,viewer,hub_manager'])
     ->name('admin.campaign-builder.page');
 Route::post('/admin/campaign-builder/{campaign}/activate', [CampaignBuilderController::class, 'activate'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.campaign-builder.activate');
 
 Route::get('/admin/campaign-operations', [CampaignOperationsController::class, 'page'])
-    ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator,viewer,hub_manager'])
     ->name('admin.campaign-operations.page');
 Route::post('/admin/campaign-operations/review', [CampaignOperationsController::class, 'review'])
     ->middleware(['auth', 'role:admin,operator'])
@@ -228,7 +228,7 @@ Route::delete('/admin/campaign-operations/review', [CampaignOperationsController
     ->name('admin.campaign-operations.review.destroy');
 
 Route::get('/admin/campaign-participants', [CampaignParticipantController::class, 'page'])
-    ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator,viewer,hub_manager'])
     ->name('admin.campaign-participants.page');
 Route::post('/admin/campaign-participants', [CampaignParticipantController::class, 'store'])
     ->middleware(['auth', 'role:admin,operator'])
@@ -238,7 +238,7 @@ Route::delete('/admin/campaign-participants/{participant}', [CampaignParticipant
     ->name('admin.campaign-participants.destroy');
 
 Route::get('/admin/sponsors', [SponsorActivationController::class, 'page'])
-    ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator,viewer,hub_manager'])
     ->name('admin.sponsors.page');
 Route::post('/admin/sponsors', [SponsorActivationController::class, 'storeSponsor'])
     ->middleware(['auth', 'role:admin,operator'])
@@ -260,7 +260,7 @@ Route::get('/admin/mission-blueprints', [MissionRewardBlueprintController::class
     ->middleware(['auth', 'role:admin'])
     ->name('admin.mission-blueprints.page');
 Route::get('/admin/missions', [MissionRewardRegistryController::class, 'page'])
-    ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator,viewer,hub_manager'])
     ->name('admin.missions.page');
 Route::post('/admin/missions', [MissionRewardRegistryController::class, 'storeMission'])
     ->middleware(['auth', 'role:admin,operator'])
@@ -285,7 +285,7 @@ Route::delete('/admin/treasures/{treasure}', [MissionRewardRegistryController::c
     ->name('admin.treasures.destroy');
 
 Route::get('/admin/ads', [AdvertisingController::class, 'page'])
-    ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator,viewer,hub_manager'])
     ->name('admin.ads.page');
 
 Route::post('/admin/rewards/{reward}/approve', [RewardApprovalController::class, 'approve'])
@@ -316,15 +316,15 @@ Route::delete('/admin/campaigns/{campaign}', [CampaignRegistryController::class,
     ->name('admin.campaigns.destroy');
 
 Route::get('/admin/display-operations', [DisplayOperationsController::class, 'page'])
-    ->middleware(['auth', 'role:admin,operator'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator'])
     ->name('admin.display-operations.page');
 
 Route::get('/admin/role-operations', [RoleOperationsController::class, 'page'])
-    ->middleware(['auth', 'role:admin,operator,viewer'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator,viewer'])
     ->name('admin.role-operations.page');
 
 Route::get('/admin/access-scopes', [UserAccessScopeController::class, 'page'])
-    ->middleware(['auth', 'role:admin,operator,viewer'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator,viewer'])
     ->name('admin.access-scopes.page');
 
 Route::post('/admin/access-scopes', [UserAccessScopeController::class, 'store'])
@@ -347,20 +347,20 @@ Route::post('/admin/display-operations/placements/{adPlacement}/cancel', [Displa
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.display-operations.placements.cancel');
 Route::get('/admin/venues', [VenueRegistryController::class, 'page'])
-    ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator,viewer,hub_manager'])
     ->name('admin.venues.page');
 Route::get('/admin/venues/facilities-template', [VenueRegistryController::class, 'facilitiesTemplate'])
-    ->middleware(['auth', 'role:admin,operator'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator'])
     ->name('admin.venues.facilities-template');
 Route::patch('/admin/venues/{venue}/profile', [VenueRegistryController::class, 'updateProfile'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.venues.profile.update');
 
 Route::get('/api/v1/admin/qr-codes', [QrRegistryController::class, 'index'])
-    ->middleware(['auth', 'role:admin,operator,viewer'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator,viewer'])
     ->name('admin.qr-codes.index');
 Route::get('/api/v1/admin/events/scan-log', [ScanEventController::class, 'index'])
-    ->middleware(['auth', 'role:admin,operator,viewer'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator,viewer'])
     ->name('admin.events.scan-log.index');
 
 Route::post('/api/v1/admin/qr-codes', [QrRegistryController::class, 'store'])
@@ -368,29 +368,29 @@ Route::post('/api/v1/admin/qr-codes', [QrRegistryController::class, 'store'])
     ->name('admin.qr-codes.api.store');
 
 Route::get('/api/v1/admin/partners', [PartnerRegistryController::class, 'index'])
-    ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator,viewer,hub_manager'])
     ->name('admin.partners.index');
 
 Route::get('/api/v1/admin/campaigns', [CampaignRegistryController::class, 'index'])
-    ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator,viewer,hub_manager'])
     ->name('admin.campaigns.index');
 
 Route::get('/api/v1/admin/campaign-operations', [CampaignOperationsController::class, 'index'])
-    ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator,viewer,hub_manager'])
     ->name('admin.campaign-operations.index');
 Route::post('/api/v1/admin/campaign-operations/review', [CampaignOperationsController::class, 'review'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.campaign-operations.api.review');
 
 Route::get('/api/v1/admin/campaign-participants', [CampaignParticipantController::class, 'index'])
-    ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator,viewer,hub_manager'])
     ->name('admin.campaign-participants.index');
 Route::post('/api/v1/admin/campaign-participants', [CampaignParticipantController::class, 'store'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.campaign-participants.api.store');
 
 Route::get('/api/v1/admin/sponsors', [SponsorActivationController::class, 'index'])
-    ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator,viewer,hub_manager'])
     ->name('admin.sponsors.index');
 Route::post('/api/v1/admin/sponsors', [SponsorActivationController::class, 'storeSponsor'])
     ->middleware(['auth', 'role:admin,operator'])
@@ -412,7 +412,7 @@ Route::get('/api/v1/admin/mission-blueprints', [MissionRewardBlueprintController
     ->middleware(['auth', 'role:admin'])
     ->name('admin.mission-blueprints.index');
 Route::get('/api/v1/admin/missions', [MissionRewardRegistryController::class, 'index'])
-    ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator,viewer,hub_manager'])
     ->name('admin.missions.index');
 Route::post('/api/v1/admin/missions', [MissionRewardRegistryController::class, 'storeMission'])
     ->middleware(['auth', 'role:admin,operator'])
@@ -431,7 +431,7 @@ Route::delete('/api/v1/admin/treasures/{treasure}', [MissionRewardRegistryContro
     ->name('admin.treasures.api.destroy');
 
 Route::get('/api/v1/admin/ads', [AdvertisingController::class, 'index'])
-    ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator,viewer,hub_manager'])
     ->name('admin.ads.index');
 
 Route::post('/api/v1/admin/campaigns', [CampaignRegistryController::class, 'store'])
@@ -459,7 +459,7 @@ Route::post('/api/v1/admin/ads/{adRequest}/reject', [AdvertisingController::clas
     ->name('admin.ads.api.reject');
 
 Route::get('/api/v1/admin/display-operations', [DisplayOperationsController::class, 'index'])
-    ->middleware(['auth', 'role:admin,operator'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator'])
     ->name('admin.display-operations.index');
 
 Route::post('/api/v1/admin/display-operations/placements/{adPlacement}/schedule', [DisplayOperationsController::class, 'schedule'])
@@ -470,7 +470,7 @@ Route::post('/api/v1/admin/display-operations/placements/{adPlacement}/cancel', 
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.display-operations.placements.api.cancel');
 Route::get('/api/v1/admin/venues', [VenueRegistryController::class, 'index'])
-    ->middleware(['auth', 'role:admin,operator,viewer,hub_manager'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator,viewer,hub_manager'])
     ->name('admin.venues.index');
 Route::patch('/api/v1/admin/venues/{venue}/profile', [VenueRegistryController::class, 'updateProfile'])
     ->middleware(['auth', 'role:admin,operator'])

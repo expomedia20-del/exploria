@@ -40,6 +40,7 @@ import type { NavItem } from '@/types';
 
 type UserRole =
     | 'admin'
+    | 'regional_admin'
     | 'operator'
     | 'viewer'
     | 'visitor'
@@ -65,35 +66,35 @@ const mainNavItems: RoleAwareNavItem[] = [
         href: dashboard(),
         icon: LayoutGrid,
         group: 'نمای کلی',
-        roles: ['admin', 'operator', 'viewer'],
+        roles: ['admin', 'regional_admin', 'operator', 'viewer'],
     },
     {
         title: 'ارزیابی مکان',
         href: '/admin/venues',
         icon: MapPinned,
         group: 'تیم داخلی اکسپلوریا',
-        roles: ['admin', 'operator', 'viewer', 'hub_manager'],
+        roles: ['admin', 'regional_admin', 'operator', 'viewer', 'hub_manager'],
     },
     {
         title: 'پنل عملیات داخلی',
         href: '/admin/internal-operations',
         icon: ClipboardCheck,
         group: 'تیم داخلی اکسپلوریا',
-        roles: ['admin', 'operator', 'viewer'],
+        roles: ['admin', 'regional_admin', 'operator', 'viewer'],
     },
     {
         title: 'چرخه دمو اکوپارک',
         href: '/admin/demo-cycle',
         icon: Route,
         group: 'تیم داخلی اکسپلوریا',
-        roles: ['admin', 'operator', 'viewer'],
+        roles: ['admin', 'regional_admin', 'operator', 'viewer'],
     },
     {
         title: 'تجاری‌سازی و فروش',
         href: '/admin/commercialization',
         icon: BriefcaseBusiness,
         group: 'تیم داخلی اکسپلوریا',
-        roles: ['admin', 'operator', 'viewer'],
+        roles: ['admin', 'regional_admin', 'operator', 'viewer'],
     },
     {
         title: 'گنجینه الگوها',
@@ -107,56 +108,56 @@ const mainNavItems: RoleAwareNavItem[] = [
         href: '/admin/campaigns',
         icon: Megaphone,
         group: 'تیم داخلی اکسپلوریا',
-        roles: ['admin', 'operator', 'viewer', 'hub_manager'],
+        roles: ['admin', 'regional_admin', 'operator', 'viewer', 'hub_manager'],
     },
     {
         title: 'کارگاه ساخت کمپین',
         href: '/admin/campaign-builder',
         icon: ClipboardCheck,
         group: 'تیم داخلی اکسپلوریا',
-        roles: ['admin', 'operator', 'viewer', 'hub_manager'],
+        roles: ['admin', 'regional_admin', 'operator', 'viewer', 'hub_manager'],
     },
     {
         title: 'ماموریت، گنج و پاداش',
         href: '/admin/missions',
         icon: Trophy,
         group: 'تیم داخلی اکسپلوریا',
-        roles: ['admin', 'operator', 'viewer', 'hub_manager'],
+        roles: ['admin', 'regional_admin', 'operator', 'viewer', 'hub_manager'],
     },
     {
         title: 'مدیریت QR و ورود',
         href: '/admin/qr-codes',
         icon: QrCode,
         group: 'تیم داخلی اکسپلوریا',
-        roles: ['admin', 'operator', 'viewer', 'hub_manager'],
+        roles: ['admin', 'regional_admin', 'operator', 'viewer', 'hub_manager'],
     },
     {
         title: 'پایش رویدادهای اسکن',
         href: '/admin/events/scan-log',
         icon: ScrollText,
         group: 'تیم داخلی اکسپلوریا',
-        roles: ['admin', 'operator', 'viewer'],
+        roles: ['admin', 'regional_admin', 'operator', 'viewer'],
     },
     {
         title: 'نقشه عملیات کمپین',
         href: '/admin/campaign-operations',
         icon: Route,
         group: 'تیم داخلی اکسپلوریا',
-        roles: ['admin', 'operator', 'viewer', 'hub_manager'],
+        roles: ['admin', 'regional_admin', 'operator', 'viewer', 'hub_manager'],
     },
     {
         title: 'مدیریت شرکا',
         href: '/admin/partners',
         icon: Store,
         group: 'واحدهای تجاری و اسپانسرها',
-        roles: ['admin', 'operator', 'viewer', 'hub_manager'],
+        roles: ['admin', 'regional_admin', 'operator', 'viewer', 'hub_manager'],
     },
     {
         title: 'عملیات تبلیغات و نمایشگرها',
         href: '/admin/display-operations',
         icon: MonitorPlay,
         group: 'تیم داخلی اکسپلوریا',
-        roles: ['admin', 'operator'],
+        roles: ['admin', 'regional_admin', 'operator'],
     },
     {
         title: 'پنل مدیر اجرایی مکان',
@@ -177,21 +178,21 @@ const mainNavItems: RoleAwareNavItem[] = [
         href: '/admin/campaign-participants',
         icon: UsersRound,
         group: 'واحدهای تجاری و اسپانسرها',
-        roles: ['admin', 'operator', 'viewer', 'hub_manager'],
+        roles: ['admin', 'regional_admin', 'operator', 'viewer', 'hub_manager'],
     },
     {
         title: 'اسپانسرها و درآمد',
         href: '/admin/sponsors',
         icon: BadgeDollarSign,
         group: 'واحدهای تجاری و اسپانسرها',
-        roles: ['admin', 'operator', 'viewer', 'hub_manager'],
+        roles: ['admin', 'regional_admin', 'operator', 'viewer', 'hub_manager'],
     },
     {
         title: 'تبلیغات مستقل',
         href: '/admin/ads',
         icon: Megaphone,
         group: 'واحدهای تجاری و اسپانسرها',
-        roles: ['admin', 'operator', 'viewer', 'hub_manager'],
+        roles: ['admin', 'regional_admin', 'operator', 'viewer', 'hub_manager'],
     },
     {
         title: 'پنل فروشگاه / شریک',
@@ -212,28 +213,28 @@ const mainNavItems: RoleAwareNavItem[] = [
         href: '/admin/role-operations',
         icon: UserCog,
         group: 'دسترسی و کنترل',
-        roles: ['admin', 'operator', 'viewer'],
+        roles: ['admin', 'regional_admin', 'operator', 'viewer'],
     },
     {
         title: 'مدیریت کاربران',
         href: '/admin/users',
         icon: UsersRound,
         group: 'دسترسی و کنترل',
-        roles: ['admin', 'operator', 'viewer'],
+        roles: ['admin', 'regional_admin', 'operator', 'viewer'],
     },
     {
         title: 'راهنمای مدیریت کاربران',
         href: '/admin/users/guide',
         icon: BookOpen,
         group: 'دسترسی و کنترل',
-        roles: ['admin', 'operator', 'viewer'],
+        roles: ['admin', 'regional_admin', 'operator', 'viewer'],
     },
     {
         title: 'تخصیص دسترسی',
         href: '/admin/access-scopes',
         icon: ShieldCheck,
         group: 'دسترسی و کنترل',
-        roles: ['admin', 'operator', 'viewer'],
+        roles: ['admin', 'regional_admin', 'operator', 'viewer'],
     },
     {
         title: 'پنل مشارکت‌کننده',
@@ -249,6 +250,7 @@ const mainNavItems: RoleAwareNavItem[] = [
         group: 'پشتیبانی',
         roles: [
             'admin',
+            'regional_admin',
             'operator',
             'viewer',
             'hub_manager',
@@ -261,7 +263,7 @@ const mainNavItems: RoleAwareNavItem[] = [
         href: '/admin/finance-wallets',
         icon: WalletCards,
         group: 'تیم داخلی اکسپلوریا',
-        roles: ['admin', 'operator', 'viewer'],
+        roles: ['admin', 'regional_admin', 'operator', 'viewer'],
     },
 ];
 

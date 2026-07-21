@@ -175,6 +175,7 @@ class UserManagementController extends Controller
             'total' => User::query()->count(),
             'internal' => User::query()->whereIn('role', [
                 UserRole::Admin,
+                UserRole::RegionalAdmin,
                 UserRole::Operator,
                 UserRole::Viewer,
             ])->count(),
@@ -239,7 +240,7 @@ class UserManagementController extends Controller
         }
 
         return match ($user->role) {
-            UserRole::Admin, UserRole::Operator, UserRole::Viewer => 'exploria_team',
+            UserRole::Admin, UserRole::RegionalAdmin, UserRole::Operator, UserRole::Viewer => 'exploria_team',
             UserRole::HubManager => 'venue_management',
             UserRole::ShopPartner, UserRole::Sponsor => 'commercial_partner',
             UserRole::Visitor => 'public',
@@ -261,6 +262,7 @@ class UserManagementController extends Controller
     {
         return match ($role) {
             'admin' => 'ادمین مرکزی',
+            'regional_admin' => 'ادمین استانی / منطقه‌ای اکسپلوریا',
             'operator' => 'اپراتور داخلی',
             'viewer' => 'مشاهده‌گر',
             'visitor' => 'بازدیدکننده / مشارکت‌کننده',

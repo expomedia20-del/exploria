@@ -23,7 +23,7 @@ const proposalImages = {
     path: '/images/ecopark/proposal/ecopark-night-path-16-9.jpg',
     roadmap: '/images/ecopark/proposal/ecopark-roadmap-night-21-9.jpg',
 };
-const internalRoles = ['admin', 'operator', 'viewer'];
+const internalRoles = ['admin', 'regional_admin', 'operator', 'viewer'];
 
 type SharedProps = {
     auth?: {

@@ -54,6 +54,7 @@ class DashboardTest extends TestCase
 
         $roles = [
             [UserRole::Admin, 'admin'],
+            [UserRole::RegionalAdmin, 'regional_admin'],
             [UserRole::Operator, 'operator'],
             [UserRole::Viewer, 'viewer'],
             [UserRole::ShopPartner, 'shop_partner'],
@@ -70,7 +71,6 @@ class DashboardTest extends TestCase
                 ->assertInertia(fn (Assert $page) => $page
                     ->component('admin/support/index')
                     ->where('support.roleContext.key', $expectedKey)
-                    ->has('support.promptGroups', 3)
                     ->has('support.promptGroups.0.prompts', 4)
                     ->has('support.promptGroups.1.prompts', 4)
                     ->has('support.promptGroups.2.prompts', 4)
@@ -98,6 +98,49 @@ class DashboardTest extends TestCase
             $this->assertGreaterThanOrEqual(6, count($support['checklist']), $role->value);
             $this->assertGreaterThanOrEqual(2, count($support['handoffNotes']), $role->value);
         }
+    }
+
+    public function test_central_and_regional_admins_have_expanded_support_coverage(): void
+    {
+        $knowledgeBase = app(SupportKnowledgeBaseService::class);
+
+        foreach ([UserRole::Admin, UserRole::RegionalAdmin] as $role) {
+            $user = User::factory()->make(['role' => $role]);
+            $support = $knowledgeBase->forUser($user);
+            $questions = collect($support['promptGroups'])
+                ->flatMap(fn (array $group) => collect($group['prompts'])->pluck('question'));
+
+            $this->assertGreaterThanOrEqual(6, count($support['promptGroups']), $role->value);
+            $this->assertGreaterThanOrEqual(24, $questions->count(), $role->value);
+            $this->assertTrue($questions->contains(fn (string $question) => str_contains($question, 'منطقه') || str_contains($question, 'مرکزی')), $role->value);
+        }
+    }
+
+    public function test_regional_admin_can_observe_without_central_or_operator_mutations(): void
+    {
+        $this->withoutVite();
+
+        $user = User::factory()->create(['role' => UserRole::RegionalAdmin]);
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk();
+
+        $this->actingAs($user)
+            ->get(route('admin.access-scopes.page'))
+            ->assertOk();
+
+        $this->actingAs($user)
+            ->post(route('admin.access-scopes.store'), [])
+            ->assertForbidden();
+
+        $this->actingAs($user)
+            ->post(route('admin.demo-cycle.run-stress-demo'))
+            ->assertForbidden();
+
+        $this->actingAs($user)
+            ->get(route('admin.mission-blueprints.page'))
+            ->assertForbidden();
     }
 
     public function test_internal_users_can_open_demo_cycle_page(): void

@@ -41,7 +41,12 @@ class DashboardController extends Controller
             return redirect()->route('ravaq.dashboard');
         }
 
-        abort_unless(in_array($user?->role, [UserRole::Admin, UserRole::Operator, UserRole::Viewer], true), 403);
+        abort_unless(in_array($user?->role, [
+            UserRole::Admin,
+            UserRole::RegionalAdmin,
+            UserRole::Operator,
+            UserRole::Viewer,
+        ], true), 403);
 
         $latestVisits = Visit::query()
             ->with(['venue', 'touchpoint', 'campaign', 'user'])

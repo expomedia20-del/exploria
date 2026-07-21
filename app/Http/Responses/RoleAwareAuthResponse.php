@@ -27,6 +27,7 @@ class RoleAwareAuthResponse implements LoginResponse, RegisterResponse
     {
         return in_array($request->user()?->role, [
             UserRole::Admin,
+            UserRole::RegionalAdmin,
             UserRole::Operator,
             UserRole::Viewer,
         ], true);

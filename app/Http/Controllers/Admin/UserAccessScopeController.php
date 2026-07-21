@@ -335,7 +335,8 @@ class UserAccessScopeController extends Controller
     {
         $accountRole = match ($roleKey) {
             'super_admin' => 'admin',
-            'regional_admin', 'project_admin', 'field_operator', 'display_ads_manager' => 'operator',
+            'regional_admin' => 'regional_admin',
+            'project_admin', 'field_operator', 'display_ads_manager' => 'operator',
             'treasure_assistant' => 'viewer',
             'venue_executive' => 'viewer',
             'ravaq_manager', 'hub_manager' => 'hub_manager',
@@ -375,6 +376,7 @@ class UserAccessScopeController extends Controller
     {
         return match ($role) {
             'admin' => 'ادمین',
+            'regional_admin' => 'اکانت ادمین استانی / منطقه‌ای',
             'operator' => 'اپراتور داخلی',
             'viewer' => 'مشاهده‌گر محدود',
             'visitor' => 'بازدیدکننده',
@@ -392,7 +394,7 @@ class UserAccessScopeController extends Controller
         }
 
         return match ($user->role->value) {
-            'admin', 'operator' => 'exploria_internal',
+            'admin', 'regional_admin', 'operator' => 'exploria_internal',
             'viewer' => 'internal_viewer',
             'hub_manager' => 'hub_manager',
             'shop_partner' => 'commercial_partner',
