@@ -89,6 +89,8 @@ class VenueRegistryService
             ->withCount(['zones', 'campaigns', 'qrCodes', 'partnerAccounts'])
             ->orderBy('created_at')
             ->get()
+            ->sortBy(fn (Venue $venue): string => sprintf('%06d-%s', (int) data_get($venue->metadata, 'rollout_order', 999999), $venue->code))
+            ->values()
             ->toBase()
             ->map(fn (Venue $venue): array => $this->serializeVenue($venue, $isGlobal));
     }

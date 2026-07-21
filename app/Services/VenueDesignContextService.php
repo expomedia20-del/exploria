@@ -24,6 +24,8 @@ class VenueDesignContextService
         $venues = Venue::query()
             ->orderBy('created_at')
             ->get()
+            ->sortBy(fn (Venue $venue): string => sprintf('%06d-%s', (int) data_get($venue->metadata, 'rollout_order', 999999), $venue->code))
+            ->values()
             ->map(fn (Venue $venue): array => $this->venueContext($venue))
             ->values();
 

@@ -179,8 +179,11 @@ class DisplayOperationsTest extends TestCase
             ->getJson(route('admin.display-operations.index'))
             ->assertOk()
             ->assertJsonPath('data.stats.onlineDevices', 0)
-            ->assertJsonPath('data.displayDevices.0.isOnline', false)
-            ->assertJsonPath('data.displayDevices.0.playbackStatus', 'idle');
+            ->assertJsonPath('data.displayDevices', fn (array $devices): bool => collect($devices)->contains(
+                fn (array $device): bool => $device['code'] === 'ecopark-entry-fixed-display'
+                    && $device['isOnline'] === false
+                    && $device['playbackStatus'] === 'idle',
+            ));
     }
 
     private function submitAdRequest(string $email, string $title, string $placementType): AdRequest

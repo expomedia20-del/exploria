@@ -53,18 +53,21 @@ class MissionRewardBlueprintContextTest extends TestCase
             ],
         ]);
 
-        $this->actingAs($admin)
+        $response = $this->actingAs($admin)
             ->getJson(route('admin.mission-blueprints.index'))
             ->assertOk()
             ->assertJsonPath('status', 'success')
             ->assertJsonPath('data.venueDesignContext.totals.facilities', 2)
             ->assertJsonPath('data.venueDesignContext.totals.campaignUsableFacilities', 2)
-            ->assertJsonPath('data.venueDesignContext.venues.0.code', 'ecopark-abbasabad')
-            ->assertJsonPath('data.venueDesignContext.venues.0.designAssets.mission.0.name', 'Discovery route')
-            ->assertJsonPath('data.venueDesignContext.venues.0.designAssets.reward.0.name', 'Ravaq food court')
             ->assertJsonFragment([
                 'code' => 'foodcourt-taste-tour-quest',
                 'buildUrl' => '/admin/campaigns?blueprint=foodcourt-taste-tour-quest&venue='.$venue->id.'&blueprint_action=build',
             ]);
+
+        $contextVenue = collect($response->json('data.venueDesignContext.venues'))->firstWhere('code', 'ecopark-abbasabad');
+
+        $this->assertIsArray($contextVenue);
+        $this->assertSame('Discovery route', $contextVenue['designAssets']['mission'][0]['name']);
+        $this->assertSame('Ravaq food court', $contextVenue['designAssets']['reward'][0]['name']);
     }
 }

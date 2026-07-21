@@ -49,6 +49,18 @@ $env:DB_PORT = [string]$Port
 $env:DB_DATABASE = $Database
 $env:DB_USERNAME = $Username
 $env:DB_PASSWORD = $Password
+$env:APP_ENV = 'testing'
+$env:APP_DEBUG = 'true'
+$env:APP_URL = 'http://localhost'
+$env:BROADCAST_CONNECTION = 'null'
+$env:CACHE_STORE = 'array'
+$env:QUEUE_CONNECTION = 'sync'
+$env:SESSION_DRIVER = 'array'
+$env:SESSION_SECURE_COOKIE = 'false'
+$env:SESSION_HTTP_ONLY = 'true'
+$env:OTP_DRIVER = 'local'
+$env:OTP_HTTP_ENDPOINT = ''
+$env:OTP_HTTP_TOKEN = ''
 
 php artisan migrate:fresh --force --no-interaction
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

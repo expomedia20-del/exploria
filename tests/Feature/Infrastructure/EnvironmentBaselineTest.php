@@ -31,10 +31,16 @@ class EnvironmentBaselineTest extends TestCase
         $this->assertStringNotContainsString('OTP_HTTP_TOKEN=sk_', $stagingEnvironment);
     }
 
-    public function test_automated_tests_use_an_isolated_in_memory_database(): void
+    public function test_automated_tests_use_an_approved_isolated_database(): void
     {
         $this->assertSame('testing', app()->environment());
-        $this->assertSame('sqlite', config('database.default'));
+
+        if (config('database.default') === 'pgsql') {
+            $this->assertSame(env('EXPLORIA_PG_DATABASE'), config('database.connections.pgsql.database'));
+
+            return;
+        }
+
         $this->assertSame(':memory:', config('database.connections.sqlite.database'));
     }
 
@@ -49,6 +55,12 @@ class EnvironmentBaselineTest extends TestCase
         $this->assertStringContainsString('select current_database()', $script);
         $this->assertStringContainsString('EXPLORIA_PG_BIN', $script);
         $this->assertStringContainsString('Required PostgreSQL tool', $script);
+        $this->assertStringContainsString('$env:APP_ENV = \'testing\'', $script);
+        $this->assertStringContainsString('$env:SESSION_DRIVER = \'array\'', $script);
+        $this->assertStringContainsString('$env:SESSION_SECURE_COOKIE = \'false\'', $script);
+        $this->assertStringContainsString('$env:OTP_DRIVER = \'local\'', $script);
+        $this->assertStringContainsString('$env:OTP_HTTP_ENDPOINT = \'\'', $script);
+        $this->assertStringContainsString('$env:OTP_HTTP_TOKEN = \'\'', $script);
         $this->assertStringContainsString('<env name="DB_CONNECTION" value="pgsql"/>', $configuration);
         $this->assertStringNotContainsString('DB_PASSWORD" value=', $configuration);
     }
