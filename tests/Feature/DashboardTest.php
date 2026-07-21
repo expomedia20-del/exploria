@@ -74,6 +74,7 @@ class DashboardTest extends TestCase
                     ->has('support.promptGroups.0.prompts', 4)
                     ->has('support.promptGroups.1.prompts', 4)
                     ->has('support.promptGroups.2.prompts', 4)
+                    ->has('support.supportPriorities', 4)
                     ->has('support.quickActions', 4)
                     ->has('support.checklist', 6)
                     ->has('support.handoffNotes', 2));
@@ -94,9 +95,38 @@ class DashboardTest extends TestCase
             $this->assertGreaterThanOrEqual(3, count($support['promptGroups']), $role->value);
             $this->assertGreaterThanOrEqual(12, $questions->count(), $role->value);
             $this->assertSame($questions->count(), $questions->unique()->count(), $role->value);
+            $this->assertGreaterThanOrEqual(4, count($support['supportPriorities']), $role->value);
             $this->assertGreaterThanOrEqual(4, count($support['quickActions']), $role->value);
             $this->assertGreaterThanOrEqual(6, count($support['checklist']), $role->value);
             $this->assertGreaterThanOrEqual(2, count($support['handoffNotes']), $role->value);
+        }
+    }
+
+    public function test_support_operational_sections_are_role_specific(): void
+    {
+        $knowledgeBase = app(SupportKnowledgeBaseService::class);
+        $signatures = [];
+
+        foreach (UserRole::cases() as $role) {
+            $user = User::factory()->make(['role' => $role]);
+            $support = $knowledgeBase->forUser($user);
+
+            $signatures[$role->value] = [
+                'priorities' => implode('|', $support['supportPriorities']),
+                'actions' => collect($support['quickActions'])->pluck('title')->implode('|'),
+                'checklist' => implode('|', $support['checklist']),
+                'handoff' => implode('|', $support['handoffNotes']),
+            ];
+        }
+
+        foreach (['priorities', 'actions', 'checklist', 'handoff'] as $section) {
+            $sectionSignatures = collect($signatures)->pluck($section);
+
+            $this->assertSame(
+                $sectionSignatures->count(),
+                $sectionSignatures->unique()->count(),
+                $section,
+            );
         }
     }
 

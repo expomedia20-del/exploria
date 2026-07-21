@@ -35,6 +35,7 @@ type SupportPayload = {
         audience: string;
     };
     promptGroups: PromptGroup[];
+    supportPriorities: string[];
     quickActions: QuickAction[];
     checklist: string[];
     handoffNotes: string[];
@@ -45,8 +46,14 @@ type Props = {
 };
 
 export default function SupportCenterIndex({ support }: Props) {
-    const { roleContext, promptGroups, quickActions, checklist, handoffNotes } =
-        support;
+    const {
+        roleContext,
+        promptGroups,
+        supportPriorities,
+        quickActions,
+        checklist,
+        handoffNotes,
+    } = support;
     const prompts = promptGroups.flatMap((group) =>
         group.prompts.map((prompt) => ({ ...prompt, groupTitle: group.title })),
     );
@@ -137,26 +144,26 @@ export default function SupportCenterIndex({ support }: Props) {
                             <h2 className="font-semibold">اولویت پشتیبانی</h2>
                         </div>
                         <ol className="mt-3 space-y-2 text-sm leading-7 text-muted-foreground">
-                            <li>
-                                ۱. خطایی که مانع ورود، اسکن QR یا شروع مسیر
-                                می‌شود.
-                            </li>
-                            <li>
-                                ۲. مأموریت، پاداش یا کد مصرفی که وضعیت نامشخص
-                                دارد.
-                            </li>
-                            <li>
-                                ۳. دسترسی، نقش یا محدوده‌ای که با مسئولیت کاربر
-                                همخوان نیست.
-                            </li>
-                            <li>
-                                ۴. تبلیغ، نمایشگر یا گزارش عملیاتی که با اجرای
-                                واقعی نمی‌خواند.
-                            </li>
+                            {supportPriorities.map((priority, index) => (
+                                <li
+                                    key={priority}
+                                    className="flex items-start gap-2"
+                                >
+                                    <span className="mt-1 inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                                        {index + 1}
+                                    </span>
+                                    <span>{priority}</span>
+                                </li>
+                            ))}
                         </ol>
-                        <div className="mt-4 rounded-md bg-muted/40 p-3 text-sm leading-7 text-muted-foreground">
+                        <div className="mt-4 grid gap-2">
                             {handoffNotes.map((note) => (
-                                <p key={note}>{note}</p>
+                                <div
+                                    key={note}
+                                    className="rounded-md bg-muted/40 p-3 text-sm leading-7 text-muted-foreground"
+                                >
+                                    {note}
+                                </div>
                             ))}
                         </div>
                     </article>
