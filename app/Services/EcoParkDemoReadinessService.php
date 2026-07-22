@@ -127,7 +127,7 @@ class EcoParkDemoReadinessService
                 'پاداش متصل به واحد تجاری',
                 $this->rewardCountForPartners($venueId, $campaignIds, $partnerIds, false),
                 1,
-                'حداقل یک مشوق فروشگاه/شریک در کمپین آماده است.',
+                'حداقل یک مشوق فروشگاه/واحد تجاری در کمپین آماده است.',
                 'یک پاداش قابل دریافت از طرف واحد تجاری تعریف کنید.',
             ),
             $this->minimumCountCheck(

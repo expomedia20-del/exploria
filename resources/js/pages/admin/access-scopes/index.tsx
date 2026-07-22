@@ -116,7 +116,7 @@ const scopeTypeLabels: Record<string, string> = {
     venue: 'مکان پروژه',
     project: 'پروژه',
     hub: 'هاب یا رواق',
-    partner: 'فروشگاه یا شریک',
+    partner: 'فروشگاه یا واحد تجاری',
     campaign: 'کمپین',
     display_network: 'شبکه نمایشگرها',
     team: 'تیم یا خانواده',

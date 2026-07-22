@@ -84,7 +84,7 @@ const panelModeLabels: Record<string, string> = {
     internal_shared: 'پنل مشترک داخلی اکسپلوریا',
     venue_panel: 'پنل اختصاصی مدیر مکان',
     hub_panel: 'پنل اختصاصی رواق/هاب',
-    partner_panel: 'پنل اختصاصی فروشگاه/واحد شریک',
+    partner_panel: 'پنل اختصاصی فروشگاه/واحد تجاری',
     sponsor_panel: 'پنل اختصاصی اسپانسر',
     public_panel: 'پنل عمومی مشارکت‌کننده',
 };

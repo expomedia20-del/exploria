@@ -305,14 +305,14 @@ const mainNavItems: RoleAwareNavItem[] = [
         roles: ['admin', 'regional_admin', 'operator', 'viewer', 'hub_manager'],
     },
     {
-        title: 'پنل فروشگاه / شریک',
+        title: 'پنل فروشگاه / واحد تجاری',
         href: '/partner/dashboard',
         icon: ShoppingBag,
         group: 'واحدهای تجاری و اسپانسرها',
         roles: ['admin', 'shop_partner'],
     },
     {
-        title: 'تبلیغات فروشگاه / شریک',
+        title: 'تبلیغات فروشگاه / واحد تجاری',
         href: '/partner/ads',
         icon: Megaphone,
         group: 'واحدهای تجاری و اسپانسرها',

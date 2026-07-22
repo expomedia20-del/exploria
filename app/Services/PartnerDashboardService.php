@@ -59,7 +59,7 @@ class PartnerDashboardService
 
         if (! $partnerUser?->partnerAccount) {
             throw ValidationException::withMessages([
-                'partner' => 'برای کاربر فعلی حساب فروشگاه/شریک فعال ثبت نشده است.',
+                'partner' => 'برای کاربر فعلی حساب فروشگاه/واحد تجاری فعال ثبت نشده است.',
             ]);
         }
 

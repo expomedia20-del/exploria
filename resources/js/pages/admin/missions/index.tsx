@@ -2416,7 +2416,7 @@ export default function MissionRewardRegistryIndex({
                                                     آزادسازی توسط ادمین/مجری
                                                 </option>
                                                 <option value="partner_confirmation">
-                                                    تایید فروشگاه/شریک
+                                                    تایید فروشگاه/واحد تحویل
                                                 </option>
                                                 <option value="random_draw">
                                                     قرعه‌کشی

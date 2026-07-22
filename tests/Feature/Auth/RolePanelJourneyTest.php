@@ -120,6 +120,54 @@ class RolePanelJourneyTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_shop_and_sponsor_accounts_cannot_cross_open_each_others_private_panels(): void
+    {
+        $regionalAdmin = User::query()->where('email', 'regional@example.test')->firstOrFail();
+        $shopPartner = User::query()->where('email', 'cafe.eco@example.test')->firstOrFail();
+        $sponsor = User::query()->where('email', 'family.sponsor@example.test')->firstOrFail();
+        $hubManager = User::query()->where('email', 'ravaq.manager@example.test')->firstOrFail();
+        $viewer = User::query()->where('email', 'viewer@example.test')->firstOrFail();
+
+        $this->actingAs($shopPartner)
+            ->get(route('sponsor.dashboard'))
+            ->assertForbidden();
+
+        $this->actingAs($sponsor)
+            ->get(route('partner.dashboard'))
+            ->assertForbidden();
+
+        $this->actingAs($sponsor)
+            ->get(route('partner.ads.page'))
+            ->assertForbidden();
+
+        $this->actingAs($regionalAdmin)
+            ->get(route('partner.dashboard'))
+            ->assertForbidden();
+
+        $this->actingAs($regionalAdmin)
+            ->get(route('sponsor.dashboard'))
+            ->assertForbidden();
+
+        $this->actingAs($viewer)
+            ->get(route('partner.dashboard'))
+            ->assertForbidden();
+
+        $this->actingAs($hubManager)
+            ->get(route('partner.dashboard'))
+            ->assertForbidden();
+    }
+
+    public function test_commercial_sidebar_labels_use_store_unit_language(): void
+    {
+        $sidebar = file_get_contents(resource_path('js/components/app-sidebar.tsx'));
+
+        $this->assertIsString($sidebar);
+        $this->assertStringContainsString('پنل فروشگاه / واحد تجاری', $sidebar);
+        $this->assertStringContainsString('تبلیغات فروشگاه / واحد تجاری', $sidebar);
+        $this->assertStringNotContainsString('پنل فروشگاه / شریک', $sidebar);
+        $this->assertStringNotContainsString('تبلیغات فروشگاه / شریک', $sidebar);
+    }
+
     public function test_new_visitors_still_land_on_participant_dashboard_without_access_scopes(): void
     {
         $visitor = User::factory()->create(['role' => UserRole::Visitor]);

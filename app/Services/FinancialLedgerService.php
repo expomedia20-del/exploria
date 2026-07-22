@@ -187,7 +187,7 @@ class FinancialLedgerService
             ],
             [
                 'code' => 'partner-reward-contract',
-                'title' => 'قرارداد فروشگاه/شریک پاداش',
+                'title' => 'قرارداد فروشگاه/واحد تجاری پاداش',
                 'party_type' => 'partner',
                 'pricing_model' => 'redemption_commission',
                 'base_amount' => 0,
@@ -318,7 +318,7 @@ class FinancialLedgerService
             'platform' => 'پلتفرم',
             'venue' => 'مکان',
             'sponsor' => 'اسپانسر',
-            'partner' => 'فروشگاه/شریک',
+            'partner' => 'فروشگاه/واحد تجاری',
             'participant' => 'کاربر',
             'advertiser' => 'تبلیغ‌دهنده',
         ][$type] ?? $type;

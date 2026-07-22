@@ -294,7 +294,7 @@ class CampaignBuilderService
             ),
             $this->launchReadinessCheck(
                 'participants',
-                'حداقل یک عضو، فروشگاه یا شریک آماده ثبت شده باشد.',
+                'حداقل یک عضو، فروشگاه یا واحد تجاری آماده ثبت شده باشد.',
                 'برای تحویل پاداش، اجرای میدانی یا پشتیبانی مسیر باید حداقل یک مشارکت‌کننده آماده باشد.',
                 $counts['readyParticipants'] > 0,
                 'blocker',
