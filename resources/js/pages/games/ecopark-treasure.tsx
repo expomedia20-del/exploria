@@ -2,15 +2,21 @@ import { Form, Head, Link } from '@inertiajs/react';
 import {
     ArrowRight,
     BadgeCheck,
+    Camera,
     CheckCircle2,
     Compass,
+    Eye,
+    Flag,
     Gift,
     Home,
     Lock,
     MapPin,
     Play,
     QrCode,
+    Route,
     Sparkles,
+    Star,
+    Target,
     Trophy,
     WalletCards,
 } from 'lucide-react';
@@ -115,6 +121,12 @@ type TreasureNode = {
     x: string;
     y: string;
     accent: string;
+    image: string;
+    mood: string;
+    scene: string;
+    challenge: string;
+    choices: string[];
+    unlockText: string;
     realMissionId: string | null;
     realMissionCode: string | null;
     status: MissionItem['status'] | 'local';
@@ -124,6 +136,70 @@ type TreasureNode = {
     completionEvidence: string | null;
     treasureName: string | null;
 };
+
+type SceneProfile = Pick<
+    TreasureNode,
+    'image' | 'mood' | 'scene' | 'challenge' | 'choices' | 'unlockText'
+>;
+
+const sceneProfiles: SceneProfile[] = [
+    {
+        image: '/images/ecopark/proposal/ecopark-night-path-16-9.jpg',
+        mood: 'شروع آرام مسیر',
+        scene: 'نور مسیر از میان درخت‌ها دیده می‌شود و اولین نشان، مسیر شما را از یک بازدید ساده به یک جست‌وجوی مرحله‌ای تبدیل می‌کند.',
+        challenge:
+            'نخستین نشانه را پیدا کنید، نیت مسیر را انتخاب کنید و آماده ورود به نقشه زنده شوید.',
+        choices: ['مسیر سریع', 'مسیر خانوادگی', 'مسیر کشف پاداش'],
+        unlockText: 'با ثبت شروع، مسیر اصلی و کد ادامه برای شما فعال می‌شود.',
+    },
+    {
+        image: '/images/ecopark/proposal/qr-backpack-route-16-9.jpg',
+        mood: 'اسکن و کشف',
+        scene: 'نمایشگر سیار یا QR محیطی سرنخ بعدی را باز می‌کند و بازی از صفحه موبایل به فضای واقعی وصل می‌شود.',
+        challenge:
+            'کد محیط را اسکن کنید یا از مسیر خانگی یک تصمیم اولیه بگیرید تا مرحله بعدی باز شود.',
+        choices: ['اسکن QR', 'پرسش کوتاه', 'ذخیره برای حضور'],
+        unlockText: 'بعد از تایید، امتیاز خوش‌آمدگویی و مسیر بعدی فعال می‌شود.',
+    },
+    {
+        image: '/images/ecopark/proposal/participant-route-card-3-2.jpg',
+        mood: 'تعامل با واحد عضو',
+        scene: 'در رواق، سرنخ‌ها کنار پیشنهادهای فروشگاه و تجربه‌های کوچک پنهان شده‌اند.',
+        challenge:
+            'یک واحد عضو را انتخاب کنید، سرنخ آن را بخوانید و پاداش مرتبط را وارد کیف خود کنید.',
+        choices: ['کوپن فروشگاه', 'پرسش برند', 'مسیر پیشنهادی'],
+        unlockText:
+            'با تکمیل این مرحله، پاداش رواق و شانس قرعه‌کشی آزاد می‌شود.',
+    },
+    {
+        image: '/images/ecopark/proposal/roi-night-plaza-4-5.jpg',
+        mood: 'چالش طعم و رای',
+        scene: 'ایستگاه خوراک، بازی را اجتماعی‌تر می‌کند؛ انتخاب شما روی مسیر پاداش بعدی اثر می‌گذارد.',
+        challenge:
+            'یک طعم یا پیشنهاد را انتخاب کنید و رای کوتاه خود را ثبت کنید.',
+        choices: ['انتخاب طعم', 'رای کوتاه', 'پیشنهاد جمعی'],
+        unlockText: 'پس از ثبت رای، نشان طعم و امتیاز وفاداری اضافه می‌شود.',
+    },
+    {
+        image: '/images/ecopark/proposal/abbasabad-nature-bridge-demo.jpg',
+        mood: 'معمای آموزشی',
+        scene: 'در نقطه دانایی، یک پرسش کوتاه مسیر را از سرگرمی صرف به کشف محتوای فرهنگی و آموزشی می‌برد.',
+        challenge:
+            'به پرسش کوتاه پاسخ دهید و نشان ستاره را برای مرحله پایانی آزاد کنید.',
+        choices: ['پاسخ آموزشی', 'راهنمای کوتاه', 'کشف ستاره'],
+        unlockText: 'پاسخ درست، مرحله گنج نهایی را قابل دسترس می‌کند.',
+    },
+    {
+        image: '/images/ecopark/proposal/ecopark-roadmap-night-21-9.jpg',
+        mood: 'گنج نهایی',
+        scene: 'همه نشانه‌ها کنار هم قرار می‌گیرند و مسیر شما به کد نهایی، پاداش اسپانسر یا قرعه‌کشی وصل می‌شود.',
+        challenge:
+            'نشانه‌های کافی را جمع کنید، کد ادامه را بسازید و پاداش نهایی را بگیرید.',
+        choices: ['دریافت کد', 'باز کردن گنج', 'ورود به قرعه‌کشی'],
+        unlockText:
+            'گنج نهایی فقط وقتی کامل می‌شود که شرط‌های کمپین نیز معتبر باشند.',
+    },
+];
 
 const fallbackNodes: TreasureNode[] = [
     {
@@ -137,6 +213,7 @@ const fallbackNodes: TreasureNode[] = [
         x: '12%',
         y: '74%',
         accent: 'bg-emerald-400',
+        ...sceneProfiles[0],
         realMissionId: null,
         realMissionCode: null,
         status: 'local',
@@ -157,6 +234,7 @@ const fallbackNodes: TreasureNode[] = [
         x: '25%',
         y: '48%',
         accent: 'bg-cyan-300',
+        ...sceneProfiles[1],
         realMissionId: null,
         realMissionCode: null,
         status: 'local',
@@ -177,6 +255,7 @@ const fallbackNodes: TreasureNode[] = [
         x: '43%',
         y: '66%',
         accent: 'bg-amber-300',
+        ...sceneProfiles[2],
         realMissionId: null,
         realMissionCode: null,
         status: 'local',
@@ -197,6 +276,7 @@ const fallbackNodes: TreasureNode[] = [
         x: '57%',
         y: '38%',
         accent: 'bg-rose-300',
+        ...sceneProfiles[3],
         realMissionId: null,
         realMissionCode: null,
         status: 'local',
@@ -217,6 +297,7 @@ const fallbackNodes: TreasureNode[] = [
         x: '72%',
         y: '56%',
         accent: 'bg-violet-300',
+        ...sceneProfiles[4],
         realMissionId: null,
         realMissionCode: null,
         status: 'local',
@@ -237,6 +318,7 @@ const fallbackNodes: TreasureNode[] = [
         x: '91%',
         y: '78%',
         accent: 'bg-yellow-300',
+        ...sceneProfiles[5],
         realMissionId: null,
         realMissionCode: null,
         status: 'local',
@@ -312,6 +394,7 @@ function buildNodes(game: GamePayload): TreasureNode[] {
     return game.missionNodes.map((node, index) => {
         const visual =
             nodeVisuals[index] ?? nodeVisuals[nodeVisuals.length - 1];
+        const scene = sceneProfiles[index % sceneProfiles.length];
         const progress = flowByCode.get(node.code);
 
         return {
@@ -330,6 +413,7 @@ function buildNodes(game: GamePayload): TreasureNode[] {
             x: visual.x,
             y: visual.y,
             accent: visual.accent,
+            ...scene,
             realMissionId: progress?.id ?? node.id,
             realMissionCode: node.code,
             status: progress?.status ?? 'local',
@@ -346,12 +430,20 @@ export default function EcoParkTreasureGame({ game }: Props) {
     const [mode, setMode] = useState<StartMode>('home');
     const [selected, setSelected] = useState<string>('gate');
     const [localCompleted, setLocalCompleted] = useState<string[]>([]);
+    const [choices, setChoices] = useState<Record<string, string>>({});
 
     const nodes = useMemo(() => buildNodes(game), [game]);
     const selectedNode =
         nodes.find((node) => node.id === selected) ??
         nodes[0] ??
         fallbackNodes[0];
+    const selectedIndex = Math.max(
+        0,
+        nodes.findIndex((node) => node.id === selectedNode.id),
+    );
+    const selectedChoice =
+        choices[selectedNode.id] ?? selectedNode.choices[0] ?? 'مسیر اصلی';
+    const nextNode = nodes[selectedIndex + 1] ?? null;
     const completed = game.missionFlow
         ? nodes
               .filter((node) => node.status === 'completed')
@@ -373,6 +465,13 @@ export default function EcoParkTreasureGame({ game }: Props) {
         setLocalCompleted((items) =>
             items.includes(id) ? items : [...items, id],
         );
+    }
+
+    function chooseSceneOption(nodeId: string, choice: string) {
+        setChoices((items) => ({
+            ...items,
+            [nodeId]: choice,
+        }));
     }
 
     return (
@@ -497,67 +596,196 @@ export default function EcoParkTreasureGame({ game }: Props) {
 
                     <div className="grid gap-4">
                         <div className="relative min-h-[560px] overflow-hidden rounded-lg border border-zinc-200 bg-[#eef5ed] p-4 shadow-sm">
-                        <img
-                            src="/images/ecopark/treasure-route.webp"
-                            alt="مسیر مفهومی گنج اکوپارک"
-                            className="absolute inset-0 h-full w-full object-cover opacity-30"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-br from-white/80 via-[#eef5ed]/82 to-white/70" />
-                        <svg
-                            className="absolute inset-0 h-full w-full opacity-80"
-                            viewBox="0 0 100 100"
-                            preserveAspectRatio="none"
-                            aria-hidden="true"
-                        >
-                            <path
-                                d="M12 74 C24 48, 35 56, 43 66 S53 36, 57 38 S66 58, 72 56 S79 31, 84 27 S89 55, 91 78"
-                                fill="none"
-                                stroke="rgba(63,63,70,0.42)"
-                                strokeWidth="0.7"
-                                strokeDasharray="2 2"
+                            <img
+                                src="/images/ecopark/treasure-route.webp"
+                                alt="مسیر مفهومی گنج اکوپارک"
+                                className="absolute inset-0 h-full w-full object-cover opacity-35"
                             />
-                            <path
-                                d="M8 88 C26 82, 34 88, 50 82 S73 84, 95 90"
-                                fill="none"
-                                stroke="rgba(16,185,129,0.16)"
-                                strokeWidth="8"
-                            />
-                        </svg>
+                            <div className="absolute inset-0 bg-gradient-to-br from-white/78 via-[#eef5ed]/80 to-white/65" />
+                            <div className="absolute inset-x-4 top-4 z-10 flex flex-wrap items-center justify-between gap-2">
+                                <div className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/90 px-3 py-2 text-xs font-semibold text-zinc-800 shadow-sm backdrop-blur">
+                                    <Route className="size-4 text-emerald-700" />
+                                    مسیر زنده گنج
+                                </div>
+                                <div className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50/95 px-3 py-2 text-xs font-semibold text-amber-900 shadow-sm backdrop-blur">
+                                    <Star className="size-4" />
+                                    ایستگاه {formatFa(
+                                        selectedIndex + 1,
+                                    )} از {formatFa(nodes.length)}
+                                </div>
+                            </div>
+                            <svg
+                                className="absolute inset-0 h-full w-full opacity-90"
+                                viewBox="0 0 100 100"
+                                preserveAspectRatio="none"
+                                aria-hidden="true"
+                            >
+                                <path
+                                    d="M12 74 C24 48, 35 56, 43 66 S53 36, 57 38 S66 58, 72 56 S79 31, 84 27 S89 55, 91 78"
+                                    fill="none"
+                                    stroke="rgba(63,63,70,0.45)"
+                                    strokeWidth="0.8"
+                                    strokeDasharray="2 2"
+                                />
+                                <path
+                                    d="M8 88 C26 82, 34 88, 50 82 S73 84, 95 90"
+                                    fill="none"
+                                    stroke="rgba(16,185,129,0.18)"
+                                    strokeWidth="8"
+                                />
+                            </svg>
 
-                        {nodes.map((node, index) => {
-                            const done = completed.includes(node.id);
-                            const active = selectedNode.id === node.id;
+                            {nodes.map((node, index) => {
+                                const done = completed.includes(node.id);
+                                const active = selectedNode.id === node.id;
 
-                            return (
-                                <button
-                                    key={node.id}
-                                    type="button"
-                                    onClick={() => setSelected(node.id)}
-                                    className={`absolute z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-2 rounded-full p-1 transition ${active ? 'scale-110' : 'hover:scale-105'}`}
-                                    style={{ left: node.x, top: node.y }}
-                                >
-                                    <span
-                                        className={`flex size-12 items-center justify-center rounded-full border text-sm font-bold shadow-lg ${done ? 'border-emerald-200 bg-emerald-300 text-zinc-950' : node.isLocked ? 'border-white bg-zinc-300 text-zinc-700' : active ? 'border-white bg-white text-zinc-950' : `border-white/30 ${node.accent} text-zinc-950`}`}
+                                return (
+                                    <button
+                                        key={node.id}
+                                        type="button"
+                                        onClick={() => setSelected(node.id)}
+                                        className={`absolute z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-2 rounded-full p-1 transition ${active ? 'scale-110' : 'hover:scale-105'}`}
+                                        style={{ left: node.x, top: node.y }}
                                     >
-                                        {done ? (
-                                            <CheckCircle2 className="size-5" />
-                                        ) : node.isLocked ? (
-                                            <Lock className="size-5" />
-                                        ) : (
-                                            formatFa(index + 1)
-                                        )}
-                                    </span>
-                                    <span className="max-w-28 rounded-full border border-zinc-200 bg-white/95 px-2 py-1 text-center text-[11px] leading-4 font-medium text-zinc-950 shadow-sm backdrop-blur">
-                                        {node.title}
-                                    </span>
-                                </button>
-                            );
-                        })}
+                                        <span
+                                            className={`flex size-12 items-center justify-center rounded-full border text-sm font-bold shadow-lg ring-4 ${done ? 'border-emerald-200 bg-emerald-300 text-zinc-950 ring-emerald-100/80' : node.isLocked ? 'border-white bg-zinc-300 text-zinc-700 ring-zinc-200/70' : active ? 'border-white bg-white text-zinc-950 ring-amber-200/90' : `border-white/30 ${node.accent} text-zinc-950 ring-white/50`}`}
+                                        >
+                                            {done ? (
+                                                <CheckCircle2 className="size-5" />
+                                            ) : node.isLocked ? (
+                                                <Lock className="size-5" />
+                                            ) : (
+                                                formatFa(index + 1)
+                                            )}
+                                        </span>
+                                        <span className="max-w-28 rounded-full border border-zinc-200 bg-white/95 px-2 py-1 text-center text-[11px] leading-4 font-medium text-zinc-950 shadow-sm backdrop-blur">
+                                            {node.title}
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
 
+                        <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white text-zinc-950 shadow-sm">
+                            <div className="grid lg:grid-cols-[0.9fr_1.1fr]">
+                                <div className="relative min-h-[260px] overflow-hidden bg-zinc-900">
+                                    <img
+                                        src={selectedNode.image}
+                                        alt={selectedNode.title}
+                                        className="absolute inset-0 h-full w-full object-cover"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-zinc-950/20 to-transparent" />
+                                    <div className="absolute inset-x-4 bottom-4 text-white">
+                                        <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold backdrop-blur">
+                                            <Camera className="size-4" />
+                                            {selectedNode.mood}
+                                        </div>
+                                        <h2 className="mt-3 text-2xl leading-9 font-semibold">
+                                            {selectedNode.title}
+                                        </h2>
+                                    </div>
+                                </div>
+
+                                <div className="grid gap-4 p-4 sm:p-5">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-900">
+                                            <MapPin className="size-4" />
+                                            {selectedNode.place}
+                                        </span>
+                                        <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-700">
+                                            {
+                                                missionStatusLabels[
+                                                    selectedNode.status
+                                                ]
+                                            }
+                                        </span>
+                                        <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-900">
+                                            {formatFa(selectedNode.points)}{' '}
+                                            امتیاز
+                                        </span>
+                                    </div>
+
+                                    <div className="grid gap-3">
+                                        <div className="rounded-md border border-zinc-200 bg-zinc-50 p-3">
+                                            <div className="flex items-center gap-2 text-sm font-semibold text-zinc-950">
+                                                <Eye className="size-4 text-cyan-700" />
+                                                صحنه کشف
+                                            </div>
+                                            <p className="mt-2 text-sm leading-7 text-zinc-700">
+                                                {selectedNode.scene}
+                                            </p>
+                                        </div>
+
+                                        <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3">
+                                            <div className="flex items-center gap-2 text-sm font-semibold text-emerald-950">
+                                                <Target className="size-4" />
+                                                چالش این مرحله
+                                            </div>
+                                            <p className="mt-2 text-sm leading-7 text-emerald-950/80">
+                                                {selectedNode.challenge}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <p className="text-sm font-semibold text-zinc-950">
+                                            انتخاب بازیکن
+                                        </p>
+                                        <div className="mt-2 flex flex-wrap gap-2">
+                                            {selectedNode.choices.map(
+                                                (choice) => {
+                                                    const isSelected =
+                                                        selectedChoice ===
+                                                        choice;
+
+                                                    return (
+                                                        <button
+                                                            key={choice}
+                                                            type="button"
+                                                            onClick={() =>
+                                                                chooseSceneOption(
+                                                                    selectedNode.id,
+                                                                    choice,
+                                                                )
+                                                            }
+                                                            className={`inline-flex min-h-10 items-center rounded-md border px-3 text-sm font-medium transition ${isSelected ? 'border-zinc-950 bg-zinc-950 text-white' : 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50'}`}
+                                                        >
+                                                            {choice}
+                                                        </button>
+                                                    );
+                                                },
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="grid gap-3 rounded-md border border-zinc-200 bg-white p-3 sm:grid-cols-[1fr_auto] sm:items-center">
+                                        <div>
+                                            <div className="flex items-center gap-2 text-sm font-semibold text-zinc-950">
+                                                <Flag className="size-4 text-amber-700" />
+                                                نتیجه انتخاب
+                                            </div>
+                                            <p className="mt-2 text-sm leading-7 text-zinc-600">
+                                                با انتخاب «{selectedChoice}»،{' '}
+                                                {selectedNode.unlockText}
+                                            </p>
+                                            {nextNode ? (
+                                                <p className="mt-1 text-xs leading-6 text-zinc-500">
+                                                    مسیر بعدی: {nextNode.title}
+                                                </p>
+                                            ) : null}
+                                        </div>
+                                        <MissionAction
+                                            game={game}
+                                            node={selectedNode}
+                                            onLocalComplete={completeLocalNode}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <div className="rounded-lg border border-zinc-200 bg-white p-4 text-zinc-950 shadow-sm">
-                            <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
+                            <div className="grid gap-4">
                                 <div>
                                     <div className="flex flex-wrap items-center gap-2">
                                         <MapPin className="size-4 text-emerald-500" />
@@ -588,11 +816,6 @@ export default function EcoParkTreasureGame({ game }: Props) {
                                         </p>
                                     ) : null}
                                 </div>
-                                <MissionAction
-                                    game={game}
-                                    node={selectedNode}
-                                    onLocalComplete={completeLocalNode}
-                                />
                             </div>
                         </div>
                     </div>
@@ -619,6 +842,53 @@ export default function EcoParkTreasureGame({ game }: Props) {
                                       ? 'شروع اختیاری از خانه'
                                       : 'شروع در محل'}
                             </span>
+                        </div>
+                        <div className="mt-4 grid gap-2">
+                            <div className="flex items-center gap-2 text-sm font-semibold text-zinc-950">
+                                <Route className="size-4 text-emerald-700" />
+                                دفترچه سفر
+                            </div>
+                            <div className="grid gap-2">
+                                {nodes.map((node, index) => {
+                                    const done = completed.includes(node.id);
+                                    const active = selectedNode.id === node.id;
+
+                                    return (
+                                        <button
+                                            key={node.id}
+                                            type="button"
+                                            onClick={() => setSelected(node.id)}
+                                            className={`grid gap-2 rounded-md border p-3 text-right transition sm:grid-cols-[auto_1fr_auto] sm:items-center ${active ? 'border-emerald-300 bg-emerald-50' : 'border-zinc-200 bg-white hover:bg-zinc-50'}`}
+                                        >
+                                            <span
+                                                className={`flex size-9 items-center justify-center rounded-full text-xs font-bold ${done ? 'bg-emerald-600 text-white' : node.isLocked ? 'bg-zinc-200 text-zinc-600' : 'bg-zinc-950 text-white'}`}
+                                            >
+                                                {done ? (
+                                                    <CheckCircle2 className="size-4" />
+                                                ) : node.isLocked ? (
+                                                    <Lock className="size-4" />
+                                                ) : (
+                                                    formatFa(index + 1)
+                                                )}
+                                            </span>
+                                            <span>
+                                                <span className="block text-sm font-semibold text-zinc-950">
+                                                    {node.title}
+                                                </span>
+                                                <span className="mt-1 block text-xs leading-5 text-zinc-500">
+                                                    {node.mood} ·{' '}
+                                                    {choices[node.id] ??
+                                                        node.choices[0]}
+                                                </span>
+                                            </span>
+                                            <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2 py-1 text-xs text-zinc-700">
+                                                <Gift className="size-3.5" />
+                                                {formatFa(node.points)}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </div>
                         <div className="mt-4 grid gap-3 md:grid-cols-2">
                             {nodes
