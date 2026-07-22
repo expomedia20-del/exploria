@@ -60,15 +60,24 @@ class InternalOperationsPanelTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('admin/internal-operations/index')
-                ->where('stats.internalUsers', 2)
-                ->where('stats.activeAssignments', 2)
-                ->has('teamMembers', 2)
-                ->where('teamMembers.0.user.email', 'project.lead@example.test')
-                ->where('teamMembers.0.entryHref', '/admin/internal-operations')
-                ->where('teamMembers.0.subordinateCount', 2)
-                ->where('teamMembers.1.user.email', 'field.operator@example.test')
-                ->where('teamMembers.1.entryHref', '/admin/campaign-operations')
-                ->where('teamMembers.1.reportsToKey', 'project_admin')
+                ->where('stats.internalUsers', 3)
+                ->where('stats.activeAssignments', 3)
+                ->has('teamMembers', 3)
+                ->where('teamMembers', fn ($members): bool => collect($members)->contains(
+                    fn (array $member): bool => data_get($member, 'user.email') === 'project.lead@example.test'
+                        && data_get($member, 'entryHref') === '/admin/internal-operations'
+                        && data_get($member, 'subordinateCount') === 2,
+                ))
+                ->where('teamMembers', fn ($members): bool => collect($members)->contains(
+                    fn (array $member): bool => data_get($member, 'user.email') === 'field.operator@example.test'
+                        && data_get($member, 'entryHref') === '/admin/campaign-operations'
+                        && data_get($member, 'reportsToKey') === 'project_admin',
+                ))
+                ->where('teamMembers', fn ($members): bool => collect($members)->contains(
+                    fn (array $member): bool => data_get($member, 'user.email') === 'project.manager.ecopark@example.test'
+                        && data_get($member, 'entryHref') === '/admin/internal-operations'
+                        && data_get($member, 'roleKey') === 'project_admin',
+                ))
                 ->has('supervisionLines'));
     }
 

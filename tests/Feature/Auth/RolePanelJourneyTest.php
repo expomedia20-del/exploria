@@ -26,6 +26,7 @@ class RolePanelJourneyTest extends TestCase
             'regional@example.test' => route('dashboard', absolute: false),
             'viewer@example.test' => route('dashboard', absolute: false),
             'demo@example.test' => route('participant.dashboard', absolute: false),
+            'project.manager.ecopark@example.test' => route('admin.internal-operations.page', absolute: false),
             'ravaq.manager@example.test' => route('ravaq.dashboard', absolute: false),
             'venue.manager.ecopark@example.test' => route('venue.dashboard', absolute: false),
             'cafe.eco@example.test' => route('partner.dashboard', absolute: false),
@@ -57,6 +58,7 @@ class RolePanelJourneyTest extends TestCase
             'regional@example.test' => [route('dashboard', absolute: false), 'dashboard'],
             'viewer@example.test' => [route('dashboard', absolute: false), 'dashboard'],
             'demo@example.test' => [route('participant.dashboard', absolute: false), 'participant/dashboard'],
+            'project.manager.ecopark@example.test' => [route('admin.internal-operations.page', absolute: false), 'admin/internal-operations/index'],
             'ravaq.manager@example.test' => [route('ravaq.dashboard', absolute: false), 'hub/dashboard'],
             'venue.manager.ecopark@example.test' => [route('venue.dashboard', absolute: false), 'venue/dashboard'],
             'cafe.eco@example.test' => [route('partner.dashboard', absolute: false), 'partner/dashboard'],
@@ -81,6 +83,7 @@ class RolePanelJourneyTest extends TestCase
 
         $journeys = [
             'regional@example.test' => [route('dashboard', absolute: false), 'regional_admin'],
+            'project.manager.ecopark@example.test' => [route('admin.internal-operations.page', absolute: false), 'project_admin'],
             'ravaq.manager@example.test' => [route('ravaq.dashboard', absolute: false), 'ravaq_manager'],
             'venue.manager.ecopark@example.test' => [route('venue.dashboard', absolute: false), 'venue_executive'],
             'cafe.eco@example.test' => [route('partner.dashboard', absolute: false), 'shop_manager'],
@@ -150,6 +153,7 @@ class RolePanelJourneyTest extends TestCase
     public function test_shop_and_sponsor_accounts_cannot_cross_open_each_others_private_panels(): void
     {
         $regionalAdmin = User::query()->where('email', 'regional@example.test')->firstOrFail();
+        $projectManager = User::query()->where('email', 'project.manager.ecopark@example.test')->firstOrFail();
         $shopPartner = User::query()->where('email', 'cafe.eco@example.test')->firstOrFail();
         $sponsor = User::query()->where('email', 'family.sponsor@example.test')->firstOrFail();
         $hubManager = User::query()->where('email', 'ravaq.manager@example.test')->firstOrFail();
@@ -173,6 +177,10 @@ class RolePanelJourneyTest extends TestCase
 
         $this->actingAs($regionalAdmin)
             ->get(route('sponsor.dashboard'))
+            ->assertForbidden();
+
+        $this->actingAs($projectManager)
+            ->get(route('partner.dashboard'))
             ->assertForbidden();
 
         $this->actingAs($viewer)
@@ -271,6 +279,91 @@ class RolePanelJourneyTest extends TestCase
         $this->assertStringContainsString('مدیریت واحدهای تجاری', $sidebar);
         $this->assertStringContainsString('اعضا و نقش‌های اجرایی کمپین', $sidebar);
         $this->assertStringContainsString('ادمین استانی / منطقه‌ای اکسپلوریا', $roleConfig);
+    }
+
+    public function test_realistic_role_chain_surfaces_support_and_guards_are_consistent(): void
+    {
+        $this->withoutVite();
+
+        $journeys = [
+            'admin@example.test' => [
+                'panel' => route('dashboard', absolute: false),
+                'component' => 'dashboard',
+                'supportKey' => 'admin',
+                'blocked' => [],
+            ],
+            'regional@example.test' => [
+                'panel' => route('dashboard', absolute: false),
+                'component' => 'dashboard',
+                'supportKey' => 'regional_admin',
+                'blocked' => [route('partner.dashboard'), route('sponsor.dashboard')],
+            ],
+            'project.manager.ecopark@example.test' => [
+                'panel' => route('admin.internal-operations.page', absolute: false),
+                'component' => 'admin/internal-operations/index',
+                'supportKey' => 'operator',
+                'blocked' => [route('partner.dashboard')],
+            ],
+            'venue.manager.ecopark@example.test' => [
+                'panel' => route('venue.dashboard', absolute: false),
+                'component' => 'venue/dashboard',
+                'supportKey' => 'viewer',
+                'blocked' => [route('partner.dashboard'), route('sponsor.dashboard')],
+            ],
+            'ravaq.manager@example.test' => [
+                'panel' => route('ravaq.dashboard', absolute: false),
+                'component' => 'hub/dashboard',
+                'supportKey' => 'hub_manager',
+                'blocked' => [route('partner.dashboard'), route('sponsor.dashboard')],
+            ],
+            'cafe.eco@example.test' => [
+                'panel' => route('partner.dashboard', absolute: false),
+                'component' => 'partner/dashboard',
+                'supportKey' => 'shop_partner',
+                'blocked' => [route('sponsor.dashboard')],
+            ],
+            'family.sponsor@example.test' => [
+                'panel' => route('sponsor.dashboard', absolute: false),
+                'component' => 'sponsor/dashboard',
+                'supportKey' => 'sponsor',
+                'blocked' => [route('partner.dashboard'), route('partner.ads.page')],
+            ],
+            'demo@example.test' => [
+                'panel' => route('participant.dashboard', absolute: false),
+                'component' => 'participant/dashboard',
+                'supportKey' => 'visitor',
+                'blocked' => [route('admin.access-scopes.page')],
+            ],
+        ];
+
+        foreach ($journeys as $email => $journey) {
+            $user = User::query()->where('email', $email)->firstOrFail();
+
+            $this->actingAs($user)
+                ->get($journey['panel'])
+                ->assertOk()
+                ->assertInertia(fn (Assert $page) => $page->component($journey['component']));
+
+            $this->actingAs($user)
+                ->get(route('admin.support.page'))
+                ->assertOk()
+                ->assertInertia(fn (Assert $page) => $page
+                    ->component('admin/support/index')
+                    ->where('support.roleContext.key', $journey['supportKey'])
+                    ->has('support.promptGroups.0.prompts.0.question')
+                    ->has('support.supportPriorities.0')
+                    ->has('support.quickActions.0.title')
+                    ->has('support.checklist.0')
+                    ->has('support.handoffNotes.0'));
+
+            foreach ($journey['blocked'] as $blockedRoute) {
+                $this->actingAs($user)
+                    ->get($blockedRoute)
+                    ->assertForbidden();
+            }
+
+            $this->app['auth']->guard()->logout();
+        }
     }
 
     public function test_new_visitors_still_land_on_participant_dashboard_without_access_scopes(): void

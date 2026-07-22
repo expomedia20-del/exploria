@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\RecordStatus;
 use App\Enums\UserRole;
 use App\Models\Campaign;
 use App\Models\ConsentLog;
@@ -41,6 +42,14 @@ class DashboardController extends Controller
 
         if ($user?->role === UserRole::HubManager) {
             return redirect()->route('ravaq.dashboard');
+        }
+
+        if ($user instanceof User && in_array($user->role, [UserRole::Operator, UserRole::Viewer], true)) {
+            $scopedDestination = $this->scopedDashboardDestination($user);
+
+            if ($scopedDestination !== null) {
+                return redirect()->to($scopedDestination);
+            }
         }
 
         abort_unless(in_array($user?->role, [
@@ -251,5 +260,29 @@ class DashboardController extends Controller
             'operationalAlerts' => $operationalAlerts,
             'campaignPerformance' => $campaignPerformance,
         ]);
+    }
+
+    private function scopedDashboardDestination(User $user): ?string
+    {
+        $roleKeys = $user->accessScopes()
+            ->where('status', RecordStatus::Active)
+            ->pluck('role_key')
+            ->all();
+
+        $destinations = [
+            'project_admin' => route('admin.internal-operations.page', absolute: false),
+            'display_ads_manager' => route('admin.display-operations.page', absolute: false),
+            'field_operator' => route('admin.campaign-operations.page', absolute: false),
+            'treasure_assistant' => route('admin.campaign-operations.page', absolute: false),
+            'venue_executive' => route('venue.dashboard', absolute: false),
+        ];
+
+        foreach ($destinations as $roleKey => $destination) {
+            if (in_array($roleKey, $roleKeys, true)) {
+                return $destination;
+            }
+        }
+
+        return null;
     }
 }

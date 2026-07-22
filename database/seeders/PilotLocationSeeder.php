@@ -176,6 +176,16 @@ class PilotLocationSeeder extends Seeder
             ['status' => RecordStatus::Active, 'metadata' => ['source' => 'pilot_seed', 'purpose' => 'venue_manager_readiness']],
         );
 
+        $projectManager = User::query()->updateOrCreate(
+            ['email' => 'project.manager.ecopark@example.test'],
+            ['name' => 'Ù…Ø¯ÛŒØ± Ù¾Ø±ÙˆÚ˜Ù‡ Ù…Ú©Ø§Ù†ÛŒ Ø§Ú©ÙˆÙ¾Ø§Ø±Ú©', 'password' => 'password', 'role' => UserRole::Operator],
+        );
+
+        UserAccessScope::query()->updateOrCreate(
+            ['user_id' => $projectManager->id, 'role_key' => 'project_admin', 'scope_type' => 'venue', 'scope_id' => $ecoPark->id],
+            ['status' => RecordStatus::Active, 'metadata' => ['source' => 'pilot_seed', 'purpose' => 'project_manager_readiness']],
+        );
+
         $partners = [
             [
                 'code' => 'cafe-eco',

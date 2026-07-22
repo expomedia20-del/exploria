@@ -153,7 +153,7 @@ const operationalRoleMenus: Record<OperationalRole, string[]> = {
     shop_manager: ['/partner/dashboard', '/partner/ads', '/admin/support'],
     internal_sponsor: ['/sponsor/dashboard', '/admin/support'],
     external_sponsor: ['/sponsor/dashboard', '/admin/support'],
-    participant: ['/participant/dashboard'],
+    participant: ['/participant/dashboard', '/admin/support'],
 };
 
 const operationalHomeHrefs: Partial<Record<OperationalRole, string>> = {

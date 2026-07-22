@@ -27,6 +27,7 @@ class RoleBasedDemoAccessTest extends TestCase
     {
         $admin = User::query()->where('email', 'admin.stress-demo@example.test')->firstOrFail();
         $visitor = User::query()->where('email', 'visitor.stress-demo@example.test')->firstOrFail();
+        $projectManager = User::query()->where('email', 'project.manager.ecopark@example.test')->firstOrFail();
         $shopPartner = User::query()->where('email', 'cafe.eco@example.test')->firstOrFail();
         $sponsor = User::query()->where('email', 'family.sponsor@example.test')->firstOrFail();
         $hubManager = User::query()->where('email', 'ravaq.manager@example.test')->firstOrFail();
@@ -38,6 +39,10 @@ class RoleBasedDemoAccessTest extends TestCase
         $this->actingAs($visitor)
             ->get(route('dashboard'))
             ->assertRedirect(route('participant.dashboard'));
+
+        $this->actingAs($projectManager)
+            ->get(route('dashboard'))
+            ->assertRedirect(route('admin.internal-operations.page'));
 
         $this->actingAs($shopPartner)
             ->get(route('dashboard'))
@@ -55,6 +60,7 @@ class RoleBasedDemoAccessTest extends TestCase
     public function test_demo_role_surfaces_are_scoped_to_their_operational_context(): void
     {
         $venueManager = User::query()->where('email', 'venue.manager.ecopark@example.test')->firstOrFail();
+        $projectManager = User::query()->where('email', 'project.manager.ecopark@example.test')->firstOrFail();
         $hubManager = User::query()->where('email', 'ravaq.manager@example.test')->firstOrFail();
         $shopPartner = User::query()->where('email', 'cafe.eco@example.test')->firstOrFail();
         $sponsor = User::query()->where('email', 'family.sponsor@example.test')->firstOrFail();
@@ -70,6 +76,13 @@ class RoleBasedDemoAccessTest extends TestCase
                 ->has('data.campaigns')
                 ->etc());
         $this->assertNotNull(collect($venueResponse->json('data.campaigns'))->firstWhere('code', 'ecopark-online-treasure-map-game-campaign'));
+
+        $this->actingAs($projectManager)
+            ->get(route('admin.internal-operations.page'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('admin/internal-operations/index')
+                ->where('auth.user.active_access_roles.0', 'project_admin'));
 
         $this->actingAs($hubManager)
             ->getJson(route('ravaq.dashboard.index'))
@@ -119,6 +132,7 @@ class RoleBasedDemoAccessTest extends TestCase
     public function test_roles_are_blocked_from_unrelated_operational_surfaces(): void
     {
         $visitor = User::query()->where('email', 'visitor.stress-demo@example.test')->firstOrFail();
+        $projectManager = User::query()->where('email', 'project.manager.ecopark@example.test')->firstOrFail();
         $shopPartner = User::query()->where('email', 'cafe.eco@example.test')->firstOrFail();
         $sponsor = User::query()->where('email', 'family.sponsor@example.test')->firstOrFail();
         $hubManager = User::query()->where('email', 'ravaq.manager@example.test')->firstOrFail();
@@ -126,6 +140,10 @@ class RoleBasedDemoAccessTest extends TestCase
 
         $this->actingAs($visitor)
             ->get(route('admin.demo-cycle.page'))
+            ->assertForbidden();
+
+        $this->actingAs($projectManager)
+            ->get(route('partner.dashboard'))
             ->assertForbidden();
 
         $this->actingAs($shopPartner)

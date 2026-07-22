@@ -26,7 +26,7 @@ class UserAccessScopeTest extends TestCase
 
     public function test_pilot_seed_creates_operational_access_scopes(): void
     {
-        $this->assertDatabaseCount('user_access_scopes', 6);
+        $this->assertDatabaseCount('user_access_scopes', 7);
 
         $this->assertDatabaseHas('user_access_scopes', [
             'role_key' => 'ravaq_manager',
@@ -48,6 +48,13 @@ class UserAccessScopeTest extends TestCase
 
         $this->assertDatabaseHas('user_access_scopes', [
             'role_key' => 'venue_executive',
+            'scope_type' => 'venue',
+            'status' => 'active',
+        ]);
+
+        $this->assertDatabaseHas('user_access_scopes', [
+            'user_id' => User::query()->where('email', 'project.manager.ecopark@example.test')->value('id'),
+            'role_key' => 'project_admin',
             'scope_type' => 'venue',
             'status' => 'active',
         ]);
