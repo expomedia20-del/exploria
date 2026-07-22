@@ -137,7 +137,7 @@ class CampaignOperationsBlueprintService
             $this->operationCheck('qr', 'QR ورودی', 'حداقل یک QR معتبر برای شروع مسیر ثبت شده باشد.', $stats['qrCodes'] > 0, $stats['qrCodes']),
             $this->operationCheck('missions', 'ماموریت', 'حداقل یک ماموریت به چرخه کاربر وصل شده باشد.', $stats['missions'] > 0, $stats['missions']),
             $this->operationCheck('incentives', 'مشوق و گنج', 'حداقل یک پاداش تاییدشده یا یک گنج برای کمپین ثبت شده باشد.', $stats['approvedRewards'] > 0 || $stats['treasures'] > 0, $stats['approvedRewards'] + $stats['treasures']),
-            $this->operationCheck('participants', 'عضو آماده', 'حداقل یک فروشگاه، شریک یا اسپانسر آماده اجرا باشد.', $stats['readyParticipants'] > 0, $stats['readyParticipants']),
+            $this->operationCheck('participants', 'عضو آماده', 'حداقل یک فروشگاه/واحد تجاری، اسپانسر یا نقش اجرایی آماده اجرا باشد.', $stats['readyParticipants'] > 0, $stats['readyParticipants']),
             $this->operationCheck('pending_rewards', 'پیشنهاد معلق', 'پیشنهاد پاداش در انتظار بررسی باقی نمانده باشد.', $stats['pendingRewards'] === 0, $stats['pendingRewards']),
             $this->operationCheck('alignment', 'همخوانی الگو', 'چرخه، ماموریت، پاداش و گنج با الگوی مرجع همخوان باشند.', collect($alignment['issues'])->where('level', 'error')->isEmpty(), (int) ($alignment['completedSteps'] ?? 0)),
         ];
@@ -291,7 +291,7 @@ class CampaignOperationsBlueprintService
                 ['key' => 'entry', 'title' => 'QR ورود', 'complete' => $stepIndex !== 1 || $qrCodes->isNotEmpty(), 'count' => $stepIndex === 1 ? $qrCodes->count() : 0, 'action' => $stepIndex === 1 ? 'برای شروع مسیر حداقل یک QR معتبر ثبت کنید.' : 'ورود مسیر از گام اول کنترل می‌شود.'],
                 ['key' => 'mission', 'title' => 'ماموریت گام', 'complete' => $stepMissions->isNotEmpty(), 'count' => $stepMissions->count(), 'action' => 'برای این گام حداقل یک ماموریت مرتبط با چرخه ثبت کنید.'],
                 ['key' => 'incentive', 'title' => 'پاداش یا گنج', 'complete' => $approvedRewards > 0 || $stepTreasures->isNotEmpty(), 'count' => $approvedRewards + $stepTreasures->count(), 'action' => 'برای این گام یک پاداش تاییدشده یا گنج قابل کشف تعریف کنید.'],
-                ['key' => 'participant', 'title' => 'عضو آماده اجرا', 'complete' => $readyParticipants->isNotEmpty(), 'count' => $readyParticipants->count(), 'action' => 'حداقل یک فروشگاه، شریک یا اسپانسر آماده اجرا لازم است.'],
+                ['key' => 'participant', 'title' => 'عضو آماده اجرا', 'complete' => $readyParticipants->isNotEmpty(), 'count' => $readyParticipants->count(), 'action' => 'حداقل یک فروشگاه/واحد تجاری، اسپانسر یا نقش اجرایی آماده اجرا لازم است.'],
             ];
 
             $label = (string) ($stepMissions->first()['cycleStep']['label']

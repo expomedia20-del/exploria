@@ -209,7 +209,7 @@ export default function CampaignParticipantsIndex({
 
     return (
         <>
-            <Head title="اعضا و شرکای کمپین" />
+            <Head title="اعضا و نقش‌های اجرایی کمپین" />
             <div
                 dir="rtl"
                 className="flex h-full flex-1 flex-col gap-5 overflow-x-auto p-4"
@@ -220,7 +220,7 @@ export default function CampaignParticipantsIndex({
                             رجیستری عملیاتی کمپین
                         </p>
                         <h1 className="mt-1 text-2xl font-semibold">
-                            اعضا و شرکای کمپین
+                            اعضا و نقش‌های اجرایی کمپین
                         </h1>
                     </div>
                     <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-6">
@@ -537,7 +537,7 @@ export default function CampaignParticipantsIndex({
                                             htmlFor="partner_account_id"
                                             className="text-xs font-medium"
                                         >
-                                            شریک / فروشگاه
+                                            فروشگاه/واحد تجاری یا حامی
                                         </label>
                                         <select
                                             key={`participant-partner-${editingParticipant?.id ?? 'new'}`}
@@ -550,7 +550,7 @@ export default function CampaignParticipantsIndex({
                                             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                         >
                                             <option value="">
-                                                بدون شریک مشخص
+                                                بدون واحد مرتبط
                                             </option>
                                             {formOptions.partners.map(
                                                 (partner) => (
@@ -919,7 +919,7 @@ export default function CampaignParticipantsIndex({
                                             <Store className="size-4 shrink-0 text-muted-foreground" />
                                             <span className="truncate font-medium">
                                                 {participant.partner?.name ??
-                                                    'عضو بدون شریک'}
+                                                    'عضو بدون واحد مرتبط'}
                                             </span>
                                         </div>
                                         <p className="mt-1 truncate text-xs text-muted-foreground">
@@ -1069,10 +1069,10 @@ export default function CampaignParticipantsIndex({
 }
 
 CampaignParticipantsIndex.layout = {
-    title: 'اعضا و شرکای کمپین',
+    title: 'اعضا و نقش‌های اجرایی کمپین',
     breadcrumbs: [
         {
-            title: 'اعضا و شرکای کمپین',
+            title: 'اعضا و نقش‌های اجرایی کمپین',
             href: '/admin/campaign-participants',
         },
     ],

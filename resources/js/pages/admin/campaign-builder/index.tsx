@@ -163,7 +163,7 @@ export default function CampaignBuilderIndex({
         ['مأموریت', counts.missions, Trophy],
         ['پاداش تاییدشده', counts.approvedRewards, BadgeCheck],
         ['پیشنهاد معلق', counts.pendingRewards, CircleAlert],
-        ['عضو و شریک', counts.participants, Store],
+        ['عضو/نقش اجرایی', counts.participants, Store],
     ];
 
     const workflowActions: WorkflowAction[] = [
@@ -204,7 +204,7 @@ export default function CampaignBuilderIndex({
             tone: counts.pendingRewards > 0 ? 'review' : 'neutral',
         },
         {
-            title: 'آماده‌سازی اعضا و شرکا',
+            title: 'آماده‌سازی اعضا و نقش‌های اجرایی',
             description:
                 'فروشگاه‌ها، اسپانسرها و نقش‌های اجرایی را از مسیرهای اختصاصی خود آماده کنید.',
             href: contextHref('/admin/campaign-participants', 'participants'),
@@ -537,9 +537,10 @@ export default function CampaignBuilderIndex({
                                 و قواعد حفظ داده انجام شود.
                             </div>
                             <div className="rounded-lg bg-muted/45 p-3 text-muted-foreground">
-                                منوهای مستقل مثل مکان‌ها، شرکا، QR و پنل فروشگاه
-                                حفظ شده‌اند. ساخت کمپین فقط آنها را برای کمپین
-                                انتخاب‌شده کنار هم می‌آورد.
+                                منوهای مستقل مثل مکان‌ها، واحدهای تجاری،
+                                اسپانسرها، QR و پنل فروشگاه حفظ شده‌اند. ساخت
+                                کمپین فقط آنها را برای کمپین انتخاب‌شده کنار هم
+                                می‌آورد.
                             </div>
                         </div>
                     </div>

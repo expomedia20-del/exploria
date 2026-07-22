@@ -302,7 +302,7 @@ function label(map: Record<string, string>, value?: string) {
 
 function itemTitle(item: JourneyItem | Participant) {
     if ('partner' in item && 'participationRole' in item) {
-        return item.partner?.name ?? 'عضو بدون شریک';
+        return item.partner?.name ?? 'عضو بدون واحد مرتبط';
     }
 
     const journeyItem = item as JourneyItem;
@@ -423,7 +423,7 @@ function detailRows(
     if ('participationRole' in item) {
         return [
             ...baseRows,
-            ['عضو', item.partner?.name ?? 'عضو بدون شریک'],
+            ['عضو', item.partner?.name ?? 'عضو بدون واحد مرتبط'],
             ['نقش در کمپین', label(roleLabels, item.participationRole)],
             ['هاب', item.hub?.name ?? 'بدون هاب'],
             ['وضعیت آماده سازی', item.onboardingStatus],
@@ -441,7 +441,7 @@ function detailRows(
         ['کد', journeyItem.code ?? 'ثبت نشده'],
         ['گام چرخه کاربر', journeyItem.cycleStep?.label ?? 'ثبت نشده'],
         ['هاب', journeyItem.hub?.name ?? 'بدون هاب'],
-        ['شریک', journeyItem.partner?.name ?? 'بدون شریک'],
+        ['واحد/حامی مرتبط', journeyItem.partner?.name ?? 'بدون واحد مرتبط'],
         ['جزئیات', itemMeta(item)],
     ];
 }
@@ -495,7 +495,7 @@ function itemOperationalGuide(
         return {
             steps: [
                 `نقش ${label(roleLabels, item.participationRole)} را برای ${item.partner?.name ?? 'عضو کمپین'} فعال کنید.`,
-                'تعهدات، پاداش ها، کدهای QR و تبلیغات مرتبط با این عضو را در صفحه اعضا و شرکای کمپین کنترل کنید.',
+                'تعهدات، پاداش ها، کدهای QR و تبلیغات مرتبط با این عضو را در صفحه اعضا و نقش‌های اجرایی کمپین کنترل کنید.',
                 'وضعیت آماده سازی را تا زمان تحویل تجربه به کاربر نهایی پیگیری کنید.',
             ],
             navigation: [
@@ -543,13 +543,13 @@ function itemOperationalGuide(
         return {
             steps: [
                 `کاربر پس از تکمیل شرط لازم، مشوق «${itemTitle(item)}» را باز می کند.`,
-                'نوع دریافت باید روشن باشد: کوپن، قرعه کشی، نشان، جایزه حضوری یا هدیه شریک تجاری.',
+                'نوع دریافت باید روشن باشد: کوپن، قرعه کشی، نشان، جایزه حضوری یا هدیه فروشگاه/واحد تجاری.',
                 'تحویل یا مصرف پاداش باید با کد، اسکن یا تأیید مسئول همان نقطه ثبت شود.',
             ],
             navigation: [
                 partner
                     ? `محل دریافت یا مصرف این مشوق به ${partner} وصل است.`
-                    : 'برای این مشوق هنوز شریک تحویل دهنده مشخص نشده است.',
+                    : 'برای این مشوق هنوز واحد تحویل‌دهنده مشخص نشده است.',
                 'اگر مشوق حضوری است، مسیر کاربر باید تا نقطه تحویل پاداش یا گنج ادامه پیدا کند.',
             ],
         };
@@ -592,7 +592,7 @@ function itemOperationalGuide(
             'این آیتم باید در صفحه مدیریت تکمیل و به یک نقش عملیاتی مشخص وصل شود.',
         ],
         navigation: [
-            'اگر آیتم وابسته به مکان است، هاب، شریک و نقطه اجرای آن باید مشخص شود.',
+            'اگر آیتم وابسته به مکان است، هاب، واحد/حامی مرتبط و نقطه اجرای آن باید مشخص شود.',
         ],
     };
 }
@@ -1478,7 +1478,7 @@ export default function CampaignOperationsIndex({
                                                                             {participant
                                                                                 .partner
                                                                                 ?.name ??
-                                                                                'عضو بدون شریک'}{' '}
+                                                                                'عضو بدون واحد مرتبط'}{' '}
                                                                             ·{' '}
                                                                             {label(
                                                                                 roleLabels,
@@ -1749,7 +1749,7 @@ export default function CampaignOperationsIndex({
                                                                     </p>
                                                                     <p className="mt-1 truncate text-muted-foreground">
                                                                         {redemption.partnerName ??
-                                                                            'شریک ثبت نشده'}{' '}
+                                                                            'واحد مرتبط ثبت نشده'}{' '}
                                                                         ·{' '}
                                                                         {redemption.visitorName ??
                                                                             'کاربر ثبت نشده'}

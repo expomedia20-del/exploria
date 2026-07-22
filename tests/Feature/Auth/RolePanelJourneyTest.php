@@ -179,7 +179,11 @@ class RolePanelJourneyTest extends TestCase
             resource_path('js/pages/admin/display-operations/index.tsx'),
             resource_path('js/pages/admin/demo-cycle/index.tsx'),
             resource_path('js/pages/admin/missions/index.tsx'),
+            resource_path('js/pages/admin/campaign-builder/index.tsx'),
+            resource_path('js/pages/admin/campaign-operations/index.tsx'),
+            resource_path('js/pages/admin/campaign-participants/index.tsx'),
             app_path('Services/CampaignBuilderService.php'),
+            app_path('Services/CampaignOperationsBlueprintService.php'),
             app_path('Services/VenueRegistryService.php'),
             app_path('Http/Controllers/Admin/UserManagementController.php'),
             app_path('Http/Controllers/Admin/InternalOperationsController.php'),
@@ -194,6 +198,11 @@ class RolePanelJourneyTest extends TestCase
             $this->assertStringNotContainsString('واحد/شریک', $content, $source);
             $this->assertStringNotContainsString('شریک:', $content, $source);
             $this->assertStringNotContainsString('شریک فروشگاهی', $content, $source);
+            $this->assertStringNotContainsString('اعضا و شرکای کمپین', $content, $source);
+            $this->assertStringNotContainsString('عضو و شریک', $content, $source);
+            $this->assertStringNotContainsString('فروشگاه، شریک یا اسپانسر', $content, $source);
+            $this->assertStringNotContainsString('عضو بدون شریک', $content, $source);
+            $this->assertStringNotContainsString('شریک ثبت نشده', $content, $source);
         }
 
         $partnerAds = file_get_contents(resource_path('js/pages/partner/ads.tsx'));
