@@ -176,7 +176,7 @@ Route::post('/admin/finance-wallets/ledger', [FinanceWalletController::class, 's
     ->name('admin.finance-wallets.ledger.store');
 
 Route::get('/admin/support', [SupportCenterController::class, 'page'])
-    ->middleware(['auth', 'role:admin,regional_admin,operator,viewer,hub_manager,shop_partner,sponsor'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator,viewer,hub_manager,shop_partner,sponsor,visitor'])
     ->name('admin.support.page');
 
 Route::get('/admin/users', [UserManagementController::class, 'page'])

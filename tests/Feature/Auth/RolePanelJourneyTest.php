@@ -104,20 +104,47 @@ class RolePanelJourneyTest extends TestCase
     public function test_external_and_read_only_accounts_cannot_open_central_admin_mutations(): void
     {
         $shopPartner = User::query()->where('email', 'cafe.eco@example.test')->firstOrFail();
-        $visitor = User::query()->where('email', 'demo@example.test')->firstOrFail();
         $viewer = User::query()->where('email', 'viewer@example.test')->firstOrFail();
 
         $this->actingAs($shopPartner)
             ->get(route('admin.access-scopes.page'))
             ->assertForbidden();
 
+        $visitor = User::query()->where('email', 'demo@example.test')->firstOrFail();
+
         $this->actingAs($visitor)
-            ->get(route('admin.support.page'))
+            ->get(route('admin.access-scopes.page'))
             ->assertForbidden();
 
         $this->actingAs($viewer)
             ->get(route('admin.display-operations.page'))
             ->assertForbidden();
+    }
+
+    public function test_demo_visitor_accounts_can_open_visitor_support_center(): void
+    {
+        $this->withoutVite();
+
+        $visitors = [
+            User::query()->where('email', 'demo@example.test')->firstOrFail(),
+            User::factory()->create([
+                'name' => 'بازدیدکننده بازی آنلاین',
+                'email' => 'visitor.game.demo@example.test',
+                'role' => UserRole::Visitor,
+            ]),
+        ];
+
+        foreach ($visitors as $visitor) {
+            $this->actingAs($visitor)
+                ->get(route('admin.support.page'))
+                ->assertOk()
+                ->assertInertia(fn (Assert $page) => $page
+                    ->component('admin/support/index')
+                    ->where('support.roleContext.key', 'visitor')
+                    ->where('support.roleContext.title', 'پشتیبانی بازدیدکننده'));
+
+            $this->app['auth']->guard()->logout();
+        }
     }
 
     public function test_shop_and_sponsor_accounts_cannot_cross_open_each_others_private_panels(): void
@@ -166,6 +193,17 @@ class RolePanelJourneyTest extends TestCase
         $this->assertStringContainsString('تبلیغات فروشگاه / واحد تجاری', $sidebar);
         $this->assertStringNotContainsString('پنل فروشگاه / شریک', $sidebar);
         $this->assertStringNotContainsString('تبلیغات فروشگاه / شریک', $sidebar);
+    }
+
+    public function test_visitor_sidebar_includes_support_entry(): void
+    {
+        $sidebar = file_get_contents(resource_path('js/components/app-sidebar.tsx'));
+
+        $this->assertIsString($sidebar);
+        $this->assertMatchesRegularExpression(
+            "/title: 'پشتیبانی و چت‌بات'.*href: '\\/admin\\/support'.*'visitor'/s",
+            $sidebar,
+        );
     }
 
     public function test_operational_role_copy_avoids_ambiguous_partner_language(): void

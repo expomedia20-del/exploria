@@ -101,6 +101,21 @@ class RoleBasedDemoAccessTest extends TestCase
                 ->where('journey.points.redeemedRewards', 1));
     }
 
+    public function test_stress_demo_visitor_can_open_visitor_support_center(): void
+    {
+        $this->withoutVite();
+
+        $visitor = User::query()->where('email', 'visitor.stress-demo@example.test')->firstOrFail();
+
+        $this->actingAs($visitor)
+            ->get(route('admin.support.page'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('admin/support/index')
+                ->where('support.roleContext.key', 'visitor')
+                ->where('support.roleContext.title', 'پشتیبانی بازدیدکننده'));
+    }
+
     public function test_roles_are_blocked_from_unrelated_operational_surfaces(): void
     {
         $visitor = User::query()->where('email', 'visitor.stress-demo@example.test')->firstOrFail();

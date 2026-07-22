@@ -64,6 +64,7 @@ class DashboardTest extends TestCase
             [UserRole::ShopPartner, 'shop_partner'],
             [UserRole::Sponsor, 'sponsor'],
             [UserRole::HubManager, 'hub_manager'],
+            [UserRole::Visitor, 'visitor'],
         ];
 
         foreach ($roles as [$role, $expectedKey]) {

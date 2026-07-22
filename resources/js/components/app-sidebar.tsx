@@ -373,6 +373,7 @@ const mainNavItems: RoleAwareNavItem[] = [
             'hub_manager',
             'shop_partner',
             'sponsor',
+            'visitor',
         ],
     },
     {
