@@ -111,6 +111,8 @@ class ConsentFlowTest extends TestCase
             'source' => 'qr_landing',
         ]);
 
+        $visitId = $response->json('data.visitId');
+        $this->assertSame(route('games.ecopark-treasure', ['visit' => $visitId]), $response->json('data.nextUrl'));
         $this->get($response->json('data.nextUrl'))->assertOk();
     }
 

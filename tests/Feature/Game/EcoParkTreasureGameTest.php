@@ -75,4 +75,31 @@ class EcoParkTreasureGameTest extends TestCase
                 ->where('game.missionFlow.missions.0.code', 'scan-entry-qr')
                 ->where('game.missionFlow.missions.0.status', 'completed'));
     }
+
+    public function test_authenticated_visitor_can_open_online_game_for_a_specific_visit(): void
+    {
+        $this->withoutVite();
+
+        $visitor = User::factory()->create(['role' => UserRole::Visitor]);
+        $qr = QrCode::query()->where('code', PilotLocationSeeder::DEMO_QR_CODE)->firstOrFail();
+        $visit = Visit::query()->create([
+            'user_id' => $visitor->id,
+            'qr_code_id' => $qr->id,
+            'venue_id' => $qr->venue_id,
+            'touchpoint_id' => $qr->touchpoint_id,
+            'campaign_id' => $qr->campaign_id,
+            'source' => 'qr_landing',
+            'status' => 'confirmed',
+            'occurred_at' => now()->subDay(),
+            'metadata' => ['is_demo' => true],
+        ]);
+
+        $this->actingAs($visitor)
+            ->get(route('games.ecopark-treasure', ['visit' => $visit->id]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('games/ecopark-treasure')
+                ->where('game.latestVisit.id', $visit->id)
+                ->where('game.latestVisit.showUrl', route('visits.show', ['visit' => $visit->id])));
+    }
 }

@@ -26,7 +26,7 @@ class EcoParkTreasureGameController extends Controller
         $campaign = $this->campaign();
         $user = $request->user();
         $visit = $user instanceof User && $campaign
-            ? $this->latestVisit($user, $campaign)
+            ? $this->selectedVisit($request, $user, $campaign)
             : null;
 
         return Inertia::render('games/ecopark-treasure', [
@@ -135,5 +135,24 @@ class EcoParkTreasureGameController extends Controller
             ->where('campaign_id', $campaign->id)
             ->latest('occurred_at')
             ->first();
+    }
+
+    private function selectedVisit(Request $request, User $user, Campaign $campaign): ?Visit
+    {
+        $visitId = $request->string('visit')->toString();
+
+        if ($visitId !== '') {
+            $visit = Visit::query()
+                ->whereKey($visitId)
+                ->where('user_id', $user->id)
+                ->where('campaign_id', $campaign->id)
+                ->first();
+
+            if ($visit instanceof Visit) {
+                return $visit;
+            }
+        }
+
+        return $this->latestVisit($user, $campaign);
     }
 }

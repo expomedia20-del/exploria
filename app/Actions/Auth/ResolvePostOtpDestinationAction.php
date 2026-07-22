@@ -3,13 +3,17 @@
 namespace App\Actions\Auth;
 
 use App\Actions\Visits\RecordVisitAction;
+use App\Actions\Visits\ResolvePostVisitDestinationAction;
 use App\Models\ConsentVersion;
 use App\Models\OtpRequest;
 use App\Models\User;
 
 class ResolvePostOtpDestinationAction
 {
-    public function __construct(private readonly RecordVisitAction $recordVisit) {}
+    public function __construct(
+        private readonly RecordVisitAction $recordVisit,
+        private readonly ResolvePostVisitDestinationAction $resolvePostVisitDestination,
+    ) {}
 
     /** @return array{consentRequired: bool, nextUrl: string} */
     public function execute(
@@ -42,7 +46,7 @@ class ResolvePostOtpDestinationAction
 
             return [
                 'consentRequired' => false,
-                'nextUrl' => route('visits.show', $visit),
+                'nextUrl' => $this->resolvePostVisitDestination->execute($visit),
             ];
         }
 

@@ -129,7 +129,7 @@ class OtpAuthenticationTest extends TestCase
         ])->assertOk()->assertJsonPath('data.consentRequired', false);
 
         $visit = Visit::query()->sole();
-        $response->assertJsonPath('data.nextUrl', route('visits.show', $visit));
+        $response->assertJsonPath('data.nextUrl', route('games.ecopark-treasure', ['visit' => $visit->id]));
         $this->assertDatabaseCount('consent_logs', 1);
     }
 

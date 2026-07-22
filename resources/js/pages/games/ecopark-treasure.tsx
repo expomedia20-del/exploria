@@ -495,7 +495,8 @@ export default function EcoParkTreasureGame({ game }: Props) {
                         </div>
                     </div>
 
-                    <div className="relative min-h-[560px] overflow-hidden rounded-lg border border-zinc-200 bg-[#eef5ed] p-4 shadow-sm">
+                    <div className="grid gap-4">
+                        <div className="relative min-h-[560px] overflow-hidden rounded-lg border border-zinc-200 bg-[#eef5ed] p-4 shadow-sm">
                         <img
                             src="/images/ecopark/treasure-route.webp"
                             alt="مسیر مفهومی گنج اکوپارک"
@@ -553,7 +554,9 @@ export default function EcoParkTreasureGame({ game }: Props) {
                             );
                         })}
 
-                        <div className="absolute right-4 bottom-4 left-4 z-20 rounded-lg border border-zinc-200 bg-white/95 p-4 text-zinc-950 shadow-lg backdrop-blur">
+                        </div>
+
+                        <div className="rounded-lg border border-zinc-200 bg-white p-4 text-zinc-950 shadow-sm">
                             <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
                                 <div>
                                     <div className="flex flex-wrap items-center gap-2">

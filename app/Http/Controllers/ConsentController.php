@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Actions\Consent\AcceptConsentAction;
 use App\Actions\Events\RecordDomainEventAction;
 use App\Actions\Visits\RecordVisitAction;
+use App\Actions\Visits\ResolvePostVisitDestinationAction;
 use App\Http\Requests\Consent\AcceptConsentRequest;
 use App\Models\ConsentVersion;
 use Illuminate\Http\JsonResponse;
@@ -52,6 +53,7 @@ class ConsentController extends Controller
         AcceptConsentRequest $request,
         AcceptConsentAction $acceptConsent,
         RecordVisitAction $recordVisit,
+        ResolvePostVisitDestinationAction $resolvePostVisitDestination,
     ): JsonResponse {
         $log = $acceptConsent->execute(
             $request->user(),
@@ -80,7 +82,7 @@ class ConsentController extends Controller
                 'consentVersionId' => $log->consent_version_id,
                 'acceptedAt' => $log->accepted_at->toIso8601String(),
                 'visitId' => $visit?->id,
-                'nextUrl' => $visit ? route('visits.show', $visit) : route('dashboard'),
+                'nextUrl' => $visit ? $resolvePostVisitDestination->execute($visit) : route('dashboard'),
             ],
         ], 201);
     }
