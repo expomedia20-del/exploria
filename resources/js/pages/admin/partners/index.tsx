@@ -97,7 +97,7 @@ export default function PartnerRegistryIndex({ partners }: Props) {
 
     return (
         <>
-            <Head title="مدیریت شرکا" />
+            <Head title="مدیریت واحدهای تجاری و اسپانسرها" />
             <div
                 dir="rtl"
                 className="flex h-full flex-1 flex-col gap-5 overflow-x-auto p-4"
@@ -108,12 +108,12 @@ export default function PartnerRegistryIndex({ partners }: Props) {
                             رجیستری فاز ۱ واقعی
                         </p>
                         <h1 className="mt-1 text-2xl font-semibold">
-                            مدیریت شرکا و زیرمجموعه‌های تجاری
+                            مدیریت واحدهای تجاری، اسپانسرها و زیرمجموعه‌ها
                         </h1>
                     </div>
                     <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
                         <div className="rounded-lg border border-sidebar-border/70 px-3 py-2 dark:border-sidebar-border">
-                            <p className="text-muted-foreground">کل شرکا</p>
+                            <p className="text-muted-foreground">کل واحدها</p>
                             <p className="mt-1 font-semibold">
                                 {partners.length.toLocaleString('fa-IR')}
                             </p>
@@ -169,7 +169,7 @@ export default function PartnerRegistryIndex({ partners }: Props) {
 
                 <section className="rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border">
                     <div className="grid min-w-[980px] grid-cols-[1.15fr_0.85fr_1fr_1fr_1fr_0.9fr] gap-3 border-b border-sidebar-border/70 px-4 py-3 text-xs font-medium text-muted-foreground dark:border-sidebar-border">
-                        <span>شریک</span>
+                        <span>واحد/اسپانسر</span>
                         <span>نوع</span>
                         <span>مکان و هاب</span>
                         <span>کاربر مسئول</span>
@@ -179,7 +179,7 @@ export default function PartnerRegistryIndex({ partners }: Props) {
 
                     {partners.length === 0 ? (
                         <div className="p-8 text-center text-sm text-muted-foreground">
-                            هنوز شریک تجاری ثبت نشده است.
+                            هنوز واحد تجاری یا اسپانسر ثبت نشده است.
                         </div>
                     ) : (
                         <div className="min-w-[980px] divide-y divide-sidebar-border/70 dark:divide-sidebar-border">
@@ -283,7 +283,7 @@ export default function PartnerRegistryIndex({ partners }: Props) {
 PartnerRegistryIndex.layout = {
     breadcrumbs: [
         {
-            title: 'مدیریت شرکا',
+            title: 'مدیریت واحدهای تجاری و اسپانسرها',
             href: '/admin/partners',
         },
     ],

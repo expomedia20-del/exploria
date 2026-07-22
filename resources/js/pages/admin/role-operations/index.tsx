@@ -91,7 +91,7 @@ const panelModeLabels: Record<string, string> = {
 
 const roleLabels: Record<string, string> = {
     super_admin: 'ادمین مرکزی اکسپلوریا',
-    regional_admin: 'مدیر منطقه‌ای / عاملیت',
+    regional_admin: 'ادمین استانی / منطقه‌ای اکسپلوریا',
     project_admin: 'مدیر پروژه مکانی اکسپلوریا',
     field_operator: 'مجری میدانی پروژه',
     treasure_assistant: 'یاریگر کاربران',
@@ -123,7 +123,7 @@ const authorityGuides: Record<string, AuthorityGuide> = {
     },
     regional_admin: {
         allowed: [
-            'مدیریت عاملیت منطقه‌ای، ظرفیت فروش، مکان‌های فعال و فرصت‌های توسعه',
+            'مدیریت عملیات استان یا منطقه از سمت تیم اکسپلوریا، ظرفیت فروش، مکان‌های فعال و فرصت‌های توسعه',
             'اولویت‌بندی پروژه‌های منطقه و ارجاع موضوعات مالی/حقوقی به ادمین مرکزی',
             'پایش KPI منطقه، درآمد، اسپانسرها و ریسک‌های اجرایی چند مکان',
         ],

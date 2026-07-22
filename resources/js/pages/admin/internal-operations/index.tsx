@@ -115,7 +115,7 @@ const workstreams: Workstream[] = [
         icon: UsersRound,
         links: [
             {
-                label: 'اعضا، فروشگاه‌ها و شرکا',
+                label: 'اعضا و نقش‌های اجرایی کمپین',
                 href: '/admin/campaign-participants',
             },
             { label: 'نقشه عملیات کمپین', href: '/admin/campaign-operations' },

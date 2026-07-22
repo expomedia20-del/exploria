@@ -256,7 +256,7 @@ const mainNavItems: RoleAwareNavItem[] = [
         roles: ['admin', 'regional_admin', 'operator', 'viewer', 'hub_manager'],
     },
     {
-        title: 'مدیریت شرکا',
+        title: 'مدیریت واحدهای تجاری',
         href: '/admin/partners',
         icon: Store,
         group: 'واحدهای تجاری و اسپانسرها',
@@ -284,7 +284,7 @@ const mainNavItems: RoleAwareNavItem[] = [
         roles: ['admin', 'hub_manager'],
     },
     {
-        title: 'اعضا، فروشگاه‌ها و شرکا',
+        title: 'اعضا و نقش‌های اجرایی کمپین',
         href: '/admin/campaign-participants',
         icon: UsersRound,
         group: 'واحدهای تجاری و اسپانسرها',

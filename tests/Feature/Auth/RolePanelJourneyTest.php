@@ -184,11 +184,18 @@ class RolePanelJourneyTest extends TestCase
             resource_path('js/pages/admin/campaign-participants/index.tsx'),
             resource_path('js/pages/admin/campaigns/index.tsx'),
             resource_path('js/pages/admin/mission-blueprints/index.tsx'),
+            resource_path('js/pages/admin/internal-operations/index.tsx'),
+            resource_path('js/pages/admin/partners/index.tsx'),
+            resource_path('js/pages/admin/role-operations/index.tsx'),
             resource_path('js/pages/dashboard.tsx'),
             resource_path('js/components/campaign-context-nav.tsx'),
+            base_path('config/exploria_roles.php'),
             app_path('Services/CampaignBuilderService.php'),
             app_path('Services/CampaignOperationsBlueprintService.php'),
+            app_path('Services/MissionRewardBlueprintService.php'),
+            app_path('Services/SupportKnowledgeBaseService.php'),
             app_path('Services/VenueRegistryService.php'),
+            app_path('Http/Controllers/Admin/DemoCycleController.php'),
             app_path('Http/Controllers/Admin/UserManagementController.php'),
             app_path('Http/Controllers/Admin/InternalOperationsController.php'),
         ];
@@ -207,15 +214,25 @@ class RolePanelJourneyTest extends TestCase
             $this->assertStringNotContainsString('فروشگاه، شریک یا اسپانسر', $content, $source);
             $this->assertStringNotContainsString('عضو بدون شریک', $content, $source);
             $this->assertStringNotContainsString('شریک ثبت نشده', $content, $source);
+            $this->assertStringNotContainsString('اعضا، فروشگاه‌ها و شرکا', $content, $source);
+            $this->assertStringNotContainsString('مدیر منطقه‌ای / عاملیت', $content, $source);
+            $this->assertStringNotContainsString('عاملیت منطقه‌ای', $content, $source);
         }
 
         $partnerAds = file_get_contents(resource_path('js/pages/partner/ads.tsx'));
         $participantDashboard = file_get_contents(resource_path('js/pages/participant/dashboard.tsx'));
+        $sidebar = file_get_contents(resource_path('js/components/app-sidebar.tsx'));
+        $roleConfig = file_get_contents(base_path('config/exploria_roles.php'));
 
         $this->assertIsString($partnerAds);
         $this->assertIsString($participantDashboard);
+        $this->assertIsString($sidebar);
+        $this->assertIsString($roleConfig);
         $this->assertStringContainsString('کل مکان فروشگاه/واحد تجاری', $partnerAds);
         $this->assertStringContainsString('محل مصرف:', $participantDashboard);
+        $this->assertStringContainsString('مدیریت واحدهای تجاری', $sidebar);
+        $this->assertStringContainsString('اعضا و نقش‌های اجرایی کمپین', $sidebar);
+        $this->assertStringContainsString('ادمین استانی / منطقه‌ای اکسپلوریا', $roleConfig);
     }
 
     public function test_new_visitors_still_land_on_participant_dashboard_without_access_scopes(): void
