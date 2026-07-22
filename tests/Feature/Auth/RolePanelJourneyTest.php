@@ -168,6 +168,43 @@ class RolePanelJourneyTest extends TestCase
         $this->assertStringNotContainsString('تبلیغات فروشگاه / شریک', $sidebar);
     }
 
+    public function test_operational_role_copy_avoids_ambiguous_partner_language(): void
+    {
+        $sources = [
+            resource_path('js/pages/partner/ads.tsx'),
+            resource_path('js/pages/hub/dashboard.tsx'),
+            resource_path('js/pages/venue/dashboard.tsx'),
+            resource_path('js/pages/participant/dashboard.tsx'),
+            resource_path('js/pages/admin/ads/index.tsx'),
+            resource_path('js/pages/admin/display-operations/index.tsx'),
+            resource_path('js/pages/admin/demo-cycle/index.tsx'),
+            resource_path('js/pages/admin/missions/index.tsx'),
+            app_path('Services/CampaignBuilderService.php'),
+            app_path('Services/VenueRegistryService.php'),
+            app_path('Http/Controllers/Admin/UserManagementController.php'),
+            app_path('Http/Controllers/Admin/InternalOperationsController.php'),
+        ];
+
+        foreach ($sources as $source) {
+            $content = file_get_contents($source);
+
+            $this->assertIsString($content);
+            $this->assertStringNotContainsString('کل مکان شریک', $content, $source);
+            $this->assertStringNotContainsString('فروشگاه / شریک', $content, $source);
+            $this->assertStringNotContainsString('واحد/شریک', $content, $source);
+            $this->assertStringNotContainsString('شریک:', $content, $source);
+            $this->assertStringNotContainsString('شریک فروشگاهی', $content, $source);
+        }
+
+        $partnerAds = file_get_contents(resource_path('js/pages/partner/ads.tsx'));
+        $participantDashboard = file_get_contents(resource_path('js/pages/participant/dashboard.tsx'));
+
+        $this->assertIsString($partnerAds);
+        $this->assertIsString($participantDashboard);
+        $this->assertStringContainsString('کل مکان فروشگاه/واحد تجاری', $partnerAds);
+        $this->assertStringContainsString('محل مصرف:', $participantDashboard);
+    }
+
     public function test_new_visitors_still_land_on_participant_dashboard_without_access_scopes(): void
     {
         $visitor = User::factory()->create(['role' => UserRole::Visitor]);

@@ -104,7 +104,7 @@ class VenueManagerDashboardService
                 'id' => 'hub-partner-summary-'.md5($hubName),
                 'code' => 'summary',
                 'name' => $hubName,
-                'partnerType' => $group->count().' واحد/شریک',
+                'partnerType' => $group->count().' واحد تجاری/حامی',
                 'status' => RecordStatus::Active->value,
                 'venueName' => $group->first()?->venue?->name,
                 'hubName' => $hubName,

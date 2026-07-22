@@ -92,7 +92,7 @@ class EcoParkDemoReadinessService
             ),
             $this->minimumCountCheck(
                 'partner_accounts',
-                'واحدها و شرکای فعال',
+                'واحدهای تجاری و حامیان فعال',
                 $venueId ? PartnerAccount::query()->where('venue_id', $venueId)->where('status', RecordStatus::Active)->count() : 0,
                 3,
                 'واحدهای تجاری و اسپانسر پایه برای دمو وجود دارند.',

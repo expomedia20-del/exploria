@@ -272,7 +272,8 @@ function DisplayScheduleQueue({ items }: { items: DisplayScheduleItem[] }) {
                         </span>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                        نمایشگر: {item.displayDeviceName ?? '-'} · شریک:{' '}
+                        نمایشگر: {item.displayDeviceName ?? '-'} · واحد/حامی
+                        مرتبط:{' '}
                         {item.partnerName ?? '-'} · اولویت:{' '}
                         {formatNumber(item.priority)}
                     </p>
@@ -330,7 +331,7 @@ export default function HubDashboard({
                         />
                         <Stat
                             icon={Store}
-                            label="واحد/شریک"
+                            label="واحد تجاری/حامی"
                             value={stats.partners}
                         />
                         <Stat
@@ -378,7 +379,7 @@ export default function HubDashboard({
 
                 <section className="grid gap-4 lg:grid-cols-2">
                     <Panel
-                        title="واحدها و شرکای محدوده"
+                        title="واحدهای تجاری و حامیان محدوده"
                         description="برای هماهنگی اجرایی و آمادگی روز اجرا؛ نه بررسی درآمد یا تصمیم تجاری واحد."
                         isEmpty={partners.length === 0}
                     >
@@ -452,7 +453,8 @@ export default function HubDashboard({
                                     </span>
                                 </div>
                                 <p className="text-xs text-muted-foreground">
-                                    شریک: {adRequest.partnerName ?? '-'} ·
+                                    واحد/حامی مرتبط:{' '}
+                                    {adRequest.partnerName ?? '-'} ·
                                     محدوده: {adRequest.hubName ?? '-'} · جایگاه:{' '}
                                     {adRequest.placementType ?? '-'}
                                 </p>
@@ -504,7 +506,8 @@ export default function HubDashboard({
                                     </span>
                                 </div>
                                 <p className="text-xs text-muted-foreground">
-                                    شریک: {reward.partnerName ?? '-'} · کمپین:{' '}
+                                    واحد تحویل/حامی:{' '}
+                                    {reward.partnerName ?? '-'} · کمپین:{' '}
                                     {reward.campaignName ?? '-'}
                                 </p>
                                 {reward.approvalStatus === 'pending_review' ? (

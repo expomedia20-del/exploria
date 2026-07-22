@@ -395,7 +395,7 @@ export default function AdminDisplayOperationsIndex({
                                                 {placement.placementType}
                                             </p>
                                             <p className="mt-1 text-xs text-muted-foreground">
-                                                شریک:{' '}
+                                                واحد/حامی مرتبط:{' '}
                                                 {placement.partnerName ?? '-'} ·
                                                 هاب: {placement.hubName ?? '-'}{' '}
                                                 · جایگاه:{' '}
@@ -514,7 +514,8 @@ export default function AdminDisplayOperationsIndex({
                                         {placement.placementType}
                                     </p>
                                     <p className="mt-1 text-xs text-muted-foreground">
-                                        شریک: {placement.partnerName ?? '-'} ·
+                                        واحد/حامی مرتبط:{' '}
+                                        {placement.partnerName ?? '-'} ·
                                         اولویت:{' '}
                                         {placement.priority.toLocaleString(
                                             'fa-IR',

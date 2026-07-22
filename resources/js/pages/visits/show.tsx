@@ -462,7 +462,7 @@ export default function VisitShow({ visit, missionFlow }: Props) {
                                         {reward.reward?.code}
                                     </p>
                                     <p className="mt-3 text-xs text-slate-500">
-                                        شریک:{' '}
+                                        محل مصرف:{' '}
                                         {reward.redemption?.partnerName ??
                                             reward.reward?.partnerName ??
                                             'پلتفرم'}{' '}

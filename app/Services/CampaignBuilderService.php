@@ -171,7 +171,7 @@ class CampaignBuilderService
             $this->step('setup', 'اطلاعات پایه کمپین', 'ادمین / اپراتور', $campaign !== null, 'نام، مکان، بازه زمانی، وضعیت و الگوی مرجع کمپین را کنترل کنید.', '/admin/campaigns'.($campaignCode ? '?campaign='.$campaignCode : '')),
             $this->step('qr', 'نقاط ورود و QR', 'ادمین / اپراتور / مدیر مکان', $counts['qrCodes'] > 0, 'حداقل یک QR معتبر برای شروع مسیر کاربر تعریف شود.', '/admin/qr-codes'.($campaignCode ? '?campaign='.$campaignCode : '')),
             $this->step('components', 'مأموریت، امتیاز، پاداش و گنج', 'ادمین / اپراتور / فروشگاه', $counts['missions'] > 0 && ($counts['approvedRewards'] > 0 || $counts['treasures'] > 0), 'مأموریت‌ها، مشوق‌ها، هزینه امتیازی و شرایط تحویل تکمیل شوند و پاداش‌های پیشنهادی بازبینی شوند.', $this->contextUrl('/admin/missions', $campaignCode, $blueprintCode, 'components')),
-            $this->step('partners', 'اعضا، فروشگاه‌ها و اسپانسرها', 'فروشگاه / شریک / ادمین', $counts['readyParticipants'] > 0 && $counts['partnerRewardOffers'] > 0, 'مالک پاداش، نقش فروشگاه‌ها، اسپانسرها، وضعیت آماده‌سازی و پیشنهاد پاداش مشخص شود.', $this->contextUrl('/admin/campaign-participants', $campaignCode, $blueprintCode, 'participants')),
+            $this->step('partners', 'اعضا، فروشگاه‌ها و اسپانسرها', 'فروشگاه/واحد تجاری / اسپانسر / ادمین', $counts['readyParticipants'] > 0 && $counts['partnerRewardOffers'] > 0, 'مالک پاداش، نقش فروشگاه‌ها، اسپانسرها، وضعیت آماده‌سازی و پیشنهاد پاداش مشخص شود.', $this->contextUrl('/admin/campaign-participants', $campaignCode, $blueprintCode, 'participants')),
             $this->step('route', 'مسیر عملیاتی کمپین', 'ادمین / مدیر مکان / مدیر هاب', $counts['qrCodes'] > 0 && $counts['missions'] > 0 && $counts['readyParticipants'] > 0 && (bool) ($campaign?->metadata['route_reviewed_at'] ?? false), 'ارتباط QR، مأموریت، مکان، فروشگاه، نمایشگر و تبلیغات در یک مسیر قابل اجرا بررسی و تایید شود.', $this->contextUrl('/admin/campaign-operations', $campaignCode, $blueprintCode, 'route')),
             $this->step('review', 'بررسی نهایی و آماده اجرا', 'ادمین', $campaign?->status->value === 'active' && $this->launchReadiness($campaign, $counts)['canActivate'], 'قبل از فعال‌سازی عمومی، نقص‌ها و مسئولیت‌های باقی‌مانده را مرور کنید و کمپین را فعال کنید.', $this->contextUrl('/admin/campaign-builder', $campaignCode, $blueprintCode, 'review')),
         ];
@@ -207,7 +207,7 @@ class CampaignBuilderService
                 'href' => '/admin/campaigns'.($campaignCode ? '?campaign='.$campaignCode : ''),
             ],
             [
-                'role' => 'فروشگاه و شریک پاداش',
+                'role' => 'فروشگاه/واحد تجاری و حامی پاداش',
                 'responsibility' => 'تکمیل پیشنهاد، موجودی، شرایط تحویل و آمادگی پذیرش کاربر',
                 'status' => $counts['readyParticipants'] > 0 ? 'دارای عضو آماده' : 'نیازمند دعوت/آماده‌سازی',
                 'href' => $campaignCode ? '/partner/dashboard?campaign='.$campaignCode : '/partner/dashboard',

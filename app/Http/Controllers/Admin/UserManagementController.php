@@ -286,7 +286,7 @@ class UserManagementController extends Controller
             'venue' => 'مکان پروژه',
             'project' => 'پروژه',
             'hub' => 'هاب / رواق',
-            'partner' => 'فروشگاه / شریک',
+            'partner' => 'فروشگاه / واحد تجاری',
             'campaign' => 'کمپین',
             'display_network' => 'شبکه نمایشگرها',
             'team' => 'تیم / خانواده',

@@ -212,7 +212,9 @@ export default function PartnerAds({
                                         className="h-9 rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                                         defaultValue=""
                                     >
-                                        <option value="">کل مکان شریک</option>
+                                        <option value="">
+                                            کل مکان فروشگاه/واحد تجاری
+                                        </option>
                                         {hubOptions.map((hub) => (
                                             <option key={hub.id} value={hub.id}>
                                                 {hub.name}

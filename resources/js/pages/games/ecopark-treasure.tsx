@@ -664,7 +664,7 @@ export default function EcoParkTreasureGame({ game }: Props) {
                                             {reward.reward?.name ?? 'پاداش'}
                                         </p>
                                         <p className="mt-1 text-xs text-zinc-600">
-                                            شریک:{' '}
+                                            محل مصرف:{' '}
                                             {reward.redemption?.partnerName ??
                                                 reward.reward?.partnerName ??
                                                 'اکسپلوریا'}{' '}

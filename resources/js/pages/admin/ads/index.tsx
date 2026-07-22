@@ -249,7 +249,8 @@ export default function AdminAdsIndex({
                                         </p>
                                     ) : null}
                                     <p className="text-xs text-muted-foreground">
-                                        شریک: {adRequest.partnerName ?? '-'} ·
+                                        واحد/حامی مرتبط:{' '}
+                                        {adRequest.partnerName ?? '-'} ·
                                         مکان: {adRequest.venueName ?? '-'} ·
                                         هاب: {adRequest.hubName ?? '-'} ·
                                         جایگاه:{' '}

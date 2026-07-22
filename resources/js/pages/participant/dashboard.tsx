@@ -902,7 +902,7 @@ export default function ParticipantDashboard({
                                                 {reward.rewardName ?? 'پاداش'}
                                             </p>
                                             <p className="mt-1 text-xs text-muted-foreground">
-                                                شریک:{' '}
+                                                محل مصرف:{' '}
                                                 {reward.redemption
                                                     ?.partnerName ??
                                                     reward.reward

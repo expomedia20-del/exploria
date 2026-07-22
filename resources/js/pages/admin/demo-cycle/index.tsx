@@ -342,8 +342,8 @@ export default function DemoCycleIndex({
                 },
                 {
                     key: 'reward_redemption',
-                    label: 'مصرف پاداش توسط شریک تایید یا ثبت شده است',
-                    owner: 'فروشگاه / شریک',
+                    label: 'مصرف پاداش توسط فروشگاه/واحد تجاری تایید یا ثبت شده است',
+                    owner: 'فروشگاه / واحد تجاری',
                     hint: 'بدون مصرف تاییدشده، گزارش فروش و ROI ناقص می‌ماند.',
                     complete: stressComplete('redemption'),
                     href: '/partner/dashboard',

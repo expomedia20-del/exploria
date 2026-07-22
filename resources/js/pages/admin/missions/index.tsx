@@ -3104,7 +3104,7 @@ export default function MissionRewardRegistryIndex({
                                             </p>
                                         ) : null}
                                         <p className="text-xs text-muted-foreground">
-                                            شریک:{' '}
+                                            واحد تحویل/حامی:{' '}
                                             {reward.partner?.name ?? 'پلتفرم'} ·
                                             موجودی:{' '}
                                             {reward.stockQuantity?.toLocaleString(

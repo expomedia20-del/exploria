@@ -176,7 +176,7 @@ class InternalOperationsController extends Controller
             'operator' => 'اپراتور',
             'viewer' => 'مشاهده‌گر',
             'hub_manager' => 'مدیر هاب',
-            'shop_partner' => 'شریک فروشگاهی',
+            'shop_partner' => 'مدیر فروشگاه / واحد تجاری',
             'sponsor' => 'اسپانسر',
             'visitor' => 'بازدیدکننده',
             default => $role ?? '-',

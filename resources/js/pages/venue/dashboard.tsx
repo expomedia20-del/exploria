@@ -293,7 +293,7 @@ export default function VenueDashboard({
                         />
                         <Stat
                             icon={Store}
-                            label="واحد/شریک"
+                            label="واحد تجاری/حامی"
                             value={stats.partners}
                         />
                         <Stat
@@ -411,7 +411,7 @@ export default function VenueDashboard({
                                     </span>
                                 </div>
                                 <p className="text-xs text-muted-foreground">
-                                    زون: {hub.zoneName ?? '-'} · واحد/شریک:{' '}
+                                    زون: {hub.zoneName ?? '-'} · واحد تجاری/حامی:{' '}
                                     {formatNumber(hub.partnerCount)} · نمایشگر:{' '}
                                     {formatNumber(hub.displayCount)} · ماموریت:{' '}
                                     {formatNumber(hub.missionCount)}
@@ -423,7 +423,7 @@ export default function VenueDashboard({
 
                 <section className="grid gap-4 xl:grid-cols-2">
                     <Panel
-                        title="خلاصه مدیریتی واحدها و شرکا"
+                        title="خلاصه مدیریتی واحدهای تجاری و حامیان"
                         description="نمای تجمیعی بر اساس محدوده؛ جزئیات مالی یا تصمیم تجاری هر واحد نمایش داده نمی‌شود."
                         isEmpty={partners.length === 0}
                     >
