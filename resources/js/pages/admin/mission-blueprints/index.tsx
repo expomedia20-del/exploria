@@ -485,7 +485,7 @@ function BlueprintSystemGuide() {
                         className="mt-3 h-8 text-xs"
                     >
                         <Link href="/admin/campaign-participants">
-                            اعضا و شرکای کمپین
+                            اعضا و نقش‌های اجرایی کمپین
                         </Link>
                     </Button>
                 </article>

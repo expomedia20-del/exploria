@@ -621,7 +621,7 @@ export default function Dashboard({
                                         </div>
                                         <p className="mt-1 text-sm text-muted-foreground">
                                             {redemption.partnerName ??
-                                                'شریک ثبت نشده'}{' '}
+                                                'واحد مرتبط ثبت نشده'}{' '}
                                             ·{' '}
                                             {redemption.visitorName ??
                                                 'کاربر ثبت نشده'}{' '}

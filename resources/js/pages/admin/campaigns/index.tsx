@@ -726,7 +726,7 @@ export default function CampaignRegistryIndex({
                                                     ),
                                                 ],
                                                 [
-                                                    'اعضا و شرکای کمپین',
+                                                    'اعضا و نقش‌های اجرایی کمپین',
                                                     campaignContextUrl(
                                                         '/admin/campaign-participants',
                                                         campaign,

@@ -133,7 +133,7 @@ export function CampaignContextNav({
                             )}
                         >
                             <UsersRound className="size-4" />
-                            اعضا و شرکای کمپین
+                            اعضا و نقش‌های اجرایی کمپین
                         </Link>
                     </Button>
                     <Button asChild variant="outline" size="sm">
