@@ -8,6 +8,7 @@ use App\Models\Campaign;
 use App\Models\MissionInstance;
 use App\Models\User;
 use App\Models\Visit;
+use App\Services\EcoParkOnlineGameService;
 use App\Services\MissionFlowService;
 use App\Services\SmartOffersService;
 use Illuminate\Http\Request;
@@ -22,8 +23,12 @@ class EcoParkTreasureGameController extends Controller
 
     private const BLUEPRINT_CODE = 'ecopark-online-treasure-map-game';
 
-    public function __invoke(Request $request, MissionFlowService $missionFlow, SmartOffersService $offers): Response
-    {
+    public function __invoke(
+        Request $request,
+        MissionFlowService $missionFlow,
+        SmartOffersService $offers,
+        EcoParkOnlineGameService $onlineGame,
+    ): Response {
         $campaign = $this->campaign();
         $user = $request->user();
         $visit = $user instanceof User && $campaign
@@ -36,6 +41,10 @@ class EcoParkTreasureGameController extends Controller
                 'entryQr' => $campaign ? $this->entryQr($campaign) : null,
                 'missionNodes' => $campaign ? $this->missionNodes($campaign) : [],
                 'gameOffers' => $offers->gameOffersForCampaign($campaign)->all(),
+                'definition' => $onlineGame->definition(),
+                'party' => $user instanceof User && $campaign
+                    ? $onlineGame->serializeParty($onlineGame->partyFor($user, $campaign), $user)
+                    : null,
                 'latestVisit' => $visit ? [
                     'id' => $visit->id,
                     'occurredAt' => $visit->occurred_at->toIso8601String(),
@@ -90,7 +99,8 @@ class EcoParkTreasureGameController extends Controller
     /** @return array<string, string|null>|null */
     private function entryQr(Campaign $campaign): ?array
     {
-        $qr = $campaign->qrCodes->first(fn ($qr): bool => $qr->isAvailableForLanding());
+        $qr = $campaign->qrCodes->first(fn ($qr): bool => $qr->isAvailableForLanding()
+            && data_get($qr->metadata, 'online_game_role', 'start') !== 'onsite_gate');
 
         if (! $qr) {
             return null;

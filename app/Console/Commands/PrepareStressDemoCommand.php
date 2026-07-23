@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Enums\RecordStatus;
 use App\Enums\UserRole;
+use App\Models\AdRequest;
 use App\Models\Campaign;
 use App\Models\CampaignParticipant;
 use App\Models\DisplayDevice;
@@ -63,6 +64,7 @@ class PrepareStressDemoCommand extends Command
             $foodHub = $this->hub($zone, 'foodcourt-family-hub', 'هاب فودکورت و خانواده', 'food_family');
             $scienceHub = $this->hub($zone, 'gonbad-mina-science-hub', 'هاب گنبد مینا و روایت علمی', 'science_story');
             $touchpoint = $this->touchpoint($entryHub);
+            $onsiteTouchpoint = $this->onsiteTouchpoint($entryHub);
 
             $this->completeVenueProfile($venue);
             $this->venueExecutiveScope($venue);
@@ -80,8 +82,9 @@ class PrepareStressDemoCommand extends Command
                 $this->participant($campaign, $partner);
             }
 
-            $this->qrCode($venue, $campaign, $touchpoint);
+            $this->qrCodes($venue, $campaign, $touchpoint, $onsiteTouchpoint);
             $this->partnerReward($campaign, $partners[0]);
+            $this->rewardedGameAd($campaign, $partners[2]);
             $proposal = $this->sponsorProposal($sponsors, $actor, $campaign, $venue, $partners->take(2)->values());
             $this->manualSponsorTrack($sponsors, $campaign, $venue, $partners[1]);
 
@@ -197,6 +200,21 @@ class PrepareStressDemoCommand extends Command
         );
     }
 
+    private function onsiteTouchpoint(Hub $hub): Touchpoint
+    {
+        return Touchpoint::query()->updateOrCreate(
+            ['hub_id' => $hub->id, 'code' => 'online-game-onsite-gate'],
+            [
+                'label' => 'دروازه حضور بازی اکسپلوریا',
+                'type' => 'qr_stand',
+                'owner_type' => 'venue',
+                'status' => RecordStatus::Active,
+                'install_notes' => 'QR دوم فقط در محل نصب می‌شود و مجوز حضور بازی آنلاین را یک‌بار مصرف می‌کند.',
+                'metadata' => ['is_demo' => true, 'stress_demo' => true, 'online_game_role' => 'onsite_gate'],
+            ],
+        );
+    }
+
     private function completeVenueProfile(Venue $venue): void
     {
         $metadata = $venue->metadata ?? [];
@@ -233,6 +251,8 @@ class PrepareStressDemoCommand extends Command
                     'is_demo' => true,
                     'stress_demo' => true,
                     'blueprint_code' => 'ecopark-online-treasure-map-game',
+                    'online_game_cycle_key' => 'launch-1405',
+                    'online_game_cycle_label' => 'دوره آغاز ۱۴۰۵',
                     'design_source' => 'venue_blueprint_recommendation',
                     'design_venue_id' => $venue->id,
                     'design_venue_code' => $venue->code,
@@ -308,8 +328,12 @@ class PrepareStressDemoCommand extends Command
         );
     }
 
-    private function qrCode(Venue $venue, Campaign $campaign, Touchpoint $touchpoint): void
-    {
+    private function qrCodes(
+        Venue $venue,
+        Campaign $campaign,
+        Touchpoint $touchpoint,
+        Touchpoint $onsiteTouchpoint,
+    ): void {
         QrCode::query()->updateOrCreate(
             ['code' => 'stress-demo-entry-qr-1405'],
             [
@@ -323,7 +347,24 @@ class PrepareStressDemoCommand extends Command
                 'valid_until' => now()->addMonths(6),
                 'max_scans_per_user_per_window' => 3,
                 'duplicate_window_seconds' => 120,
-                'metadata' => ['is_demo' => true, 'stress_demo' => true],
+                'metadata' => ['is_demo' => true, 'stress_demo' => true, 'online_game_role' => 'start'],
+            ],
+        );
+
+        QrCode::query()->updateOrCreate(
+            ['code' => 'stress-demo-onsite-gate-1405'],
+            [
+                'venue_id' => $venue->id,
+                'touchpoint_id' => $onsiteTouchpoint->id,
+                'campaign_id' => $campaign->id,
+                'destination_url' => url('/scan/stress-demo-onsite-gate-1405'),
+                'label' => 'QR دروازه حضور بازی اکسپلوریا',
+                'status' => RecordStatus::Active,
+                'valid_from' => now()->subDay(),
+                'valid_until' => now()->addMonths(6),
+                'max_scans_per_user_per_window' => 1,
+                'duplicate_window_seconds' => 300,
+                'metadata' => ['is_demo' => true, 'stress_demo' => true, 'online_game_role' => 'onsite_gate'],
             ],
         );
     }
@@ -348,6 +389,51 @@ class PrepareStressDemoCommand extends Command
                     'availability_status' => 'active',
                     'claim_condition' => 'mission_completion',
                 ],
+            ],
+        );
+    }
+
+    private function rewardedGameAd(Campaign $campaign, PartnerAccount $partner): void
+    {
+        $ad = AdRequest::query()->updateOrCreate(
+            ['code' => 'ecopark-rewarded-family-tip-1405'],
+            [
+                'venue_id' => $campaign->venue_id,
+                'partner_account_id' => $partner->id,
+                'title' => 'یک نکته کوتاه برای کاوش خانوادگی',
+                'body_copy' => 'با تقسیم نقش‌های نقشه‌خوان، نشانه‌یاب و ثبت‌کننده، هر عضو خانواده در کشف مسیر سهم واقعی پیدا می‌کند.',
+                'cta_text' => 'مشاهده نکته',
+                'target_url' => null,
+                'advertiser_type' => 'sponsor',
+                'ad_type' => 'rewarded_content',
+                'status' => 'approved',
+                'starts_at' => now()->subDay(),
+                'ends_at' => now()->addMonths(6),
+                'impression_cap' => 10000,
+                'click_cap' => 5000,
+                'metadata' => ['is_demo' => true, 'stress_demo' => true, 'rewarded_points' => 30],
+            ],
+        );
+
+        $ad->creatives()->updateOrCreate(
+            ['creative_type' => 'text_card'],
+            [
+                'headline' => 'کاوش بهتر با تقسیم نقش‌ها',
+                'body_copy' => 'یک محتوای ده‌ثانیه‌ای و اختیاری برای تشویق همکاری؛ بدون قفل‌کردن هیچ مرحله.',
+                'cta_text' => 'مشاهده اختیاری',
+                'status' => 'approved',
+                'metadata' => ['is_demo' => true, 'rewarded' => true],
+            ],
+        );
+
+        $ad->placements()->updateOrCreate(
+            ['placement_type' => 'post_mission'],
+            [
+                'status' => 'approved',
+                'starts_at' => now()->subDay(),
+                'ends_at' => now()->addMonths(6),
+                'priority' => 1,
+                'metadata' => ['is_demo' => true, 'rewarded' => true],
             ],
         );
     }

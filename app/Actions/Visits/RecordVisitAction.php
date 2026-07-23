@@ -10,6 +10,7 @@ use App\Models\QrCode;
 use App\Models\ScanEvent;
 use App\Models\User;
 use App\Models\Visit;
+use App\Services\EcoParkOnlineGameService;
 use App\Services\MissionFlowService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -20,6 +21,7 @@ class RecordVisitAction
         private readonly RecordQrScanEventAction $recordQrScan,
         private readonly MissionFlowService $missionFlow,
         private readonly RecordDomainEventAction $recordEvent,
+        private readonly EcoParkOnlineGameService $onlineGame,
     ) {}
 
     public function execute(
@@ -127,6 +129,8 @@ class RecordVisitAction
                 }
             }
         }
+
+        $this->onlineGame->redeemOnsiteVisit($user, $visit->loadMissing('qrCode'));
 
         return $visit;
     }

@@ -27,6 +27,7 @@ use App\Http\Controllers\Auth\OtpController;
 use App\Http\Controllers\ConsentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Display\DisplayAdvertisingController;
+use App\Http\Controllers\Games\EcoParkOnlineGameActionController;
 use App\Http\Controllers\Games\EcoParkTreasureGameController;
 use App\Http\Controllers\Hub\HubAdScheduleController;
 use App\Http\Controllers\Hub\HubManagerDashboardController;
@@ -67,6 +68,30 @@ Route::middleware('auth')->group(function () {
     Route::post('/participant/participation', [ParticipantDashboardController::class, 'startParticipation'])
         ->middleware('role:visitor')
         ->name('participant.participation.start');
+    Route::post('/games/ecopark-treasure/parties', [EcoParkOnlineGameActionController::class, 'create'])
+        ->middleware('role:visitor')
+        ->name('games.ecopark-treasure.parties.create');
+    Route::post('/games/ecopark-treasure/parties/join', [EcoParkOnlineGameActionController::class, 'join'])
+        ->middleware('role:visitor')
+        ->name('games.ecopark-treasure.parties.join');
+    Route::post('/games/ecopark-treasure/parties/{party}/route', [EcoParkOnlineGameActionController::class, 'selectRoute'])
+        ->middleware('role:visitor')
+        ->name('games.ecopark-treasure.parties.route');
+    Route::post('/games/ecopark-treasure/parties/{party}/hotspots', [EcoParkOnlineGameActionController::class, 'discoverHotspot'])
+        ->middleware('role:visitor')
+        ->name('games.ecopark-treasure.parties.hotspots');
+    Route::post('/games/ecopark-treasure/parties/{party}/clue', [EcoParkOnlineGameActionController::class, 'submitClue'])
+        ->middleware('role:visitor')
+        ->name('games.ecopark-treasure.parties.clue');
+    Route::post('/games/ecopark-treasure/parties/{party}/pass', [EcoParkOnlineGameActionController::class, 'issuePass'])
+        ->middleware('role:visitor')
+        ->name('games.ecopark-treasure.parties.pass');
+    Route::post('/games/ecopark-treasure/parties/{party}/sponsor-bonus/start', [EcoParkOnlineGameActionController::class, 'startSponsorBonus'])
+        ->middleware('role:visitor')
+        ->name('games.ecopark-treasure.parties.sponsor-bonus.start');
+    Route::post('/games/ecopark-treasure/parties/{party}/sponsor-bonus/complete', [EcoParkOnlineGameActionController::class, 'completeSponsorBonus'])
+        ->middleware('role:visitor')
+        ->name('games.ecopark-treasure.parties.sponsor-bonus.complete');
     Route::get('/partner/dashboard', [PartnerDashboardController::class, 'page'])
         ->middleware('role:admin,shop_partner')
         ->name('partner.dashboard');

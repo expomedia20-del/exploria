@@ -1,79 +1,100 @@
 import { Form, Head, Link } from '@inertiajs/react';
 import {
     BadgeCheck,
-    CheckCircle2,
+    Check,
+    ChevronLeft,
+    CircleDot,
+    Clock3,
     Compass,
+    Copy,
     Gift,
+    Home,
+    LoaderCircle,
     Lock,
+    Map,
     MapPin,
-    Play,
     QrCode,
     Route,
     ShieldCheck,
     Sparkles,
     Target,
-    Trophy,
+    TicketCheck,
+    UserRound,
+    UsersRound,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
-type MissionStatus =
-    | 'available'
-    | 'started'
-    | 'completed'
-    | 'locked'
-    | 'preview';
-
-type ServerMissionNode = {
-    id: string;
-    code: string;
+type Mode = {
+    key: 'individual' | 'family' | 'team';
     title: string;
-    place: string | null;
-    hubName: string | null;
-    touchpointLabel: string | null;
-    clue: string;
-    mission: string | null;
-    missionType: string;
-    triggerType: string;
-    completionEvidence: string | null;
-    reward: string | null;
-    points: number;
-    treasureName: string | null;
-    cycleStep: { index: number | null; label: string | null };
-    unlockMinPoints: number | null;
+    description: string;
 };
 
-type MissionItem = {
-    id: string;
-    code: string;
+type RouteOption = {
+    key: 'quick' | 'family' | 'explorer';
     title: string;
-    description: string | null;
-    completionEvidence: string;
-    successMessage: string | null;
-    cycleStep: { index: number | null; label: string | null };
-    status: Exclude<MissionStatus, 'preview'>;
-    isLocked: boolean;
-    canStart: boolean;
-    canComplete: boolean;
-    points: number;
-    missionType: string;
-    triggerType: string;
-    hubName: string | null;
-    touchpointLabel: string | null;
-    treasureName: string | null;
+    duration: string;
+    description: string;
 };
 
-type UserRewardItem = {
+type Hotspot = {
+    key: string;
+    title: string;
+    hint: string;
+    x: number;
+    y: number;
+};
+
+type Clue = {
+    question: string;
+    choices: { key: string; label: string }[];
+};
+
+type StepDefinition = {
+    index: number;
+    title: string;
+    instruction: string;
+    verification: string;
+};
+
+type PartyStep = {
+    index: number;
+    status: 'locked' | 'available' | 'completed';
+    points: number;
+    attempts: number;
+    metadata: Record<string, unknown> | null;
+};
+
+type Party = {
     id: string;
-    status: string;
-    redemption: {
-        redemptionCode: string;
-        status: string;
-        partnerName: string | null;
+    mode: Mode['key'];
+    name: string | null;
+    inviteCode: string | null;
+    routeKey: RouteOption['key'] | null;
+    status: 'active' | 'ready_for_visit' | 'completed';
+    score: number;
+    isLeader: boolean;
+    collaborationBonusAwarded: boolean;
+    members: {
+        id: string;
+        displayName: string;
+        memberType: 'registered' | 'companion';
+        role: 'leader' | 'member' | 'companion';
+        isViewer: boolean;
+    }[];
+    steps: PartyStep[];
+    foundHotspots: string[];
+    entryPass: {
+        code: string;
+        status: 'active' | 'redeemed' | 'expired';
+        expiresAt: string;
     } | null;
-    reward: {
-        name: string;
-        partnerName: string | null;
-    } | null;
+    bonusClaims: {
+        adRequestId: string;
+        status: 'started' | 'completed';
+        points: number;
+        startedAt: string;
+    }[];
 };
 
 type GameOffer = {
@@ -84,806 +105,1089 @@ type GameOffer = {
     partnerName: string | null;
     bodyCopy: string | null;
     ctaText: string;
-    targetUrl: string | null;
     assetUrl: string | null;
-    placementType: string | null;
     points: number | null;
-    terms: string | null;
-};
-
-type MissionFlow = {
-    stats: {
-        totalPoints: number;
-        completedMissions: number;
-        availableMissions: number;
-        rewards: number;
-    };
-    missions: MissionItem[];
-    rewards: UserRewardItem[];
-};
-
-type GamePayload = {
-    campaign: {
-        id: string;
-        code: string;
-        name: string;
-        venueName: string | null;
-        city: string | null;
-        scanUrl: string | null;
-    } | null;
-    entryQr: {
-        code: string;
-        label: string | null;
-        scanUrl: string;
-    } | null;
-    missionNodes: ServerMissionNode[];
-    gameOffers: GameOffer[];
-    latestVisit: {
-        id: string;
-        occurredAt: string;
-        showUrl: string;
-    } | null;
-    missionFlow: MissionFlow | null;
-    visitorState: {
-        isAuthenticated: boolean;
-        hasLinkedVisit: boolean;
-        participantDashboardUrl: string | null;
-    };
-};
-
-type JourneyNode = {
-    id: string;
-    code: string;
-    title: string;
-    step: number;
-    stepLabel: string | null;
-    place: string;
-    hubName: string | null;
-    touchpointLabel: string | null;
-    description: string;
-    completionEvidence: string;
-    reward: string;
-    points: number;
-    missionType: string;
-    triggerType: string;
-    status: MissionStatus;
-    canStart: boolean;
-    canComplete: boolean;
-    gameOffer: GameOffer | null;
 };
 
 type Props = {
-    game: GamePayload;
-};
-
-const statusLabels: Record<MissionStatus, string> = {
-    available: 'مرحله جاری',
-    started: 'در حال انجام',
-    completed: 'تکمیل‌شده',
-    locked: 'مرحله آینده',
-    preview: 'پیش‌نمایش',
-};
-
-function formatFa(value: number) {
-    return value.toLocaleString('fa-IR');
-}
-
-function offerForIndex(offers: GameOffer[], index: number) {
-    if (offers.length === 0) {
-        return null;
-    }
-
-    return offers[index % offers.length];
-}
-
-function buildJourneyNodes(game: GamePayload): JourneyNode[] {
-    const progressByCode = new Map(
-        (game.missionFlow?.missions ?? []).map((mission) => [
-            mission.code,
-            mission,
-        ]),
-    );
-
-    return game.missionNodes.map((node, index) => {
-        const progress = progressByCode.get(node.code);
-        const touchpointLabel =
-            progress?.touchpointLabel ?? node.touchpointLabel;
-        const hubName = progress?.hubName ?? node.hubName;
-        const step =
-            progress?.cycleStep.index ?? node.cycleStep.index ?? index + 1;
-
-        return {
-            id: node.id,
-            code: node.code,
-            title: progress?.title ?? node.title,
-            step,
-            stepLabel:
-                progress?.cycleStep.label ?? node.cycleStep.label ?? null,
-            place:
-                touchpointLabel ??
-                hubName ??
-                node.place ??
-                game.campaign?.venueName ??
-                'مسیر کمپین',
-            hubName,
-            touchpointLabel,
-            description:
-                progress?.description ??
-                node.clue ??
-                node.mission ??
-                'راهنمای این مرحله در همین صفحه نمایش داده می‌شود.',
-            completionEvidence:
-                progress?.completionEvidence ??
-                node.completionEvidence ??
-                'انجام اقدام مرحله و ثبت آن در اکسپلوریا',
-            reward:
-                progress?.successMessage ??
-                node.reward ??
-                (node.treasureName
-                    ? `باز شدن گنج: ${node.treasureName}`
-                    : `${formatFa(node.points)} امتیاز مسیر`),
-            points: progress?.points ?? node.points,
-            missionType: progress?.missionType ?? node.missionType,
-            triggerType: progress?.triggerType ?? node.triggerType,
-            status: progress?.status ?? 'preview',
-            canStart: progress?.canStart ?? false,
-            canComplete: progress?.canComplete ?? false,
-            gameOffer: offerForIndex(game.gameOffers, index),
+    game: {
+        campaign: {
+            id: string;
+            name: string;
+            venueName: string | null;
+            city: string | null;
+        } | null;
+        entryQr: { code: string; label: string | null; scanUrl: string } | null;
+        latestVisit: { id: string; occurredAt: string; showUrl: string } | null;
+        visitorState: {
+            isAuthenticated: boolean;
+            hasLinkedVisit: boolean;
+            participantDashboardUrl: string | null;
         };
-    });
-}
+        definition: {
+            modes: Mode[];
+            routes: RouteOption[];
+            hotspots: Hotspot[];
+            clues: Record<RouteOption['key'], Clue>;
+            steps: StepDefinition[];
+            rules: string[];
+        };
+        party: Party | null;
+        gameOffers: GameOffer[];
+    };
+};
 
-function locationInstruction(node: JourneyNode) {
-    if (node.touchpointLabel && node.hubName) {
-        return `${node.hubName}، ${node.touchpointLabel}`;
-    }
+const modeIcons = {
+    individual: UserRound,
+    family: Home,
+    team: UsersRound,
+};
 
-    return node.touchpointLabel ?? node.hubName ?? node.place;
-}
+const faNumber = (value: number) => value.toLocaleString('fa-IR');
 
-export default function EcoParkTreasureGame({ game }: Props) {
-    const nodes = useMemo(() => buildJourneyNodes(game), [game]);
-    const currentNode =
-        nodes.find(
-            (node) => node.status === 'available' || node.status === 'started',
-        ) ?? null;
-    const allCompleted =
-        nodes.length > 0 && nodes.every((node) => node.status === 'completed');
-    const [reviewedNodeId, setReviewedNodeId] = useState<string | null>(null);
-    const reviewedNode = reviewedNodeId
-        ? (nodes.find(
-              (node) =>
-                  node.id === reviewedNodeId && node.status === 'completed',
-          ) ?? null)
-        : null;
-    const displayNode =
-        reviewedNode ??
-        currentNode ??
-        nodes.findLast((node) => node.status === 'completed') ??
-        nodes[0] ??
-        null;
-    const completedCount =
-        game.missionFlow?.stats.completedMissions ??
-        nodes.filter((node) => node.status === 'completed').length;
-    const progress =
-        nodes.length > 0
-            ? Math.round((completedCount / nodes.length) * 100)
-            : 0;
-    const hasLinkedVisit =
-        game.visitorState.hasLinkedVisit && game.latestVisit !== null;
-
-    return (
-        <>
-            <Head title="مسیر گنج اکوپارک" />
-            <main className="min-h-svh bg-[#f6f7f2] text-zinc-950" dir="rtl">
-                <header className="border-b border-zinc-200 bg-white/95">
-                    <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
-                        <div>
-                            <p className="text-xs font-semibold tracking-[0.18em] text-emerald-700">
-                                EXPLORIA
-                            </p>
-                            <p className="mt-1 text-sm font-semibold">
-                                {game.campaign?.venueName ?? 'اکوپارک'}
-                            </p>
-                        </div>
-                        {game.visitorState.participantDashboardUrl ? (
-                            <Link
-                                href={game.visitorState.participantDashboardUrl}
-                                className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
-                            >
-                                <Compass className="size-4" />
-                                پنل من
-                            </Link>
-                        ) : null}
-                    </div>
-                </header>
-
-                <div className="mx-auto grid max-w-6xl gap-5 px-4 py-5 sm:px-6 sm:py-7">
-                    <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
-                        <div className="grid lg:grid-cols-[1.1fr_0.9fr]">
-                            <div className="p-5 sm:p-7">
-                                <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-900">
-                                    <Route className="size-4" />
-                                    مسیر رسمی کمپین
-                                </div>
-                                <h1 className="mt-4 text-2xl leading-10 font-bold sm:text-4xl">
-                                    نقشه گنج اکوپارک
-                                </h1>
-                                <p className="mt-3 max-w-2xl text-sm leading-7 text-zinc-600 sm:text-base sm:leading-8">
-                                    در هر لحظه فقط یک مرحله فعال است. کارت «کار
-                                    بعدی شما» مکان، اقدام لازم و روش تأیید همان
-                                    مرحله را نشان می‌دهد.
-                                </p>
-                            </div>
-                            <div className="relative min-h-44 overflow-hidden bg-zinc-900 lg:min-h-full">
-                                <img
-                                    src="/images/ecopark/hero.webp"
-                                    alt="نمای اکوپارک"
-                                    className="absolute inset-0 h-full w-full object-cover"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-l from-emerald-950/75 to-zinc-950/35" />
-                                <div className="relative flex h-full min-h-44 items-end p-5 text-white">
-                                    <div className="grid grid-cols-3 gap-5">
-                                        <div>
-                                            <p className="text-xs text-white/70">
-                                                پیشرفت
-                                            </p>
-                                            <p className="mt-1 text-xl font-bold">
-                                                {formatFa(progress)}٪
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <p className="text-xs text-white/70">
-                                                مرحله
-                                            </p>
-                                            <p className="mt-1 text-xl font-bold">
-                                                {formatFa(completedCount)} /{' '}
-                                                {formatFa(nodes.length)}
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <p className="text-xs text-white/70">
-                                                امتیاز
-                                            </p>
-                                            <p className="mt-1 text-xl font-bold">
-                                                {formatFa(
-                                                    game.missionFlow?.stats
-                                                        .totalPoints ?? 0,
-                                                )}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    {!hasLinkedVisit ? (
-                        <GuestStart game={game} nodes={nodes} />
-                    ) : (
-                        <>
-                            <section className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr] lg:items-start">
-                                {allCompleted ? (
-                                    <JourneyCompleted game={game} />
-                                ) : displayNode ? (
-                                    <CurrentMissionCard
-                                        game={game}
-                                        node={displayNode}
-                                        currentNode={currentNode}
-                                        onReturnToCurrent={() =>
-                                            setReviewedNodeId(null)
-                                        }
-                                    />
-                                ) : null}
-
-                                <JourneyMap
-                                    nodes={nodes}
-                                    currentNode={currentNode}
-                                    selectedNode={displayNode}
-                                    onSelectCompleted={setReviewedNodeId}
-                                />
-                            </section>
-
-                            <RewardWallet
-                                rewards={game.missionFlow?.rewards ?? []}
-                            />
-                        </>
-                    )}
-                </div>
-            </main>
-        </>
-    );
-}
-
-function GuestStart({
-    game,
-    nodes,
+function SubmitButton({
+    processing,
+    disabled = false,
+    children,
+    className = '',
 }: {
-    game: GamePayload;
-    nodes: JourneyNode[];
+    processing: boolean;
+    disabled?: boolean;
+    children: React.ReactNode;
+    className?: string;
 }) {
     return (
-        <section className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
-            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 sm:p-7">
-                <div className="flex size-11 items-center justify-center rounded-xl bg-emerald-700 text-white">
-                    <QrCode className="size-6" />
+        <button
+            type="submit"
+            disabled={processing || disabled}
+            className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
+        >
+            {processing ? (
+                <LoaderCircle className="size-4 animate-spin" />
+            ) : (
+                <ChevronLeft className="size-4" />
+            )}
+            {children}
+        </button>
+    );
+}
+
+function FieldError({ message }: { message?: string }) {
+    return message ? (
+        <p className="mt-2 text-xs font-medium text-rose-700">{message}</p>
+    ) : null;
+}
+
+function JourneyProgress({
+    steps,
+    definitions,
+}: {
+    steps: PartyStep[];
+    definitions: StepDefinition[];
+}) {
+    return (
+        <ol className="grid gap-2 lg:gap-3">
+            {definitions.map((definition) => {
+                const progress = steps.find(
+                    (item) => item.index === definition.index,
+                );
+                const status = progress?.status ?? 'locked';
+                const Icon =
+                    status === 'completed'
+                        ? Check
+                        : status === 'available'
+                          ? CircleDot
+                          : Lock;
+
+                return (
+                    <li
+                        key={definition.index}
+                        className={`flex items-center gap-3 rounded-2xl border p-3 transition ${
+                            status === 'available'
+                                ? 'border-slate-950 bg-slate-950 text-white shadow-lg'
+                                : status === 'completed'
+                                  ? 'border-emerald-200 bg-emerald-50 text-emerald-950'
+                                  : 'border-slate-200 bg-white/70 text-slate-400'
+                        }`}
+                    >
+                        <span
+                            className={`grid size-10 shrink-0 place-items-center rounded-xl ${
+                                status === 'available'
+                                    ? 'bg-amber-300 text-slate-950'
+                                    : status === 'completed'
+                                      ? 'bg-emerald-600 text-white'
+                                      : 'bg-slate-100'
+                            }`}
+                        >
+                            <Icon className="size-5" />
+                        </span>
+                        <span className="min-w-0">
+                            <span className="block text-xs opacity-70">
+                                مرحله {faNumber(definition.index)}
+                            </span>
+                            <span className="block truncate text-sm font-bold">
+                                {definition.title}
+                            </span>
+                        </span>
+                        {progress?.points ? (
+                            <span className="mr-auto text-xs font-bold">
+                                +{faNumber(progress.points)}
+                            </span>
+                        ) : null}
+                    </li>
+                );
+            })}
+        </ol>
+    );
+}
+
+function ParticipationSetup({ game }: { game: Props['game'] }) {
+    const [mode, setMode] = useState<Mode['key']>('individual');
+    const [showJoin, setShowJoin] = useState(false);
+
+    if (!game.visitorState.isAuthenticated) {
+        return (
+            <section className="rounded-[2rem] border border-emerald-200 bg-white p-6 shadow-xl shadow-emerald-950/5 sm:p-10">
+                <div className="mx-auto max-w-xl text-center">
+                    <span className="mx-auto grid size-16 place-items-center rounded-2xl bg-emerald-100 text-emerald-800">
+                        <QrCode className="size-8" />
+                    </span>
+                    <h2 className="mt-5 text-2xl font-black">
+                        ورود امن، نقطه شروع بازی است
+                    </h2>
+                    <p className="mt-3 leading-8 text-slate-600">
+                        QR شروع را اسکن کنید و با شماره موبایل وارد شوید. انتخاب
+                        حالت بازی در گام بعد انجام می‌شود و هنوز هیچ چالشی
+                        خودکار تکمیل نخواهد شد.
+                    </p>
+                    {game.entryQr ? (
+                        <Link
+                            href={game.entryQr.scanUrl}
+                            className="mt-6 inline-flex min-h-12 items-center gap-2 rounded-2xl bg-slate-950 px-6 font-bold text-white hover:bg-emerald-700"
+                        >
+                            <QrCode className="size-5" />
+                            ورود با QR شروع
+                        </Link>
+                    ) : (
+                        <p className="mt-6 rounded-2xl bg-amber-50 p-4 text-sm text-amber-900">
+                            QR شروع این کمپین هنوز فعال نشده است.
+                        </p>
+                    )}
                 </div>
-                <h2 className="mt-4 text-xl font-bold">
-                    برای شروع، QR ورودی را اسکن کنید
+            </section>
+        );
+    }
+
+    if (!game.latestVisit) {
+        return (
+            <section className="rounded-[2rem] border border-amber-200 bg-amber-50 p-8 text-center">
+                <QrCode className="mx-auto size-10 text-amber-700" />
+                <h2 className="mt-4 text-xl font-black">
+                    ابتدا QR شروع کمپین را اسکن کنید
                 </h2>
-                <p className="mt-2 text-sm leading-7 text-emerald-950/75">
-                    پیشرفت و امتیاز فقط پس از ثبت یک Visit معتبر ذخیره می‌شود.
-                    QR در «{game.entryQr?.label ?? 'استند ورودی اصلی'}» قرار
-                    دارد.
+                <p className="mt-2 text-sm leading-7 text-amber-900">
+                    ورود حساب شما معتبر است، اما هنوز بازدیدی به این کمپین متصل
+                    نشده؛ اسکن QR شروع تنها راه بازشدن مرحله اول است.
                 </p>
                 {game.entryQr ? (
                     <Link
                         href={game.entryQr.scanUrl}
-                        className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-700 px-5 text-sm font-bold text-white hover:bg-emerald-800 sm:w-auto"
+                        className="mt-5 inline-flex rounded-xl bg-amber-900 px-5 py-3 text-sm font-bold text-white"
                     >
-                        <QrCode className="size-5" />
-                        ورود با QR رسمی کمپین
+                        اسکن QR شروع
                     </Link>
-                ) : (
-                    <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm leading-7 text-amber-950">
-                        QR فعال برای این کمپین در دسترس نیست. از سفیر مستقر در
-                        ورودی کمک بگیرید.
-                    </div>
-                )}
+                ) : null}
+            </section>
+        );
+    }
+
+    return (
+        <section className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-xl shadow-slate-950/5 sm:p-8">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                    <span className="text-xs font-bold text-emerald-700">
+                        مرحله ۱ از ۵
+                    </span>
+                    <h2 className="mt-1 text-2xl font-black">
+                        با چه کسانی بازی می‌کنید؟
+                    </h2>
+                    <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-600">
+                        هر سه حالت، پنج چالش یکسان دارند. تفاوت فقط در شیوه
+                        همکاری و ثبت پیشرفت مشترک است.
+                    </p>
+                </div>
+                <button
+                    type="button"
+                    onClick={() => setShowJoin((value) => !value)}
+                    className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-bold hover:border-emerald-500"
+                >
+                    {showJoin ? 'ساخت گروه جدید' : 'کد دعوت دارم'}
+                </button>
             </div>
 
-            <div className="rounded-2xl border border-zinc-200 bg-white p-5 sm:p-7">
-                <h2 className="font-bold">پیش‌نمایش مراحل</h2>
-                <p className="mt-2 text-sm leading-7 text-zinc-600">
-                    این فهرست فقط برای آشنایی است و هیچ مرحله‌ای را تکمیل
-                    نمی‌کند.
-                </p>
-                <div className="mt-4 grid gap-2">
-                    {nodes.map((node) => (
-                        <div
-                            key={node.id}
-                            className="flex items-center gap-3 rounded-xl bg-zinc-50 p-3"
-                        >
-                            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white text-sm font-bold shadow-sm">
-                                {formatFa(node.step)}
-                            </span>
-                            <div>
-                                <p className="text-sm font-semibold">
-                                    {node.title}
-                                </p>
-                                <p className="mt-1 text-xs text-zinc-500">
-                                    {node.place}
-                                </p>
-                            </div>
+            {showJoin ? (
+                <Form
+                    action="/games/ecopark-treasure/parties/join"
+                    method="post"
+                    options={{ preserveScroll: true }}
+                    className="mt-7 rounded-2xl bg-slate-50 p-5"
+                >
+                    {({ processing, errors }) => (
+                        <div className="mx-auto max-w-md">
+                            <label
+                                htmlFor="invite_code"
+                                className="text-sm font-bold"
+                            >
+                                کد ۶ حرفی دعوت تیم
+                            </label>
+                            <input
+                                id="invite_code"
+                                name="invite_code"
+                                maxLength={6}
+                                dir="ltr"
+                                placeholder="AB12CD"
+                                className="mt-2 h-12 w-full rounded-xl border border-slate-300 px-4 text-center text-lg font-black tracking-[0.25em] uppercase outline-none focus:border-emerald-500"
+                            />
+                            <FieldError message={errors.invite_code} />
+                            <SubmitButton
+                                processing={processing}
+                                className="mt-4 w-full"
+                            >
+                                پیوستن به تیم
+                            </SubmitButton>
                         </div>
-                    ))}
-                </div>
-            </div>
+                    )}
+                </Form>
+            ) : (
+                <Form
+                    action="/games/ecopark-treasure/parties"
+                    method="post"
+                    options={{ preserveScroll: true }}
+                    className="mt-7"
+                >
+                    {({ processing, errors }) => (
+                        <>
+                            <input
+                                type="hidden"
+                                name="visit_id"
+                                value={game.latestVisit?.id}
+                            />
+                            <input type="hidden" name="mode" value={mode} />
+                            <div className="grid gap-3 md:grid-cols-3">
+                                {game.definition.modes.map((item) => {
+                                    const Icon = modeIcons[item.key];
+                                    const selected = mode === item.key;
+
+                                    return (
+                                        <button
+                                            key={item.key}
+                                            type="button"
+                                            onClick={() => setMode(item.key)}
+                                            className={`rounded-2xl border p-5 text-right transition ${
+                                                selected
+                                                    ? 'border-emerald-600 bg-emerald-50 ring-2 ring-emerald-100'
+                                                    : 'border-slate-200 hover:border-slate-400'
+                                            }`}
+                                        >
+                                            <span className="flex items-center gap-3">
+                                                <span
+                                                    className={`grid size-11 place-items-center rounded-xl ${selected ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-700'}`}
+                                                >
+                                                    <Icon className="size-5" />
+                                                </span>
+                                                <strong>{item.title}</strong>
+                                            </span>
+                                            <span className="mt-4 block text-sm leading-7 text-slate-600">
+                                                {item.description}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            <FieldError message={errors.mode} />
+
+                            {mode !== 'individual' ? (
+                                <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                                    <label className="grid gap-2 text-sm font-bold">
+                                        نام{' '}
+                                        {mode === 'family' ? 'خانواده' : 'تیم'}
+                                        <input
+                                            name="name"
+                                            placeholder={
+                                                mode === 'family'
+                                                    ? 'مثلاً خانواده کاوشگر'
+                                                    : 'مثلاً تیم ستاره شمال'
+                                            }
+                                            className="h-12 rounded-xl border border-slate-300 px-4 font-normal outline-none focus:border-emerald-500"
+                                        />
+                                        <FieldError message={errors.name} />
+                                    </label>
+                                    {mode === 'family' ? (
+                                        <label className="grid gap-2 text-sm font-bold">
+                                            تعداد همراهان
+                                            <select
+                                                name="companion_count"
+                                                defaultValue="2"
+                                                className="h-12 rounded-xl border border-slate-300 bg-white px-4 font-normal"
+                                            >
+                                                {[1, 2, 3, 4, 5].map(
+                                                    (count) => (
+                                                        <option
+                                                            key={count}
+                                                            value={count}
+                                                        >
+                                                            {faNumber(count)}{' '}
+                                                            همراه
+                                                        </option>
+                                                    ),
+                                                )}
+                                            </select>
+                                            <FieldError
+                                                message={errors.companion_count}
+                                            />
+                                        </label>
+                                    ) : (
+                                        <p className="self-end rounded-xl bg-sky-50 p-3 text-xs leading-6 text-sky-900">
+                                            پس از ساخت، کد دعوت می‌گیرید. حداکثر
+                                            ۸ حساب می‌توانند عضو تیم شوند.
+                                        </p>
+                                    )}
+                                </div>
+                            ) : null}
+
+                            <div className="mt-6 flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
+                                <p className="text-xs leading-6 text-slate-500">
+                                    این انتخاب برای مشارکت امتیازدار همین دوره
+                                    ثبت می‌شود.
+                                </p>
+                                <SubmitButton
+                                    processing={processing}
+                                    className="sm:min-w-52"
+                                >
+                                    ساخت مسیر و شروع
+                                </SubmitButton>
+                            </div>
+                        </>
+                    )}
+                </Form>
+            )}
         </section>
     );
 }
 
-function CurrentMissionCard({
+function RouteChallenge({
     game,
-    node,
-    currentNode,
-    onReturnToCurrent,
+    party,
 }: {
-    game: GamePayload;
-    node: JourneyNode;
-    currentNode: JourneyNode | null;
-    onReturnToCurrent: () => void;
+    game: Props['game'];
+    party: Party;
 }) {
-    const isReviewingCompleted =
-        node.status === 'completed' && currentNode?.id !== node.id;
+    return (
+        <div className="grid gap-4 md:grid-cols-3">
+            {game.definition.routes.map((routeOption) => (
+                <Form
+                    key={routeOption.key}
+                    action={`/games/ecopark-treasure/parties/${party.id}/route`}
+                    method="post"
+                    options={{ preserveScroll: true }}
+                >
+                    {({ processing, errors }) => (
+                        <div className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-5 hover:border-emerald-400">
+                            <input
+                                type="hidden"
+                                name="route_key"
+                                value={routeOption.key}
+                            />
+                            <span className="flex items-center justify-between">
+                                <Route className="size-6 text-emerald-700" />
+                                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold">
+                                    {routeOption.duration}
+                                </span>
+                            </span>
+                            <h3 className="mt-5 text-lg font-black">
+                                {routeOption.title}
+                            </h3>
+                            <p className="mt-2 flex-1 text-sm leading-7 text-slate-600">
+                                {routeOption.description}
+                            </p>
+                            <FieldError message={errors.route_key} />
+                            <SubmitButton
+                                processing={processing}
+                                className="mt-5 w-full"
+                            >
+                                انتخاب این مسیر
+                            </SubmitButton>
+                        </div>
+                    )}
+                </Form>
+            ))}
+        </div>
+    );
+}
+
+function MapChallenge({ game, party }: { game: Props['game']; party: Party }) {
+    const [contributor, setContributor] = useState(
+        party.members.find((member) => member.isViewer)?.id ??
+            party.members[0]?.id,
+    );
 
     return (
-        <article className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
-            <div
-                className={`border-b p-5 sm:p-6 ${
-                    node.status === 'completed'
-                        ? 'border-emerald-200 bg-emerald-50'
-                        : 'border-amber-200 bg-amber-50'
-                }`}
-            >
-                <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="grid gap-5 lg:grid-cols-[1fr_18rem]">
+            <div className="relative min-h-[25rem] overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-950 via-teal-900 to-slate-950 p-5 text-white shadow-inner">
+                <div className="absolute inset-0 [background-image:radial-gradient(circle_at_center,white_1px,transparent_1px)] [background-size:24px_24px] opacity-20" />
+                <div className="relative z-10 flex items-start justify-between">
                     <div>
-                        <p className="text-xs font-semibold text-zinc-600">
-                            {node.status === 'completed'
-                                ? `مرحله ${formatFa(node.step)}`
-                                : 'کار بعدی شما'}
-                        </p>
-                        <h2 className="mt-1 text-xl leading-8 font-bold sm:text-2xl">
-                            {node.title}
-                        </h2>
+                        <p className="text-xs text-emerald-200">نقشه آنلاین</p>
+                        <h3 className="mt-1 text-xl font-black">
+                            سه نشانه پنهان را پیدا کنید
+                        </h3>
                     </div>
-                    <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-semibold shadow-sm">
-                        {node.status === 'completed' ? (
-                            <CheckCircle2 className="size-4 text-emerald-700" />
-                        ) : (
-                            <Target className="size-4 text-amber-700" />
-                        )}
-                        {statusLabels[node.status]}
+                    <span className="rounded-full bg-white/10 px-3 py-1 text-xs backdrop-blur">
+                        {faNumber(party.foundHotspots.length)} از ۳
                     </span>
                 </div>
-            </div>
 
-            <div className="grid gap-4 p-5 sm:p-6">
-                <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4">
-                    <div className="flex items-start gap-3">
-                        <MapPin className="mt-0.5 size-5 shrink-0 text-emerald-700" />
-                        <div>
-                            <p className="text-xs font-semibold text-emerald-800">
-                                کجا برویم؟
-                            </p>
-                            <p className="mt-1 font-bold text-emerald-950">
-                                {locationInstruction(node)}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-xl border border-zinc-200 p-4">
-                        <div className="flex items-center gap-2 text-sm font-bold">
-                            <Route className="size-4 text-sky-700" />
-                            چه کاری انجام دهیم؟
-                        </div>
-                        <p className="mt-2 text-sm leading-7 text-zinc-600">
-                            {node.description}
-                        </p>
-                    </div>
-                    <div className="rounded-xl border border-zinc-200 p-4">
-                        <div className="flex items-center gap-2 text-sm font-bold">
-                            <ShieldCheck className="size-4 text-violet-700" />
-                            چگونه تأیید می‌شود؟
-                        </div>
-                        <p className="mt-2 text-sm leading-7 text-zinc-600">
-                            {node.completionEvidence}
-                        </p>
-                    </div>
-                </div>
-
-                <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
-                    <Gift className="mt-0.5 size-5 shrink-0 text-amber-700" />
-                    <div>
-                        <p className="text-xs font-semibold text-amber-800">
-                            پاداش این مرحله
-                        </p>
-                        <p className="mt-1 text-sm font-bold text-amber-950">
-                            {node.reward} · {formatFa(node.points)} امتیاز
-                        </p>
-                    </div>
-                </div>
-
-                {node.status === 'completed' && node.gameOffer ? (
-                    <CompletedOffer offer={node.gameOffer} />
-                ) : null}
-
-                <div className="border-t border-zinc-200 pt-4">
-                    {isReviewingCompleted && currentNode ? (
-                        <button
-                            type="button"
-                            onClick={onReturnToCurrent}
-                            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-zinc-950 px-5 text-sm font-bold text-white hover:bg-zinc-800 sm:w-auto"
-                        >
-                            <Play className="size-5" />
-                            ادامه مرحله {formatFa(currentNode.step)}
-                        </button>
-                    ) : (
-                        <MissionPrimaryAction game={game} node={node} />
-                    )}
-                </div>
-            </div>
-        </article>
-    );
-}
-
-function MissionPrimaryAction({
-    game,
-    node,
-}: {
-    game: GamePayload;
-    node: JourneyNode;
-}) {
-    if (node.status === 'completed') {
-        return (
-            <div className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-emerald-100 px-4 text-sm font-bold text-emerald-900">
-                <CheckCircle2 className="size-5" />
-                این مرحله تکمیل شده است
-            </div>
-        );
-    }
-
-    if (node.status === 'locked' || node.status === 'preview') {
-        return (
-            <div className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-zinc-100 px-4 text-sm font-bold text-zinc-600">
-                <Lock className="size-5" />
-                ابتدا مرحله قبلی را کامل کنید
-            </div>
-        );
-    }
-
-    if (node.triggerType === 'qr_scan') {
-        if (node.code === 'scan-entry-qr' && game.entryQr) {
-            return (
-                <Link
-                    href={game.entryQr.scanUrl}
-                    className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-zinc-950 px-5 text-sm font-bold text-white hover:bg-zinc-800 sm:w-auto"
-                >
-                    <QrCode className="size-5" />
-                    اسکن QR همین نقطه
-                </Link>
-            );
-        }
-
-        return (
-            <div className="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm leading-7 text-sky-950">
-                QR نصب‌شده در «{node.place}» را با دوربین گوشی اسکن کنید؛ این
-                مرحله با دکمه دستی تکمیل نمی‌شود.
-            </div>
-        );
-    }
-
-    if (node.triggerType === 'admin_approval') {
-        if (node.status === 'started') {
-            return (
-                <div className="rounded-xl border border-violet-200 bg-violet-50 p-4 text-sm leading-7 text-violet-950">
-                    درخواست شما ثبت شده و این مرحله پس از بررسی مجری کمپین تکمیل
-                    می‌شود.
-                </div>
-            );
-        }
-
-        return (
-            <Form
-                action={`/visits/${game.latestVisit?.id}/missions/${node.id}/start`}
-                method="post"
-            >
-                {({ processing }) => (
-                    <button
-                        type="submit"
-                        disabled={processing}
-                        className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-violet-700 px-5 text-sm font-bold text-white hover:bg-violet-800 disabled:opacity-60 sm:w-auto"
-                    >
-                        <BadgeCheck className="size-5" />
-                        {processing
-                            ? 'در حال ثبت...'
-                            : 'ارسال مرحله برای تأیید مجری'}
-                    </button>
-                )}
-            </Form>
-        );
-    }
-
-    const actionLabel =
-        node.triggerType === 'manual_check'
-            ? 'راهنمای مسیر را پیدا کردم'
-            : node.triggerType === 'content_complete'
-              ? 'روایت این نقطه را مشاهده کردم'
-              : node.status === 'available'
-                ? 'شروع این مرحله'
-                : 'ثبت تکمیل مرحله';
-    const action =
-        node.status === 'available' &&
-        !['manual_check', 'content_complete'].includes(node.triggerType)
-            ? 'start'
-            : 'complete';
-
-    return (
-        <Form
-            action={`/visits/${game.latestVisit?.id}/missions/${node.id}/${action}`}
-            method="post"
-        >
-            {({ processing }) => (
-                <button
-                    type="submit"
-                    disabled={
-                        processing ||
-                        (action === 'complete' && !node.canComplete)
-                    }
-                    className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-zinc-950 px-5 text-sm font-bold text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-                >
-                    {action === 'start' ? (
-                        <Play className="size-5" />
-                    ) : (
-                        <BadgeCheck className="size-5" />
-                    )}
-                    {processing ? 'در حال ثبت...' : actionLabel}
-                </button>
-            )}
-        </Form>
-    );
-}
-
-function JourneyMap({
-    nodes,
-    currentNode,
-    selectedNode,
-    onSelectCompleted,
-}: {
-    nodes: JourneyNode[];
-    currentNode: JourneyNode | null;
-    selectedNode: JourneyNode | null;
-    onSelectCompleted: (id: string | null) => void;
-}) {
-    return (
-        <aside className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
-            <div className="flex items-center gap-2">
-                <Route className="size-5 text-emerald-700" />
-                <h2 className="font-bold">نقشه پیشرفت</h2>
-            </div>
-            <p className="mt-2 text-sm leading-7 text-zinc-600">
-                فقط مرحله جاری قابل انجام است. مراحل آینده پس از تکمیل مرحله
-                قبلی باز می‌شوند.
-            </p>
-
-            <div className="mt-5 grid gap-3">
-                {nodes.map((node, index) => {
-                    const isCurrent = currentNode?.id === node.id;
-                    const isSelected = selectedNode?.id === node.id;
-                    const canReview = node.status === 'completed' || isCurrent;
+                {game.definition.hotspots.map((hotspot) => {
+                    const found = party.foundHotspots.includes(hotspot.key);
 
                     return (
-                        <button
-                            key={node.id}
-                            type="button"
-                            disabled={!canReview}
-                            onClick={() =>
-                                onSelectCompleted(
-                                    node.status === 'completed'
-                                        ? node.id
-                                        : null,
-                                )
-                            }
-                            className={`relative flex w-full items-start gap-3 rounded-xl border p-3 text-right transition ${
-                                isSelected
-                                    ? 'border-zinc-950 bg-zinc-950 text-white'
-                                    : node.status === 'completed'
-                                      ? 'border-emerald-200 bg-emerald-50 hover:border-emerald-300'
-                                      : isCurrent
-                                        ? 'border-amber-300 bg-amber-50'
-                                        : 'cursor-not-allowed border-zinc-200 bg-zinc-50 text-zinc-500'
-                            }`}
+                        <Form
+                            key={hotspot.key}
+                            action={`/games/ecopark-treasure/parties/${party.id}/hotspots`}
+                            method="post"
+                            options={{ preserveScroll: true }}
+                            className="absolute z-20"
+                            style={{
+                                right: `${hotspot.x}%`,
+                                top: `${hotspot.y}%`,
+                            }}
                         >
-                            {index < nodes.length - 1 ? (
-                                <span className="absolute top-11 right-[1.85rem] h-[calc(100%+0.75rem)] w-px bg-zinc-200" />
-                            ) : null}
-                            <span
-                                className={`relative z-10 flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
-                                    isSelected
-                                        ? 'bg-white text-zinc-950'
-                                        : node.status === 'completed'
-                                          ? 'bg-emerald-600 text-white'
-                                          : isCurrent
-                                            ? 'bg-amber-400 text-zinc-950'
-                                            : 'bg-zinc-200 text-zinc-600'
-                                }`}
-                            >
-                                {node.status === 'completed' ? (
-                                    <CheckCircle2 className="size-5" />
-                                ) : node.status === 'locked' ? (
-                                    <Lock className="size-4" />
-                                ) : (
-                                    formatFa(node.step)
-                                )}
-                            </span>
-                            <span className="min-w-0 flex-1">
-                                <span className="block text-sm font-bold">
-                                    {node.title}
-                                </span>
-                                <span
-                                    className={`mt-1 block text-xs ${
-                                        isSelected
-                                            ? 'text-white/70'
-                                            : 'text-zinc-500'
-                                    }`}
-                                >
-                                    {statusLabels[node.status]} · {node.place}
-                                </span>
-                            </span>
-                        </button>
+                            {({ processing }) => (
+                                <>
+                                    <input
+                                        type="hidden"
+                                        name="hotspot_key"
+                                        value={hotspot.key}
+                                    />
+                                    {party.mode === 'family' ? (
+                                        <input
+                                            type="hidden"
+                                            name="member_id"
+                                            value={contributor}
+                                        />
+                                    ) : null}
+                                    <button
+                                        type="submit"
+                                        disabled={processing || found}
+                                        aria-label={
+                                            found
+                                                ? `${hotspot.title} پیدا شد`
+                                                : hotspot.hint
+                                        }
+                                        className={`grid size-14 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-4 shadow-xl transition ${
+                                            found
+                                                ? 'border-emerald-200 bg-emerald-500'
+                                                : 'animate-pulse border-amber-200 bg-amber-400 text-slate-950 hover:scale-110'
+                                        }`}
+                                    >
+                                        {processing ? (
+                                            <LoaderCircle className="size-5 animate-spin" />
+                                        ) : found ? (
+                                            <Check className="size-6" />
+                                        ) : (
+                                            <Target className="size-6" />
+                                        )}
+                                    </button>
+                                </>
+                            )}
+                        </Form>
                     );
                 })}
+                <div className="absolute right-[12%] bottom-[12%] left-[12%] h-24 rounded-[50%] border-t-4 border-dashed border-emerald-300/40" />
             </div>
-        </aside>
+
+            <aside className="space-y-3">
+                {party.mode === 'family' ? (
+                    <label className="block rounded-2xl border border-violet-200 bg-violet-50 p-4 text-sm font-bold">
+                        چه کسی این نشانه را پیدا کرد؟
+                        <select
+                            value={contributor}
+                            onChange={(event) =>
+                                setContributor(event.target.value)
+                            }
+                            className="mt-2 h-11 w-full rounded-xl border border-violet-200 bg-white px-3 font-normal"
+                        >
+                            {party.members.map((member) => (
+                                <option key={member.id} value={member.id}>
+                                    {member.displayName}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+                ) : null}
+                {game.definition.hotspots.map((hotspot) => {
+                    const found = party.foundHotspots.includes(hotspot.key);
+
+                    return (
+                        <div
+                            key={hotspot.key}
+                            className={`rounded-2xl border p-4 ${found ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200 bg-white'}`}
+                        >
+                            <div className="flex items-center gap-2">
+                                {found ? (
+                                    <BadgeCheck className="size-5 text-emerald-700" />
+                                ) : (
+                                    <Compass className="size-5 text-amber-600" />
+                                )}
+                                <strong>
+                                    {found ? hotspot.title : 'نشانه پنهان'}
+                                </strong>
+                            </div>
+                            <p className="mt-2 text-xs leading-6 text-slate-600">
+                                {found ? 'این تکه سرنخ ثبت شد.' : hotspot.hint}
+                            </p>
+                        </div>
+                    );
+                })}
+                {party.mode !== 'individual' ? (
+                    <p className="rounded-2xl bg-amber-50 p-3 text-xs leading-6 text-amber-900">
+                        اگر حداقل دو عضو در کشف‌ها سهیم باشند، ۳۰ امتیاز همکاری
+                        می‌گیرید.
+                    </p>
+                ) : null}
+            </aside>
+        </div>
     );
 }
 
-function CompletedOffer({ offer }: { offer: GameOffer }) {
+function ClueChallenge({ game, party }: { game: Props['game']; party: Party }) {
+    const clue = party.routeKey ? game.definition.clues[party.routeKey] : null;
+
+    if (!clue) {
+        return null;
+    }
+
     return (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-            <div className="flex items-start gap-3">
-                <Sparkles className="mt-0.5 size-5 shrink-0 text-amber-700" />
-                <div className="min-w-0 flex-1">
-                    <p className="text-xs font-semibold text-amber-800">
-                        پیشنهاد پس از تکمیل مرحله
-                    </p>
-                    <p className="mt-1 font-bold text-amber-950">
-                        {offer.title}
-                    </p>
-                    {offer.bodyCopy ? (
-                        <p className="mt-2 text-sm leading-7 text-amber-950/75">
-                            {offer.bodyCopy}
-                        </p>
-                    ) : null}
-                    {offer.targetUrl ? (
-                        <a
-                            href={offer.targetUrl}
-                            className="mt-3 inline-flex min-h-10 items-center justify-center rounded-lg bg-amber-600 px-4 text-xs font-bold text-white hover:bg-amber-700"
-                        >
-                            {offer.ctaText}
-                        </a>
-                    ) : null}
-                </div>
+        <div>
+            <div className="rounded-2xl bg-slate-950 p-5 text-white">
+                <p className="text-xs text-emerald-300">سرنخ نهایی مسیر</p>
+                <h3 className="mt-2 text-lg leading-8 font-black">
+                    {clue.question}
+                </h3>
+            </div>
+            <div className="mt-4 grid gap-3">
+                {clue.choices.map((choice) => (
+                    <Form
+                        key={choice.key}
+                        action={`/games/ecopark-treasure/parties/${party.id}/clue`}
+                        method="post"
+                        options={{ preserveScroll: true }}
+                    >
+                        {({ processing, errors }) => (
+                            <>
+                                <input
+                                    type="hidden"
+                                    name="answer_key"
+                                    value={choice.key}
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={processing}
+                                    className="flex min-h-14 w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 text-right text-sm font-bold transition hover:border-emerald-500 hover:bg-emerald-50 disabled:opacity-60"
+                                >
+                                    <span>{choice.label}</span>
+                                    {processing ? (
+                                        <LoaderCircle className="size-4 animate-spin" />
+                                    ) : (
+                                        <ChevronLeft className="size-4" />
+                                    )}
+                                </button>
+                                <FieldError message={errors.answer_key} />
+                            </>
+                        )}
+                    </Form>
+                ))}
             </div>
         </div>
     );
 }
 
-function JourneyCompleted({ game }: { game: GamePayload }) {
+function PassChallenge({ party }: { party: Party }) {
     return (
-        <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6 shadow-sm sm:p-8">
-            <div className="flex size-12 items-center justify-center rounded-full bg-emerald-700 text-white">
-                <Trophy className="size-6" />
-            </div>
-            <h2 className="mt-4 text-2xl font-bold">مسیر شما کامل شد</h2>
-            <p className="mt-2 text-sm leading-7 text-emerald-950/75">
-                همه مراحل ثبت شده‌اند. امتیازها و پاداش‌های دریافت‌شده را در کیف
-                پاداش یا پنل مشارکت مشاهده کنید.
+        <div className="rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50 to-white p-6">
+            <TicketCheck className="size-10 text-amber-700" />
+            <h3 className="mt-4 text-xl font-black">چالش‌های آنلاین کامل شد</h3>
+            <p className="mt-2 max-w-xl text-sm leading-7 text-slate-600">
+                اکنون راهبر گروه می‌تواند مجوز حضور هفت‌روزه و یک‌بارمصرف را
+                بسازد. این دکمه یک مرحله را «ادعا» نمی‌کند؛ یک مجوز امضاشده
+                واقعی تولید می‌کند که فقط با QR حضور اکوپارک مصرف می‌شود.
             </p>
-            {game.visitorState.participantDashboardUrl ? (
-                <Link
-                    href={game.visitorState.participantDashboardUrl}
-                    className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-emerald-700 px-5 text-sm font-bold text-white hover:bg-emerald-800"
+            {party.isLeader ? (
+                <Form
+                    action={`/games/ecopark-treasure/parties/${party.id}/pass`}
+                    method="post"
+                    options={{ preserveScroll: true }}
+                    className="mt-5"
                 >
-                    <Trophy className="size-5" />
-                    مشاهده پنل و پاداش‌ها
-                </Link>
-            ) : null}
-        </section>
+                    {({ processing, errors }) => (
+                        <>
+                            <SubmitButton processing={processing}>
+                                ساخت مجوز حضور
+                            </SubmitButton>
+                            <FieldError message={errors.party} />
+                        </>
+                    )}
+                </Form>
+            ) : (
+                <p className="mt-5 rounded-xl bg-sky-50 p-4 text-sm font-bold text-sky-900">
+                    منتظر بمانید تا راهبر تیم مجوز مشترک را بسازد.
+                </p>
+            )}
+        </div>
     );
 }
 
-function RewardWallet({ rewards }: { rewards: UserRewardItem[] }) {
+function EntryPass({ party }: { party: Party }) {
+    const pass = party.entryPass;
+    const [copied, setCopied] = useState(false);
+
+    if (!pass) {
+        return null;
+    }
+
     return (
-        <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
-            <div className="flex items-center gap-2">
-                <Gift className="size-5 text-amber-700" />
-                <h2 className="font-bold">پاداش‌های دریافت‌شده</h2>
+        <div className="overflow-hidden rounded-3xl bg-slate-950 text-white shadow-2xl">
+            <div className="grid gap-6 p-6 sm:grid-cols-[1fr_auto] sm:p-8">
+                <div>
+                    <span className="inline-flex items-center gap-2 rounded-full bg-emerald-400/15 px-3 py-1 text-xs font-bold text-emerald-300">
+                        <BadgeCheck className="size-4" />
+                        مرحله آنلاین تکمیل شد
+                    </span>
+                    <h2 className="mt-4 text-2xl font-black">
+                        مجوز حضور اکوپارک
+                    </h2>
+                    <p className="mt-2 text-sm leading-7 text-slate-300">
+                        در محل، QR با عنوان «دروازه حضور بازی» را اسکن کنید.
+                        امتیاز حضوری پس از همان اسکن معتبر ثبت می‌شود.
+                    </p>
+                </div>
+                <div className="rounded-2xl bg-white p-5 text-center text-slate-950">
+                    <QrCode className="mx-auto size-12" />
+                    <p className="mt-3 font-mono text-xl font-black tracking-wider">
+                        {pass.code}
+                    </p>
+                    <button
+                        type="button"
+                        onClick={async () => {
+                            await navigator.clipboard.writeText(pass.code);
+                            setCopied(true);
+                        }}
+                        className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-emerald-700"
+                    >
+                        {copied ? (
+                            <Check className="size-3" />
+                        ) : (
+                            <Copy className="size-3" />
+                        )}
+                        {copied ? 'کپی شد' : 'کپی کد'}
+                    </button>
+                </div>
             </div>
-            {rewards.length > 0 ? (
-                <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {rewards.map((reward) => (
-                        <div
-                            key={reward.id}
-                            className="rounded-xl border border-amber-200 bg-amber-50 p-4"
-                        >
-                            <p className="font-bold">
-                                {reward.reward?.name ?? 'پاداش مسیر'}
+            <div className="border-t border-white/10 bg-white/5 px-6 py-4 text-xs text-slate-300 sm:px-8">
+                اعتبار تا{' '}
+                {new Intl.DateTimeFormat('fa-IR', {
+                    dateStyle: 'medium',
+                    timeStyle: 'short',
+                }).format(new Date(pass.expiresAt))}
+                {' • '}
+                وضعیت: {pass.status === 'redeemed' ? 'مصرف‌شده' : 'فعال'}
+            </div>
+        </div>
+    );
+}
+
+function SponsorBonus({ party, offer }: { party: Party; offer: GameOffer }) {
+    const claim = party.bonusClaims.find(
+        (item) => item.adRequestId === offer.adRequestId,
+    );
+    const [remaining, setRemaining] = useState(10);
+
+    useEffect(() => {
+        if (claim?.status !== 'started') {
+            return;
+        }
+
+        const updateRemaining = () => {
+            const elapsed = Math.floor(
+                (Date.now() - new Date(claim.startedAt).getTime()) / 1000,
+            );
+            setRemaining(Math.max(0, 10 - elapsed));
+        };
+
+        updateRemaining();
+        const timer = window.setInterval(updateRemaining, 1000);
+
+        return () => window.clearInterval(timer);
+    }, [claim?.startedAt, claim?.status]);
+
+    if (!offer.adRequestId) {
+        return null;
+    }
+
+    return (
+        <aside className="rounded-3xl border border-amber-200 bg-amber-50 p-5">
+            <div className="flex items-start gap-3">
+                <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-amber-200 text-amber-900">
+                    <Gift className="size-5" />
+                </span>
+                <div>
+                    <span className="text-[11px] font-bold text-amber-800">
+                        کاملاً اختیاری • ۳۰ امتیاز اضافه
+                    </span>
+                    <h3 className="mt-1 font-black">{offer.title}</h3>
+                    <p className="mt-1 text-xs text-slate-600">
+                        {offer.partnerName}
+                    </p>
+                </div>
+            </div>
+            <p className="mt-4 text-sm leading-7 text-slate-700">
+                {offer.bodyCopy}
+            </p>
+            {claim?.status === 'completed' ? (
+                <p className="mt-4 flex items-center gap-2 rounded-xl bg-emerald-100 p-3 text-sm font-bold text-emerald-900">
+                    <BadgeCheck className="size-5" />
+                    امتیاز اختیاری دریافت شد
+                </p>
+            ) : claim?.status === 'started' ? (
+                <Form
+                    action={`/games/ecopark-treasure/parties/${party.id}/sponsor-bonus/complete`}
+                    method="post"
+                    options={{ preserveScroll: true }}
+                    className="mt-4"
+                >
+                    {({ processing, errors }) => (
+                        <>
+                            <input
+                                type="hidden"
+                                name="ad_request_id"
+                                value={offer.adRequestId ?? ''}
+                            />
+                            <SubmitButton
+                                processing={processing}
+                                disabled={remaining > 0}
+                                className="w-full"
+                            >
+                                {remaining > 0
+                                    ? `${faNumber(remaining)} ثانیه تا دریافت`
+                                    : 'دریافت ۳۰ امتیاز'}
+                            </SubmitButton>
+                            <FieldError message={errors.ad_request_id} />
+                        </>
+                    )}
+                </Form>
+            ) : (
+                <Form
+                    action={`/games/ecopark-treasure/parties/${party.id}/sponsor-bonus/start`}
+                    method="post"
+                    options={{ preserveScroll: true }}
+                    className="mt-4"
+                >
+                    {({ processing, errors }) => (
+                        <>
+                            <input
+                                type="hidden"
+                                name="ad_request_id"
+                                value={offer.adRequestId ?? ''}
+                            />
+                            <button
+                                type="submit"
+                                disabled={processing}
+                                className="w-full rounded-xl border border-amber-800 px-4 py-3 text-sm font-bold text-amber-900 disabled:opacity-60"
+                            >
+                                {processing
+                                    ? 'در حال آغاز...'
+                                    : 'مشاهده اختیاری پیشنهاد'}
+                            </button>
+                            <FieldError message={errors.ad_request_id} />
+                        </>
+                    )}
+                </Form>
+            )}
+            <p className="mt-3 text-[11px] leading-5 text-amber-900">
+                رد کردن این بخش هیچ مرحله‌ای را قفل نمی‌کند و از امتیاز اصلی شما
+                کم نمی‌شود.
+            </p>
+        </aside>
+    );
+}
+
+function ActiveGame({ game, party }: { game: Props['game']; party: Party }) {
+    const currentStep =
+        party.steps.find((step) => step.status === 'available') ?? null;
+    const currentDefinition = currentStep
+        ? game.definition.steps.find((step) => step.index === currentStep.index)
+        : null;
+    const sponsorOffer = game.gameOffers.find(
+        (offer) => offer.kind === 'ad' && offer.adRequestId,
+    );
+    const routeTitle = game.definition.routes.find(
+        (routeOption) => routeOption.key === party.routeKey,
+    )?.title;
+
+    return (
+        <div className="grid gap-6 lg:grid-cols-[19rem_minmax(0,1fr)]">
+            <aside className="space-y-5 lg:sticky lg:top-5 lg:self-start">
+                <div className="rounded-3xl bg-slate-950 p-5 text-white">
+                    <div className="flex items-center justify-between">
+                        <span className="text-xs text-slate-300">
+                            امتیاز مشترک
+                        </span>
+                        <Sparkles className="size-5 text-amber-300" />
+                    </div>
+                    <strong className="mt-2 block text-3xl font-black">
+                        {faNumber(party.score)}
+                    </strong>
+                    <div className="mt-4 flex flex-wrap gap-2 text-[11px]">
+                        <span className="rounded-full bg-white/10 px-3 py-1">
+                            {game.definition.modes.find(
+                                (mode) => mode.key === party.mode,
+                            )?.title ?? party.mode}
+                        </span>
+                        {routeTitle ? (
+                            <span className="rounded-full bg-emerald-400/15 px-3 py-1 text-emerald-300">
+                                {routeTitle}
+                            </span>
+                        ) : null}
+                    </div>
+                </div>
+
+                <JourneyProgress
+                    steps={party.steps}
+                    definitions={game.definition.steps}
+                />
+
+                {party.mode === 'team' && party.inviteCode ? (
+                    <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4">
+                        <span className="text-xs font-bold text-sky-800">
+                            کد دعوت تیم
+                        </span>
+                        <strong className="mt-2 block font-mono text-2xl tracking-[0.2em] text-sky-950">
+                            {party.inviteCode}
+                        </strong>
+                        <p className="mt-2 text-xs leading-5 text-sky-800">
+                            هر عضو با حساب خودش وارد می‌شود؛ پیشرفت برای همه
+                            مشترک است.
+                        </p>
+                    </div>
+                ) : null}
+
+                {sponsorOffer ? (
+                    <SponsorBonus party={party} offer={sponsorOffer} />
+                ) : null}
+            </aside>
+
+            <main className="min-w-0 space-y-5">
+                {party.entryPass ? (
+                    <EntryPass party={party} />
+                ) : currentDefinition ? (
+                    <section className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-xl shadow-slate-950/5 sm:p-8">
+                        <header className="border-b border-slate-100 pb-5">
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800">
+                                    کار بعدی شما • مرحله{' '}
+                                    {faNumber(currentDefinition.index)}
+                                </span>
+                                <span className="text-xs text-slate-500">
+                                    اعضا: {faNumber(party.members.length)}
+                                </span>
+                            </div>
+                            <h1 className="mt-4 text-2xl font-black sm:text-3xl">
+                                {currentDefinition.title}
+                            </h1>
+                            <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
+                                {currentDefinition.instruction}
                             </p>
-                            <p className="mt-1 text-xs text-amber-900/70">
-                                {reward.reward?.partnerName ??
-                                    reward.redemption?.partnerName ??
-                                    'اکسپلوریا'}
-                            </p>
-                            {reward.redemption ? (
-                                <p
-                                    className="mt-3 font-mono text-sm font-bold"
-                                    dir="ltr"
-                                >
-                                    {reward.redemption.redemptionCode}
-                                </p>
+                            <div className="mt-4 flex items-start gap-2 rounded-2xl bg-violet-50 p-3 text-xs leading-6 text-violet-900">
+                                <ShieldCheck className="mt-0.5 size-4 shrink-0" />
+                                <span>
+                                    <strong>چگونه تأیید می‌شود؟ </strong>
+                                    {currentDefinition.verification}
+                                </span>
+                            </div>
+                        </header>
+
+                        <div className="pt-6">
+                            {currentStep?.index === 2 ? (
+                                party.isLeader ? (
+                                    <RouteChallenge game={game} party={party} />
+                                ) : (
+                                    <p className="rounded-2xl bg-sky-50 p-5 text-sm font-bold text-sky-900">
+                                        راهبر تیم در حال انتخاب مسیر مشترک است.
+                                        پس از ثبت، نقشه برای همه اعضا باز
+                                        می‌شود.
+                                    </p>
+                                )
+                            ) : null}
+                            {currentStep?.index === 3 ? (
+                                <MapChallenge game={game} party={party} />
+                            ) : null}
+                            {currentStep?.index === 4 ? (
+                                <ClueChallenge game={game} party={party} />
+                            ) : null}
+                            {currentStep?.index === 5 ? (
+                                <PassChallenge party={party} />
                             ) : null}
                         </div>
-                    ))}
+                    </section>
+                ) : (
+                    <EntryPass party={party} />
+                )}
+
+                <section className="rounded-3xl border border-slate-200 bg-white p-5">
+                    <h2 className="flex items-center gap-2 font-black">
+                        <UsersRound className="size-5 text-emerald-700" />
+                        اعضای {party.mode === 'family' ? 'خانواده' : 'گروه'}
+                    </h2>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                        {party.members.map((member) => (
+                            <span
+                                key={member.id}
+                                className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-2 text-xs font-bold"
+                            >
+                                <UserRound className="size-3.5" />
+                                {member.displayName}
+                                {member.role === 'leader' ? ' • راهبر' : ''}
+                            </span>
+                        ))}
+                    </div>
+                    {party.collaborationBonusAwarded ? (
+                        <p className="mt-4 flex items-center gap-2 rounded-xl bg-emerald-50 p-3 text-xs font-bold text-emerald-900">
+                            <Sparkles className="size-4" />
+                            پاداش همکاری ۳۰ امتیازی با مشارکت چند عضو فعال شد.
+                        </p>
+                    ) : null}
+                </section>
+            </main>
+        </div>
+    );
+}
+
+export default function EcoParkTreasureGame({ game }: Props) {
+    const completedSteps = useMemo(
+        () =>
+            game.party?.steps.filter((step) => step.status === 'completed')
+                .length ?? 0,
+        [game.party],
+    );
+
+    return (
+        <>
+            <Head title="مسیر گنج اکوپارک | EXPLORIA" />
+            <div dir="rtl" className="min-h-screen bg-[#f4f7f1] text-slate-950">
+                <header className="border-b border-emerald-950/10 bg-emerald-950 text-white">
+                    <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
+                        <div className="flex items-center gap-3">
+                            <span className="grid size-11 place-items-center rounded-2xl bg-emerald-400 text-emerald-950">
+                                <Compass className="size-6" />
+                            </span>
+                            <div>
+                                <strong className="block tracking-wide">
+                                    EXPLORIA
+                                </strong>
+                                <span className="text-xs text-emerald-200">
+                                    {game.campaign?.name ?? 'مسیر گنج اکوپارک'}
+                                </span>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            {game.party ? (
+                                <span className="hidden rounded-full bg-white/10 px-3 py-2 text-xs sm:inline-flex">
+                                    {faNumber(completedSteps)} از ۵ مرحله
+                                </span>
+                            ) : null}
+                            {game.visitorState.participantDashboardUrl ? (
+                                <Link
+                                    href={
+                                        game.visitorState
+                                            .participantDashboardUrl
+                                    }
+                                    className="rounded-xl border border-white/20 px-3 py-2 text-xs font-bold"
+                                >
+                                    پنل من
+                                </Link>
+                            ) : null}
+                        </div>
+                    </div>
+                </header>
+
+                <section className="overflow-hidden bg-gradient-to-l from-emerald-950 via-teal-900 to-slate-950 text-white">
+                    <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[1fr_23rem] lg:py-14">
+                        <div>
+                            <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs text-emerald-100">
+                                <MapPin className="size-3.5" />
+                                {game.campaign?.venueName ?? 'اکوپارک'}
+                                {game.campaign?.city
+                                    ? ` • ${game.campaign.city}`
+                                    : ''}
+                            </span>
+                            <h1 className="mt-5 max-w-3xl text-3xl leading-tight font-black sm:text-5xl">
+                                یک مسیر روشن؛ پنج چالش واقعی
+                            </h1>
+                            <p className="mt-4 max-w-2xl text-sm leading-8 text-emerald-100 sm:text-base">
+                                انفرادی، خانوادگی یا تیمی بازی کنید. در هر لحظه
+                                فقط یک کار اصلی دارید و مرحله بعد تنها پس از
+                                تأیید واقعی باز می‌شود.
+                            </p>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 self-end">
+                            {[
+                                [Map, '۳', 'نقطه نقشه'],
+                                [Clock3, '۵', 'مرحله روشن'],
+                                [ShieldCheck, '۱', 'مجوز حضور'],
+                            ].map(([Icon, value, label]) => {
+                                const StatIcon = Icon as typeof Map;
+
+                                return (
+                                    <div
+                                        key={String(label)}
+                                        className="rounded-2xl bg-white/10 p-3 text-center backdrop-blur"
+                                    >
+                                        <StatIcon className="mx-auto size-5 text-amber-300" />
+                                        <strong className="mt-2 block text-xl">
+                                            {value as string}
+                                        </strong>
+                                        <span className="text-[10px] text-emerald-100">
+                                            {label as string}
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </section>
+
+                <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-10">
+                    {game.party ? (
+                        <ActiveGame game={game} party={game.party} />
+                    ) : (
+                        <ParticipationSetup game={game} />
+                    )}
+
+                    <section className="mt-6 grid gap-3 rounded-3xl border border-slate-200 bg-white p-5 sm:grid-cols-3">
+                        {game.definition.rules.map((rule, index) => (
+                            <div
+                                key={rule}
+                                className="flex items-start gap-3 text-xs leading-6 text-slate-600"
+                            >
+                                <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-emerald-100 font-black text-emerald-800">
+                                    {faNumber(index + 1)}
+                                </span>
+                                {rule}
+                            </div>
+                        ))}
+                    </section>
                 </div>
-            ) : (
-                <p className="mt-3 text-sm leading-7 text-zinc-500">
-                    پس از تکمیل نخستین مرحله، پاداش‌های شما در این بخش نمایش
-                    داده می‌شوند.
-                </p>
-            )}
-        </section>
+            </div>
+        </>
     );
 }
