@@ -9,6 +9,7 @@ use App\Models\MissionInstance;
 use App\Models\User;
 use App\Models\Visit;
 use App\Services\MissionFlowService;
+use App\Services\SmartOffersService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -21,7 +22,7 @@ class EcoParkTreasureGameController extends Controller
 
     private const BLUEPRINT_CODE = 'ecopark-online-treasure-map-game';
 
-    public function __invoke(Request $request, MissionFlowService $missionFlow): Response
+    public function __invoke(Request $request, MissionFlowService $missionFlow, SmartOffersService $offers): Response
     {
         $campaign = $this->campaign();
         $user = $request->user();
@@ -34,6 +35,7 @@ class EcoParkTreasureGameController extends Controller
                 'campaign' => $campaign ? $this->serializeCampaign($campaign) : null,
                 'entryQr' => $campaign ? $this->entryQr($campaign) : null,
                 'missionNodes' => $campaign ? $this->missionNodes($campaign) : [],
+                'gameOffers' => $offers->gameOffersForCampaign($campaign)->all(),
                 'latestVisit' => $visit ? [
                     'id' => $visit->id,
                     'occurredAt' => $visit->occurred_at->toIso8601String(),

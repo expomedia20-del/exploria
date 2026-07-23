@@ -10,6 +10,7 @@ use App\Models\PartnerAccount;
 use App\Models\PartnerLocation;
 use App\Models\PartnerUser;
 use App\Models\User;
+use App\Models\UserAccessScope;
 use Database\Seeders\PilotLocationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -132,7 +133,34 @@ class StandaloneAdvertisingTest extends TestCase
         ]);
     }
 
-    public function test_hub_manager_can_reject_ad_request(): void
+    public function test_regional_admin_can_review_only_scoped_ad_requests(): void
+    {
+        $scopedAdRequest = $this->submitAdRequest('ravaq.store@example.test', 'Regional scoped ad request');
+        $foreignPartner = $this->createScienceShopPartnerUser('regional-foreign-shop@example.test');
+        $foreignAdRequest = $this->submitAdRequest($foreignPartner->email, 'Regional foreign ad request');
+        $regionalAdmin = User::factory()->create(['role' => UserRole::RegionalAdmin]);
+
+        UserAccessScope::query()->create([
+            'user_id' => $regionalAdmin->id,
+            'role_key' => 'regional_admin',
+            'scope_type' => 'partner',
+            'scope_id' => $scopedAdRequest->partner_account_id,
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($regionalAdmin)
+            ->postJson(route('admin.ads.api.approve', $scopedAdRequest))
+            ->assertOk()
+            ->assertJsonPath('data.status', 'approved');
+
+        $this->actingAs($regionalAdmin)
+            ->postJson(route('admin.ads.api.approve', $foreignAdRequest))
+            ->assertForbidden();
+
+        $this->assertSame('pending_review', $foreignAdRequest->fresh()->status);
+    }
+
+    public function test_hub_manager_cannot_reject_ad_request(): void
     {
         $adRequest = $this->submitAdRequest('ravaq.store@example.test', 'Ravaq scoped ad request');
         $manager = User::query()->where('email', 'ravaq.manager@example.test')->firstOrFail();
@@ -141,19 +169,13 @@ class StandaloneAdvertisingTest extends TestCase
             ->postJson(route('admin.ads.api.reject', $adRequest), [
                 'notes' => 'Ù†ÛŒØ§Ø²Ù…Ù†Ø¯ Ø§ØµÙ„Ø§Ø­ Ù…Ø­ØªÙˆØ§.',
             ])
-            ->assertOk()
-            ->assertJsonPath('data.status', 'rejected');
+            ->assertForbidden();
 
         $adRequest->refresh();
 
-        $this->assertSame('rejected', $adRequest->status);
-        $this->assertSame('rejected', $adRequest->creatives()->firstOrFail()->status);
-        $this->assertSame('rejected', $adRequest->placements()->firstOrFail()->status);
-        $this->assertDatabaseHas('event_log', [
-            'event_type' => 'audit.ad_rejected',
-            'actor_user_id' => $manager->id,
-            'object_id' => $adRequest->id,
-        ]);
+        $this->assertSame('pending_review', $adRequest->status);
+        $this->assertSame('pending_review', $adRequest->creatives()->firstOrFail()->status);
+        $this->assertSame('pending_review', $adRequest->placements()->firstOrFail()->status);
     }
 
     public function test_admin_can_open_ad_moderation_page(): void
@@ -167,10 +189,26 @@ class StandaloneAdvertisingTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('admin/ads/index')
+                ->where('canReviewAds', true)
                 ->where('stats.requests', 1)
                 ->where('stats.devices', 2)
                 ->has('adRequests', 1)
                 ->has('displayDevices', 2));
+    }
+
+    public function test_hub_manager_opens_ad_page_without_review_permission(): void
+    {
+        $this->withoutVite();
+        $this->submitAdRequest('ravaq.store@example.test', 'Hub visible ad request');
+        $manager = User::query()->where('email', 'ravaq.manager@example.test')->firstOrFail();
+
+        $this->actingAs($manager)
+            ->get(route('admin.ads.page'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('admin/ads/index')
+                ->where('canReviewAds', false)
+                ->has('adRequests', 1));
     }
 
     public function test_display_device_can_read_approved_schedule(): void
@@ -179,9 +217,7 @@ class StandaloneAdvertisingTest extends TestCase
         $adRequest = $this->submitAdRequest('ravaq.store@example.test', 'Ravaq scheduled display ad', 'mobile_display');
         $device = DisplayDevice::query()->where('code', 'ecopark-mobile-promo-display')->firstOrFail();
 
-        $this->actingAs($manager)
-            ->postJson(route('admin.ads.api.approve', $adRequest))
-            ->assertOk();
+        $this->approveAdRequest($adRequest);
 
         $this->getJson(route('display.schedule', $device))
             ->assertOk()
@@ -209,9 +245,7 @@ class StandaloneAdvertisingTest extends TestCase
         $adRequest = $this->submitAdRequest('ravaq.store@example.test', 'Ravaq event display ad', 'mobile_display');
         $device = DisplayDevice::query()->where('code', 'ecopark-mobile-promo-display')->firstOrFail();
 
-        $this->actingAs($manager)
-            ->postJson(route('admin.ads.api.approve', $adRequest))
-            ->assertOk();
+        $this->approveAdRequest($adRequest);
 
         $this->actingAs($manager)
             ->postJson(route('hub.ads.api.schedule', $adRequest), [
@@ -281,6 +315,15 @@ class StandaloneAdvertisingTest extends TestCase
             ->assertCreated();
 
         return AdRequest::query()->where('title', $title)->firstOrFail();
+    }
+
+    private function approveAdRequest(AdRequest $adRequest): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.ads.api.approve', $adRequest))
+            ->assertOk();
     }
 
     private function createScienceShopPartnerUser(string $email = 'science.shop@example.test'): User

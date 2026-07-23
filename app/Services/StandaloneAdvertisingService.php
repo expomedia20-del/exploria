@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\RecordStatus;
+use App\Enums\UserRole;
 use App\Models\AdEvent;
 use App\Models\AdPlacement;
 use App\Models\AdRequest;
@@ -101,6 +102,12 @@ class StandaloneAdvertisingService
             ]);
 
         return [
+            'canReviewAds' => $user === null || $this->canReviewAds($user),
+            'governance' => [
+                'reviewOwner' => 'تیم داخلی اکسپلوریا',
+                'localExecutionOwner' => 'مدیر مکان/هاب در محدوده نمایشگرهای خودش',
+                'policy' => 'مدیران مکان و هاب می‌توانند اجرای محلی تبلیغ تاییدشده را زمان‌بندی کنند، اما اختیار تایید یا رد نهایی تبلیغ با تیم اکسپلوریا است.',
+            ],
             'stats' => [
                 'requests' => $adRequests->count(),
                 'pending' => $adRequests->where('status', 'pending_review')->count(),
@@ -326,6 +333,11 @@ class StandaloneAdvertisingService
             ->count();
 
         return $impressions < $adRequest->impression_cap;
+    }
+
+    private function canReviewAds(User $user): bool
+    {
+        return in_array($user->role, [UserRole::Admin, UserRole::RegionalAdmin, UserRole::Operator], true);
     }
 
     /** @return array<string, mixed> */

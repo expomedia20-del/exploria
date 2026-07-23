@@ -17,7 +17,7 @@ class HubAdScheduleController extends Controller
 {
     public function store(Request $request, AdRequest $adRequest, HubManagerAccessService $access): JsonResponse|RedirectResponse
     {
-        $access->ensureCanReviewAdRequest($request->user(), $adRequest);
+        $access->ensureCanScheduleAdRequest($request->user(), $adRequest);
 
         $data = $request->validate([
             'display_device_id' => ['required', 'uuid', 'exists:display_devices,id'],

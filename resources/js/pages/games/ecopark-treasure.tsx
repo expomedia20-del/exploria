@@ -11,12 +11,14 @@ import {
     Home,
     Lock,
     MapPin,
+    Megaphone,
     Play,
     QrCode,
     Route,
     Sparkles,
     Star,
     Target,
+    TicketCheck,
     Trophy,
     WalletCards,
 } from 'lucide-react';
@@ -93,6 +95,7 @@ type GamePayload = {
         scanUrl: string;
     } | null;
     missionNodes: ServerMissionNode[];
+    gameOffers: GameOffer[];
     latestVisit: {
         id: string;
         occurredAt: string;
@@ -104,6 +107,21 @@ type GamePayload = {
         hasLinkedVisit: boolean;
         participantDashboardUrl: string | null;
     };
+};
+
+type GameOffer = {
+    id: string;
+    kind: 'ad' | 'reward';
+    adRequestId: string | null;
+    title: string;
+    partnerName: string | null;
+    bodyCopy: string | null;
+    ctaText: string;
+    targetUrl: string | null;
+    assetUrl: string | null;
+    placementType: string | null;
+    points: number | null;
+    terms: string | null;
 };
 
 type Props = {
@@ -135,6 +153,7 @@ type TreasureNode = {
     canComplete: boolean;
     completionEvidence: string | null;
     treasureName: string | null;
+    gameOffer?: GameOffer | null;
 };
 
 type SceneProfile = Pick<
@@ -379,9 +398,20 @@ function buildCode(mode: StartMode, completed: string[], visitId?: string) {
     return `EXP-${prefix}-1405-${score}`;
 }
 
+function offerForIndex(offers: GameOffer[], index: number) {
+    if (offers.length === 0) {
+        return null;
+    }
+
+    return offers[index % offers.length];
+}
+
 function buildNodes(game: GamePayload): TreasureNode[] {
     if (game.missionNodes.length === 0) {
-        return fallbackNodes;
+        return fallbackNodes.map((node, index) => ({
+            ...node,
+            gameOffer: offerForIndex(game.gameOffers, index),
+        }));
     }
 
     const flowByCode = new Map(
@@ -422,6 +452,7 @@ function buildNodes(game: GamePayload): TreasureNode[] {
             canComplete: progress?.canComplete ?? false,
             completionEvidence: progress?.completionEvidence ?? null,
             treasureName: progress?.treasureName ?? node.treasureName,
+            gameOffer: offerForIndex(game.gameOffers, index),
         };
     });
 }
@@ -725,6 +756,97 @@ export default function EcoParkTreasureGame({ game }: Props) {
                                                 {selectedNode.challenge}
                                             </p>
                                         </div>
+
+                                        {selectedNode.gameOffer ? (
+                                            <div className="rounded-md border border-amber-200 bg-amber-50 p-3">
+                                                <div className="flex items-start gap-3">
+                                                    <span className="mt-1 inline-flex size-9 shrink-0 items-center justify-center rounded-md bg-white text-amber-700 shadow-sm">
+                                                        {selectedNode.gameOffer
+                                                            .kind ===
+                                                        'reward' ? (
+                                                            <TicketCheck className="size-5" />
+                                                        ) : (
+                                                            <Megaphone className="size-5" />
+                                                        )}
+                                                    </span>
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className="flex flex-wrap items-center gap-2">
+                                                            <p className="text-sm font-semibold text-amber-950">
+                                                                {
+                                                                    selectedNode
+                                                                        .gameOffer
+                                                                        .title
+                                                                }
+                                                            </p>
+                                                            <span className="rounded-full bg-white px-2 py-1 text-xs font-semibold text-amber-800">
+                                                                تایید اکسپلوریا
+                                                            </span>
+                                                        </div>
+                                                        {selectedNode.gameOffer
+                                                            .partnerName ? (
+                                                            <p className="mt-1 text-xs text-amber-900/75">
+                                                                {
+                                                                    selectedNode
+                                                                        .gameOffer
+                                                                        .partnerName
+                                                                }
+                                                            </p>
+                                                        ) : null}
+                                                        {selectedNode.gameOffer
+                                                            .bodyCopy ? (
+                                                            <p className="mt-2 text-sm leading-7 text-amber-950/80">
+                                                                {
+                                                                    selectedNode
+                                                                        .gameOffer
+                                                                        .bodyCopy
+                                                                }
+                                                            </p>
+                                                        ) : null}
+                                                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                                                            {selectedNode
+                                                                .gameOffer
+                                                                .points !==
+                                                            null ? (
+                                                                <span className="rounded-full bg-white px-2 py-1 text-xs font-semibold text-amber-900">
+                                                                    {formatFa(
+                                                                        selectedNode
+                                                                            .gameOffer
+                                                                            .points,
+                                                                    )}{' '}
+                                                                    امتیاز برای
+                                                                    دریافت
+                                                                </span>
+                                                            ) : null}
+                                                            {selectedNode
+                                                                .gameOffer
+                                                                .targetUrl ? (
+                                                                <a
+                                                                    href={
+                                                                        selectedNode
+                                                                            .gameOffer
+                                                                            .targetUrl
+                                                                    }
+                                                                    className="inline-flex h-9 items-center justify-center rounded-md bg-amber-600 px-3 text-xs font-semibold text-white hover:bg-amber-700"
+                                                                >
+                                                                    {
+                                                                        selectedNode
+                                                                            .gameOffer
+                                                                            .ctaText
+                                                                    }
+                                                                </a>
+                                                            ) : (
+                                                                <Link
+                                                                    href="/offers"
+                                                                    className="inline-flex h-9 items-center justify-center rounded-md bg-amber-600 px-3 text-xs font-semibold text-white hover:bg-amber-700"
+                                                                >
+                                                                    دیدن پیشنهاد
+                                                                </Link>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : null}
                                     </div>
 
                                     <div>

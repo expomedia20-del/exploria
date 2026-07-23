@@ -215,6 +215,12 @@ export default function Welcome() {
                             </Link>
                             <nav className="flex flex-wrap justify-center gap-2 text-sm">
                                 <Link
+                                    href="/offers"
+                                    className="inline-flex h-10 items-center rounded-md border border-white/20 px-4 hover:bg-white/10"
+                                >
+                                    پیشنهادهای امروز
+                                </Link>
+                                <Link
                                     href="/login"
                                     className="inline-flex h-10 items-center rounded-md border border-white/20 px-4 hover:bg-white/10"
                                 >
@@ -283,6 +289,13 @@ export default function Welcome() {
                                     >
                                         صفحه تجاری‌سازی
                                         <BadgeDollarSign className="size-4" />
+                                    </Link>
+                                    <Link
+                                        href="/offers"
+                                        className="inline-flex h-12 items-center gap-2 rounded-md border border-white/25 px-5 text-sm font-semibold hover:bg-white/10"
+                                    >
+                                        پیشنهادهای امروز
+                                        <TicketCheck className="size-4" />
                                     </Link>
                                     <Link
                                         href="/dashboard"

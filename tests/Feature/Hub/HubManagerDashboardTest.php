@@ -134,11 +134,9 @@ class HubManagerDashboardTest extends TestCase
         $adRequest = $this->submitAdRequest('ravaq.store@example.test', 'Reviewed ravaq ad');
         $offer = $this->submitPartnerOffer('ravaq.store@example.test', 'Reviewed ravaq offer');
 
-        $this->actingAs($manager)
-            ->postJson(route('admin.ads.api.approve', $adRequest), [
-                'notes' => 'Approved for mobile ravaq display.',
-            ])
-            ->assertOk();
+        $this->approveAdRequest($adRequest, [
+            'notes' => 'Approved for mobile ravaq display.',
+        ]);
 
         $this->actingAs($manager)
             ->postJson(route('admin.rewards.api.reject', $offer), [
@@ -166,11 +164,9 @@ class HubManagerDashboardTest extends TestCase
         $adRequest = $this->submitAdRequest('ravaq.store@example.test', 'Scheduled ravaq mobile ad', 'mobile_display');
         $displayDevice = DisplayDevice::query()->where('code', 'ecopark-mobile-promo-display')->firstOrFail();
 
-        $this->actingAs($manager)
-            ->postJson(route('admin.ads.api.approve', $adRequest), [
-                'notes' => 'Ready for ravaq mobile display.',
-            ])
-            ->assertOk();
+        $this->approveAdRequest($adRequest, [
+            'notes' => 'Ready for ravaq mobile display.',
+        ]);
 
         $this->actingAs($manager)
             ->postJson(route('hub.ads.api.schedule', $adRequest), [
@@ -206,9 +202,7 @@ class HubManagerDashboardTest extends TestCase
         $adRequest = $this->submitAdRequest('ravaq.store@example.test', 'Cancelable ravaq mobile ad', 'mobile_display');
         $displayDevice = DisplayDevice::query()->where('code', 'ecopark-mobile-promo-display')->firstOrFail();
 
-        $this->actingAs($manager)
-            ->postJson(route('admin.ads.api.approve', $adRequest))
-            ->assertOk();
+        $this->approveAdRequest($adRequest);
 
         $this->actingAs($manager)
             ->postJson(route('hub.ads.api.schedule', $adRequest), [
@@ -246,9 +240,7 @@ class HubManagerDashboardTest extends TestCase
         $adRequest = $this->submitAdRequest('ravaq.store@example.test', 'Foreign display ravaq ad', 'mobile_display');
         $foreignDisplay = DisplayDevice::query()->where('code', 'ecopark-entry-fixed-display')->firstOrFail();
 
-        $this->actingAs($manager)
-            ->postJson(route('admin.ads.api.approve', $adRequest))
-            ->assertOk();
+        $this->approveAdRequest($adRequest);
 
         $this->actingAs($manager)
             ->postJson(route('hub.ads.api.schedule', $adRequest), [
@@ -275,6 +267,16 @@ class HubManagerDashboardTest extends TestCase
             ->assertCreated();
 
         return AdRequest::query()->where('title', $title)->firstOrFail();
+    }
+
+    /** @param array<string, mixed> $payload */
+    private function approveAdRequest(AdRequest $adRequest, array $payload = []): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.ads.api.approve', $adRequest), $payload)
+            ->assertOk();
     }
 
     private function submitPartnerOffer(string $email, string $name): RewardDefinition

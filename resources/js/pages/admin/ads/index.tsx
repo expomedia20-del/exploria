@@ -50,6 +50,12 @@ type DisplayDevice = {
 };
 
 type Props = {
+    canReviewAds: boolean;
+    governance: {
+        reviewOwner: string;
+        localExecutionOwner: string;
+        policy: string;
+    };
     stats: {
         requests: number;
         pending: number;
@@ -118,6 +124,8 @@ function formatDate(value: string | null) {
 }
 
 export default function AdminAdsIndex({
+    canReviewAds,
+    governance,
     stats,
     adRequests,
     displayDevices,
@@ -210,6 +218,14 @@ export default function AdminAdsIndex({
                     </Alert>
                 ) : null}
 
+                <Alert>
+                    <AlertDescription>
+                        {governance.policy} مسئول بازبینی:{' '}
+                        {governance.reviewOwner} · مسئول اجرای محلی:{' '}
+                        {governance.localExecutionOwner}
+                    </AlertDescription>
+                </Alert>
+
                 <section className="rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border">
                     <div className="border-b border-sidebar-border/70 px-4 py-3 dark:border-sidebar-border">
                         <h2 className="font-semibold">صف تایید تبلیغات</h2>
@@ -272,7 +288,8 @@ export default function AdminAdsIndex({
                                             'fa-IR',
                                         ) ?? 'نامحدود'}
                                     </p>
-                                    {adRequest.status === 'pending_review' ? (
+                                    {adRequest.status === 'pending_review' &&
+                                    canReviewAds ? (
                                         <div className="flex flex-wrap gap-2 pt-1">
                                             <Form
                                                 action={`/admin/ads/${adRequest.id}/approve`}
@@ -310,6 +327,15 @@ export default function AdminAdsIndex({
                                                 )}
                                             </Form>
                                         </div>
+                                    ) : null}
+                                    {adRequest.status === 'pending_review' &&
+                                    !canReviewAds ? (
+                                        <p className="rounded-md bg-muted px-3 py-2 text-xs leading-6 text-muted-foreground">
+                                            شما می‌توانید وضعیت این تبلیغ را
+                                            مشاهده و پس از تایید تیم اکسپلوریا
+                                            اجرای محلی آن را پیگیری کنید؛ رد یا
+                                            تایید نهایی در اختیار این نقش نیست.
+                                        </p>
                                     ) : null}
                                 </article>
                             ))

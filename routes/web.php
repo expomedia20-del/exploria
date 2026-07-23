@@ -37,6 +37,7 @@ use App\Http\Controllers\Partner\PartnerOfferController;
 use App\Http\Controllers\Partner\RewardRedemptionController;
 use App\Http\Controllers\RewardWalletController;
 use App\Http\Controllers\ScanLandingController;
+use App\Http\Controllers\SmartOffersController;
 use App\Http\Controllers\Sponsor\SponsorDashboardController;
 use App\Http\Controllers\Venue\VenueManagerDashboardController;
 use App\Http\Controllers\VisitExperienceController;
@@ -50,6 +51,7 @@ Route::inertia('/demo', 'welcome')->name('demo');
 Route::inertia('/demo/ecosystem', 'demo/ecosystem')->name('demo.ecosystem');
 Route::inertia('/demo/missions', 'demo/missions')->name('demo.missions');
 Route::inertia('/demo/proposal', 'demo/proposal')->name('demo.proposal');
+Route::get('/offers', [SmartOffersController::class, 'page'])->name('offers.page');
 Route::get('/games/ecopark-treasure', EcoParkTreasureGameController::class)->name('games.ecopark-treasure');
 Route::get('/scan/{code}', ScanLandingController::class)->where('code', '[A-Za-z0-9-]+')->name('scan.landing');
 Route::inertia('/access', 'auth/otp')->name('visitor.otp');
@@ -120,6 +122,10 @@ Route::post('/api/v1/display/{displayDevice:code}/events', [DisplayAdvertisingCo
 Route::post('/api/v1/display/{displayDevice:code}/heartbeat', [DisplayAdvertisingController::class, 'heartbeat'])
     ->middleware('throttle:120,1')
     ->name('display.heartbeat.store');
+Route::get('/api/v1/offers', [SmartOffersController::class, 'index'])->name('offers.index');
+Route::post('/api/v1/offers/game-events', [SmartOffersController::class, 'storeGameEvent'])
+    ->middleware('throttle:120,1')
+    ->name('offers.game-events.store');
 Route::prefix('api/v1/auth/otp')->middleware('throttle:5,1')->group(function () {
     Route::post('request', [OtpController::class, 'request'])->name('otp.request');
     Route::post('verify', [OtpController::class, 'verify'])->name('otp.verify');
@@ -301,11 +307,11 @@ Route::post('/admin/rewards/{reward}/revision', [RewardApprovalController::class
     ->name('admin.rewards.revision');
 
 Route::post('/admin/ads/{adRequest}/approve', [AdvertisingController::class, 'approve'])
-    ->middleware(['auth', 'role:admin,operator,hub_manager'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator'])
     ->name('admin.ads.approve');
 
 Route::post('/admin/ads/{adRequest}/reject', [AdvertisingController::class, 'reject'])
-    ->middleware(['auth', 'role:admin,operator,hub_manager'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator'])
     ->name('admin.ads.reject');
 
 Route::post('/admin/campaigns', [CampaignRegistryController::class, 'store'])
@@ -451,11 +457,11 @@ Route::post('/api/v1/admin/rewards/{reward}/revision', [RewardApprovalController
     ->name('admin.rewards.api.revision');
 
 Route::post('/api/v1/admin/ads/{adRequest}/approve', [AdvertisingController::class, 'approve'])
-    ->middleware(['auth', 'role:admin,operator,hub_manager'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator'])
     ->name('admin.ads.api.approve');
 
 Route::post('/api/v1/admin/ads/{adRequest}/reject', [AdvertisingController::class, 'reject'])
-    ->middleware(['auth', 'role:admin,operator,hub_manager'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator'])
     ->name('admin.ads.api.reject');
 
 Route::get('/api/v1/admin/display-operations', [DisplayOperationsController::class, 'index'])
