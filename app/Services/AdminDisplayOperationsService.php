@@ -14,6 +14,11 @@ use Illuminate\Validation\ValidationException;
 
 class AdminDisplayOperationsService
 {
+    private const DEVICE_PLACEMENT_TYPES = [
+        'fixed_display',
+        'mobile_display',
+    ];
+
     /** @return array<string, mixed> */
     public function overview(): array
     {
@@ -68,6 +73,7 @@ class AdminDisplayOperationsService
                 'adRequest.venue:id,code,name',
             ])
             ->where('status', 'approved')
+            ->whereIn('placement_type', self::DEVICE_PLACEMENT_TYPES)
             ->whereNull('display_device_id')
             ->whereHas('adRequest', fn ($query) => $query->where('status', 'approved'))
             ->latest('updated_at')

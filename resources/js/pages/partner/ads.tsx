@@ -44,6 +44,7 @@ type AdRequest = {
     impressionsCount: number;
     hubName: string | null;
     placementType: string | null;
+    placementTypes: string[];
     creativeType: string | null;
     assetUrl: string | null;
 };
@@ -81,6 +82,22 @@ const placementLabels: Record<string, string> = {
     map_route: 'نقشه و مسیر',
     post_mission: 'بعد از ماموریت',
 };
+
+const onlinePlacementOptions = [
+    ['qr_landing', placementLabels.qr_landing],
+    ['reward_page', placementLabels.reward_page],
+    ['map_route', placementLabels.map_route],
+    ['post_mission', placementLabels.post_mission],
+] as const;
+
+function placementText(placementTypes: string[], fallback: string | null) {
+    const types = placementTypes.length > 0 ? placementTypes : [fallback ?? ''];
+
+    return types
+        .filter(Boolean)
+        .map((type) => placementLabels[type] ?? type)
+        .join('، ');
+}
 
 function Stat({
     icon: Icon,
@@ -173,9 +190,9 @@ export default function PartnerAds({
 
                 <Alert>
                     <AlertDescription>
-                        این صفحه فقط برای تبلیغ مستقل همان فروشگاه یا واحد
-                        تجاری است. درخواست‌های اسپانسری، حمایت از مسیر و
-                        قراردادهای برند از پنل اسپانسر ثبت و پیگیری می‌شوند.
+                        این صفحه فقط برای تبلیغ مستقل همان فروشگاه یا واحد تجاری
+                        است. درخواست‌های اسپانسری، حمایت از مسیر و قراردادهای
+                        برند از پنل اسپانسر ثبت و پیگیری می‌شوند.
                     </AlertDescription>
                 </Alert>
 
@@ -276,6 +293,40 @@ export default function PartnerAds({
                                     </select>
                                     <InputError
                                         message={errors.placement_type}
+                                    />
+                                </div>
+                                <div className="grid gap-2 rounded-md border border-sidebar-border/70 p-3 md:col-span-2 dark:border-sidebar-border">
+                                    <div>
+                                        <p className="text-sm font-medium">
+                                            کانال‌های آنلاین مکمل
+                                        </p>
+                                        <p className="mt-1 text-xs leading-6 text-muted-foreground">
+                                            اگر این موارد انتخاب شوند، پس از
+                                            تایید اکسپلوریا همین تبلیغ در صفحه
+                                            پیشنهادها و مسیر بازی هم قابل نمایش
+                                            می‌شود.
+                                        </p>
+                                    </div>
+                                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                                        {onlinePlacementOptions.map(
+                                            ([value, label]) => (
+                                                <label
+                                                    key={value}
+                                                    className="flex min-h-10 items-center gap-2 rounded-md border border-input px-3 text-sm"
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        name="online_placements[]"
+                                                        value={value}
+                                                        className="size-4"
+                                                    />
+                                                    <span>{label}</span>
+                                                </label>
+                                            ),
+                                        )}
+                                    </div>
+                                    <InputError
+                                        message={errors.online_placements}
                                     />
                                 </div>
                                 <div className="grid gap-2">
@@ -440,11 +491,10 @@ export default function PartnerAds({
                                     ) : null}
                                     <p className="text-xs text-muted-foreground">
                                         جایگاه:{' '}
-                                        {placementLabels[
-                                            adRequest.placementType ?? ''
-                                        ] ??
-                                            adRequest.placementType ??
-                                            '-'}{' '}
+                                        {placementText(
+                                            adRequest.placementTypes,
+                                            adRequest.placementType,
+                                        ) || '-'}{' '}
                                         · هاب: {adRequest.hubName ?? '-'} ·
                                         بازه: {formatDate(adRequest.startsAt)}{' '}
                                         تا {formatDate(adRequest.endsAt)}

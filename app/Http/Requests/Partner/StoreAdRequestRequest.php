@@ -24,6 +24,8 @@ class StoreAdRequestRequest extends FormRequest
             'ad_type' => ['required', 'string', Rule::in(['standalone', 'display_takeover', 'reward_moment'])],
             'creative_type' => ['required', 'string', Rule::in(['image', 'video', 'text_card', 'display_banner'])],
             'placement_type' => ['required', 'string', Rule::in(['fixed_display', 'mobile_display', 'qr_landing', 'reward_page', 'map_route', 'post_mission'])],
+            'online_placements' => ['nullable', 'array', 'max:4'],
+            'online_placements.*' => ['string', 'distinct', Rule::in(['qr_landing', 'reward_page', 'map_route', 'post_mission'])],
             'asset_url' => ['nullable', 'url', 'max:2048'],
             'starts_at' => ['nullable', 'date'],
             'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],

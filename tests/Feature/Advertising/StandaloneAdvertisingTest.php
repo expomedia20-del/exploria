@@ -239,6 +239,89 @@ class StandaloneAdvertisingTest extends TestCase
             ->assertJsonPath('data.items.0.placementType', 'mobile_display');
     }
 
+    public function test_partner_ad_can_complete_display_online_offers_and_game_journey(): void
+    {
+        $this->withoutVite();
+
+        $adRequest = $this->submitAdRequest(
+            'cafe.eco@example.test',
+            'Full journey cafe campaign ad',
+            'fixed_display',
+            [
+                'body_copy' => 'یک تبلیغ چندکاناله برای نمایشگر، پیشنهادهای امروز و نقشه بازی.',
+                'cta_text' => 'دیدن پیشنهاد',
+                'target_url' => 'https://example.com/full-journey',
+                'online_placements' => ['qr_landing', 'map_route'],
+                'impression_cap' => 20,
+                'click_cap' => 5,
+            ],
+        );
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $device = DisplayDevice::query()->where('code', 'ecopark-entry-fixed-display')->firstOrFail();
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.ads.api.approve', $adRequest), [
+                'notes' => 'تایید برای اجرای چندکاناله دمو.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'approved');
+
+        foreach (['fixed_display', 'qr_landing', 'map_route'] as $placementType) {
+            $this->assertDatabaseHas('ad_placements', [
+                'ad_request_id' => $adRequest->id,
+                'placement_type' => $placementType,
+                'status' => 'approved',
+            ]);
+        }
+
+        $this->actingAs($admin)
+            ->getJson(route('admin.display-operations.index'))
+            ->assertOk()
+            ->assertJsonCount(1, 'data.readyPlacements')
+            ->assertJsonPath('data.readyPlacements.0.adRequestId', $adRequest->id)
+            ->assertJsonPath('data.readyPlacements.0.placementType', 'fixed_display');
+
+        $fixedPlacement = $adRequest->placements()->where('placement_type', 'fixed_display')->firstOrFail();
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.display-operations.placements.api.schedule', $fixedPlacement), [
+                'display_device_id' => $device->id,
+                'starts_at' => now()->subMinute()->toIso8601String(),
+                'ends_at' => now()->addDay()->toIso8601String(),
+                'priority' => 1,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'scheduled');
+
+        $this->getJson(route('display.schedule', $device))
+            ->assertOk()
+            ->assertJsonPath('data.items.0.adRequestId', $adRequest->id)
+            ->assertJsonPath('data.items.0.title', 'Full journey cafe campaign ad');
+
+        $this->getJson(route('offers.index'))
+            ->assertOk()
+            ->assertJsonFragment(['title' => 'Full journey cafe campaign ad']);
+
+        $this->get(route('games.ecopark-treasure'))
+            ->assertOk()
+            ->assertSee('Full journey cafe campaign ad');
+
+        $this->postJson(route('offers.game-events.store'), [
+            'ad_request_id' => $adRequest->id,
+            'event_type' => 'game_offer_click',
+            'mission_code' => 'scan-entry-qr',
+            'metadata' => ['surface' => 'full_journey_test'],
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.eventType', 'game_offer_click');
+
+        $this->assertDatabaseHas('ad_events', [
+            'ad_request_id' => $adRequest->id,
+            'display_device_id' => null,
+            'event_type' => 'game_offer_click',
+        ]);
+    }
+
     public function test_display_device_can_record_ad_events(): void
     {
         $manager = User::query()->where('email', 'ravaq.manager@example.test')->firstOrFail();
@@ -300,7 +383,8 @@ class StandaloneAdvertisingTest extends TestCase
         $this->assertSame('pending_review', $adRequest->fresh()->status);
     }
 
-    private function submitAdRequest(string $email = 'cafe.eco@example.test', string $title = 'Test cafe ad', string $placementType = 'fixed_display'): AdRequest
+    /** @param array<string, mixed> $overrides */
+    private function submitAdRequest(string $email = 'cafe.eco@example.test', string $title = 'Test cafe ad', string $placementType = 'fixed_display', array $overrides = []): AdRequest
     {
         $partnerUser = User::query()->where('email', $email)->firstOrFail();
 
@@ -311,6 +395,7 @@ class StandaloneAdvertisingTest extends TestCase
                 'ad_type' => 'standalone',
                 'creative_type' => 'image',
                 'placement_type' => $placementType,
+                ...$overrides,
             ])
             ->assertCreated();
 

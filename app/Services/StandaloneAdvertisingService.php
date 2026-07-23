@@ -18,6 +18,13 @@ use Illuminate\Validation\ValidationException;
 
 class StandaloneAdvertisingService
 {
+    private const ONLINE_PLACEMENT_TYPES = [
+        'qr_landing',
+        'reward_page',
+        'map_route',
+        'post_mission',
+    ];
+
     public function __construct(private readonly PartnerDashboardService $partnerDashboardService, private readonly UserAccessScopeService $accessScopes) {}
 
     /** @return array<string, mixed> */
@@ -159,14 +166,25 @@ class StandaloneAdvertisingService
                 'metadata' => ['source' => 'partner_ad_submission'],
             ]);
 
-            $adRequest->placements()->create([
-                'placement_type' => $data['placement_type'],
-                'status' => 'pending_review',
-                'starts_at' => $data['starts_at'] ?? null,
-                'ends_at' => $data['ends_at'] ?? null,
-                'priority' => $data['priority'] ?? 5,
-                'metadata' => ['requested_hub_id' => $hub?->id],
-            ]);
+            $placementTypes = collect([$data['placement_type']])
+                ->merge($data['online_placements'] ?? [])
+                ->filter(fn (mixed $placementType): bool => is_string($placementType) && $placementType !== '')
+                ->unique()
+                ->values();
+
+            $placementTypes->each(function (string $placementType) use ($adRequest, $data, $hub): void {
+                $adRequest->placements()->create([
+                    'placement_type' => $placementType,
+                    'status' => 'pending_review',
+                    'starts_at' => $data['starts_at'] ?? null,
+                    'ends_at' => $data['ends_at'] ?? null,
+                    'priority' => $data['priority'] ?? ($this->isOnlinePlacement($placementType) ? 6 : 5),
+                    'metadata' => [
+                        'requested_hub_id' => $hub?->id,
+                        'channel' => $this->isOnlinePlacement($placementType) ? 'online' : 'display',
+                    ],
+                ]);
+            });
 
             return $adRequest;
         });
@@ -453,9 +471,15 @@ class StandaloneAdvertisingService
             'hubName' => $adRequest->hub?->name,
             'touchpointLabel' => $adRequest->touchpoint?->label,
             'placementType' => $placement?->placement_type,
+            'placementTypes' => $adRequest->placements->pluck('placement_type')->values()->all(),
             'placementStatus' => $placement?->status,
             'creativeType' => $creative?->creative_type,
             'assetUrl' => $creative?->asset_url,
         ];
+    }
+
+    private function isOnlinePlacement(string $placementType): bool
+    {
+        return in_array($placementType, self::ONLINE_PLACEMENT_TYPES, true);
     }
 }
