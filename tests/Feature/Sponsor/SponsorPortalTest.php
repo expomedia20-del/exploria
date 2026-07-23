@@ -3,6 +3,7 @@
 namespace Tests\Feature\Sponsor;
 
 use App\Enums\UserRole;
+use App\Models\AdRequest;
 use App\Models\Campaign;
 use App\Models\PartnerAccount;
 use App\Models\SponsorAccount;
@@ -36,8 +37,10 @@ class SponsorPortalTest extends TestCase
                 ->component('sponsor/dashboard')
                 ->where('sponsor.code', 'family-route-sponsor')
                 ->where('stats.proposals', 0)
+                ->where('stats.adRequests', 0)
                 ->has('formOptions.campaigns', 1)
-                ->has('formOptions.partners', 2));
+                ->has('formOptions.partners', 2)
+                ->has('formOptions.adHubs', 1));
 
         $this->assertDatabaseHas('sponsor_accounts', [
             'code' => 'family-route-sponsor',
@@ -185,6 +188,77 @@ class SponsorPortalTest extends TestCase
             ->firstWhere('title', 'Family treasure reward box');
 
         $this->assertCount(2, $rewardItem['partnerAllocations']);
+    }
+
+    public function test_sponsor_can_submit_multichannel_ad_request_for_admin_review(): void
+    {
+        $this->withoutVite();
+
+        $sponsorUser = User::query()->where('email', 'family.sponsor@example.test')->firstOrFail();
+        $title = 'Family route sponsor online game ad';
+
+        $this->actingAs($sponsorUser)
+            ->postJson(route('sponsor.ads.api.store'), [
+                'title' => $title,
+                'body_copy' => 'Sponsor message for display, online offers, and game route.',
+                'cta_text' => 'See sponsor offer',
+                'target_url' => 'https://example.com/sponsor-family-route',
+                'ad_type' => 'standalone',
+                'creative_type' => 'image',
+                'placement_type' => 'fixed_display',
+                'asset_url' => 'https://example.com/sponsor-ad.jpg',
+                'online_placements' => ['qr_landing', 'map_route', 'post_mission'],
+                'budget_amount' => 3500000,
+                'impression_cap' => 4000,
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.status', 'pending_review')
+            ->assertJsonPath('data.advertiserType', 'sponsor');
+
+        $adRequest = AdRequest::query()
+            ->where('title', $title)
+            ->with(['partnerAccount', 'placements'])
+            ->firstOrFail();
+
+        $this->assertSame('family-route-sponsor', $adRequest->partnerAccount->code);
+        $this->assertSame('sponsor', $adRequest->advertiser_type);
+
+        foreach (['fixed_display', 'qr_landing', 'map_route', 'post_mission'] as $placementType) {
+            $this->assertDatabaseHas('ad_placements', [
+                'ad_request_id' => $adRequest->id,
+                'placement_type' => $placementType,
+                'status' => 'pending_review',
+            ]);
+        }
+
+        $this->actingAs($sponsorUser)
+            ->postJson(route('admin.ads.api.approve', $adRequest))
+            ->assertForbidden();
+
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.ads.api.approve', $adRequest), [
+                'notes' => 'Approved sponsor ad for multichannel demo.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'approved');
+
+        $this->actingAs($sponsorUser)
+            ->getJson(route('sponsor.dashboard.index'))
+            ->assertOk()
+            ->assertJsonPath('data.stats.adRequests', 1)
+            ->assertJsonPath('data.stats.approvedAds', 1)
+            ->assertJsonPath('data.adRequests.0.title', $title)
+            ->assertJsonPath('data.adRequests.0.advertiserType', 'sponsor');
+
+        $this->getJson(route('offers.index'))
+            ->assertOk()
+            ->assertJsonFragment(['title' => $title]);
+
+        $this->get(route('games.ecopark-treasure'))
+            ->assertOk()
+            ->assertSee($title);
     }
 
     public function test_sponsor_item_allocations_must_match_item_quantity(): void

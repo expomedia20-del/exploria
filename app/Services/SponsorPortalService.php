@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\RecordStatus;
 use App\Enums\UserRole;
 use App\Models\Campaign;
+use App\Models\Hub;
 use App\Models\PartnerAccount;
 use App\Models\PartnerUser;
 use App\Models\SponsorAccount;
@@ -13,12 +14,15 @@ use App\Models\SponsorProposalItem;
 use App\Models\SponsorUser;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class SponsorPortalService
 {
+    public function __construct(private readonly StandaloneAdvertisingService $advertising) {}
+
     public function sponsorForUser(User $user): SponsorAccount
     {
         if (in_array($user->role, [UserRole::Admin, UserRole::Operator], true)) {
@@ -63,6 +67,7 @@ class SponsorPortalService
     {
         $sponsor = $this->sponsorForUser($user);
         $sponsor->load('venue:id,code,name');
+        $sponsorPartner = $this->partnerForSponsor($sponsor);
 
         $proposals = $sponsor->proposals()
             ->with([
@@ -76,6 +81,7 @@ class SponsorPortalService
             ->latest('created_at')
             ->get()
             ->map(fn (SponsorProposal $proposal): array => $this->serializeProposal($proposal));
+        $adRequests = $this->advertising->adRequestsForPartner($sponsorPartner);
 
         return [
             'sponsor' => $this->serializeSponsor($sponsor),
@@ -84,10 +90,19 @@ class SponsorPortalService
                 'pendingProposals' => $proposals->where('status', 'pending_review')->count(),
                 'approvedProposals' => $proposals->where('status', 'approved')->count(),
                 'revisionRequested' => $proposals->where('status', 'revision_requested')->count(),
+                'adRequests' => $adRequests->count(),
+                'pendingAds' => $adRequests->where('status', 'pending_review')->count(),
+                'approvedAds' => $adRequests->where('status', 'approved')->count(),
             ],
             'proposals' => $proposals,
+            'adRequests' => $adRequests,
             'formOptions' => $this->formOptions($sponsor),
         ];
+    }
+
+    public function sponsorPartnerForUser(User $user): PartnerAccount
+    {
+        return $this->partnerForSponsor($this->sponsorForUser($user));
     }
 
     /** @param array<string, mixed> $data */
@@ -405,6 +420,8 @@ class SponsorPortalService
     /** @return array<string, mixed> */
     private function formOptions(SponsorAccount $sponsor): array
     {
+        $sponsorPartner = $this->partnerForSponsor($sponsor);
+
         return [
             'campaigns' => Campaign::query()
                 ->when($sponsor->venue_id !== null, fn (Builder $query) => $query->where('venue_id', $sponsor->venue_id))
@@ -432,7 +449,77 @@ class SponsorPortalService
                     'status' => $partner->status->value,
                     'venueName' => $partner->venue?->name,
                 ]),
+            'adHubs' => $this->adHubOptionsForPartner($sponsorPartner),
         ];
+    }
+
+    /** @return Collection<int, array{id: string, code: string, name: string}> */
+    private function adHubOptionsForPartner(PartnerAccount $partner): Collection
+    {
+        $hubIds = $partner->locations()
+            ->where('status', RecordStatus::Active)
+            ->whereNotNull('hub_id')
+            ->pluck('hub_id')
+            ->unique()
+            ->values();
+
+        return Hub::query()
+            ->whereIn('id', $hubIds)
+            ->orderBy('created_at')
+            ->get(['id', 'code', 'name'])
+            ->toBase()
+            ->map(fn (Hub $hub): array => [
+                'id' => $hub->id,
+                'code' => $hub->code,
+                'name' => $hub->name,
+            ])
+            ->values();
+    }
+
+    private function partnerForSponsor(SponsorAccount $sponsor): PartnerAccount
+    {
+        $linkedPartnerId = $sponsor->metadata['linked_partner_account_id'] ?? null;
+
+        if (is_string($linkedPartnerId) && $linkedPartnerId !== '') {
+            $linkedPartner = PartnerAccount::query()
+                ->whereKey($linkedPartnerId)
+                ->where('partner_type', 'sponsor')
+                ->first();
+
+            if ($linkedPartner) {
+                return $linkedPartner;
+            }
+        }
+
+        $partner = PartnerAccount::query()
+            ->where('code', $sponsor->code)
+            ->where('partner_type', 'sponsor')
+            ->when($sponsor->venue_id !== null, fn (Builder $query) => $query->where('venue_id', $sponsor->venue_id))
+            ->first();
+
+        if ($partner) {
+            return $partner;
+        }
+
+        if ($sponsor->venue_id === null) {
+            throw ValidationException::withMessages([
+                'sponsor' => 'برای ثبت تبلیغ، حساب اسپانسر باید به یک مکان یا حساب عملیاتی اسپانسر وصل باشد.',
+            ]);
+        }
+
+        return PartnerAccount::query()->create([
+            'venue_id' => $sponsor->venue_id,
+            'code' => Str::limit($sponsor->code, 64, ''),
+            'name' => $sponsor->name,
+            'partner_type' => 'sponsor',
+            'status' => RecordStatus::Active,
+            'contact_name' => $sponsor->contact_name,
+            'contact_mobile' => $sponsor->contact_mobile,
+            'metadata' => [
+                'source' => 'sponsor_portal_ad_fallback',
+                'sponsor_account_id' => $sponsor->id,
+            ],
+        ]);
     }
 
     private function ensureSponsorFromPartner(PartnerUser $partnerUser): SponsorAccount

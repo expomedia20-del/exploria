@@ -1,11 +1,14 @@
 import { Form, Head, Link, usePage } from '@inertiajs/react';
 import {
     BadgeDollarSign,
+    CalendarClock,
     FileCheck2,
     Gift,
     Megaphone,
+    MonitorPlay,
     Pencil,
     Plus,
+    RadioTower,
     Send,
     Store,
     Trash2,
@@ -24,6 +27,7 @@ type PartnerOption = RegistryEntity & {
     status: string;
     venueName: string | null;
 };
+type HubOption = RegistryEntity;
 
 type Sponsor = RegistryEntity & {
     sponsorType: string;
@@ -66,6 +70,27 @@ type SponsorProposalItem = {
     description: string | null;
 };
 
+type AdRequest = {
+    id: string;
+    code: string;
+    title: string;
+    bodyCopy: string | null;
+    ctaText: string | null;
+    targetUrl: string | null;
+    adType: string;
+    status: string;
+    startsAt: string | null;
+    endsAt: string | null;
+    budgetAmount: number | null;
+    impressionCap: number | null;
+    impressionsCount: number;
+    hubName: string | null;
+    placementType: string | null;
+    placementTypes: string[];
+    creativeType: string | null;
+    assetUrl: string | null;
+};
+
 type Props = {
     sponsor: Sponsor;
     stats: {
@@ -73,11 +98,16 @@ type Props = {
         pendingProposals: number;
         approvedProposals: number;
         revisionRequested: number;
+        adRequests: number;
+        pendingAds: number;
+        approvedAds: number;
     };
     proposals: SponsorProposal[];
+    adRequests: AdRequest[];
     formOptions: {
         campaigns: CampaignOption[];
         partners: PartnerOption[];
+        adHubs: HubOption[];
     };
 };
 
@@ -102,6 +132,22 @@ const proposalTypeLabels: Record<string, string> = {
     scientific_cultural_content: 'محتوای علمی/فرهنگی',
     product_sampling: 'نمونه‌گیری محصول',
 };
+
+const placementLabels: Record<string, string> = {
+    fixed_display: 'نمایشگر ثابت',
+    mobile_display: 'نمایشگر سیار',
+    qr_landing: 'صفحه QR',
+    reward_page: 'صفحه پاداش',
+    map_route: 'نقشه و مسیر بازی',
+    post_mission: 'پس از ماموریت',
+};
+
+const onlinePlacementOptions = [
+    ['qr_landing', placementLabels.qr_landing],
+    ['reward_page', placementLabels.reward_page],
+    ['map_route', placementLabels.map_route],
+    ['post_mission', placementLabels.post_mission],
+] as const;
 
 type ProposalItemForm = {
     item_type: string;
@@ -130,6 +176,25 @@ function fa(value: number) {
 
 function money(value: number) {
     return value > 0 ? `${fa(value)} تومان` : '-';
+}
+
+function placementText(placementTypes: string[], fallback: string | null) {
+    const types = placementTypes.length > 0 ? placementTypes : [fallback ?? ''];
+
+    return types
+        .filter(Boolean)
+        .map((type) => placementLabels[type] ?? type)
+        .join('، ');
+}
+
+function formatDate(value: string | null) {
+    if (!value) {
+        return 'بدون محدودیت';
+    }
+
+    return new Intl.DateTimeFormat('fa-IR', {
+        dateStyle: 'medium',
+    }).format(new Date(value));
 }
 
 function label(map: Record<string, string>, value: string) {
@@ -227,6 +292,7 @@ export default function SponsorDashboard({
     sponsor,
     stats,
     proposals,
+    adRequests,
     formOptions,
 }: Props) {
     const { flash } = usePage<SharedProps>().props;
@@ -1022,6 +1088,416 @@ export default function SponsorDashboard({
                                 </>
                             )}
                         </Form>
+                    </div>
+                </section>
+
+                <section className="exploria-panel overflow-hidden">
+                    <div className="border-b border-border/70 px-4 py-3 dark:border-sidebar-border">
+                        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                            <div className="flex items-center gap-2">
+                                <MonitorPlay className="size-4 text-muted-foreground" />
+                                <h2 className="font-semibold">
+                                    درخواست تبلیغ اسپانسری
+                                </h2>
+                            </div>
+                            <div className="grid grid-cols-3 gap-2 text-xs">
+                                <span className="rounded-md bg-muted px-2.5 py-1">
+                                    کل: {fa(stats.adRequests)}
+                                </span>
+                                <span className="rounded-md bg-muted px-2.5 py-1">
+                                    منتظر: {fa(stats.pendingAds)}
+                                </span>
+                                <span className="rounded-md bg-muted px-2.5 py-1">
+                                    تایید: {fa(stats.approvedAds)}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <Form
+                        action="/sponsor/ads"
+                        method="post"
+                        options={{ preserveScroll: true }}
+                        className="grid min-w-0 gap-4 p-4 md:grid-cols-2"
+                    >
+                        {({ processing, errors }) => (
+                            <>
+                                {Object.keys(errors).length > 0 ? (
+                                    <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive md:col-span-2">
+                                        <p className="font-medium">
+                                            فرم تبلیغ ارسال نشد؛ موارد مشخص‌شده
+                                            را اصلاح کنید.
+                                        </p>
+                                        {Object.values(errors)[0] ? (
+                                            <p className="mt-1 text-xs">
+                                                {Object.values(errors)[0]}
+                                            </p>
+                                        ) : null}
+                                    </div>
+                                ) : null}
+                                <div className="grid gap-1.5">
+                                    <label
+                                        htmlFor="ad_title"
+                                        className="text-xs font-medium"
+                                    >
+                                        عنوان تبلیغ
+                                    </label>
+                                    <input
+                                        id="ad_title"
+                                        name="title"
+                                        required
+                                        className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                        placeholder="مثلا حمایت از مسیر گنج خانوادگی"
+                                    />
+                                    <InputError message={errors.title} />
+                                </div>
+                                <div className="grid gap-1.5">
+                                    <label
+                                        htmlFor="ad_hub_id"
+                                        className="text-xs font-medium"
+                                    >
+                                        محدوده اجرا
+                                    </label>
+                                    <select
+                                        id="ad_hub_id"
+                                        name="hub_id"
+                                        className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                        defaultValue=""
+                                    >
+                                        <option value="">
+                                            کل محدوده اسپانسر
+                                        </option>
+                                        {(formOptions.adHubs ?? []).map(
+                                            (hub) => (
+                                                <option
+                                                    key={hub.id}
+                                                    value={hub.id}
+                                                >
+                                                    {hub.name}
+                                                </option>
+                                            ),
+                                        )}
+                                    </select>
+                                    <InputError message={errors.hub_id} />
+                                </div>
+                                <div className="grid gap-1.5">
+                                    <label
+                                        htmlFor="ad_type"
+                                        className="text-xs font-medium"
+                                    >
+                                        نوع تبلیغ
+                                    </label>
+                                    <select
+                                        id="ad_type"
+                                        name="ad_type"
+                                        required
+                                        className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                        defaultValue="standalone"
+                                    >
+                                        <option value="standalone">
+                                            تبلیغ مستقل اسپانسر
+                                        </option>
+                                        <option value="display_takeover">
+                                            جایگاه ویژه نمایشگر
+                                        </option>
+                                        <option value="reward_moment">
+                                            پیام کنار پاداش
+                                        </option>
+                                    </select>
+                                    <InputError message={errors.ad_type} />
+                                </div>
+                                <div className="grid gap-1.5">
+                                    <label
+                                        htmlFor="placement_type"
+                                        className="text-xs font-medium"
+                                    >
+                                        جایگاه اصلی
+                                    </label>
+                                    <select
+                                        id="placement_type"
+                                        name="placement_type"
+                                        required
+                                        className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                        defaultValue="fixed_display"
+                                    >
+                                        <option value="fixed_display">
+                                            نمایشگر ثابت
+                                        </option>
+                                        <option value="mobile_display">
+                                            نمایشگر سیار
+                                        </option>
+                                        <option value="qr_landing">
+                                            صفحه QR
+                                        </option>
+                                        <option value="reward_page">
+                                            صفحه پاداش
+                                        </option>
+                                        <option value="map_route">
+                                            نقشه و مسیر بازی
+                                        </option>
+                                        <option value="post_mission">
+                                            پس از ماموریت
+                                        </option>
+                                    </select>
+                                    <InputError
+                                        message={errors.placement_type}
+                                    />
+                                </div>
+                                <div className="grid gap-2 rounded-md border border-border/70 p-3 md:col-span-2">
+                                    <p className="text-sm font-medium">
+                                        کانال‌های آنلاین مکمل
+                                    </p>
+                                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                                        {onlinePlacementOptions.map(
+                                            ([value, title]) => (
+                                                <label
+                                                    key={value}
+                                                    className="flex min-h-10 items-center gap-2 rounded-md border border-input px-3 text-sm"
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        name="online_placements[]"
+                                                        value={value}
+                                                        className="size-4"
+                                                    />
+                                                    <span>{title}</span>
+                                                </label>
+                                            ),
+                                        )}
+                                    </div>
+                                    <InputError
+                                        message={errors.online_placements}
+                                    />
+                                </div>
+                                <div className="grid gap-1.5">
+                                    <label
+                                        htmlFor="creative_type"
+                                        className="text-xs font-medium"
+                                    >
+                                        نوع محتوا
+                                    </label>
+                                    <select
+                                        id="creative_type"
+                                        name="creative_type"
+                                        required
+                                        className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                        defaultValue="image"
+                                    >
+                                        <option value="image">تصویر</option>
+                                        <option value="video">ویدئو</option>
+                                        <option value="text_card">
+                                            کارت متنی
+                                        </option>
+                                        <option value="display_banner">
+                                            بنر نمایشگر
+                                        </option>
+                                    </select>
+                                    <InputError
+                                        message={errors.creative_type}
+                                    />
+                                </div>
+                                <div className="grid gap-1.5">
+                                    <label
+                                        htmlFor="asset_url"
+                                        className="text-xs font-medium"
+                                    >
+                                        لینک فایل محتوا
+                                    </label>
+                                    <input
+                                        id="asset_url"
+                                        name="asset_url"
+                                        type="url"
+                                        dir="ltr"
+                                        className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                        placeholder="https://example.com/sponsor-ad.jpg"
+                                    />
+                                    <InputError message={errors.asset_url} />
+                                </div>
+                                <div className="grid gap-1.5">
+                                    <label
+                                        htmlFor="starts_at"
+                                        className="text-xs font-medium"
+                                    >
+                                        شروع نمایش
+                                    </label>
+                                    <input
+                                        id="starts_at"
+                                        name="starts_at"
+                                        type="datetime-local"
+                                        className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                    />
+                                    <InputError message={errors.starts_at} />
+                                </div>
+                                <div className="grid gap-1.5">
+                                    <label
+                                        htmlFor="ends_at"
+                                        className="text-xs font-medium"
+                                    >
+                                        پایان نمایش
+                                    </label>
+                                    <input
+                                        id="ends_at"
+                                        name="ends_at"
+                                        type="datetime-local"
+                                        className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                    />
+                                    <InputError message={errors.ends_at} />
+                                </div>
+                                <div className="grid gap-1.5">
+                                    <label
+                                        htmlFor="budget_amount"
+                                        className="text-xs font-medium"
+                                    >
+                                        بودجه پیشنهادی
+                                    </label>
+                                    <input
+                                        id="budget_amount"
+                                        name="budget_amount"
+                                        type="number"
+                                        min="0"
+                                        className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                    />
+                                    <InputError
+                                        message={errors.budget_amount}
+                                    />
+                                </div>
+                                <div className="grid gap-1.5">
+                                    <label
+                                        htmlFor="impression_cap"
+                                        className="text-xs font-medium"
+                                    >
+                                        سقف نمایش
+                                    </label>
+                                    <input
+                                        id="impression_cap"
+                                        name="impression_cap"
+                                        type="number"
+                                        min="1"
+                                        className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                    />
+                                    <InputError
+                                        message={errors.impression_cap}
+                                    />
+                                </div>
+                                <div className="grid gap-1.5 md:col-span-2">
+                                    <label
+                                        htmlFor="body_copy"
+                                        className="text-xs font-medium"
+                                    >
+                                        متن تبلیغ
+                                    </label>
+                                    <textarea
+                                        id="body_copy"
+                                        name="body_copy"
+                                        className="min-h-24 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                        placeholder="پیام برند، پیشنهاد اسپانسری یا متن فراخوان"
+                                    />
+                                    <InputError message={errors.body_copy} />
+                                </div>
+                                <div className="grid gap-1.5">
+                                    <label
+                                        htmlFor="cta_text"
+                                        className="text-xs font-medium"
+                                    >
+                                        متن دکمه
+                                    </label>
+                                    <input
+                                        id="cta_text"
+                                        name="cta_text"
+                                        className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                        placeholder="مثلا مشاهده پیشنهاد"
+                                    />
+                                    <InputError message={errors.cta_text} />
+                                </div>
+                                <div className="grid gap-1.5">
+                                    <label
+                                        htmlFor="target_url"
+                                        className="text-xs font-medium"
+                                    >
+                                        لینک مقصد
+                                    </label>
+                                    <input
+                                        id="target_url"
+                                        name="target_url"
+                                        type="url"
+                                        dir="ltr"
+                                        className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                        placeholder="https://example.com"
+                                    />
+                                    <InputError message={errors.target_url} />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <Button
+                                        disabled={processing}
+                                        className="w-full sm:w-auto"
+                                    >
+                                        <RadioTower className="size-4" />
+                                        ارسال درخواست تبلیغ
+                                    </Button>
+                                </div>
+                            </>
+                        )}
+                    </Form>
+                </section>
+
+                <section className="exploria-panel overflow-hidden">
+                    <div className="border-b border-border/70 px-4 py-3 dark:border-sidebar-border">
+                        <div className="flex items-center gap-2">
+                            <CalendarClock className="size-4 text-muted-foreground" />
+                            <h2 className="font-semibold">
+                                تبلیغات اسپانسری ثبت‌شده
+                            </h2>
+                        </div>
+                    </div>
+                    <div className="divide-y divide-border/70">
+                        {adRequests.length === 0 ? (
+                            <div className="p-6 text-sm text-muted-foreground">
+                                هنوز درخواست تبلیغی ثبت نشده است.
+                            </div>
+                        ) : (
+                            adRequests.map((adRequest) => (
+                                <article
+                                    key={adRequest.id}
+                                    className="grid gap-2 px-4 py-3 text-sm"
+                                >
+                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                        <div className="min-w-0">
+                                            <p className="truncate font-medium">
+                                                {adRequest.title}
+                                            </p>
+                                            <p
+                                                className="mt-1 truncate text-xs text-muted-foreground"
+                                                dir="ltr"
+                                            >
+                                                {adRequest.code} ·{' '}
+                                                {adRequest.creativeType ?? '-'}
+                                            </p>
+                                        </div>
+                                        <span className="w-fit shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
+                                            {label(
+                                                statusLabels,
+                                                adRequest.status,
+                                            )}
+                                        </span>
+                                    </div>
+                                    {adRequest.bodyCopy ? (
+                                        <p className="line-clamp-2 text-xs text-muted-foreground">
+                                            {adRequest.bodyCopy}
+                                        </p>
+                                    ) : null}
+                                    <p className="text-xs text-muted-foreground">
+                                        جایگاه:{' '}
+                                        {placementText(
+                                            adRequest.placementTypes,
+                                            adRequest.placementType,
+                                        ) || '-'}{' '}
+                                        · محدوده: {adRequest.hubName ?? '-'} ·
+                                        بازه: {formatDate(adRequest.startsAt)}{' '}
+                                        تا {formatDate(adRequest.endsAt)} ·
+                                        نمایش: {fa(adRequest.impressionsCount)}
+                                    </p>
+                                </article>
+                            ))
+                        )}
                     </div>
                 </section>
 

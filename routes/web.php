@@ -94,6 +94,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/sponsor/proposals', [SponsorDashboardController::class, 'storeProposal'])
         ->middleware('role:admin,operator,sponsor')
         ->name('sponsor.proposals.store');
+    Route::post('/sponsor/ads', [SponsorDashboardController::class, 'storeAdRequest'])
+        ->middleware('role:admin,operator,sponsor')
+        ->name('sponsor.ads.store');
     Route::patch('/sponsor/proposals/{proposal}', [SponsorDashboardController::class, 'updateProposal'])
         ->middleware('role:admin,operator,sponsor')
         ->name('sponsor.proposals.update');
@@ -148,6 +151,9 @@ Route::get('/api/v1/ravaq/dashboard', [HubManagerDashboardController::class, 'in
 Route::patch('/api/v1/sponsor/proposals/{proposal}', [SponsorDashboardController::class, 'updateProposal'])
     ->middleware(['auth', 'role:admin,operator,sponsor'])
     ->name('sponsor.proposals.api.update');
+Route::post('/api/v1/sponsor/ads', [SponsorDashboardController::class, 'storeAdRequest'])
+    ->middleware(['auth', 'role:admin,operator,sponsor'])
+    ->name('sponsor.ads.api.store');
 
 Route::get('/admin/qr-codes', [QrRegistryController::class, 'page'])
     ->middleware(['auth', 'role:admin,regional_admin,operator,viewer'])

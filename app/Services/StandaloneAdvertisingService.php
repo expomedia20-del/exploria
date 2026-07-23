@@ -33,12 +33,7 @@ class StandaloneAdvertisingService
         $partner = $this->partnerDashboardService->partnerForUser($user);
         $partner->load(['venue:id,code,name', 'locations.hub:id,code,name']);
 
-        $adRequests = $partner->adRequests()
-            ->with(['venue:id,code,name', 'hub:id,code,name', 'placements.displayDevice:id,code,name,device_type', 'creatives:id,ad_request_id,creative_type,asset_url,status'])
-            ->withCount(['events as impressions_count' => fn ($query) => $query->where('event_type', 'impression')])
-            ->latest('created_at')
-            ->get()
-            ->map(fn (AdRequest $adRequest): array => $this->serializeAdRequest($adRequest));
+        $adRequests = $this->adRequestsForPartner($partner);
 
         return [
             'partner' => [
@@ -57,6 +52,17 @@ class StandaloneAdvertisingService
             'hubOptions' => $this->hubOptionsForPartner($partner),
             'adRequests' => $adRequests,
         ];
+    }
+
+    /** @return Collection<int, array<string, mixed>> */
+    public function adRequestsForPartner(PartnerAccount $partner): Collection
+    {
+        return $partner->adRequests()
+            ->with(['venue:id,code,name', 'hub:id,code,name', 'placements.displayDevice:id,code,name,device_type', 'creatives:id,ad_request_id,creative_type,asset_url,status'])
+            ->withCount(['events as impressions_count' => fn ($query) => $query->where('event_type', 'impression')])
+            ->latest('created_at')
+            ->get()
+            ->map(fn (AdRequest $adRequest): array => $this->serializeAdRequest($adRequest));
     }
 
     /** @return array<string, mixed> */
@@ -131,9 +137,28 @@ class StandaloneAdvertisingService
     public function createPartnerAdRequest(User $user, array $data): AdRequest
     {
         $partner = $this->partnerDashboardService->partnerForUser($user);
+
+        return $this->createAdRequestForPartner($user, $partner, $data, 'partner_ad_submission');
+    }
+
+    /** @param array<string, mixed> $data */
+    public function createSponsorAdRequest(User $user, PartnerAccount $partner, array $data): AdRequest
+    {
+        if ($partner->partner_type !== 'sponsor') {
+            throw ValidationException::withMessages([
+                'sponsor' => 'حساب تبلیغاتی انتخاب‌شده از نوع اسپانسر نیست.',
+            ]);
+        }
+
+        return $this->createAdRequestForPartner($user, $partner, $data, 'sponsor_ad_submission');
+    }
+
+    /** @param array<string, mixed> $data */
+    private function createAdRequestForPartner(User $user, PartnerAccount $partner, array $data, string $source): AdRequest
+    {
         $hub = $this->hubForPartner($partner, $data['hub_id'] ?? null);
 
-        return DB::transaction(function () use ($data, $hub, $partner, $user): AdRequest {
+        return DB::transaction(function () use ($data, $hub, $partner, $source, $user): AdRequest {
             $adRequest = AdRequest::query()->create([
                 'venue_id' => $partner->venue_id,
                 'partner_account_id' => $partner->id,
@@ -153,7 +178,7 @@ class StandaloneAdvertisingService
                 'budget_amount' => $data['budget_amount'] ?? null,
                 'impression_cap' => $data['impression_cap'] ?? null,
                 'click_cap' => $data['click_cap'] ?? null,
-                'metadata' => ['source' => 'partner_ad_submission'],
+                'metadata' => ['source' => $source],
             ]);
 
             $adRequest->creatives()->create([
@@ -163,7 +188,7 @@ class StandaloneAdvertisingService
                 'body_copy' => $data['body_copy'] ?? null,
                 'cta_text' => $data['cta_text'] ?? null,
                 'status' => 'pending_review',
-                'metadata' => ['source' => 'partner_ad_submission'],
+                'metadata' => ['source' => $source],
             ]);
 
             $placementTypes = collect([$data['placement_type']])
