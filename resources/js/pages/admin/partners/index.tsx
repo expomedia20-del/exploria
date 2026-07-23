@@ -150,8 +150,8 @@ export default function PartnerRegistryIndex({ partners }: Props) {
                     >
                         <p className="font-semibold">پنل فروشگاه</p>
                         <p className="mt-2 leading-6 text-muted-foreground">
-                            پیشنهاد پاداش، مصرف کد و گزارش عملکرد فروشگاه از
-                            پنل فروشگاه پیگیری می‌شود.
+                            پیشنهاد پاداش، مصرف کد و گزارش عملکرد فروشگاه از پنل
+                            فروشگاه پیگیری می‌شود.
                         </p>
                     </Link>
                     <Link

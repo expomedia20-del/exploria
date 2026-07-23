@@ -411,10 +411,10 @@ export default function VenueDashboard({
                                     </span>
                                 </div>
                                 <p className="text-xs text-muted-foreground">
-                                    زون: {hub.zoneName ?? '-'} · واحد تجاری/حامی:{' '}
-                                    {formatNumber(hub.partnerCount)} · نمایشگر:{' '}
-                                    {formatNumber(hub.displayCount)} · ماموریت:{' '}
-                                    {formatNumber(hub.missionCount)}
+                                    زون: {hub.zoneName ?? '-'} · واحد
+                                    تجاری/حامی: {formatNumber(hub.partnerCount)}{' '}
+                                    · نمایشگر: {formatNumber(hub.displayCount)}{' '}
+                                    · ماموریت: {formatNumber(hub.missionCount)}
                                 </p>
                             </article>
                         ))}

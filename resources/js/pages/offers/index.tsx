@@ -80,13 +80,7 @@ function formatDate(value: string | null) {
     }).format(new Date(value));
 }
 
-function Stat({
-    label,
-    value,
-}: {
-    label: string;
-    value: number;
-}) {
+function Stat({ label, value }: { label: string; value: number }) {
     return (
         <div className="rounded-md border border-white/15 bg-white/10 px-4 py-3">
             <p className="text-xs text-emerald-100">{label}</p>
@@ -97,12 +91,7 @@ function Stat({
     );
 }
 
-export default function OffersIndex({
-    governance,
-    stats,
-    ads,
-    offers,
-}: Props) {
+export default function OffersIndex({ governance, stats, ads, offers }: Props) {
     return (
         <>
             <Head title="پیشنهادهای امروز اکسپلوریا" />
@@ -179,8 +168,7 @@ export default function OffersIndex({
 
                     {offers.length === 0 ? (
                         <div className="rounded-lg border border-dashed border-zinc-300 bg-white p-6 text-sm leading-7 text-zinc-600">
-                            هنوز پیشنهاد تاییدشده‌ای برای نمایش عمومی فعال
-                            نیست.
+                            هنوز پیشنهاد تاییدشده‌ای برای نمایش عمومی فعال نیست.
                         </div>
                     ) : (
                         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -192,7 +180,8 @@ export default function OffersIndex({
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="min-w-0">
                                             <p className="text-xs text-emerald-700">
-                                                {offer.partnerName ?? 'اکسپلوریا'}
+                                                {offer.partnerName ??
+                                                    'اکسپلوریا'}
                                             </p>
                                             <h3 className="mt-1 text-lg leading-7 font-semibold">
                                                 {offer.name}
@@ -223,8 +212,9 @@ export default function OffersIndex({
                                         مکان: {offer.venueName ?? '-'}
                                     </p>
                                     <p className="mt-1 text-xs leading-6 text-zinc-500">
-                                        اعتبار: {formatDate(offer.availableFrom)}{' '}
-                                        تا {formatDate(offer.availableUntil)}
+                                        اعتبار:{' '}
+                                        {formatDate(offer.availableFrom)} تا{' '}
+                                        {formatDate(offer.availableUntil)}
                                     </p>
                                     {offer.terms ? (
                                         <p className="mt-3 rounded-md bg-amber-50 px-3 py-2 text-xs leading-6 text-amber-900">
@@ -252,8 +242,8 @@ export default function OffersIndex({
 
                     {ads.length === 0 ? (
                         <div className="rounded-lg border border-dashed border-zinc-300 bg-white p-6 text-sm leading-7 text-zinc-600">
-                            هنوز آگهی آنلاین تاییدشده‌ای برای این جایگاه‌ها
-                            فعال نیست.
+                            هنوز آگهی آنلاین تاییدشده‌ای برای این جایگاه‌ها فعال
+                            نیست.
                         </div>
                     ) : (
                         <div className="grid gap-4 md:grid-cols-2">

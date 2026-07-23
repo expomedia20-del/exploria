@@ -1,5 +1,4 @@
 import { Form, Head, Link, usePage } from '@inertiajs/react';
-import { useMemo, useState } from 'react';
 import {
     CheckCircle2,
     Gift,
@@ -10,6 +9,7 @@ import {
     TicketCheck,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { DateTimePickerField } from '@/components/date-time-picker-field';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -424,11 +424,10 @@ export default function PartnerDashboard({
                                 برای مشارکت در کمپین این کارها را انجام دهید
                             </h2>
                             <p className="mt-1 text-sm text-muted-foreground">
-                                این صفحه برای ثبت پیشنهاد پاداش یا تخفیف،
-                                پیگیری تایید ادمین، مدیریت موجودی و تایید مصرف
-                                پاداش کاربران همان فروشگاه است. پیشنهاد
-                                اسپانسری و قرارداد حمایت از پنل اسپانسر انجام
-                                می‌شود.
+                                این صفحه برای ثبت پیشنهاد پاداش یا تخفیف، پیگیری
+                                تایید ادمین، مدیریت موجودی و تایید مصرف پاداش
+                                کاربران همان فروشگاه است. پیشنهاد اسپانسری و
+                                قرارداد حمایت از پنل اسپانسر انجام می‌شود.
                             </p>
                         </div>
                     </div>
@@ -438,9 +437,8 @@ export default function PartnerDashboard({
                                 اقدام اصلی این مرحله: پیشنهاد پاداش یا تخفیف
                             </p>
                             <p className="mt-1 text-xs text-muted-foreground">
-                                تبلیغ فروشگاه مسیر جداگانه دارد و فقط برای
-                                پیام، جایگاه و زمان‌بندی همان واحد تجاری ثبت
-                                می‌شود.
+                                تبلیغ فروشگاه مسیر جداگانه دارد و فقط برای پیام،
+                                جایگاه و زمان‌بندی همان واحد تجاری ثبت می‌شود.
                             </p>
                         </div>
                         <div className="flex flex-wrap gap-2">

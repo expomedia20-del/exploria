@@ -4,12 +4,66 @@ namespace App\Services;
 
 use App\Enums\RecordStatus;
 use App\Models\AdEvent;
+use App\Models\AdPlacement;
 use App\Models\AdRequest;
 use App\Models\Campaign;
 use App\Models\RewardDefinition;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * @phpstan-type OnlineAd array{
+ *     id: string,
+ *     code: string,
+ *     title: string,
+ *     bodyCopy: string|null,
+ *     ctaText: string,
+ *     targetUrl: string|null,
+ *     adType: string,
+ *     creativeType: string|null,
+ *     assetUrl: string|null,
+ *     placementType: string|null,
+ *     placementTypes: list<string>,
+ *     venueName: string|null,
+ *     partnerName: string|null,
+ *     partnerType: string|null,
+ *     startsAt: string|null,
+ *     endsAt: string|null
+ * }
+ * @phpstan-type PartnerOffer array{
+ *     id: string,
+ *     code: string,
+ *     name: string,
+ *     rewardType: string,
+ *     pointCost: int|null,
+ *     stockQuantity: int|null,
+ *     userRewardsCount: int,
+ *     description: mixed,
+ *     terms: mixed,
+ *     rewardTier: mixed,
+ *     rewardOption: mixed,
+ *     availableFrom: mixed,
+ *     availableUntil: mixed,
+ *     venueName: string|null,
+ *     campaignName: string|null,
+ *     partnerName: string|null,
+ *     partnerType: string|null
+ * }
+ * @phpstan-type GameOffer array{
+ *     id: string,
+ *     kind: string,
+ *     adRequestId: string|null,
+ *     title: string,
+ *     partnerName: string|null,
+ *     bodyCopy: mixed,
+ *     ctaText: string,
+ *     targetUrl: string|null,
+ *     assetUrl: string|null,
+ *     placementType: string|null,
+ *     points: int|null,
+ *     terms: mixed
+ * }
+ */
 class SmartOffersService
 {
     private const ONLINE_AD_PLACEMENTS = [
@@ -46,47 +100,17 @@ class SmartOffersService
         ];
     }
 
-    /** @return Collection<int, array<string, mixed>> */
+    /** @return Collection<int, covariant GameOffer> */
     public function gameOffersForCampaign(?Campaign $campaign): Collection
     {
         $gamePlacements = ['map_route', 'post_mission', 'reward_page'];
 
         $ads = $this->approvedOnlineAds($campaign?->venue_id)
             ->filter(fn (array $ad): bool => collect($ad['placementTypes'])->intersect($gamePlacements)->isNotEmpty())
-            ->map(function (array $ad) use ($gamePlacements): array {
-                $gamePlacement = collect($ad['placementTypes'])->first(fn (string $placement): bool => in_array($placement, $gamePlacements, true));
-
-                return [
-                    'id' => 'ad-'.$ad['id'],
-                    'kind' => 'ad',
-                    'adRequestId' => $ad['id'],
-                    'title' => $ad['title'],
-                    'partnerName' => $ad['partnerName'],
-                    'bodyCopy' => $ad['bodyCopy'],
-                    'ctaText' => $ad['ctaText'],
-                    'targetUrl' => $ad['targetUrl'],
-                    'assetUrl' => $ad['assetUrl'],
-                    'placementType' => $gamePlacement,
-                    'points' => null,
-                    'terms' => null,
-                ];
-            });
+            ->map(fn (array $ad): array => $this->gameAdOffer($ad, $gamePlacements));
 
         $rewards = $this->activePartnerOffers($campaign)
-            ->map(fn (array $reward): array => [
-                'id' => 'reward-'.$reward['id'],
-                'kind' => 'reward',
-                'adRequestId' => null,
-                'title' => $reward['name'],
-                'partnerName' => $reward['partnerName'],
-                'bodyCopy' => $reward['description'],
-                'ctaText' => 'دیدن پیشنهاد',
-                'targetUrl' => route('offers.page'),
-                'assetUrl' => null,
-                'placementType' => 'game_reward',
-                'points' => $reward['pointCost'],
-                'terms' => $reward['terms'],
-            ]);
+            ->map(fn (array $reward): array => $this->gameRewardOffer($reward));
 
         return $ads
             ->merge($rewards)
@@ -132,7 +156,7 @@ class SmartOffersService
         ]);
     }
 
-    /** @return Collection<int, array<string, mixed>> */
+    /** @return Collection<int, covariant OnlineAd> */
     private function approvedOnlineAds(?string $venueId = null): Collection
     {
         $now = now();
@@ -157,33 +181,11 @@ class SmartOffersService
             ->limit(12)
             ->get()
             ->toBase()
-            ->map(function (AdRequest $adRequest): array {
-                $placement = $adRequest->placements->first();
-                $creative = $adRequest->creatives->first();
-
-                return [
-                    'id' => $adRequest->id,
-                    'code' => $adRequest->code,
-                    'title' => $adRequest->title,
-                    'bodyCopy' => $adRequest->body_copy,
-                    'ctaText' => $adRequest->cta_text ?? $creative?->cta_text ?? 'مشاهده پیشنهاد',
-                    'targetUrl' => $adRequest->target_url,
-                    'adType' => $adRequest->ad_type,
-                    'creativeType' => $creative?->creative_type,
-                    'assetUrl' => $creative?->asset_url,
-                    'placementType' => $placement?->placement_type,
-                    'placementTypes' => $adRequest->placements->pluck('placement_type')->values()->all(),
-                    'venueName' => $adRequest->venue?->name,
-                    'partnerName' => $adRequest->partnerAccount?->name,
-                    'partnerType' => $adRequest->partnerAccount?->partner_type,
-                    'startsAt' => $adRequest->starts_at?->toIso8601String(),
-                    'endsAt' => $adRequest->ends_at?->toIso8601String(),
-                ];
-            })
+            ->map(fn (AdRequest $adRequest): array => $this->onlineAd($adRequest))
             ->values();
     }
 
-    /** @return Collection<int, array<string, mixed>> */
+    /** @return Collection<int, covariant PartnerOffer> */
     private function activePartnerOffers(?Campaign $campaign = null): Collection
     {
         $now = now();
@@ -210,25 +212,109 @@ class SmartOffersService
             ->get()
             ->toBase()
             ->filter(fn (RewardDefinition $reward): bool => ($reward->metadata['availability_status'] ?? 'active') !== 'paused')
-            ->map(fn (RewardDefinition $reward): array => [
-                'id' => $reward->id,
-                'code' => $reward->code,
-                'name' => $reward->name,
-                'rewardType' => $reward->reward_type,
-                'pointCost' => $reward->point_cost,
-                'stockQuantity' => $reward->stock_quantity,
-                'userRewardsCount' => (int) $reward->getAttribute('user_rewards_count'),
-                'description' => $reward->metadata['description'] ?? null,
-                'terms' => $reward->metadata['terms'] ?? null,
-                'rewardTier' => $reward->metadata['reward_tier'] ?? null,
-                'rewardOption' => $reward->metadata['reward_option'] ?? null,
-                'availableFrom' => $reward->metadata['available_from'] ?? null,
-                'availableUntil' => $reward->metadata['available_until'] ?? null,
-                'venueName' => $reward->venue?->name,
-                'campaignName' => $reward->campaign?->name,
-                'partnerName' => $reward->partnerAccount?->name,
-                'partnerType' => $reward->partnerAccount?->partner_type,
-            ])
+            ->map(fn (RewardDefinition $reward): array => $this->partnerOffer($reward))
             ->values();
+    }
+
+    /**
+     * @param  OnlineAd  $ad
+     * @param  list<string>  $gamePlacements
+     * @return GameOffer
+     */
+    private function gameAdOffer(array $ad, array $gamePlacements): array
+    {
+        $gamePlacement = collect($ad['placementTypes'])
+            ->first(fn (string $placement): bool => in_array($placement, $gamePlacements, true));
+
+        return [
+            'id' => 'ad-'.$ad['id'],
+            'kind' => 'ad',
+            'adRequestId' => $ad['id'],
+            'title' => $ad['title'],
+            'partnerName' => $ad['partnerName'],
+            'bodyCopy' => $ad['bodyCopy'],
+            'ctaText' => $ad['ctaText'],
+            'targetUrl' => $ad['targetUrl'],
+            'assetUrl' => $ad['assetUrl'],
+            'placementType' => $gamePlacement,
+            'points' => null,
+            'terms' => null,
+        ];
+    }
+
+    /**
+     * @param  PartnerOffer  $reward
+     * @return GameOffer
+     */
+    private function gameRewardOffer(array $reward): array
+    {
+        return [
+            'id' => 'reward-'.$reward['id'],
+            'kind' => 'reward',
+            'adRequestId' => null,
+            'title' => $reward['name'],
+            'partnerName' => $reward['partnerName'],
+            'bodyCopy' => $reward['description'],
+            'ctaText' => 'دیدن پیشنهاد',
+            'targetUrl' => route('offers.page'),
+            'assetUrl' => null,
+            'placementType' => 'game_reward',
+            'points' => $reward['pointCost'],
+            'terms' => $reward['terms'],
+        ];
+    }
+
+    /** @return OnlineAd */
+    private function onlineAd(AdRequest $adRequest): array
+    {
+        $placement = $adRequest->placements->first();
+        $creative = $adRequest->creatives->first();
+        $placementTypes = $adRequest->placements
+            ->map(fn (AdPlacement $adPlacement): string => $adPlacement->placement_type)
+            ->values()
+            ->all();
+
+        return [
+            'id' => $adRequest->id,
+            'code' => $adRequest->code,
+            'title' => $adRequest->title,
+            'bodyCopy' => $adRequest->body_copy,
+            'ctaText' => $adRequest->cta_text ?? $creative->cta_text ?? 'مشاهده پیشنهاد',
+            'targetUrl' => $adRequest->target_url,
+            'adType' => $adRequest->ad_type,
+            'creativeType' => $creative?->creative_type,
+            'assetUrl' => $creative?->asset_url,
+            'placementType' => $placement?->placement_type,
+            'placementTypes' => array_values($placementTypes),
+            'venueName' => $adRequest->venue?->name,
+            'partnerName' => $adRequest->partnerAccount?->name,
+            'partnerType' => $adRequest->partnerAccount?->partner_type,
+            'startsAt' => $adRequest->starts_at?->toIso8601String(),
+            'endsAt' => $adRequest->ends_at?->toIso8601String(),
+        ];
+    }
+
+    /** @return PartnerOffer */
+    private function partnerOffer(RewardDefinition $reward): array
+    {
+        return [
+            'id' => $reward->id,
+            'code' => $reward->code,
+            'name' => $reward->name,
+            'rewardType' => $reward->reward_type,
+            'pointCost' => $reward->point_cost,
+            'stockQuantity' => $reward->stock_quantity,
+            'userRewardsCount' => (int) $reward->getAttribute('user_rewards_count'),
+            'description' => $reward->metadata['description'] ?? null,
+            'terms' => $reward->metadata['terms'] ?? null,
+            'rewardTier' => $reward->metadata['reward_tier'] ?? null,
+            'rewardOption' => $reward->metadata['reward_option'] ?? null,
+            'availableFrom' => $reward->metadata['available_from'] ?? null,
+            'availableUntil' => $reward->metadata['available_until'] ?? null,
+            'venueName' => $reward->venue?->name,
+            'campaignName' => $reward->campaign?->name,
+            'partnerName' => $reward->partnerAccount?->name,
+            'partnerType' => $reward->partnerAccount?->partner_type,
+        ];
     }
 }

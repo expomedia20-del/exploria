@@ -36,7 +36,10 @@ class EnvironmentBaselineTest extends TestCase
         $this->assertSame('testing', app()->environment());
 
         if (config('database.default') === 'pgsql') {
-            $this->assertSame(env('EXPLORIA_PG_DATABASE'), config('database.connections.pgsql.database'));
+            $database = config('database.connections.pgsql.database');
+
+            $this->assertIsString($database);
+            $this->assertMatchesRegularExpression('/(^|[_-])test(ing)?$/', $database);
 
             return;
         }

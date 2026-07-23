@@ -205,7 +205,7 @@ export default function Dashboard({
                     </h1>
                 </header>
 
-                <section className="flex flex-col gap-3 rounded-lg border border-emerald-200 bg-emerald-50/75 p-4 text-sm dark:border-emerald-900/60 dark:bg-emerald-950/20 md:flex-row md:items-center md:justify-between">
+                <section className="flex flex-col gap-3 rounded-lg border border-emerald-200 bg-emerald-50/75 p-4 text-sm md:flex-row md:items-center md:justify-between dark:border-emerald-900/60 dark:bg-emerald-950/20">
                     <div className="flex items-start gap-3">
                         <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-md bg-emerald-600 text-white">
                             <MapPin className="size-5" />
@@ -215,9 +215,10 @@ export default function Dashboard({
                                 {scopeSummary.label}
                             </p>
                             <p className="mt-1 leading-6 text-muted-foreground">
-                                داده‌های این داشبورد بر اساس دامنه دسترسی نقش شما
-                                نمایش داده می‌شود؛ ادمین مرکزی نمای کل و ادمین
-                                استانی فقط نمای استان/منطقه خودش را می‌بیند.
+                                داده‌های این داشبورد بر اساس دامنه دسترسی نقش
+                                شما نمایش داده می‌شود؛ ادمین مرکزی نمای کل و
+                                ادمین استانی فقط نمای استان/منطقه خودش را
+                                می‌بیند.
                             </p>
                         </div>
                     </div>

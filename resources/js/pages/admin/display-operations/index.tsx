@@ -515,8 +515,7 @@ export default function AdminDisplayOperationsIndex({
                                     </p>
                                     <p className="mt-1 text-xs text-muted-foreground">
                                         واحد/حامی مرتبط:{' '}
-                                        {placement.partnerName ?? '-'} ·
-                                        اولویت:{' '}
+                                        {placement.partnerName ?? '-'} · اولویت:{' '}
                                         {placement.priority.toLocaleString(
                                             'fa-IR',
                                         )}

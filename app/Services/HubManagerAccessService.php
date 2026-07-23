@@ -145,7 +145,7 @@ class HubManagerAccessService
             return true;
         }
 
-        if ($adRequest->venue_id !== null && $this->hasDirectScope($user, 'venue', $adRequest->venue_id)) {
+        if ($this->hasDirectScope($user, 'venue', $adRequest->venue_id)) {
             return true;
         }
 
@@ -155,10 +155,6 @@ class HubManagerAccessService
 
         if ($adRequest->partner_account_id !== null && $this->hasDirectScope($user, 'partner', $adRequest->partner_account_id)) {
             return true;
-        }
-
-        if ($adRequest->venue_id === null) {
-            return false;
         }
 
         $venueCity = Venue::query()

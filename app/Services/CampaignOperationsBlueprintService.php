@@ -19,6 +19,11 @@ use Illuminate\Validation\ValidationException;
 
 class CampaignOperationsBlueprintService
 {
+    private const HUB_OPERATION_PRIORITIES = [
+        'commercial_ravaq' => 10,
+        'food_family' => 20,
+    ];
+
     public function __construct(
         private readonly UserAccessScopeService $accessScopes,
         private readonly CampaignBlueprintConsistencyService $blueprintConsistency,
@@ -344,7 +349,9 @@ class CampaignOperationsBlueprintService
                     'qrCodes' => (int) ($participant->metadata['connections']['qr_codes'] ?? 0),
                     'missions' => (int) ($participant->metadata['connections']['missions'] ?? 0),
                 ],
-            ]);
+            ])
+            ->sortBy(fn (array $participant): string => $this->participantHubSortKey($participant))
+            ->values();
     }
 
     /**
@@ -362,7 +369,24 @@ class CampaignOperationsBlueprintService
                 'roles' => $items->pluck('participationRole')->unique()->values(),
                 'participants' => $items->values(),
             ])
+            ->sortBy(fn (array $group): string => $this->participantHubSortKey($group))
             ->values();
+    }
+
+    /** @param array<string, mixed> $group */
+    private function participantHubSortKey(array $group): string
+    {
+        $hubType = (string) data_get($group, 'hub.hubType');
+        $priority = $hubType === ''
+            ? 999
+            : (self::HUB_OPERATION_PRIORITIES[$hubType] ?? 100);
+
+        return sprintf(
+            '%03d:%s:%s',
+            $priority,
+            (string) data_get($group, 'hub.code', 'external'),
+            (string) data_get($group, 'partner.code', ''),
+        );
     }
 
     /** @return array<string, mixed> */

@@ -1,5 +1,4 @@
 import { Form, Head, usePage } from '@inertiajs/react';
-import { useMemo, useState } from 'react';
 import {
     AlertTriangle,
     CheckCircle2,
@@ -12,6 +11,7 @@ import {
     XCircle,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -387,9 +387,9 @@ export default function AccessScopesIndex({
                                         <p className="mt-1 text-xs leading-6 text-muted-foreground">
                                             گزارش به:{' '}
                                             {role.reportsTo
-                                                ? roleLabelByKey[
+                                                ? (roleLabelByKey[
                                                       role.reportsTo
-                                                  ] ?? role.reportsTo
+                                                  ] ?? role.reportsTo)
                                                 : 'سطح مستقل / بالاترین سطح'}
                                         </p>
                                         <div className="mt-2">
@@ -975,28 +975,25 @@ export default function AccessScopesIndex({
                                     <div className="lg:col-span-5">
                                         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                                             {roleOptions.map((role) => (
-                                                    <div
-                                                        key={role.key}
-                                                        className="rounded-md border border-sidebar-border/70 p-3 dark:border-sidebar-border"
-                                                    >
-                                                        <p className="font-medium">
-                                                            {role.label}
-                                                        </p>
-                                                        <div className="mt-2">
-                                                            <GovernancePill
-                                                                governance={
-                                                                    role.governance
-                                                                }
-                                                            />
-                                                        </div>
-                                                        <p className="mt-2 text-xs leading-6 text-muted-foreground">
-                                                            {
+                                                <div
+                                                    key={role.key}
+                                                    className="rounded-md border border-sidebar-border/70 p-3 dark:border-sidebar-border"
+                                                >
+                                                    <p className="font-medium">
+                                                        {role.label}
+                                                    </p>
+                                                    <div className="mt-2">
+                                                        <GovernancePill
+                                                            governance={
                                                                 role.governance
-                                                                    .policy
                                                             }
-                                                        </p>
+                                                        />
                                                     </div>
-                                                ))}
+                                                    <p className="mt-2 text-xs leading-6 text-muted-foreground">
+                                                        {role.governance.policy}
+                                                    </p>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
                                 </>

@@ -273,8 +273,7 @@ function DisplayScheduleQueue({ items }: { items: DisplayScheduleItem[] }) {
                     </div>
                     <p className="text-xs text-muted-foreground">
                         نمایشگر: {item.displayDeviceName ?? '-'} · واحد/حامی
-                        مرتبط:{' '}
-                        {item.partnerName ?? '-'} · اولویت:{' '}
+                        مرتبط: {item.partnerName ?? '-'} · اولویت:{' '}
                         {formatNumber(item.priority)}
                     </p>
                     <p className="text-xs text-muted-foreground">
@@ -297,7 +296,8 @@ export default function HubDashboard({
         title: 'پنل مدیر هاب',
         subtitle: 'نظارت اجرایی بر هاب‌ها، مجموعه‌های تخصصی و واحدهای وابسته',
         areaLabel: 'هاب',
-        scopeNote: 'در این نما همه هاب‌های تحت مدیریت همین حساب نمایش داده می‌شوند.',
+        scopeNote:
+            'در این نما همه هاب‌های تحت مدیریت همین حساب نمایش داده می‌شوند.',
     },
     stats,
     hubs,
@@ -354,9 +354,9 @@ export default function HubDashboard({
 
                 <OperationalBoundaryNote title="تعریف نقش این پنل">
                     این پنل برای نظم، آمادگی، هماهنگی و اعلام مغایرت‌های اجرایی
-                    {` ${panelContext.areaLabel} `}است. تصمیم تجاری هر
-                    فروشگاه، قیمت‌گذاری، درآمد، نوع پاداش، قرارداد اسپانسر و
-                    تایید نهایی تبلیغ از این پنل انجام نمی‌شود.
+                    {` ${panelContext.areaLabel} `}است. تصمیم تجاری هر فروشگاه،
+                    قیمت‌گذاری، درآمد، نوع پاداش، قرارداد اسپانسر و تایید نهایی
+                    تبلیغ از این پنل انجام نمی‌شود.
                 </OperationalBoundaryNote>
 
                 <Panel
@@ -454,8 +454,8 @@ export default function HubDashboard({
                                 </div>
                                 <p className="text-xs text-muted-foreground">
                                     واحد/حامی مرتبط:{' '}
-                                    {adRequest.partnerName ?? '-'} ·
-                                    محدوده: {adRequest.hubName ?? '-'} · جایگاه:{' '}
+                                    {adRequest.partnerName ?? '-'} · محدوده:{' '}
+                                    {adRequest.hubName ?? '-'} · جایگاه:{' '}
                                     {adRequest.placementType ?? '-'}
                                 </p>
                                 {adRequest.displayDeviceName ? (
@@ -506,9 +506,8 @@ export default function HubDashboard({
                                     </span>
                                 </div>
                                 <p className="text-xs text-muted-foreground">
-                                    واحد تحویل/حامی:{' '}
-                                    {reward.partnerName ?? '-'} · کمپین:{' '}
-                                    {reward.campaignName ?? '-'}
+                                    واحد تحویل/حامی: {reward.partnerName ?? '-'}{' '}
+                                    · کمپین: {reward.campaignName ?? '-'}
                                 </p>
                                 {reward.approvalStatus === 'pending_review' ? (
                                     <OperationalBoundaryNote
@@ -517,9 +516,9 @@ export default function HubDashboard({
                                     >
                                         نوع پاداش، ارزش اقتصادی و شرایط فروشگاهی
                                         در اختیار واحد تجاری و اکسپلوریا است.
-                                        مدیر {panelContext.areaLabel} فقط
-                                        مغایرت با مقررات مجموعه یا مانع اجرایی
-                                        را اعلام می‌کند.
+                                        مدیر {panelContext.areaLabel} فقط مغایرت
+                                        با مقررات مجموعه یا مانع اجرایی را اعلام
+                                        می‌کند.
                                     </OperationalBoundaryNote>
                                 ) : null}
                                 <ReviewTrail

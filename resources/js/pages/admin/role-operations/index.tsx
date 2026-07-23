@@ -410,7 +410,7 @@ function RoleCard({ role }: { role: RoleItem }) {
                 </div>
             </div>
 
-            <div className="mt-4 grid gap-3 rounded-md border border-sidebar-border/70 bg-muted/30 p-3 text-sm dark:border-sidebar-border md:grid-cols-3">
+            <div className="mt-4 grid gap-3 rounded-md border border-sidebar-border/70 bg-muted/30 p-3 text-sm md:grid-cols-3 dark:border-sidebar-border">
                 <div>
                     <p className="text-xs text-muted-foreground">
                         نوع اکانت ورود
