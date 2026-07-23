@@ -57,7 +57,25 @@ class VisitMissionFlowTest extends TestCase
                 ->where('missionFlow.missions.0.code', 'scan-entry-qr')
                 ->where('missionFlow.missions.0.completionEvidence', "\u{0627}\u{0633}\u{06A9}\u{0646} QR \u{0647}\u{0645}\u{06CC}\u{0646} \u{0646}\u{0642}\u{0637}\u{0647}")
                 ->where('missionFlow.missions.0.successMessage', "\u{0645}\u{0623}\u{0645}\u{0648}\u{0631}\u{06CC}\u{062A} \u{06A9}\u{0627}\u{0645}\u{0644} \u{0634}\u{062F} \u{0648} \u{0645}\u{0631}\u{062D}\u{0644}\u{0647} \u{0628}\u{0639}\u{062F}\u{06CC} \u{0645}\u{0633}\u{06CC}\u{0631} \u{0628}\u{0631}\u{0627}\u{06CC} \u{0634}\u{0645}\u{0627} \u{0628}\u{0627}\u{0632} \u{0645}\u{06CC}\u{200C}\u{0634}\u{0648}\u{062F}.")
-                ->has('missionFlow.missions.0.cycleStep'));
+                ->has('missionFlow.missions.0.cycleStep')
+                ->where('missionFlow.missions.1.status', 'locked')
+                ->where('missionFlow.missions.1.isLocked', true));
+    }
+
+    public function test_user_cannot_skip_the_current_mission(): void
+    {
+        $laterMission = MissionInstance::query()->where('code', 'discover-route-guide')->firstOrFail();
+
+        $this->actingAs($this->visitor)
+            ->postJson(route('visits.missions.api.complete', [$this->visit, $laterMission]))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('mission')
+            ->assertJsonPath('errors.mission.0', 'ابتدا مرحله قبلی مسیر را کامل کنید.');
+
+        $this->assertDatabaseMissing('user_mission_progress', [
+            'user_id' => $this->visitor->id,
+            'mission_instance_id' => $laterMission->id,
+        ]);
     }
 
     public function test_user_can_start_and_complete_a_visit_mission_and_receive_reward(): void

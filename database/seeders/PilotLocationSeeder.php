@@ -422,7 +422,7 @@ class PilotLocationSeeder extends Seeder
 
         $missionInstances = [];
 
-        foreach ($missionTemplates as $missionData) {
+        foreach ($missionTemplates as $missionIndex => $missionData) {
             /** @var Hub $missionHub */
             $missionHub = $missionData['hub'];
             /** @var Touchpoint|null $missionTouchpoint */
@@ -455,6 +455,8 @@ class PilotLocationSeeder extends Seeder
                     'unlock_rule' => $missionData['unlock_rule'] ?? null,
                     'metadata' => [
                         'is_demo' => true,
+                        'cycle_step_index' => $missionIndex + 1,
+                        'cycle_step_label' => 'مرحله '.($missionIndex + 1),
                         'layer_reward' => $missionData['reward'],
                         'reward_code' => $missionData['reward_code'],
                         'visitor_instruction' => $missionData['description'],

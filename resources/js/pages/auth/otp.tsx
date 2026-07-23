@@ -125,52 +125,52 @@ export default function OtpAccess() {
     return (
         <main
             dir="rtl"
-            className="min-h-screen bg-[radial-gradient(circle_at_top_left,#fed7aa_0,#f8fafc_34%,#ecfeff_72%,#eef2ff_100%)] px-4 py-6 text-slate-950 dark:bg-slate-950 dark:text-slate-50"
+            className="min-h-svh w-full bg-[radial-gradient(circle_at_top_left,#fed7aa_0,#f8fafc_34%,#ecfeff_72%,#eef2ff_100%)] px-3 py-3 text-slate-950 sm:px-4 sm:py-6 dark:bg-slate-950 dark:text-slate-50"
         >
             <Head title="ورود به اکسپلوریا" />
 
-            <section className="mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-5xl items-center">
-                <div className="grid w-full gap-5 overflow-hidden rounded-2xl border border-white/70 bg-white/82 shadow-xl shadow-slate-900/10 backdrop-blur md:grid-cols-[1.05fr_0.95fr] dark:border-slate-800 dark:bg-slate-900/90">
-                    <div className="flex flex-col justify-between gap-8 p-6 sm:p-8">
+            <section className="mx-auto flex min-h-[calc(100svh-1.5rem)] w-full max-w-5xl items-center sm:min-h-[calc(100svh-3rem)]">
+                <div className="grid w-full grid-cols-1 overflow-hidden rounded-xl border border-white/70 bg-white/82 shadow-xl shadow-slate-900/10 backdrop-blur sm:rounded-2xl lg:grid-cols-[1.05fr_0.95fr] dark:border-slate-800 dark:bg-slate-900/90">
+                    <div className="order-2 flex flex-col justify-between gap-6 p-5 sm:p-8 lg:order-1 lg:gap-8">
                         <div>
-                            <div className="mb-6 flex items-center gap-3">
-                                <div className="flex size-11 items-center justify-center rounded-xl bg-slate-950 text-white shadow-sm">
-                                    <AppLogoIcon className="size-8" />
+                            <div className="mb-4 flex items-center gap-3 sm:mb-6">
+                                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-slate-950 text-white shadow-sm sm:size-11">
+                                    <AppLogoIcon className="size-7 sm:size-8" />
                                 </div>
                                 <div>
                                     <p className="text-sm text-slate-500 dark:text-slate-300">
                                         Exploria
                                     </p>
-                                    <h1 className="text-2xl font-semibold">
+                                    <h1 className="text-xl leading-8 font-semibold sm:text-2xl">
                                         ورود سریع به تجربه مکان
                                     </h1>
                                 </div>
                             </div>
-                            <p className="max-w-md text-sm leading-7 text-slate-600 dark:text-slate-300">
+                            <p className="max-w-md text-sm leading-6 text-slate-600 sm:leading-7 dark:text-slate-300">
                                 شماره موبایل را وارد کنید، کد تایید را بزنید و
                                 بدون توقف اضافه وارد رضایت نامه یا ادامه مسیر
                                 بازدید شوید.
                             </p>
                         </div>
 
-                        <div className="grid gap-3 text-sm sm:grid-cols-3">
-                            <div className="rounded-xl bg-teal-50 p-3 text-teal-900 dark:bg-teal-950/40 dark:text-teal-100">
+                        <div className="grid grid-cols-3 gap-2 text-xs sm:gap-3 sm:text-sm">
+                            <div className="rounded-xl bg-teal-50 p-2.5 text-teal-900 sm:p-3 dark:bg-teal-950/40 dark:text-teal-100">
                                 <MapPin className="mb-2 size-5" />
                                 ورود با QR
                             </div>
-                            <div className="rounded-xl bg-blue-50 p-3 text-blue-900 dark:bg-blue-950/40 dark:text-blue-100">
+                            <div className="rounded-xl bg-blue-50 p-2.5 text-blue-900 sm:p-3 dark:bg-blue-950/40 dark:text-blue-100">
                                 <ShieldCheck className="mb-2 size-5" />
                                 رضایت امن
                             </div>
-                            <div className="rounded-xl bg-orange-50 p-3 text-orange-900 dark:bg-orange-950/40 dark:text-orange-100">
+                            <div className="rounded-xl bg-orange-50 p-2.5 text-orange-900 sm:p-3 dark:bg-orange-950/40 dark:text-orange-100">
                                 <Sparkles className="mb-2 size-5" />
                                 شروع بازی
                             </div>
                         </div>
                     </div>
 
-                    <div className="bg-slate-950 p-5 text-white sm:p-6">
-                        <div className="rounded-xl border border-white/10 bg-white/8 p-5">
+                    <div className="order-1 bg-slate-950 p-4 text-white sm:p-6 lg:order-2">
+                        <div className="rounded-xl border border-white/10 bg-white/8 p-4 sm:p-5">
                             {step === 'mobile' && (
                                 <form
                                     onSubmit={requestOtp}

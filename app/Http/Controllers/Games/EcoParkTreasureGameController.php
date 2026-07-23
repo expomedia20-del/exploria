@@ -107,16 +107,26 @@ class EcoParkTreasureGameController extends Controller
     private function missionNodes(Campaign $campaign): array
     {
         return $campaign->missionInstances
+            ->sortBy(fn (MissionInstance $mission): int => (int) data_get(
+                $mission->metadata,
+                'cycle_step_index',
+                999999,
+            ))
             ->values()
             ->map(fn (MissionInstance $mission, int $index): array => [
                 'id' => $mission->id,
                 'code' => $mission->code,
                 'title' => $mission->title_override ?? $mission->missionTemplate->title,
                 'place' => $mission->hub_id ? $mission->hub->name : $mission->touchpoint?->label,
+                'hubName' => $mission->hub?->name,
+                'touchpointLabel' => $mission->touchpoint?->label,
                 'clue' => $mission->metadata['visitor_instruction']
                     ?? $mission->missionTemplate->description
                     ?? 'سرنخ این مرحله در مسیر کمپین نمایش داده می‌شود.',
                 'mission' => $mission->missionTemplate->description,
+                'missionType' => $mission->missionTemplate->mission_type,
+                'triggerType' => $mission->missionTemplate->trigger_type,
+                'completionEvidence' => $mission->metadata['completion_evidence'] ?? null,
                 'reward' => $mission->metadata['success_message']
                     ?? ($mission->treasure?->name ? 'باز شدن گنج: '.$mission->treasure->name : null),
                 'points' => (int) $mission->missionTemplate->point_value,

@@ -28,12 +28,23 @@ class MissionFlowService
             ->get()
             ->keyBy('mission_instance_id');
         $completedPoints = $this->completedPointsForCampaign($user, $visit->campaign_id);
+        $sequenceIsComplete = true;
         $serializedMissions = $missions
-            ->map(fn (MissionInstance $mission): array => $this->serializeMission(
-                $mission,
-                $progressByMissionId->get($mission->id),
-                $completedPoints,
-            ))
+            ->map(function (MissionInstance $mission) use ($progressByMissionId, $completedPoints, &$sequenceIsComplete): array {
+                $isSequenced = is_numeric(data_get($mission->metadata, 'cycle_step_index'));
+                $serialized = $this->serializeMission(
+                    $mission,
+                    $progressByMissionId->get($mission->id),
+                    $completedPoints,
+                    $isSequenced && ! $sequenceIsComplete,
+                );
+
+                if ($isSequenced) {
+                    $sequenceIsComplete = $sequenceIsComplete && $serialized['status'] === 'completed';
+                }
+
+                return $serialized;
+            })
             ->values();
         $wallet = $this->walletForUser($user, $visit->campaign_id);
 
@@ -68,6 +79,20 @@ class MissionFlowService
                 ],
             );
         });
+    }
+
+    /** @return array{progress: UserMissionProgress, reward: UserReward|null, completedNow: bool, rewardIssuedNow: bool}|null */
+    public function completeEntryQrMission(User $user, Visit $visit): ?array
+    {
+        $mission = $this->missionsForVisit($visit)
+            ->first(fn (MissionInstance $mission): bool => $mission->missionTemplate->trigger_type === 'qr_scan'
+                && ($mission->touchpoint_id === null || $mission->touchpoint_id === $visit->touchpoint_id));
+
+        if (! $mission instanceof MissionInstance) {
+            return null;
+        }
+
+        return $this->complete($user, $visit, $mission);
     }
 
     /** @return array{progress: UserMissionProgress, reward: UserReward|null, completedNow: bool, rewardIssuedNow: bool} */
@@ -160,6 +185,12 @@ class MissionFlowService
             ]);
         }
 
+        if ($this->hasIncompletePreviousMission($user, $visit, $mission)) {
+            throw ValidationException::withMessages([
+                'mission' => 'ابتدا مرحله قبلی مسیر را کامل کنید.',
+            ]);
+        }
+
         if ($this->isLocked($mission, $this->completedPointsForCampaign($user, $visit->campaign_id))) {
             throw ValidationException::withMessages([
                 'mission' => 'شرط باز شدن این ماموریت هنوز کامل نشده است.',
@@ -184,7 +215,13 @@ class MissionFlowService
             ->where('campaign_id', $visit->campaign_id)
             ->where('venue_id', $visit->venue_id)
             ->orderBy('created_at')
-            ->get();
+            ->get()
+            ->sortBy(fn (MissionInstance $mission): string => sprintf(
+                '%06d-%s',
+                (int) data_get($mission->metadata, 'cycle_step_index', 999999),
+                $mission->created_at?->toISOString() ?? $mission->id,
+            ))
+            ->values();
     }
 
     private function completedPointsForCampaign(User $user, string $campaignId): int
@@ -197,10 +234,14 @@ class MissionFlowService
     }
 
     /** @return array<string, mixed> */
-    private function serializeMission(MissionInstance $mission, ?UserMissionProgress $progress, int $completedPoints): array
-    {
+    private function serializeMission(
+        MissionInstance $mission,
+        ?UserMissionProgress $progress,
+        int $completedPoints,
+        bool $sequentiallyLocked = false,
+    ): array {
         $mission->loadMissing('missionTemplate');
-        $locked = $this->isLocked($mission, $completedPoints);
+        $locked = $sequentiallyLocked || $this->isLocked($mission, $completedPoints);
         $status = $progress ? $progress->status : ($locked ? 'locked' : 'available');
 
         return [
@@ -258,6 +299,35 @@ class MissionFlowService
         $minimumPoints = data_get($mission->unlock_rule, 'min_points');
 
         return is_numeric($minimumPoints) && $completedPoints < (int) $minimumPoints;
+    }
+
+    private function hasIncompletePreviousMission(User $user, Visit $visit, MissionInstance $mission): bool
+    {
+        $missionStep = data_get($mission->metadata, 'cycle_step_index');
+
+        if (! is_numeric($missionStep)) {
+            return false;
+        }
+
+        $previousMissionIds = $this->missionsForVisit($visit)
+            ->filter(function (MissionInstance $candidate) use ($missionStep): bool {
+                $candidateStep = data_get($candidate->metadata, 'cycle_step_index');
+
+                return is_numeric($candidateStep) && (int) $candidateStep < (int) $missionStep;
+            })
+            ->pluck('id');
+
+        if ($previousMissionIds->isEmpty()) {
+            return false;
+        }
+
+        $completedPreviousMissions = UserMissionProgress::query()
+            ->where('user_id', $user->id)
+            ->whereIn('mission_instance_id', $previousMissionIds)
+            ->where('status', 'completed')
+            ->count();
+
+        return $completedPreviousMissions !== $previousMissionIds->count();
     }
 
     private function awardRewardForMission(User $user, MissionInstance $mission): ?UserReward

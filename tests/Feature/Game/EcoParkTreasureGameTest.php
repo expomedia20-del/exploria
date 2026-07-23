@@ -40,6 +40,9 @@ class EcoParkTreasureGameTest extends TestCase
                 ->where('game.visitorState.isAuthenticated', false)
                 ->where('game.visitorState.hasLinkedVisit', false)
                 ->has('game.missionNodes', 4)
+                ->where('game.missionNodes.0.triggerType', 'qr_scan')
+                ->where('game.missionNodes.1.triggerType', 'manual_check')
+                ->where('game.missionNodes.1.cycleStep.index', 2)
                 ->has('game.gameOffers')
                 ->where('game.missionFlow', null));
     }
@@ -137,7 +140,9 @@ class EcoParkTreasureGameTest extends TestCase
                 ->where('game.missionFlow.stats.totalPoints', 120)
                 ->where('game.missionFlow.stats.completedMissions', 1)
                 ->where('game.missionFlow.missions.0.code', 'scan-entry-qr')
-                ->where('game.missionFlow.missions.0.status', 'completed'));
+                ->where('game.missionFlow.missions.0.status', 'completed')
+                ->where('game.missionFlow.missions.1.status', 'available')
+                ->where('game.missionFlow.missions.2.status', 'locked'));
     }
 
     public function test_authenticated_visitor_can_open_online_game_for_a_specific_visit(): void

@@ -3,6 +3,7 @@
 namespace Tests\Feature\Consent;
 
 use App\Models\ConsentVersion;
+use App\Models\MissionInstance;
 use App\Models\User;
 use Database\Seeders\ConsentVersionSeeder;
 use Database\Seeders\PilotLocationSeeder;
@@ -113,7 +114,20 @@ class ConsentFlowTest extends TestCase
 
         $visitId = $response->json('data.visitId');
         $this->assertSame(route('games.ecopark-treasure', ['visit' => $visitId]), $response->json('data.nextUrl'));
-        $this->get($response->json('data.nextUrl'))->assertOk();
+        $entryMission = MissionInstance::query()->where('code', 'scan-entry-qr')->firstOrFail();
+        $this->assertDatabaseHas('user_mission_progress', [
+            'user_id' => $user->id,
+            'mission_instance_id' => $entryMission->id,
+            'status' => 'completed',
+            'points_awarded' => 120,
+        ]);
+
+        $this->get($response->json('data.nextUrl'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('game.missionFlow.missions.0.status', 'completed')
+                ->where('game.missionFlow.missions.1.status', 'available')
+                ->where('game.missionFlow.missions.1.triggerType', 'manual_check'));
     }
 
     public function test_accepting_the_same_version_twice_is_idempotent(): void
