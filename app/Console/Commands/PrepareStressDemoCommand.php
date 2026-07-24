@@ -654,11 +654,13 @@ class PrepareStressDemoCommand extends Command
         $boostedReward = RewardDefinition::query()
             ->where('campaign_id', $campaign->id)
             ->where('reward_type', 'sponsor_discount')
+            ->whereIn('metadata->source', ['sponsor_proposal_activation', 'admin_sponsor_activation'])
             ->orderByDesc('stock_quantity')
             ->first();
         $premiumReward = RewardDefinition::query()
             ->where('campaign_id', $campaign->id)
             ->where('reward_type', 'sponsor_product')
+            ->whereIn('metadata->source', ['sponsor_proposal_activation', 'admin_sponsor_activation'])
             ->orderByDesc('stock_quantity')
             ->first();
 

@@ -70,6 +70,20 @@ class StressDemoCommandTest extends TestCase
                 ->where('metadata->source', 'game_commercial_checkpoint')
                 ->count(),
         );
+        $this->assertNull(
+            RewardDefinition::query()
+                ->where('campaign_id', $campaign->id)
+                ->where('code', 'ecopark-book-garden-family-gift')
+                ->value('metadata->game_final_level'),
+        );
+        $this->assertSame(
+            1,
+            RewardDefinition::query()
+                ->where('campaign_id', $campaign->id)
+                ->whereIn('metadata->source', ['sponsor_proposal_activation', 'admin_sponsor_activation'])
+                ->where('metadata->game_final_level', 'premium')
+                ->count(),
+        );
         $this->assertDatabaseHas('reward_definitions', [
             'campaign_id' => $campaign->id,
             'code' => 'ecopark-final-explorer-base',
