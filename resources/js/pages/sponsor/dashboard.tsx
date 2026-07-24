@@ -134,6 +134,7 @@ const proposalTypeLabels: Record<string, string> = {
 };
 
 const placementLabels: Record<string, string> = {
+    public_feed: 'ویترین عمومی فروشگاه‌ها',
     fixed_display: 'نمایشگر ثابت',
     mobile_display: 'نمایشگر سیار',
     qr_landing: 'صفحه QR',
@@ -143,6 +144,7 @@ const placementLabels: Record<string, string> = {
 };
 
 const onlinePlacementOptions = [
+    ['public_feed', placementLabels.public_feed],
     ['qr_landing', placementLabels.qr_landing],
     ['reward_page', placementLabels.reward_page],
     ['map_route', placementLabels.map_route],
@@ -1225,6 +1227,9 @@ export default function SponsorDashboard({
                                         <option value="mobile_display">
                                             نمایشگر سیار
                                         </option>
+                                        <option value="public_feed">
+                                            ویترین عمومی فروشگاه‌ها
+                                        </option>
                                         <option value="qr_landing">
                                             صفحه QR
                                         </option>
@@ -1246,7 +1251,13 @@ export default function SponsorDashboard({
                                     <p className="text-sm font-medium">
                                         کانال‌های آنلاین مکمل
                                     </p>
-                                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                                    <p className="text-xs leading-6 text-muted-foreground">
+                                        ویترین عمومی بدون امتیاز است؛ جایگاه‌های
+                                        مسیر برای محتوای ویژه و امتیازآور همان
+                                        مرحله‌اند. پنج انتشار نخست ویترین در
+                                        پایلوت رایگان معرفی شده‌اند.
+                                    </p>
+                                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
                                         {onlinePlacementOptions.map(
                                             ([value, title]) => (
                                                 <label

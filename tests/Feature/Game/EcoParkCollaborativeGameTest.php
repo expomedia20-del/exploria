@@ -159,6 +159,157 @@ class EcoParkCollaborativeGameTest extends TestCase
                 ->where('game.party.collaborationBonusAwarded', true));
     }
 
+    public function test_group_stays_editable_until_route_and_family_can_reach_eight_members(): void
+    {
+        $leader = User::factory()->create(['role' => UserRole::Visitor]);
+        $visit = $this->visitFor($leader);
+
+        $this->actingAs($leader)->post(route('games.ecopark-treasure.parties.create'), [
+            'visit_id' => $visit->id,
+            'mode' => 'family',
+            'name' => 'خانواده نخست',
+            'companion_count' => 2,
+        ])->assertRedirect();
+
+        $party = GameParty::query()->firstOrFail();
+
+        $this->actingAs($leader)->patch(
+            route('games.ecopark-treasure.parties.update', $party),
+            [
+                'mode' => 'family',
+                'name' => 'خانواده هشت‌نفره',
+                'companion_count' => 7,
+            ],
+        )->assertRedirect();
+
+        $party->refresh();
+        $this->assertSame('خانواده هشت‌نفره', $party->name);
+        $this->assertSame(
+            8,
+            $party->members()->where('status', 'active')->count(),
+        );
+        $serialized = app(EcoParkOnlineGameService::class)
+            ->serializeParty($party, $leader);
+        $this->assertFalse($serialized['isSetupLocked']);
+        $this->assertSame('family', $serialized['recommendedRouteKey']);
+
+        $this->actingAs($leader)->post(
+            route('games.ecopark-treasure.parties.route', $party),
+            ['route_key' => 'family'],
+        )->assertRedirect();
+
+        $this->actingAs($leader)
+            ->from(route('games.ecopark-treasure'))
+            ->patch(route('games.ecopark-treasure.parties.update', $party), [
+                'mode' => 'family',
+                'name' => 'تغییر دیرهنگام',
+                'companion_count' => 3,
+            ])
+            ->assertSessionHasErrors('party');
+
+        $this->assertSame('خانواده هشت‌نفره', $party->refresh()->name);
+    }
+
+    public function test_team_invitation_reaches_existing_or_new_account_and_membership_locks_after_route(): void
+    {
+        $leader = User::factory()->create([
+            'role' => UserRole::Visitor,
+            'mobile_hash' => hash('sha256', '09120000001'),
+        ]);
+        $existingMember = User::factory()->create([
+            'role' => UserRole::Visitor,
+            'mobile_hash' => hash('sha256', '09120000002'),
+        ]);
+
+        $this->actingAs($leader)->post(route('games.ecopark-treasure.parties.create'), [
+            'visit_id' => $this->visitFor($leader)->id,
+            'mode' => 'team',
+            'name' => 'تیم دعوت هوشمند',
+        ])->assertRedirect();
+        $party = GameParty::query()->firstOrFail();
+
+        $this->actingAs($leader)->post(
+            route('games.ecopark-treasure.parties.invitations.store', $party),
+            ['mobile' => '09120000002'],
+        )->assertRedirect()->assertSessionHas(
+            'success',
+            'دعوت به پنل کاربر اکسپلوریا ارسال شد.',
+        );
+
+        $this->assertDatabaseHas('game_party_invitations', [
+            'game_party_id' => $party->id,
+            'invitee_user_id' => $existingMember->id,
+            'status' => 'pending',
+        ]);
+
+        $this->actingAs($leader)
+            ->from(route('games.ecopark-treasure'))
+            ->post(route('games.ecopark-treasure.parties.route', $party), [
+                'route_key' => 'explorer',
+            ])
+            ->assertSessionHasErrors('route_key');
+
+        $this->withoutVite();
+        $this->actingAs($existingMember)
+            ->get(route('participant.dashboard'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('pendingTeamInvitations', 1)
+                ->where(
+                    'pendingTeamInvitations.0.inviteCode',
+                    $party->invite_code,
+                ));
+
+        $this->actingAs($existingMember)->post(
+            route('games.ecopark-treasure.parties.join'),
+            ['invite_code' => $party->invite_code],
+        )->assertRedirect();
+        $this->assertDatabaseHas('game_party_invitations', [
+            'game_party_id' => $party->id,
+            'invitee_user_id' => $existingMember->id,
+            'status' => 'accepted',
+        ]);
+
+        $newMobile = '09120000003';
+        $this->actingAs($leader)->post(
+            route('games.ecopark-treasure.parties.invitations.store', $party),
+            ['mobile' => $newMobile],
+        )->assertRedirect()->assertSessionHas(
+            'success',
+            'دعوت عضویت آماده شد؛ لینک نمایش‌داده‌شده را برای این فرد بفرستید.',
+        );
+        $newMember = User::factory()->create([
+            'role' => UserRole::Visitor,
+            'mobile_hash' => hash('sha256', $newMobile),
+        ]);
+
+        $this->actingAs($newMember)
+            ->get(route('participant.dashboard'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('pendingTeamInvitations', 1)
+                ->where(
+                    'pendingTeamInvitations.0.inviteCode',
+                    $party->invite_code,
+                ));
+
+        $this->actingAs($leader)->post(
+            route('games.ecopark-treasure.parties.route', $party),
+            ['route_key' => 'explorer'],
+        )->assertRedirect();
+
+        $this->actingAs($newMember)
+            ->from(route('games.ecopark-treasure'))
+            ->post(route('games.ecopark-treasure.parties.join'), [
+                'invite_code' => $party->invite_code,
+            ])
+            ->assertSessionHasErrors('party');
+        $this->assertDatabaseMissing('game_party_members', [
+            'game_party_id' => $party->id,
+            'user_id' => $newMember->id,
+        ]);
+    }
+
     public function test_participant_dashboard_uses_single_online_game_flow_instead_of_legacy_missions(): void
     {
         $this->withoutVite();

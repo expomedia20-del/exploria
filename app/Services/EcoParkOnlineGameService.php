@@ -9,6 +9,7 @@ use App\Models\GameBonusClaim;
 use App\Models\GameChallengeProgress;
 use App\Models\GameEntryPass;
 use App\Models\GameParty;
+use App\Models\GamePartyInvitation;
 use App\Models\GamePartyMember;
 use App\Models\QrCode;
 use App\Models\RewardDefinition;
@@ -34,6 +35,12 @@ class EcoParkOnlineGameService
     private const SPONSOR_BONUS = 30;
 
     private const ROUTE_KEYS = ['quick', 'family', 'explorer'];
+
+    private const RECOMMENDED_ROUTES = [
+        'individual' => 'quick',
+        'family' => 'family',
+        'team' => 'explorer',
+    ];
 
     private const HOTSPOT_KEYS = ['mina', 'nature', 'fire-water', 'book-garden', 'art-lake', 'taleghani'];
 
@@ -83,9 +90,9 @@ class EcoParkOnlineGameService
                 ['key' => 'team', 'title' => 'تیمی', 'description' => 'با کد دعوت به دوستان بپیوندید و پیشرفت مشترک بسازید.'],
             ],
             'routes' => [
-                ['key' => 'quick', 'title' => 'مسیر سریع', 'duration' => '۴۵ دقیقه', 'description' => 'سه نقطه نزدیک و مناسب بازدید کوتاه.'],
-                ['key' => 'family', 'title' => 'مسیر خانوادگی', 'duration' => '۷۵ دقیقه', 'description' => 'ریتم آرام‌تر، توقف بیشتر و راهنمای ساده‌تر.'],
-                ['key' => 'explorer', 'title' => 'مسیر کاوشگر', 'duration' => '۹۰ دقیقه', 'description' => 'سرنخ‌های عمیق‌تر برای گروه‌های ماجراجو.'],
+                ['key' => 'quick', 'title' => 'مسیر سریع', 'duration' => '۴۵ دقیقه', 'description' => 'سه نقطه نزدیک و مناسب بازدید کوتاه.', 'recommendedFor' => ['individual']],
+                ['key' => 'family', 'title' => 'مسیر خانوادگی', 'duration' => '۷۵ دقیقه', 'description' => 'ریتم آرام‌تر، توقف بیشتر و راهنمای ساده‌تر.', 'recommendedFor' => ['family']],
+                ['key' => 'explorer', 'title' => 'مسیر کاوشگر', 'duration' => '۹۰ دقیقه', 'description' => 'سرنخ‌های عمیق‌تر برای گروه‌های ماجراجو.', 'recommendedFor' => ['team']],
             ],
             'hotspots' => [
                 ['key' => 'mina', 'title' => 'گنبد مینا', 'description' => 'مرکز علمی آسمان و ستاره‌ها', 'x' => 72, 'y' => 24],
@@ -195,6 +202,10 @@ class EcoParkOnlineGameService
                 'status' => 'active',
                 'joined_at' => now(),
             ]);
+            $user->update([
+                'public_participation_status' => 'participant',
+                'public_participation_mode' => $mode,
+            ]);
 
             if ($mode === 'family') {
                 $count = (int) ($data['companion_count'] ?? 1);
@@ -221,7 +232,194 @@ class EcoParkOnlineGameService
                 ]);
             }
 
+            $this->syncVisitParticipation($party);
+
             return $party->load($this->partyRelations());
+        });
+    }
+
+    /** @param array<string, mixed> $data */
+    public function updateParty(User $user, GameParty $party, array $data): GameParty
+    {
+        $this->assertMember($user, $party);
+        $this->assertOwner($user, $party);
+
+        return DB::transaction(function () use ($party, $data): GameParty {
+            $lockedParty = GameParty::query()->lockForUpdate()->findOrFail($party->id);
+            $this->assertSetupEditable($lockedParty);
+
+            $mode = (string) $data['mode'];
+            $registeredMembers = $lockedParty->members()
+                ->where('member_type', 'registered')
+                ->where('status', 'active')
+                ->count();
+
+            if ($mode !== 'team' && $registeredMembers > 1) {
+                throw ValidationException::withMessages([
+                    'mode' => 'برای تغییر حالت تیمی، ابتدا اعضای دیگر را از گروه خارج کنید.',
+                ]);
+            }
+
+            $lockedParty->members()
+                ->where('member_type', 'companion')
+                ->where('status', 'active')
+                ->update(['status' => 'removed']);
+
+            if ($mode === 'family') {
+                $count = (int) ($data['companion_count'] ?? 1);
+                foreach (range(1, $count) as $number) {
+                    GamePartyMember::query()->create([
+                        'game_party_id' => $lockedParty->id,
+                        'display_name' => 'همراه خانواده '.$number,
+                        'member_type' => 'companion',
+                        'role' => 'companion',
+                        'status' => 'active',
+                        'joined_at' => now(),
+                    ]);
+                }
+            }
+
+            if ($mode !== 'team') {
+                $lockedParty->invitations()
+                    ->where('status', 'pending')
+                    ->update(['status' => 'cancelled', 'closed_at' => now()]);
+            }
+
+            $lockedParty->update([
+                'mode' => $mode,
+                'name' => $mode === 'individual'
+                    ? 'مسیر '.$lockedParty->owner->name
+                    : ($data['name'] ?? null),
+                'invite_code' => $mode === 'team'
+                    ? ($lockedParty->invite_code ?: $this->uniqueInviteCode())
+                    : null,
+                'metadata' => array_merge($lockedParty->metadata ?? [], [
+                    'privacy' => $mode === 'family' ? 'anonymous_companions' : null,
+                ]),
+            ]);
+            User::query()
+                ->whereIn(
+                    'id',
+                    $lockedParty->members()
+                        ->where('member_type', 'registered')
+                        ->where('status', 'active')
+                        ->pluck('user_id'),
+                )
+                ->update(['public_participation_mode' => $mode]);
+
+            $this->syncVisitParticipation($lockedParty);
+
+            return $lockedParty->load($this->partyRelations());
+        });
+    }
+
+    public function inviteMember(User $user, GameParty $party, string $mobile): GamePartyInvitation
+    {
+        $this->assertMember($user, $party);
+        $this->assertOwner($user, $party);
+
+        return DB::transaction(function () use ($user, $party, $mobile): GamePartyInvitation {
+            $lockedParty = GameParty::query()->lockForUpdate()->findOrFail($party->id);
+            $this->assertSetupEditable($lockedParty);
+
+            if ($lockedParty->mode !== 'team') {
+                throw ValidationException::withMessages([
+                    'mobile' => 'ارسال دعوت حساب کاربری فقط در حالت تیمی فعال است.',
+                ]);
+            }
+
+            $mobileHash = hash('sha256', $mobile);
+            if (hash_equals((string) $user->mobile_hash, $mobileHash)) {
+                throw ValidationException::withMessages([
+                    'mobile' => 'شما از قبل راهبر این تیم هستید.',
+                ]);
+            }
+
+            $invitee = User::query()->where('mobile_hash', $mobileHash)->first();
+            if ($invitee && $lockedParty->members()
+                ->where('user_id', $invitee->id)
+                ->where('status', 'active')
+                ->exists()) {
+                throw ValidationException::withMessages([
+                    'mobile' => 'این کاربر از قبل عضو تیم است.',
+                ]);
+            }
+            if ($invitee && GameParty::query()
+                ->where('campaign_id', $lockedParty->campaign_id)
+                ->where('cycle_key', $lockedParty->cycle_key)
+                ->where('id', '!=', $lockedParty->id)
+                ->whereHas('members', fn ($query) => $query
+                    ->where('user_id', $invitee->id)
+                    ->where('status', 'active'))
+                ->exists()) {
+                throw ValidationException::withMessages([
+                    'mobile' => 'این کاربر در دوره جاری عضو گروه دیگری است.',
+                ]);
+            }
+
+            $activeMembers = $lockedParty->members()
+                ->where('member_type', 'registered')
+                ->where('status', 'active')
+                ->count();
+            $pendingInvitations = $lockedParty->invitations()
+                ->where('status', 'pending')
+                ->where('mobile_hash', '!=', $mobileHash)
+                ->count();
+
+            if ($activeMembers + $pendingInvitations >= 8) {
+                throw ValidationException::withMessages([
+                    'mobile' => 'ظرفیت هشت‌نفره تیم با اعضا و دعوت‌های در انتظار تکمیل شده است.',
+                ]);
+            }
+
+            return GamePartyInvitation::query()->updateOrCreate(
+                [
+                    'game_party_id' => $lockedParty->id,
+                    'mobile_hash' => $mobileHash,
+                ],
+                [
+                    'inviter_user_id' => $user->id,
+                    'invitee_user_id' => $invitee?->id,
+                    'status' => 'pending',
+                    'invited_at' => now(),
+                    'accepted_at' => null,
+                    'closed_at' => null,
+                    'metadata' => [
+                        'target_last_four' => substr($mobile, -4),
+                        'delivery' => $invitee ? 'participant_panel' : 'membership_link',
+                    ],
+                ],
+            );
+        });
+    }
+
+    public function removeMember(User $user, GameParty $party, GamePartyMember $member): GameParty
+    {
+        $this->assertMember($user, $party);
+        $this->assertOwner($user, $party);
+
+        return DB::transaction(function () use ($party, $member): GameParty {
+            $lockedParty = GameParty::query()->lockForUpdate()->findOrFail($party->id);
+            $this->assertSetupEditable($lockedParty);
+
+            if ($member->game_party_id !== $lockedParty->id || $member->role === 'leader') {
+                throw ValidationException::withMessages([
+                    'member' => 'این عضو قابل حذف از گروه نیست.',
+                ]);
+            }
+
+            if ($member->user_id) {
+                $lockedParty->invitations()
+                    ->where('invitee_user_id', $member->user_id)
+                    ->where('status', 'accepted')
+                    ->update(['status' => 'removed', 'closed_at' => now()]);
+                $member->delete();
+            } else {
+                $member->update(['status' => 'removed']);
+            }
+            $this->syncVisitParticipation($lockedParty);
+
+            return $lockedParty->load($this->partyRelations());
         });
     }
 
@@ -232,6 +430,21 @@ class EcoParkOnlineGameService
         }
 
         return DB::transaction(function () use ($user, $campaign, $inviteCode): GameParty {
+            User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
+
+            $existingMembership = GameParty::query()
+                ->where('campaign_id', $campaign->id)
+                ->where('cycle_key', $this->cycleKey($campaign))
+                ->whereHas('members', fn ($query) => $query
+                    ->where('user_id', $user->id)
+                    ->where('status', 'active'))
+                ->exists();
+            if ($existingMembership) {
+                throw ValidationException::withMessages([
+                    'invite_code' => 'شما در این دوره عضو یک گروه بازی هستید.',
+                ]);
+            }
+
             $party = GameParty::query()
                 ->where('campaign_id', $campaign->id)
                 ->where('cycle_key', $this->cycleKey($campaign))
@@ -245,7 +458,12 @@ class EcoParkOnlineGameService
                 throw ValidationException::withMessages(['invite_code' => 'کد دعوت معتبر یا فعال نیست.']);
             }
 
-            if ($party->members()->where('member_type', 'registered')->count() >= 8) {
+            $this->assertSetupEditable($party);
+
+            if ($party->members()
+                ->where('member_type', 'registered')
+                ->where('status', 'active')
+                ->count() >= 8) {
                 throw ValidationException::withMessages(['invite_code' => 'ظرفیت این تیم تکمیل شده است.']);
             }
 
@@ -258,6 +476,24 @@ class EcoParkOnlineGameService
                 'status' => 'active',
                 'joined_at' => now(),
             ]);
+            $user->update([
+                'public_participation_status' => 'participant',
+                'public_participation_mode' => 'team',
+            ]);
+
+            $party->invitations()
+                ->where('status', 'pending')
+                ->where(function ($query) use ($user): void {
+                    $query->where('invitee_user_id', $user->id)
+                        ->orWhere('mobile_hash', $user->mobile_hash);
+                })
+                ->update([
+                    'invitee_user_id' => $user->id,
+                    'status' => 'accepted',
+                    'accepted_at' => now(),
+                    'closed_at' => now(),
+                ]);
+            $this->syncVisitParticipation($party);
 
             return $party->load($this->partyRelations());
         });
@@ -274,11 +510,31 @@ class EcoParkOnlineGameService
         }
 
         return DB::transaction(function () use ($party, $routeKey): GameParty {
-            $party->update(['route_key' => $routeKey, 'score' => $party->score + self::STEP_POINTS[2]]);
-            $this->completeStep($party, 2, self::STEP_POINTS[2], ['route_key' => $routeKey]);
-            $this->unlockStep($party, 3);
+            $lockedParty = GameParty::query()->lockForUpdate()->findOrFail($party->id);
+            $this->assertSetupEditable($lockedParty);
+            if ($lockedParty->mode === 'team' && $lockedParty->members()
+                ->where('member_type', 'registered')
+                ->where('status', 'active')
+                ->count() < 2) {
+                throw ValidationException::withMessages([
+                    'route_key' => 'برای قطعی‌کردن مسیر تیمی، دست‌کم یک عضو باید دعوت را بپذیرد و به راهبر بپیوندد.',
+                ]);
+            }
+            $lockedParty->update([
+                'route_key' => $routeKey,
+                'score' => $lockedParty->score + self::STEP_POINTS[2],
+                'metadata' => array_merge($lockedParty->metadata ?? [], [
+                    'group_locked_at' => now()->toIso8601String(),
+                ]),
+            ]);
+            $lockedParty->invitations()
+                ->where('status', 'pending')
+                ->update(['status' => 'closed', 'closed_at' => now()]);
+            $this->completeStep($lockedParty, 2, self::STEP_POINTS[2], ['route_key' => $routeKey]);
+            $this->unlockStep($lockedParty, 3);
+            $this->syncVisitParticipation($lockedParty);
 
-            return $party->load($this->partyRelations());
+            return $lockedParty->load($this->partyRelations());
         });
     }
 
@@ -659,17 +915,22 @@ class EcoParkOnlineGameService
             'name' => $party->name,
             'inviteCode' => $party->invite_code,
             'routeKey' => $party->route_key,
+            'recommendedRouteKey' => self::RECOMMENDED_ROUTES[$party->mode] ?? 'quick',
+            'isSetupLocked' => $party->route_key !== null,
             'status' => $effectiveStatus,
             'score' => $party->score,
             'isLeader' => $viewer?->id === $party->owner_user_id,
             'collaborationBonusAwarded' => $party->collaboration_bonus_awarded,
-            'members' => $party->members->map(fn (GamePartyMember $member): array => [
+            'members' => $party->members->where('status', 'active')->map(fn (GamePartyMember $member): array => [
                 'id' => $member->id,
                 'displayName' => $member->display_name,
                 'memberType' => $member->member_type,
                 'role' => $member->role,
                 'isViewer' => $viewer && $member->user_id === $viewer->id,
             ])->values()->all(),
+            'invitations' => $viewer?->id === $party->owner_user_id
+                ? $this->serializePartyInvitations($party)
+                : [],
             'steps' => $party->progress->sortBy('step_index')->map(fn (GameChallengeProgress $progress): array => [
                 'index' => $progress->step_index,
                 'status' => $progress->status,
@@ -698,6 +959,72 @@ class EcoParkOnlineGameService
         ];
     }
 
+    /** @return list<array<string, mixed>> */
+    private function serializePartyInvitations(GameParty $party): array
+    {
+        $items = [];
+
+        foreach ($party->invitations->where('status', 'pending') as $invitation) {
+            $delivery = data_get($invitation->metadata, 'delivery');
+            $items[] = [
+                'id' => $invitation->id,
+                'targetLabel' => '••••'.data_get($invitation->metadata, 'target_last_four'),
+                'delivery' => $delivery,
+                'deliveryLabel' => $delivery === 'participant_panel'
+                    ? 'ارسال‌شده به پنل عضو'
+                    : 'لینک دعوت عضویت آماده ارسال',
+                'invitedAt' => $invitation->invited_at->toIso8601String(),
+                'shareUrl' => route('games.ecopark-treasure', [
+                    'invite' => $party->invite_code,
+                ]),
+            ];
+        }
+
+        return $items;
+    }
+
+    /** @return list<array<string, mixed>> */
+    public function pendingInvitationsFor(User $user, ?Campaign $campaign = null): array
+    {
+        if (! $user->mobile_hash) {
+            return [];
+        }
+
+        $invitations = GamePartyInvitation::query()
+            ->with(['party.owner'])
+            ->where('status', 'pending')
+            ->where(function ($query) use ($user): void {
+                $query->where('invitee_user_id', $user->id)
+                    ->orWhere('mobile_hash', $user->mobile_hash);
+            })
+            ->when($campaign, fn ($query) => $query->whereHas(
+                'party',
+                fn ($partyQuery) => $partyQuery->where('campaign_id', $campaign->id),
+            ))
+            ->whereHas('party', fn ($query) => $query
+                ->where('mode', 'team')
+                ->whereNull('route_key')
+                ->where('status', 'active'))
+            ->latest('invited_at')
+            ->get();
+        $items = [];
+
+        foreach ($invitations as $invitation) {
+            $items[] = [
+                'id' => $invitation->id,
+                'partyName' => $invitation->party->name,
+                'leaderName' => $invitation->party->owner->name,
+                'inviteCode' => $invitation->party->invite_code ?? '',
+                'invitedAt' => $invitation->invited_at->toIso8601String(),
+                'joinUrl' => route('games.ecopark-treasure', [
+                    'invite' => $invitation->party->invite_code,
+                ]),
+            ];
+        }
+
+        return $items;
+    }
+
     /**
      * Backfill newly configured checkpoint rewards for physical steps that were
      * completed before those rewards existed. Repeated calls are idempotent.
@@ -719,7 +1046,7 @@ class EcoParkOnlineGameService
     /** @return list<string> */
     private function partyRelations(): array
     {
-        return ['members', 'progress', 'entryPass', 'bonusClaims'];
+        return ['owner', 'members', 'invitations', 'progress', 'entryPass', 'bonusClaims'];
     }
 
     /** @return list<array{key: string, fragment: string, hint: string}> */
@@ -956,6 +1283,7 @@ class EcoParkOnlineGameService
     private function commerceSnapshot(GameParty $party): array
     {
         $userIds = $party->members
+            ->where('status', 'active')
             ->pluck('user_id')
             ->filter(fn (mixed $id): bool => is_numeric($id))
             ->map(fn (mixed $id): int => (int) $id)
@@ -1031,7 +1359,9 @@ class EcoParkOnlineGameService
                 };
             });
 
-        foreach ($party->members->where('member_type', 'registered') as $member) {
+        foreach ($party->members
+            ->where('member_type', 'registered')
+            ->where('status', 'active') as $member) {
             if (! is_numeric($member->user_id)) {
                 continue;
             }
@@ -1137,6 +1467,17 @@ class EcoParkOnlineGameService
         }
     }
 
+    private function assertSetupEditable(GameParty $party): void
+    {
+        $routeStep = $party->progress()->where('step_index', 2)->first();
+
+        if ($party->route_key !== null || ! $routeStep || $routeStep->status !== 'available') {
+            throw ValidationException::withMessages([
+                'party' => 'پس از ثبت قطعی مسیر، ترکیب گروه و دعوت‌ها قفل می‌شوند.',
+            ]);
+        }
+    }
+
     /** @param array<string, mixed> $metadata */
     private function completeStep(GameParty $party, int $step, int $points, array $metadata): void
     {
@@ -1160,6 +1501,32 @@ class EcoParkOnlineGameService
         } while (GameParty::query()->where('invite_code', $code)->exists());
 
         return $code;
+    }
+
+    private function syncVisitParticipation(GameParty $party): void
+    {
+        if (! $party->visit_id) {
+            return;
+        }
+
+        $members = $party->members()
+            ->where('status', 'active')
+            ->orderBy('joined_at')
+            ->pluck('display_name')
+            ->all();
+        $visit = Visit::query()->find($party->visit_id);
+        if (! $visit) {
+            return;
+        }
+
+        $visit->update([
+            'metadata' => array_merge($visit->metadata ?? [], [
+                'participation_mode' => $party->mode,
+                'team_name' => $party->name,
+                'participants' => $members,
+                'group_locked' => $party->route_key !== null,
+            ]),
+        ]);
     }
 
     /**

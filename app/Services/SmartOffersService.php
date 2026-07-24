@@ -10,6 +10,7 @@ use App\Models\Campaign;
 use App\Models\GameChallengeProgress;
 use App\Models\GameParty;
 use App\Models\RewardDefinition;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 
@@ -35,7 +36,8 @@ use Illuminate\Validation\ValidationException;
  *     requiredSeconds: int|null,
  *     gameStageIndex: int|null,
  *     checkpointKey: string|null,
- *     commercialModel: string|null
+ *     commercialModel: string|null,
+ *     channel: string
  * }
  * @phpstan-type PartnerOffer array{
  *     id: string,
@@ -78,11 +80,19 @@ use Illuminate\Validation\ValidationException;
  */
 class SmartOffersService
 {
-    private const ONLINE_AD_PLACEMENTS = [
+    private const PUBLIC_FEED_PLACEMENT = 'public_feed';
+
+    private const LEGACY_PUBLIC_PLACEMENTS = [
         'qr_landing',
         'reward_page',
         'map_route',
         'post_mission',
+    ];
+
+    private const GAME_AD_PLACEMENTS = [
+        'map_route',
+        'post_mission',
+        'reward_page',
     ];
 
     private const GAME_EVENT_TYPES = [
@@ -94,18 +104,46 @@ class SmartOffersService
     /** @return array<string, mixed> */
     public function publicOverview(): array
     {
-        $ads = $this->approvedOnlineAds();
+        $ads = $this->approvedPublicAds();
         $offers = $this->activePartnerOffers();
+        $dashboardItems = $ads
+            ->take(2)
+            ->map(fn (array $ad): array => [
+                'id' => $ad['id'],
+                'kind' => 'ad',
+                'title' => $ad['title'],
+                'description' => $ad['bodyCopy'],
+                'partnerName' => $ad['partnerName'],
+                'href' => $ad['targetUrl'] ?? route('offers.page'),
+            ])
+            ->concat($offers->take(2)->map(fn (array $offer): array => [
+                'id' => $offer['id'],
+                'kind' => 'offer',
+                'title' => $offer['name'],
+                'description' => $offer['description'],
+                'partnerName' => $offer['partnerName'],
+                'href' => route('offers.page'),
+            ]))
+            ->values();
 
         return [
             'governance' => [
-                'title' => 'پیشنهادهای امروز اکسپلوریا',
-                'policy' => 'این صفحه فقط پیشنهادها و آگهی‌های تاییدشده تیم اکسپلوریا را نمایش می‌دهد. مدیران مکان و هاب می‌توانند ظرفیت اجرا و هماهنگی محلی را پیشنهاد کنند، اما حق حذف یا رد نهایی تبلیغات را ندارند.',
+                'title' => 'ویترین فروشگاه‌ها و پیشنهادهای اکسپلوریا',
+                'policy' => 'این ویترین فقط آگهی‌ها و پیشنهادهای عمومی تاییدشده را نمایش می‌دهد و مشاهده آن امتیاز بازی ایجاد نمی‌کند. در پایلوت، پنج انتشار نخست هر فروشگاه رایگان است و انتشارهای بعدی پس از تعیین تعرفه فعال می‌شوند.',
+                'pricingPolicy' => '۵ انتشار نخست هر فروشگاه در پایلوت رایگان؛ انتشارهای بعدی تعرفه‌دار.',
             ],
             'stats' => [
                 'ads' => $ads->count(),
                 'offers' => $offers->count(),
                 'total' => $ads->count() + $offers->count(),
+            ],
+            'dashboardSummary' => [
+                'title' => 'ویترین فروشگاه‌ها و پیشنهادهای عمومی',
+                'description' => 'تبلیغات عمومی فروشگاه‌ها را جدا از پیشنهادهای اختیاری و امتیازآور مراحل بازی ببینید.',
+                'href' => route('offers.page'),
+                'adsCount' => $ads->count(),
+                'offersCount' => $offers->count(),
+                'items' => $dashboardItems,
             ],
             'ads' => $ads,
             'offers' => $offers,
@@ -115,11 +153,8 @@ class SmartOffersService
     /** @return Collection<int, covariant GameOffer> */
     public function gameOffersForCampaign(?Campaign $campaign): Collection
     {
-        $gamePlacements = ['map_route', 'post_mission', 'reward_page'];
-
-        $ads = $this->approvedOnlineAds($campaign?->venue_id)
-            ->filter(fn (array $ad): bool => collect($ad['placementTypes'])->intersect($gamePlacements)->isNotEmpty())
-            ->map(fn (array $ad): array => $this->gameAdOffer($ad, $gamePlacements));
+        $ads = $this->approvedGameAds($campaign?->venue_id)
+            ->map(fn (array $ad): array => $this->gameAdOffer($ad, self::GAME_AD_PLACEMENTS));
 
         $rewards = $this->activePartnerOffers($campaign)
             ->map(fn (array $reward): array => $this->gameRewardOffer($reward));
@@ -188,15 +223,28 @@ class SmartOffersService
             ]);
         }
 
-        $adRequest = AdRequest::query()
+        $now = now();
+        $adRequest = $this->approvedAdsQuery()
             ->whereKey($data['ad_request_id'])
-            ->where('status', 'approved')
+            ->where(function (Builder $query): void {
+                $query
+                    ->where('ad_type', 'rewarded_content')
+                    ->orWhere(function (Builder $query): void {
+                        $query
+                            ->where('ad_type', '!=', 'rewarded_content')
+                            ->whereDoesntHave('placements', fn (Builder $placementQuery) => $placementQuery
+                                ->where('placement_type', self::PUBLIC_FEED_PLACEMENT));
+                    });
+            })
             ->whereHas('placements', fn ($query) => $query
-                ->whereIn('placement_type', ['map_route', 'post_mission', 'reward_page'])
-                ->where('status', 'approved'))
+                ->whereIn('placement_type', self::GAME_AD_PLACEMENTS)
+                ->where('status', 'approved')
+                ->where(fn ($query) => $query->whereNull('starts_at')->orWhere('starts_at', '<=', $now))
+                ->where(fn ($query) => $query->whereNull('ends_at')->orWhere('ends_at', '>=', $now)))
+            ->whereHas('creatives', fn ($query) => $query->where('status', 'approved'))
             ->first();
 
-        if (! $adRequest instanceof AdRequest) {
+        if (! $adRequest instanceof AdRequest || ! $this->hasRemainingCapacity($adRequest)) {
             throw ValidationException::withMessages([
                 'ad_request_id' => 'این پیشنهاد برای بازی آنلاین فعال یا تاییدشده نیست.',
             ]);
@@ -217,32 +265,127 @@ class SmartOffersService
     }
 
     /** @return Collection<int, covariant OnlineAd> */
-    private function approvedOnlineAds(?string $venueId = null): Collection
+    private function approvedPublicAds(?string $venueId = null): Collection
+    {
+        $now = now();
+        $placements = [
+            self::PUBLIC_FEED_PLACEMENT,
+            ...self::LEGACY_PUBLIC_PLACEMENTS,
+        ];
+
+        return $this->approvedAdsQuery($venueId)
+            ->where('ad_type', '!=', 'rewarded_content')
+            ->where(function (Builder $query) use ($now): void {
+                $query
+                    ->whereHas('placements', fn (Builder $placementQuery) => $placementQuery
+                        ->where('placement_type', self::PUBLIC_FEED_PLACEMENT)
+                        ->where('status', 'approved')
+                        ->where(fn (Builder $dateQuery) => $dateQuery->whereNull('starts_at')->orWhere('starts_at', '<=', $now))
+                        ->where(fn (Builder $dateQuery) => $dateQuery->whereNull('ends_at')->orWhere('ends_at', '>=', $now)))
+                    ->orWhere(function (Builder $legacyQuery) use ($now): void {
+                        $legacyQuery
+                            ->whereDoesntHave('placements', fn (Builder $placementQuery) => $placementQuery
+                                ->where('placement_type', self::PUBLIC_FEED_PLACEMENT))
+                            ->whereHas('placements', fn (Builder $placementQuery) => $placementQuery
+                                ->whereIn('placement_type', self::LEGACY_PUBLIC_PLACEMENTS)
+                                ->where('status', 'approved')
+                                ->where(fn (Builder $dateQuery) => $dateQuery->whereNull('starts_at')->orWhere('starts_at', '<=', $now))
+                                ->where(fn (Builder $dateQuery) => $dateQuery->whereNull('ends_at')->orWhere('ends_at', '>=', $now)));
+                    });
+            })
+            ->with([
+                'venue:id,code,name',
+                'partnerAccount:id,code,name,partner_type',
+                'placements' => fn ($query) => $query
+                    ->whereIn('placement_type', $placements)
+                    ->where('status', 'approved')
+                    ->where(fn ($query) => $query->whereNull('starts_at')->orWhere('starts_at', '<=', $now))
+                    ->where(fn ($query) => $query->whereNull('ends_at')->orWhere('ends_at', '>=', $now))
+                    ->orderBy('priority'),
+                'creatives' => fn ($query) => $query
+                    ->select(['id', 'ad_request_id', 'creative_type', 'asset_url', 'headline', 'body_copy', 'cta_text', 'status'])
+                    ->where('status', 'approved')
+                    ->latest('created_at'),
+            ])
+            ->latest('created_at')
+            ->get()
+            ->toBase()
+            ->filter(fn (AdRequest $adRequest): bool => $this->hasRemainingCapacity($adRequest))
+            ->map(fn (AdRequest $adRequest): array => $this->onlineAd($adRequest, [self::PUBLIC_FEED_PLACEMENT]))
+            ->take(12)
+            ->values();
+    }
+
+    /** @return Collection<int, covariant OnlineAd> */
+    private function approvedGameAds(?string $venueId = null): Collection
+    {
+        $now = now();
+
+        return $this->approvedAdsQuery($venueId)
+            ->where(function (Builder $query): void {
+                $query
+                    ->where('ad_type', 'rewarded_content')
+                    ->orWhere(function (Builder $legacyQuery): void {
+                        $legacyQuery
+                            ->where('ad_type', '!=', 'rewarded_content')
+                            ->whereDoesntHave('placements', fn (Builder $placementQuery) => $placementQuery
+                                ->where('placement_type', self::PUBLIC_FEED_PLACEMENT));
+                    });
+            })
+            ->whereHas('placements', fn (Builder $query) => $query
+                ->whereIn('placement_type', self::GAME_AD_PLACEMENTS)
+                ->where('status', 'approved')
+                ->where(fn (Builder $dateQuery) => $dateQuery->whereNull('starts_at')->orWhere('starts_at', '<=', $now))
+                ->where(fn (Builder $dateQuery) => $dateQuery->whereNull('ends_at')->orWhere('ends_at', '>=', $now)))
+            ->with([
+                'venue:id,code,name',
+                'partnerAccount:id,code,name,partner_type',
+                'placements' => fn ($query) => $query
+                    ->whereIn('placement_type', self::GAME_AD_PLACEMENTS)
+                    ->where('status', 'approved')
+                    ->where(fn ($query) => $query->whereNull('starts_at')->orWhere('starts_at', '<=', $now))
+                    ->where(fn ($query) => $query->whereNull('ends_at')->orWhere('ends_at', '>=', $now))
+                    ->orderBy('priority'),
+                'creatives' => fn ($query) => $query
+                    ->select(['id', 'ad_request_id', 'creative_type', 'asset_url', 'headline', 'body_copy', 'cta_text', 'status'])
+                    ->where('status', 'approved')
+                    ->latest('created_at'),
+            ])
+            ->latest('created_at')
+            ->get()
+            ->toBase()
+            ->filter(fn (AdRequest $adRequest): bool => $this->hasRemainingCapacity($adRequest))
+            ->map(fn (AdRequest $adRequest): array => $this->onlineAd($adRequest, self::GAME_AD_PLACEMENTS))
+            ->take(12)
+            ->values();
+    }
+
+    /** @return Builder<AdRequest> */
+    private function approvedAdsQuery(?string $venueId = null): Builder
     {
         $now = now();
 
         return AdRequest::query()
-            ->when($venueId, fn ($query) => $query->where('venue_id', $venueId))
+            ->when($venueId, fn (Builder $query) => $query->where('venue_id', $venueId))
             ->where('status', 'approved')
-            ->where(function ($query) use ($now): void {
-                $query->whereNull('starts_at')->orWhere('starts_at', '<=', $now);
-            })
-            ->where(function ($query) use ($now): void {
-                $query->whereNull('ends_at')->orWhere('ends_at', '>=', $now);
-            })
-            ->whereHas('placements', fn ($query) => $query->whereIn('placement_type', self::ONLINE_AD_PLACEMENTS))
-            ->with([
-                'venue:id,code,name',
-                'partnerAccount:id,code,name,partner_type',
-                'placements' => fn ($query) => $query->whereIn('placement_type', self::ONLINE_AD_PLACEMENTS)->orderBy('priority'),
-                'creatives:id,ad_request_id,creative_type,asset_url,headline,body_copy,cta_text,status',
-            ])
-            ->latest('created_at')
-            ->limit(12)
-            ->get()
-            ->toBase()
-            ->map(fn (AdRequest $adRequest): array => $this->onlineAd($adRequest))
-            ->values();
+            ->where(fn (Builder $query) => $query->whereNull('starts_at')->orWhere('starts_at', '<=', $now))
+            ->where(fn (Builder $query) => $query->whereNull('ends_at')->orWhere('ends_at', '>=', $now))
+            ->whereHas('creatives', fn (Builder $query) => $query->where('status', 'approved'))
+            ->withCount([
+                'events as impressions_count' => fn (Builder $query) => $query
+                    ->whereIn('event_type', ['impression', 'game_offer_view']),
+                'events as clicks_count' => fn (Builder $query) => $query
+                    ->whereIn('event_type', ['click', 'game_offer_click']),
+            ]);
+    }
+
+    private function hasRemainingCapacity(AdRequest $adRequest): bool
+    {
+        $impressions = (int) $adRequest->getAttribute('impressions_count');
+        $clicks = (int) $adRequest->getAttribute('clicks_count');
+
+        return ($adRequest->impression_cap === null || $impressions < $adRequest->impression_cap)
+            && ($adRequest->click_cap === null || $clicks < $adRequest->click_cap);
     }
 
     /** @return Collection<int, covariant PartnerOffer> */
@@ -334,10 +477,17 @@ class SmartOffersService
         ];
     }
 
-    /** @return OnlineAd */
-    private function onlineAd(AdRequest $adRequest): array
+    /**
+     * @param  list<string>  $preferredPlacements
+     * @return OnlineAd
+     */
+    private function onlineAd(AdRequest $adRequest, array $preferredPlacements = []): array
     {
-        $placement = $adRequest->placements->first();
+        $placement = collect($preferredPlacements)
+            ->map(fn (string $placementType) => $adRequest->placements
+                ->firstWhere('placement_type', $placementType))
+            ->first(fn (mixed $candidate): bool => $candidate instanceof AdPlacement)
+            ?? $adRequest->placements->first();
         $creative = $adRequest->creatives->first();
         $placementTypes = $adRequest->placements
             ->map(fn (AdPlacement $adPlacement): string => $adPlacement->placement_type)
@@ -376,6 +526,9 @@ class SmartOffersService
             'commercialModel' => is_string(data_get($adRequest->metadata, 'commercial_model'))
                 ? data_get($adRequest->metadata, 'commercial_model')
                 : null,
+            'channel' => $adRequest->ad_type === 'rewarded_content'
+                ? 'rewarded_content'
+                : ($placement?->placement_type === self::PUBLIC_FEED_PLACEMENT ? 'public_feed' : 'legacy_public'),
         ];
     }
 

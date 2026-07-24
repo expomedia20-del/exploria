@@ -37,6 +37,7 @@ type RouteOption = {
     title: string;
     duration: string;
     description: string;
+    recommendedFor: Mode['key'][];
 };
 
 type Hotspot = {
@@ -73,6 +74,8 @@ type Party = {
     name: string | null;
     inviteCode: string | null;
     routeKey: RouteOption['key'] | null;
+    recommendedRouteKey: RouteOption['key'];
+    isSetupLocked: boolean;
     status: 'active' | 'ready_for_visit' | 'onsite_active' | 'completed';
     score: number;
     isLeader: boolean;
@@ -83,6 +86,14 @@ type Party = {
         memberType: 'registered' | 'companion';
         role: 'leader' | 'member' | 'companion';
         isViewer: boolean;
+    }[];
+    invitations: {
+        id: string;
+        targetLabel: string;
+        delivery: 'participant_panel' | 'membership_link';
+        deliveryLabel: string;
+        invitedAt: string;
+        shareUrl: string;
     }[];
     steps: PartyStep[];
     foundHotspots: string[];
@@ -194,6 +205,15 @@ type Props = {
             rules: string[];
         };
         party: Party | null;
+        pendingInvitations: {
+            id: string;
+            partyName: string | null;
+            leaderName: string;
+            inviteCode: string;
+            invitedAt: string;
+            joinUrl: string;
+        }[];
+        invitePrefill: string;
         gameOffers: GameOffer[];
     };
 };
@@ -349,7 +369,7 @@ function CommerceProgress({ party }: { party: Party }) {
 
 function ParticipationSetup({ game }: { game: Props['game'] }) {
     const [mode, setMode] = useState<Mode['key']>('individual');
-    const [showJoin, setShowJoin] = useState(false);
+    const [showJoin, setShowJoin] = useState(Boolean(game.invitePrefill));
 
     if (!game.visitorState.isAuthenticated) {
         return (
@@ -366,6 +386,14 @@ function ParticipationSetup({ game }: { game: Props['game'] }) {
                         حالت بازی در گام بعد انجام می‌شود و هنوز هیچ چالشی
                         خودکار تکمیل نخواهد شد.
                     </p>
+                    {game.invitePrefill ? (
+                        <p className="mt-4 rounded-2xl bg-sky-50 p-4 text-sm leading-7 text-sky-900">
+                            شما با کد تیم{' '}
+                            <strong dir="ltr">{game.invitePrefill}</strong> دعوت
+                            شده‌اید. پس از ورود یا عضویت با همین شماره، دعوت در
+                            پنل شما آماده پذیرش است.
+                        </p>
+                    ) : null}
                     {game.entryQr ? (
                         <Link
                             href={game.entryQr.scanUrl}
@@ -380,6 +408,69 @@ function ParticipationSetup({ game }: { game: Props['game'] }) {
                         </p>
                     )}
                 </div>
+            </section>
+        );
+    }
+
+    if (game.pendingInvitations.length > 0) {
+        return (
+            <section className="rounded-[2rem] border border-sky-200 bg-white p-5 shadow-xl shadow-sky-950/5 sm:p-8">
+                <span className="text-xs font-bold text-sky-700">
+                    دعوت تازه در پنل شما
+                </span>
+                <h2 className="mt-1 text-2xl font-black">
+                    به یک تیم اکسپلوریا دعوت شده‌اید
+                </h2>
+                <p className="mt-2 text-sm leading-7 text-slate-600">
+                    پذیرش دعوت آگاهانه است؛ با زدن دکمه زیر عضو تیم می‌شوید و تا
+                    قبل از انتخاب قطعی مسیر، راهبر می‌تواند ترکیب را اصلاح کند.
+                </p>
+                <div className="mt-5 grid gap-3">
+                    {game.pendingInvitations.map((invitation) => (
+                        <Form
+                            key={invitation.id}
+                            action="/games/ecopark-treasure/parties/join"
+                            method="post"
+                            options={{ preserveScroll: true }}
+                            className="rounded-2xl border border-sky-100 bg-sky-50 p-4"
+                        >
+                            {({ processing, errors }) => (
+                                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                    <div>
+                                        <strong className="block text-sky-950">
+                                            {invitation.partyName ??
+                                                'تیم اکسپلوریا'}
+                                        </strong>
+                                        <span className="mt-1 block text-xs text-sky-800">
+                                            راهبر: {invitation.leaderName}
+                                        </span>
+                                    </div>
+                                    <input
+                                        type="hidden"
+                                        name="invite_code"
+                                        value={invitation.inviteCode}
+                                    />
+                                    <div>
+                                        <SubmitButton processing={processing}>
+                                            پذیرش و پیوستن به تیم
+                                        </SubmitButton>
+                                        <FieldError
+                                            message={errors.invite_code}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </Form>
+                    ))}
+                </div>
+                {!game.latestVisit && game.entryQr ? (
+                    <Link
+                        href={game.entryQr.scanUrl}
+                        className="mt-4 inline-flex text-xs font-bold text-emerald-800"
+                    >
+                        فعلاً نمی‌پیوندم؛ شروع یک مسیر جدید با QR
+                    </Link>
+                ) : null}
             </section>
         );
     }
@@ -458,6 +549,7 @@ function ParticipationSetup({ game }: { game: Props['game'] }) {
                                 maxLength={6}
                                 dir="ltr"
                                 placeholder="کد دریافتی"
+                                defaultValue={game.invitePrefill}
                                 className="mt-2 h-12 w-full rounded-xl border border-slate-300 px-4 text-center text-lg font-black tracking-[0.25em] uppercase outline-none focus:border-emerald-500"
                             />
                             <p className="mt-2 text-[11px] leading-5 text-slate-500">
@@ -546,7 +638,7 @@ function ParticipationSetup({ game }: { game: Props['game'] }) {
                                                 defaultValue="2"
                                                 className="h-12 rounded-xl border border-slate-300 bg-white px-4 font-normal"
                                             >
-                                                {[1, 2, 3, 4, 5].map(
+                                                {[1, 2, 3, 4, 5, 6, 7].map(
                                                     (count) => (
                                                         <option
                                                             key={count}
@@ -580,13 +672,235 @@ function ParticipationSetup({ game }: { game: Props['game'] }) {
                                     processing={processing}
                                     className="sm:min-w-52"
                                 >
-                                    ساخت مسیر و شروع
+                                    ساخت گروه و رفتن به انتخاب مسیر
                                 </SubmitButton>
                             </div>
                         </>
                     )}
                 </Form>
             )}
+        </section>
+    );
+}
+
+function EditableGroupSetup({
+    game,
+    party,
+}: {
+    game: Props['game'];
+    party: Party;
+}) {
+    const [mode, setMode] = useState<Mode['key']>(party.mode);
+    const companionCount = party.members.filter(
+        (member) => member.memberType === 'companion',
+    ).length;
+
+    const shareInvitation = async (url: string) => {
+        const text = `برای عضویت در تیم «${party.name ?? 'اکسپلوریا'}» و ادامه بازی از این لینک وارد شوید: ${url}`;
+
+        if (navigator.share) {
+            await navigator.share({ title: 'دعوت تیم اکسپلوریا', text, url });
+
+            return;
+        }
+
+        await navigator.clipboard.writeText(text);
+    };
+
+    return (
+        <section className="mb-6 rounded-3xl border border-sky-200 bg-sky-50/70 p-4 sm:p-5">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <span className="text-xs font-bold text-sky-700">
+                        مرحله ۱ هنوز باز است
+                    </span>
+                    <h2 className="mt-1 text-lg font-black">
+                        ترکیب گروه را نهایی کنید
+                    </h2>
+                    <p className="mt-1 text-xs leading-6 text-sky-900">
+                        تا پیش از انتخاب مسیر می‌توانید نوع، نام و اعضا را اصلاح
+                        کنید. با ثبت مسیر، این بخش برای همه قفل می‌شود.
+                    </p>
+                </div>
+                <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-sky-900">
+                    {faNumber(party.members.length)} از ۸ نفر
+                </span>
+            </div>
+
+            {party.isLeader ? (
+                <Form
+                    action={`/games/ecopark-treasure/parties/${party.id}`}
+                    method="patch"
+                    options={{ preserveScroll: true }}
+                    className="mt-5 rounded-2xl bg-white p-4"
+                >
+                    {({ processing, errors }) => (
+                        <>
+                            <input type="hidden" name="mode" value={mode} />
+                            <div className="grid gap-2 sm:grid-cols-3">
+                                {game.definition.modes.map((item) => (
+                                    <button
+                                        key={item.key}
+                                        type="button"
+                                        onClick={() => setMode(item.key)}
+                                        className={`rounded-xl border px-3 py-3 text-sm font-bold ${
+                                            mode === item.key
+                                                ? 'border-sky-600 bg-sky-50 text-sky-950'
+                                                : 'border-slate-200 text-slate-600'
+                                        }`}
+                                    >
+                                        {item.title}
+                                    </button>
+                                ))}
+                            </div>
+                            <FieldError message={errors.mode} />
+
+                            {mode !== 'individual' ? (
+                                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                                    <label className="grid gap-2 text-xs font-bold">
+                                        نام{' '}
+                                        {mode === 'family' ? 'خانواده' : 'تیم'}
+                                        <input
+                                            name="name"
+                                            defaultValue={party.name ?? ''}
+                                            className="h-11 rounded-xl border border-slate-300 px-3 text-sm font-normal"
+                                        />
+                                        <FieldError message={errors.name} />
+                                    </label>
+                                    {mode === 'family' ? (
+                                        <label className="grid gap-2 text-xs font-bold">
+                                            تعداد همراهان خانواده
+                                            <select
+                                                name="companion_count"
+                                                defaultValue={Math.max(
+                                                    1,
+                                                    companionCount,
+                                                )}
+                                                className="h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm font-normal"
+                                            >
+                                                {[1, 2, 3, 4, 5, 6, 7].map(
+                                                    (count) => (
+                                                        <option
+                                                            key={count}
+                                                            value={count}
+                                                        >
+                                                            {faNumber(count)}{' '}
+                                                            همراه
+                                                        </option>
+                                                    ),
+                                                )}
+                                            </select>
+                                            <FieldError
+                                                message={errors.companion_count}
+                                            />
+                                        </label>
+                                    ) : (
+                                        <p className="self-end rounded-xl bg-sky-50 p-3 text-xs leading-6 text-sky-900">
+                                            پس از ذخیره حالت تیمی، فرم دعوت اعضا
+                                            فعال می‌شود.
+                                        </p>
+                                    )}
+                                </div>
+                            ) : null}
+
+                            <SubmitButton
+                                processing={processing}
+                                className="mt-4"
+                            >
+                                ذخیره اصلاحات گروه
+                            </SubmitButton>
+                            <FieldError message={errors.party} />
+                        </>
+                    )}
+                </Form>
+            ) : (
+                <p className="mt-4 rounded-xl bg-white p-4 text-xs leading-6 text-sky-900">
+                    راهبر هنوز می‌تواند اعضا را اصلاح کند. انتخاب مسیر پس از
+                    تصمیم راهبر برای همه اعضا یکسان و قطعی خواهد بود.
+                </p>
+            )}
+
+            {party.mode === 'team' && party.isLeader ? (
+                <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                    <Form
+                        action={`/games/ecopark-treasure/parties/${party.id}/invitations`}
+                        method="post"
+                        options={{ preserveScroll: true }}
+                        className="rounded-2xl border border-sky-100 bg-white p-4"
+                    >
+                        {({ processing, errors }) => (
+                            <>
+                                <h3 className="text-sm font-black">
+                                    دعوت عضو با شماره موبایل
+                                </h3>
+                                <p className="mt-1 text-xs leading-6 text-slate-500">
+                                    اگر حساب داشته باشد دعوت در پنل او می‌آید؛
+                                    در غیر این صورت لینک، دعوت عضویت در
+                                    اکسپلوریا نیز هست.
+                                </p>
+                                <input
+                                    name="mobile"
+                                    inputMode="numeric"
+                                    dir="ltr"
+                                    placeholder="09120000000"
+                                    className="mt-3 h-11 w-full rounded-xl border border-slate-300 px-3 text-left"
+                                />
+                                <FieldError message={errors.mobile} />
+                                <SubmitButton
+                                    processing={processing}
+                                    className="mt-3 w-full"
+                                >
+                                    ساخت و ارسال دعوت
+                                </SubmitButton>
+                            </>
+                        )}
+                    </Form>
+
+                    <div className="rounded-2xl border border-sky-100 bg-white p-4">
+                        <h3 className="text-sm font-black">
+                            دعوت‌های در انتظار
+                        </h3>
+                        {party.invitations.length > 0 ? (
+                            <div className="mt-3 grid gap-2">
+                                {party.invitations.map((invitation) => (
+                                    <div
+                                        key={invitation.id}
+                                        className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 p-3"
+                                    >
+                                        <div>
+                                            <strong
+                                                dir="ltr"
+                                                className="text-xs"
+                                            >
+                                                {invitation.targetLabel}
+                                            </strong>
+                                            <span className="mt-1 block text-[11px] text-slate-500">
+                                                {invitation.deliveryLabel}
+                                            </span>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                void shareInvitation(
+                                                    invitation.shareUrl,
+                                                )
+                                            }
+                                            className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2 py-2 text-[11px] font-bold"
+                                        >
+                                            <Copy className="size-3.5" />
+                                            ارسال
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="mt-3 rounded-xl bg-slate-50 p-3 text-xs text-slate-500">
+                                هنوز دعوتی ارسال نشده است.
+                            </p>
+                        )}
+                    </div>
+                </div>
+            ) : null}
         </section>
     );
 }
@@ -598,46 +912,76 @@ function RouteChallenge({
     game: Props['game'];
     party: Party;
 }) {
+    const needsTeamMember =
+        party.mode === 'team' &&
+        party.members.filter((member) => member.memberType === 'registered')
+            .length < 2;
+
     return (
-        <div className="grid gap-4 md:grid-cols-3">
-            {game.definition.routes.map((routeOption) => (
-                <Form
-                    key={routeOption.key}
-                    action={`/games/ecopark-treasure/parties/${party.id}/route`}
-                    method="post"
-                    options={{ preserveScroll: true }}
-                >
-                    {({ processing, errors }) => (
-                        <div className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-5 hover:border-emerald-400">
-                            <input
-                                type="hidden"
-                                name="route_key"
-                                value={routeOption.key}
-                            />
-                            <span className="flex items-center justify-between">
-                                <Route className="size-6 text-emerald-700" />
-                                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold">
-                                    {routeOption.duration}
+        <>
+            <div className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm leading-7 text-emerald-950">
+                گزینه دارای نشان سبز، پیشنهاد اکسپلوریا بر اساس انتخاب مرحله اول
+                است؛ انتخاب نهایی همچنان با راهبر است.
+                {needsTeamMember ? (
+                    <strong className="mt-2 block text-amber-800">
+                        پیش از قطعی‌کردن مسیر تیمی، دست‌کم یک عضو باید دعوت را
+                        بپذیرد.
+                    </strong>
+                ) : null}
+            </div>
+            <div className="grid gap-4 md:grid-cols-3">
+                {game.definition.routes.map((routeOption) => (
+                    <Form
+                        key={routeOption.key}
+                        action={`/games/ecopark-treasure/parties/${party.id}/route`}
+                        method="post"
+                        options={{ preserveScroll: true }}
+                    >
+                        {({ processing, errors }) => (
+                            <div className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-5 hover:border-emerald-400">
+                                <input
+                                    type="hidden"
+                                    name="route_key"
+                                    value={routeOption.key}
+                                />
+                                <span className="flex items-center justify-between">
+                                    <Route className="size-6 text-emerald-700" />
+                                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold">
+                                        {routeOption.duration}
+                                    </span>
                                 </span>
-                            </span>
-                            <h3 className="mt-5 text-lg font-black">
-                                {routeOption.title}
-                            </h3>
-                            <p className="mt-2 flex-1 text-sm leading-7 text-slate-600">
-                                {routeOption.description}
-                            </p>
-                            <FieldError message={errors.route_key} />
-                            <SubmitButton
-                                processing={processing}
-                                className="mt-5 w-full"
-                            >
-                                انتخاب این مسیر
-                            </SubmitButton>
-                        </div>
-                    )}
-                </Form>
-            ))}
-        </div>
+                                <h3 className="mt-5 text-lg font-black">
+                                    {routeOption.title}
+                                </h3>
+                                {party.recommendedRouteKey ===
+                                routeOption.key ? (
+                                    <span className="mt-2 w-fit rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-bold text-emerald-800">
+                                        پیشنهاد متناسب با حالت{' '}
+                                        {
+                                            game.definition.modes.find(
+                                                (mode) =>
+                                                    mode.key === party.mode,
+                                            )?.title
+                                        }
+                                    </span>
+                                ) : null}
+                                <p className="mt-2 flex-1 text-sm leading-7 text-slate-600">
+                                    {routeOption.description}
+                                </p>
+                                <FieldError message={errors.route_key} />
+                                <SubmitButton
+                                    processing={processing}
+                                    disabled={needsTeamMember}
+                                    className="mt-5 w-full"
+                                >
+                                    انتخاب این مسیر
+                                </SubmitButton>
+                            </div>
+                        )}
+                    </Form>
+                ))}
+            </div>
+        </>
     );
 }
 
@@ -1459,7 +1803,9 @@ function ActiveGame({ game, party }: { game: Props['game']; party: Party }) {
                 />
                 <CommerceProgress party={party} />
 
-                {party.mode === 'team' && party.inviteCode ? (
+                {party.mode === 'team' &&
+                party.inviteCode &&
+                !party.isSetupLocked ? (
                     <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4">
                         <span className="text-xs font-bold text-sky-800">
                             کد دعوت تیم
@@ -1525,13 +1871,28 @@ function ActiveGame({ game, party }: { game: Props['game']; party: Party }) {
                         <div className="pt-6">
                             {currentStep?.index === 2 ? (
                                 party.isLeader ? (
-                                    <RouteChallenge game={game} party={party} />
+                                    <>
+                                        <EditableGroupSetup
+                                            game={game}
+                                            party={party}
+                                        />
+                                        <RouteChallenge
+                                            game={game}
+                                            party={party}
+                                        />
+                                    </>
                                 ) : (
-                                    <p className="rounded-2xl bg-sky-50 p-5 text-sm font-bold text-sky-900">
-                                        راهبر تیم در حال انتخاب مسیر مشترک است.
-                                        پس از ثبت، نقشه برای همه اعضا باز
-                                        می‌شود.
-                                    </p>
+                                    <>
+                                        <EditableGroupSetup
+                                            game={game}
+                                            party={party}
+                                        />
+                                        <p className="rounded-2xl bg-sky-50 p-5 text-sm font-bold text-sky-900">
+                                            راهبر تیم در حال انتخاب مسیر مشترک
+                                            است. پس از ثبت، نقشه برای همه اعضا
+                                            باز می‌شود.
+                                        </p>
+                                    </>
                                 )
                             ) : null}
                             {currentStep?.index === 3 ? (
@@ -1563,6 +1924,26 @@ function ActiveGame({ game, party }: { game: Props['game']; party: Party }) {
                                 <UserRound className="size-3.5" />
                                 {member.displayName}
                                 {member.role === 'leader' ? ' • راهبر' : ''}
+                                {party.isLeader &&
+                                !party.isSetupLocked &&
+                                member.role !== 'leader' ? (
+                                    <Form
+                                        action={`/games/ecopark-treasure/parties/${party.id}/members/${member.id}`}
+                                        method="delete"
+                                        options={{ preserveScroll: true }}
+                                    >
+                                        {({ processing }) => (
+                                            <button
+                                                type="submit"
+                                                disabled={processing}
+                                                aria-label={`حذف ${member.displayName}`}
+                                                className="grid size-5 place-items-center rounded-full bg-white text-rose-700 disabled:opacity-50"
+                                            >
+                                                <X className="size-3" />
+                                            </button>
+                                        )}
+                                    </Form>
+                                ) : null}
                             </span>
                         ))}
                     </div>

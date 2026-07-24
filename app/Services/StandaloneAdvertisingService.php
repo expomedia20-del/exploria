@@ -19,6 +19,7 @@ use Illuminate\Validation\ValidationException;
 class StandaloneAdvertisingService
 {
     private const ONLINE_PLACEMENT_TYPES = [
+        'public_feed',
         'qr_landing',
         'reward_page',
         'map_route',

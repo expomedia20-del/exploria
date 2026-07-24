@@ -45,15 +45,33 @@ class ParticipantDashboardController extends Controller
             ->latest('occurred_at')
             ->first();
 
-        $onlineParty = $latestVisit?->campaign
-            ? $onlineGameService->partyFor($user, $latestVisit->campaign)
+        $onlineCampaign = ($latestVisit instanceof Visit ? $latestVisit->campaign : null)
+            ?? $onlineGameService->campaign();
+        $onlineParty = $onlineCampaign
+            ? $onlineGameService->partyFor($user, $onlineCampaign)
             : null;
         $onlineGame = $onlineGameService->serializeParty($onlineParty, $user);
         $flow = $latestVisit && ! $onlineGame
             ? $missionFlow->visitMissionSummary($user, $latestVisit)
             : null;
-        $participation = $this->participationProfile($latestVisit);
+        $participation = $onlineParty
+            ? [
+                'mode' => $onlineParty->mode,
+                'modeLabel' => match ($onlineParty->mode) {
+                    'family' => 'خانوادگی',
+                    'team' => 'تیمی',
+                    default => 'انفرادی',
+                },
+                'teamName' => $onlineParty->name,
+                'members' => $onlineParty->members
+                    ->where('status', 'active')
+                    ->pluck('display_name')
+                    ->values()
+                    ->all(),
+            ]
+            : $this->participationProfile($latestVisit);
         $journey = $this->journeySummary($user, $latestVisit, $flow, $onlineParty, $onlineGame);
+        $generalMarketplace = $offers->publicOverview();
 
         if ($onlineGame) {
             $currentStage = is_array($onlineGame['currentStage'] ?? null)
@@ -66,7 +84,10 @@ class ParticipantDashboardController extends Controller
                 'label' => $nextLabel,
                 'description' => $currentStage['instruction']
                     ?? 'مرحله جاری را در صفحه واحد کمپین ادامه دهید.',
-                'href' => route('games.ecopark-treasure', ['visit' => $latestVisit?->id]),
+                'href' => route(
+                    'games.ecopark-treasure',
+                    $latestVisit ? ['visit' => $latestVisit->id] : [],
+                ),
             ];
             $journey['currentOffer'] = $latestVisit?->campaign
                 ? $offers->gameOffersForParty($latestVisit->campaign, $onlineParty)
@@ -103,6 +124,18 @@ class ParticipantDashboardController extends Controller
             ] : null,
             'missionFlow' => $flow,
             'onlineGame' => $onlineGame,
+            'pendingTeamInvitations' => $onlineGameService->pendingInvitationsFor($user),
+            'generalMarketplace' => [
+                'stats' => $generalMarketplace['stats'],
+                'ads' => array_slice(
+                    is_array($generalMarketplace['ads'] ?? null)
+                        ? $generalMarketplace['ads']
+                        : [],
+                    0,
+                    4,
+                ),
+                'allOffersUrl' => route('offers.page'),
+            ],
             'journey' => $journey,
             'viewerMode' => [
                 'canPreviewVisitors' => $this->canPreviewVisitors($viewer),
@@ -256,7 +289,10 @@ class ParticipantDashboardController extends Controller
                     'hasVisit' => $visit !== null,
                     'latestVisitId' => $visit?->id,
                     'experienceUrl' => $isCurrentOnlineGame
-                        ? route('games.ecopark-treasure', ['visit' => $visit?->id])
+                        ? route(
+                            'games.ecopark-treasure',
+                            $visit ? ['visit' => $visit->id] : [],
+                        )
                         : ($visit ? route('visits.show', ['visit' => $visit->id]) : null),
                     'experienceLabel' => $isCurrentOnlineGame
                         ? match ($onlineStatus) {

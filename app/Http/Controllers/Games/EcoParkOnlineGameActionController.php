@@ -8,17 +8,21 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Games\ConfirmGamePhysicalScanRequest;
 use App\Http\Requests\Games\CreateGamePartyRequest;
 use App\Http\Requests\Games\DiscoverGameHotspotRequest;
+use App\Http\Requests\Games\InviteGamePartyMemberRequest;
 use App\Http\Requests\Games\IssueGamePassRequest;
 use App\Http\Requests\Games\JoinGamePartyRequest;
 use App\Http\Requests\Games\RewardedGameAdRequest;
 use App\Http\Requests\Games\SelectGameRouteRequest;
 use App\Http\Requests\Games\SubmitGameClueRequest;
+use App\Http\Requests\Games\UpdateGamePartyRequest;
 use App\Models\Campaign;
 use App\Models\GameParty;
+use App\Models\GamePartyMember;
 use App\Models\User;
 use App\Models\Visit;
 use App\Services\EcoParkOnlineGameService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 
 class EcoParkOnlineGameActionController extends Controller
 {
@@ -46,6 +50,42 @@ class EcoParkOnlineGameActionController extends Controller
         $this->game->joinParty($request->user(), $campaign, $request->validated('invite_code'));
 
         return back()->with('success', 'به تیم پیوستید و پیشرفت مشترک برای شما فعال شد.');
+    }
+
+    public function update(UpdateGamePartyRequest $request, GameParty $party): RedirectResponse
+    {
+        $this->game->updateParty($request->user(), $party, $request->validated());
+
+        return back()->with('success', 'ترکیب گروه به‌روزرسانی شد. تا پیش از ثبت مسیر همچنان قابل اصلاح است.');
+    }
+
+    public function invite(InviteGamePartyMemberRequest $request, GameParty $party): RedirectResponse
+    {
+        $invitation = $this->game->inviteMember(
+            $request->user(),
+            $party,
+            $request->validated('mobile'),
+        );
+        $sentToPanel = data_get($invitation->metadata, 'delivery') === 'participant_panel';
+
+        return back()->with(
+            'success',
+            $sentToPanel
+                ? 'دعوت به پنل کاربر اکسپلوریا ارسال شد.'
+                : 'دعوت عضویت آماده شد؛ لینک نمایش‌داده‌شده را برای این فرد بفرستید.',
+        );
+    }
+
+    public function removeMember(
+        Request $request,
+        GameParty $party,
+        GamePartyMember $member,
+    ): RedirectResponse {
+        $user = $request->user();
+        abort_unless($user instanceof User, 401);
+        $this->game->removeMember($user, $party, $member);
+
+        return back()->with('success', 'عضو از ترکیب گروه پیش از انتخاب مسیر حذف شد.');
     }
 
     public function selectRoute(SelectGameRouteRequest $request, GameParty $party): RedirectResponse

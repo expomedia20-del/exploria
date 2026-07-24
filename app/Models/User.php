@@ -115,4 +115,10 @@ class User extends Authenticatable implements PasskeyUser
     {
         return $this->hasMany(RewardRedemption::class);
     }
+
+    /** @return HasMany<GamePartyInvitation, $this> */
+    public function gamePartyInvitations(): HasMany
+    {
+        return $this->hasMany(GamePartyInvitation::class, 'invitee_user_id');
+    }
 }

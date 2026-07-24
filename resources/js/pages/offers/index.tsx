@@ -27,6 +27,7 @@ type SmartAd = {
     partnerType: string | null;
     startsAt: string | null;
     endsAt: string | null;
+    channel: 'public_feed' | 'legacy_public';
 };
 
 type PartnerOffer = {
@@ -53,6 +54,7 @@ type Props = {
     governance: {
         title: string;
         policy: string;
+        pricingPolicy: string;
     };
     stats: {
         ads: number;
@@ -61,9 +63,25 @@ type Props = {
     };
     ads: SmartAd[];
     offers: PartnerOffer[];
+    dashboardSummary: {
+        title: string;
+        description: string;
+        href: string;
+        adsCount: number;
+        offersCount: number;
+        items: {
+            id: string;
+            kind: 'ad' | 'offer';
+            title: string;
+            description: string | null;
+            partnerName: string | null;
+            href: string;
+        }[];
+    };
 };
 
 const placementLabels: Record<string, string> = {
+    public_feed: 'ویترین عمومی',
     qr_landing: 'صفحه QR',
     reward_page: 'لحظه پاداش',
     map_route: 'مسیر و نقشه',
@@ -133,21 +151,20 @@ export default function OffersIndex({ governance, stats, ads, offers }: Props) {
                         <div className="rounded-lg border border-cyan-200 bg-cyan-50 p-4">
                             <Store className="size-5 text-cyan-700" />
                             <h2 className="mt-3 font-semibold">
-                                فروشگاه و اسپانسر
+                                ویترین عمومی، بدون امتیاز
                             </h2>
                             <p className="mt-2 text-sm leading-7 text-zinc-600">
-                                پیشنهادها می‌توانند از فروشگاه‌ها، واحدهای عضو
-                                یا اسپانسرهای تاییدشده وارد چرخه شوند.
+                                دیدن آگهی‌های این صفحه کاملاً اختیاری است و
+                                امتیاز یا پیشرفت بازی را تغییر نمی‌دهد.
                             </p>
                         </div>
                         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
                             <TicketCheck className="size-5 text-amber-700" />
                             <h2 className="mt-3 font-semibold">
-                                آماده اتصال به بازی
+                                فرصت پایلوت برای فروشگاه‌ها
                             </h2>
                             <p className="mt-2 text-sm leading-7 text-zinc-600">
-                                این فهرست پایه اتصال پیشنهادها به مرحله بازی،
-                                QR، مسیر نقشه و لحظه پاداش است.
+                                {governance.pricingPolicy}
                             </p>
                         </div>
                     </div>
@@ -231,10 +248,10 @@ export default function OffersIndex({ governance, stats, ads, offers }: Props) {
                     <div className="mb-4 flex items-center justify-between gap-3">
                         <div>
                             <p className="text-sm text-muted-foreground">
-                                تبلیغ آنلاین، QR، مسیر نقشه و لحظه پاداش
+                                آگهی عمومی مستقل از مراحل و امتیاز بازی
                             </p>
                             <h2 className="text-2xl font-semibold">
-                                آگهی‌های تاییدشده
+                                ویترین عمومی فروشگاه‌ها
                             </h2>
                         </div>
                         <Megaphone className="size-6 text-cyan-700" />
@@ -242,8 +259,8 @@ export default function OffersIndex({ governance, stats, ads, offers }: Props) {
 
                     {ads.length === 0 ? (
                         <div className="rounded-lg border border-dashed border-zinc-300 bg-white p-6 text-sm leading-7 text-zinc-600">
-                            هنوز آگهی آنلاین تاییدشده‌ای برای این جایگاه‌ها فعال
-                            نیست.
+                            هنوز آگهی عمومی تاییدشده و فعالی در ویترین وجود
+                            ندارد.
                         </div>
                     ) : (
                         <div className="grid gap-4 md:grid-cols-2">
@@ -267,11 +284,11 @@ export default function OffersIndex({ governance, stats, ads, offers }: Props) {
                                     <div className="min-w-0">
                                         <div className="flex flex-wrap gap-2 text-xs">
                                             <span className="rounded-full bg-cyan-50 px-2.5 py-1 text-cyan-800">
-                                                {placementLabels[
-                                                    ad.placementType ?? ''
-                                                ] ??
-                                                    ad.placementType ??
-                                                    'آنلاین'}
+                                                {ad.channel === 'legacy_public'
+                                                    ? 'ویترین عمومی'
+                                                    : (placementLabels[
+                                                          ad.placementType ?? ''
+                                                      ] ?? 'ویترین عمومی')}
                                             </span>
                                             <span className="rounded-full bg-stone-100 px-2.5 py-1 text-zinc-700">
                                                 {ad.partnerName ?? 'اکسپلوریا'}
@@ -282,7 +299,7 @@ export default function OffersIndex({ governance, stats, ads, offers }: Props) {
                                         </h3>
                                         <p className="mt-2 line-clamp-3 text-sm leading-7 text-zinc-600">
                                             {ad.bodyCopy ??
-                                                'آگهی تاییدشده برای نمایش در مسیرهای آنلاین اکسپلوریا.'}
+                                                'آگهی عمومی تاییدشده برای ویترین فروشگاه‌های اکسپلوریا.'}
                                         </p>
                                         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                                             <p className="flex items-center gap-1 text-xs text-zinc-500">
@@ -312,8 +329,9 @@ export default function OffersIndex({ governance, stats, ads, offers }: Props) {
                 <section className="border-t bg-white">
                     <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-5 text-sm sm:px-6 lg:px-8">
                         <p className="text-zinc-600">
-                            این صفحه پایه محصول رسانه‌ای اکسپلوریا است و در
-                            مرحله بعد به بازی آنلاین و صفحه کاربر متصل می‌شود.
+                            پیشنهادهای امتیازآور هر مرحله فقط داخل همان مسیر
+                            بازی نمایش داده می‌شوند و با این ویترین عمومی
+                            متفاوت‌اند.
                         </p>
                         <Link
                             href="/"

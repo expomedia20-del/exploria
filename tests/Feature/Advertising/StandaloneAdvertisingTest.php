@@ -322,6 +322,37 @@ class StandaloneAdvertisingTest extends TestCase
         ]);
     }
 
+    public function test_partner_can_submit_public_storefront_ad_without_turning_it_into_game_content(): void
+    {
+        $this->withoutVite();
+
+        $adRequest = $this->submitAdRequest(
+            'cafe.eco@example.test',
+            'Public storefront only ad',
+            'public_feed',
+            [
+                'body_copy' => 'پیشنهاد عمومی فروشگاه بدون امتیاز بازی.',
+            ],
+        );
+
+        $this->approveAdRequest($adRequest);
+
+        $this->assertDatabaseHas('ad_placements', [
+            'ad_request_id' => $adRequest->id,
+            'placement_type' => 'public_feed',
+            'status' => 'approved',
+        ]);
+        $this->getJson(route('offers.index'))
+            ->assertOk()
+            ->assertJsonFragment([
+                'title' => 'Public storefront only ad',
+                'channel' => 'public_feed',
+            ]);
+        $this->get(route('games.ecopark-treasure'))
+            ->assertOk()
+            ->assertDontSee('Public storefront only ad');
+    }
+
     public function test_display_device_can_record_ad_events(): void
     {
         $manager = User::query()->where('email', 'ravaq.manager@example.test')->firstOrFail();

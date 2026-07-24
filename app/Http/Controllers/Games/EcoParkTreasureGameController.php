@@ -48,6 +48,10 @@ class EcoParkTreasureGameController extends Controller
                 'gameOffers' => $offers->gameOffersForParty($campaign, $party)->all(),
                 'definition' => $onlineGame->definition(),
                 'party' => $onlineGame->serializeParty($party, $user instanceof User ? $user : null),
+                'pendingInvitations' => $user instanceof User
+                    ? $onlineGame->pendingInvitationsFor($user, $campaign)
+                    : [],
+                'invitePrefill' => $request->string('invite')->upper()->toString(),
                 'latestVisit' => $visit ? [
                     'id' => $visit->id,
                     'occurredAt' => $visit->occurred_at->toIso8601String(),

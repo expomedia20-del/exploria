@@ -25,6 +25,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property array<string, mixed>|null $metadata
  * @property-read Campaign $campaign
  * @property-read Collection<int, GamePartyMember> $members
+ * @property-read Collection<int, GamePartyInvitation> $invitations
  * @property-read Collection<int, GameChallengeProgress> $progress
  * @property-read GameEntryPass|null $entryPass
  * @property-read Collection<int, GameBonusClaim> $bonusClaims
@@ -72,6 +73,12 @@ class GameParty extends Model
     public function members(): HasMany
     {
         return $this->hasMany(GamePartyMember::class);
+    }
+
+    /** @return HasMany<GamePartyInvitation, $this> */
+    public function invitations(): HasMany
+    {
+        return $this->hasMany(GamePartyInvitation::class);
     }
 
     /** @return HasMany<GameChallengeProgress, $this> */

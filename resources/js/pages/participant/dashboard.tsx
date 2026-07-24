@@ -197,6 +197,28 @@ type Props = {
     latestVisit: LatestVisit | null;
     missionFlow: MissionFlow;
     onlineGame: OnlineGame | null;
+    pendingTeamInvitations: {
+        id: string;
+        partyName: string | null;
+        leaderName: string;
+        inviteCode: string;
+        invitedAt: string;
+        joinUrl: string;
+    }[];
+    generalMarketplace: {
+        stats: { ads: number; offers: number; total: number };
+        ads: {
+            id: string;
+            title: string;
+            bodyCopy: string | null;
+            ctaText: string;
+            targetUrl: string | null;
+            assetUrl: string | null;
+            partnerName: string | null;
+            venueName: string | null;
+        }[];
+        allOffersUrl: string;
+    };
     journey: Journey;
     viewerMode: ViewerMode;
 };
@@ -231,6 +253,8 @@ export default function ParticipantDashboard({
     latestVisit,
     missionFlow,
     onlineGame,
+    pendingTeamInvitations,
+    generalMarketplace,
     journey,
     viewerMode,
 }: Props) {
@@ -280,6 +304,8 @@ export default function ParticipantDashboard({
                 </div>
             ) : null}
 
+            <TeamInvitationInbox invitations={pendingTeamInvitations} />
+
             {viewerMode.canPreviewVisitors ? (
                 <AdminPreview viewerMode={viewerMode} />
             ) : null}
@@ -288,7 +314,7 @@ export default function ParticipantDashboard({
                 <ParticipationSetup />
             ) : null}
 
-            {onlineGame && latestVisit ? (
+            {onlineGame ? (
                 <CurrentJourney
                     game={onlineGame}
                     visit={latestVisit}
@@ -330,6 +356,8 @@ export default function ParticipantDashboard({
                 />
             </section>
 
+            <GeneralMarketplace marketplace={generalMarketplace} />
+
             <section className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
                 <RewardWallet rewards={journey.rewardWallet} />
                 <RewardEconomy
@@ -355,6 +383,153 @@ export default function ParticipantDashboard({
     );
 }
 
+function TeamInvitationInbox({
+    invitations,
+}: {
+    invitations: Props['pendingTeamInvitations'];
+}) {
+    if (invitations.length === 0) {
+        return null;
+    }
+
+    return (
+        <section className="rounded-3xl border border-sky-200 bg-sky-50 p-4 sm:p-5">
+            <div className="flex items-center gap-2">
+                <UsersRound className="size-5 text-sky-700" />
+                <h2 className="font-black">دعوت‌های تیمی شما</h2>
+            </div>
+            <p className="mt-2 text-xs leading-6 text-sky-900">
+                یک راهبر شما را به تیم دعوت کرده است. عضویت فقط با تأیید خودتان
+                انجام می‌شود و پس از انتخاب مسیر، ترکیب تیم قفل خواهد شد.
+            </p>
+            <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                {invitations.map((invitation) => (
+                    <Form
+                        key={invitation.id}
+                        action="/games/ecopark-treasure/parties/join"
+                        method="post"
+                        options={{ preserveScroll: true }}
+                        className="rounded-2xl bg-white p-4"
+                    >
+                        {({ processing, errors }) => (
+                            <>
+                                <strong className="block">
+                                    {invitation.partyName ?? 'تیم اکسپلوریا'}
+                                </strong>
+                                <span className="mt-1 block text-xs text-muted-foreground">
+                                    دعوت از طرف {invitation.leaderName}
+                                </span>
+                                <input
+                                    type="hidden"
+                                    name="invite_code"
+                                    value={invitation.inviteCode}
+                                />
+                                <Button
+                                    type="submit"
+                                    disabled={processing}
+                                    className="mt-3"
+                                >
+                                    <UsersRound className="size-4" />
+                                    پذیرش و پیوستن
+                                </Button>
+                                {errors.invite_code ? (
+                                    <p className="mt-2 text-xs text-rose-700">
+                                        {errors.invite_code}
+                                    </p>
+                                ) : null}
+                            </>
+                        )}
+                    </Form>
+                ))}
+            </div>
+        </section>
+    );
+}
+
+function GeneralMarketplace({
+    marketplace,
+}: {
+    marketplace: Props['generalMarketplace'];
+}) {
+    return (
+        <section className="rounded-3xl border border-violet-200 bg-violet-50/60 p-4 sm:p-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <span className="inline-flex items-center gap-2 text-xs font-bold text-violet-700">
+                        <Megaphone className="size-4" />
+                        ویترین عمومی و غیرامتیازی
+                    </span>
+                    <h2 className="mt-2 text-xl font-black">
+                        تبلیغات و پیشنهادهای همه فروشگاه‌ها
+                    </h2>
+                    <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-600">
+                        این ویترین مستقل از بازی است و دیدن آن امتیاز مرحله
+                        نمی‌دهد. تبلیغ ویژه و امتیازآور فقط در گام مرتبط کمپین
+                        با برچسب روشن نمایش داده می‌شود.
+                    </p>
+                </div>
+                <Link
+                    href={marketplace.allOffersUrl}
+                    className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-violet-900 px-4 text-sm font-bold text-white"
+                >
+                    <Store className="size-4" />
+                    مشاهده همه
+                </Link>
+            </div>
+
+            {marketplace.ads.length > 0 ? (
+                <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    {marketplace.ads.map((ad) => (
+                        <article
+                            key={ad.id}
+                            className="overflow-hidden rounded-2xl border border-violet-100 bg-white"
+                        >
+                            {ad.assetUrl ? (
+                                <img
+                                    src={ad.assetUrl}
+                                    alt=""
+                                    className="aspect-[16/9] w-full bg-slate-100 object-cover"
+                                />
+                            ) : (
+                                <div className="grid aspect-[16/9] place-items-center bg-gradient-to-br from-violet-100 to-emerald-50">
+                                    <Megaphone className="size-8 text-violet-700" />
+                                </div>
+                            )}
+                            <div className="p-4">
+                                <span className="text-[11px] font-bold text-violet-700">
+                                    تبلیغ عمومی • بدون امتیاز
+                                </span>
+                                <h3 className="mt-1 font-black">{ad.title}</h3>
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                    {ad.partnerName ??
+                                        ad.venueName ??
+                                        'فروشگاه عضو اکسپلوریا'}
+                                </p>
+                                {ad.bodyCopy ? (
+                                    <p className="mt-3 line-clamp-2 text-xs leading-6 text-slate-600">
+                                        {ad.bodyCopy}
+                                    </p>
+                                ) : null}
+                                <Link
+                                    href={marketplace.allOffersUrl}
+                                    className="mt-3 inline-flex text-xs font-bold text-violet-800"
+                                >
+                                    جزئیات در ویترین
+                                </Link>
+                            </div>
+                        </article>
+                    ))}
+                </div>
+            ) : (
+                <div className="mt-5 rounded-2xl border border-dashed border-violet-200 bg-white p-5 text-sm text-slate-600">
+                    تبلیغ عمومی فعالی وجود ندارد؛ ویترین با تأیید محتوای جدید
+                    فروشگاه‌ها به‌روزرسانی می‌شود.
+                </div>
+            )}
+        </section>
+    );
+}
+
 function CurrentJourney({
     game,
     visit,
@@ -363,7 +538,7 @@ function CurrentJourney({
     offer,
 }: {
     game: OnlineGame;
-    visit: LatestVisit;
+    visit: LatestVisit | null;
     participant: Participant;
     action: Journey['nextAction'];
     offer: CurrentOffer | null;
@@ -446,10 +621,10 @@ function CurrentJourney({
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
                     <div className="absolute inset-x-0 bottom-0 p-5 text-white">
                         <p className="text-xs text-emerald-200">
-                            {visit.venueName ?? 'مکان کمپین'}
+                            {visit?.venueName ?? 'مکان کمپین'}
                         </p>
                         <p className="mt-1 text-xl font-black">
-                            {visit.campaignName ?? 'مسیر اکسپلوریا'}
+                            {visit?.campaignName ?? 'مسیر اکسپلوریا'}
                         </p>
                         <p className="mt-2 text-xs text-slate-200">
                             امتیاز گروه: {faNumber(game.score)} · اعضا:{' '}

@@ -153,7 +153,7 @@ const operationalRoleMenus: Record<OperationalRole, string[]> = {
     shop_manager: ['/partner/dashboard', '/partner/ads', '/admin/support'],
     internal_sponsor: ['/sponsor/dashboard', '/admin/support'],
     external_sponsor: ['/sponsor/dashboard', '/admin/support'],
-    participant: ['/participant/dashboard', '/admin/support'],
+    participant: ['/participant/dashboard', '/offers', '/admin/support'],
 };
 
 const operationalHomeHrefs: Partial<Record<OperationalRole, string>> = {
@@ -357,6 +357,13 @@ const mainNavItems: RoleAwareNavItem[] = [
         title: 'پنل مشارکت‌کننده',
         href: '/participant/dashboard',
         icon: PlayCircle,
+        group: 'پنل کاربر',
+        roles: ['admin', 'visitor'],
+    },
+    {
+        title: 'ویترین فروشگاه‌ها',
+        href: '/offers',
+        icon: ShoppingBag,
         group: 'پنل کاربر',
         roles: ['admin', 'visitor'],
     },

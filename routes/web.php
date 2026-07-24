@@ -72,8 +72,17 @@ Route::middleware('auth')->group(function () {
         ->middleware('role:visitor')
         ->name('games.ecopark-treasure.parties.create');
     Route::post('/games/ecopark-treasure/parties/join', [EcoParkOnlineGameActionController::class, 'join'])
-        ->middleware('role:visitor')
+        ->middleware(['role:visitor', 'throttle:10,1'])
         ->name('games.ecopark-treasure.parties.join');
+    Route::patch('/games/ecopark-treasure/parties/{party}', [EcoParkOnlineGameActionController::class, 'update'])
+        ->middleware('role:visitor')
+        ->name('games.ecopark-treasure.parties.update');
+    Route::post('/games/ecopark-treasure/parties/{party}/invitations', [EcoParkOnlineGameActionController::class, 'invite'])
+        ->middleware(['role:visitor', 'throttle:10,1'])
+        ->name('games.ecopark-treasure.parties.invitations.store');
+    Route::delete('/games/ecopark-treasure/parties/{party}/members/{member}', [EcoParkOnlineGameActionController::class, 'removeMember'])
+        ->middleware('role:visitor')
+        ->name('games.ecopark-treasure.parties.members.destroy');
     Route::post('/games/ecopark-treasure/parties/{party}/route', [EcoParkOnlineGameActionController::class, 'selectRoute'])
         ->middleware('role:visitor')
         ->name('games.ecopark-treasure.parties.route');
