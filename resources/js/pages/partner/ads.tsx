@@ -7,6 +7,7 @@ import {
     RadioTower,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { useState } from 'react';
 import { DateTimePickerField } from '@/components/date-time-picker-field';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -140,6 +141,9 @@ export default function PartnerAds({
     adRequests,
 }: Props) {
     const { flash } = usePage<SharedProps>().props;
+    const [adType, setAdType] = useState('standalone');
+    const [placementType, setPlacementType] = useState('fixed_display');
+    const isRewardedPopup = adType === 'rewarded_content';
 
     return (
         <>
@@ -249,7 +253,16 @@ export default function PartnerAds({
                                         name="ad_type"
                                         required
                                         className="h-9 rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                                        defaultValue="standalone"
+                                        value={adType}
+                                        onChange={(event) => {
+                                            const value = event.target.value;
+
+                                            setAdType(value);
+
+                                            if (value === 'rewarded_content') {
+                                                setPlacementType('map_route');
+                                            }
+                                        }}
                                     >
                                         <option value="standalone">
                                             تبلیغ مستقل فروشگاه
@@ -259,6 +272,9 @@ export default function PartnerAds({
                                         </option>
                                         <option value="reward_moment">
                                             پیام کنار پاداش فروشگاه
+                                        </option>
+                                        <option value="rewarded_content">
+                                            پاپ‌آپ امتیازآور داخل بازی
                                         </option>
                                     </select>
                                     <InputError message={errors.ad_type} />
@@ -272,20 +288,27 @@ export default function PartnerAds({
                                         name="placement_type"
                                         required
                                         className="h-9 rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                                        defaultValue="fixed_display"
+                                        value={placementType}
+                                        onChange={(event) =>
+                                            setPlacementType(event.target.value)
+                                        }
                                     >
-                                        <option value="fixed_display">
-                                            نمایشگر ثابت
-                                        </option>
-                                        <option value="mobile_display">
-                                            نمایشگر سیار
-                                        </option>
-                                        <option value="public_feed">
-                                            ویترین عمومی فروشگاه‌ها
-                                        </option>
-                                        <option value="qr_landing">
-                                            صفحه QR
-                                        </option>
+                                        {!isRewardedPopup ? (
+                                            <>
+                                                <option value="fixed_display">
+                                                    نمایشگر ثابت
+                                                </option>
+                                                <option value="mobile_display">
+                                                    نمایشگر سیار
+                                                </option>
+                                                <option value="public_feed">
+                                                    ویترین عمومی فروشگاه‌ها
+                                                </option>
+                                                <option value="qr_landing">
+                                                    صفحه QR
+                                                </option>
+                                            </>
+                                        ) : null}
                                         <option value="reward_page">
                                             صفحه پاداش
                                         </option>
@@ -339,29 +362,45 @@ export default function PartnerAds({
                                     <Label htmlFor="creative_type">
                                         نوع محتوا
                                     </Label>
-                                    <select
-                                        id="creative_type"
-                                        name="creative_type"
-                                        required
-                                        className="h-9 rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                                        defaultValue="image"
-                                    >
-                                        <option value="image">تصویر</option>
-                                        <option value="video">ویدئو</option>
-                                        <option value="text_card">
-                                            کارت متنی
-                                        </option>
-                                        <option value="display_banner">
-                                            بنر نمایشگر
-                                        </option>
-                                    </select>
+                                    {isRewardedPopup ? (
+                                        <>
+                                            <input
+                                                type="hidden"
+                                                name="creative_type"
+                                                value="image"
+                                            />
+                                            <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm leading-6 text-emerald-950">
+                                                تصویر ثابت ۱۶:۹ — ویدئو در
+                                                پاپ‌آپ بازی نمایش داده نمی‌شود.
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <select
+                                            id="creative_type"
+                                            name="creative_type"
+                                            required
+                                            className="h-9 rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                            defaultValue="image"
+                                        >
+                                            <option value="image">تصویر</option>
+                                            <option value="video">ویدئو</option>
+                                            <option value="text_card">
+                                                کارت متنی
+                                            </option>
+                                            <option value="display_banner">
+                                                بنر نمایشگر
+                                            </option>
+                                        </select>
+                                    )}
                                     <InputError
                                         message={errors.creative_type}
                                     />
                                 </div>
                                 <div className="grid gap-2">
                                     <Label htmlFor="asset_url">
-                                        لینک فایل/نمونه محتوا
+                                        {isRewardedPopup
+                                            ? 'لینک تصویر ثابت تبلیغ'
+                                            : 'لینک فایل/نمونه محتوا'}
                                     </Label>
                                     <Input
                                         id="asset_url"
@@ -369,9 +408,85 @@ export default function PartnerAds({
                                         type="url"
                                         dir="ltr"
                                         placeholder="https://example.com/ad.jpg"
+                                        required={isRewardedPopup}
                                     />
+                                    {isRewardedPopup ? (
+                                        <p className="text-xs leading-6 text-muted-foreground">
+                                            پیشنهاد: ۱۲۰۰×۶۷۵ پیکسل، WebP یا
+                                            JPEG، حجم کمتر از ۲۵۰ کیلوبایت.
+                                        </p>
+                                    ) : null}
                                     <InputError message={errors.asset_url} />
                                 </div>
+                                {isRewardedPopup ? (
+                                    <div className="grid gap-3 rounded-md border border-amber-200 bg-amber-50 p-3 sm:grid-cols-3 md:col-span-2">
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="rewarded_points">
+                                                امتیاز کاربر
+                                            </Label>
+                                            <Input
+                                                id="rewarded_points"
+                                                name="rewarded_points"
+                                                type="number"
+                                                min="1"
+                                                max="100"
+                                                defaultValue="30"
+                                                required
+                                            />
+                                            <InputError
+                                                message={errors.rewarded_points}
+                                            />
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="required_seconds">
+                                                زمان مشاهده (ثانیه)
+                                            </Label>
+                                            <Input
+                                                id="required_seconds"
+                                                name="required_seconds"
+                                                type="number"
+                                                min="8"
+                                                max="15"
+                                                defaultValue="10"
+                                                required
+                                            />
+                                            <InputError
+                                                message={
+                                                    errors.required_seconds
+                                                }
+                                            />
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="game_stage_index">
+                                                مرحله نمایش
+                                            </Label>
+                                            <select
+                                                id="game_stage_index"
+                                                name="game_stage_index"
+                                                required
+                                                defaultValue="3"
+                                                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                            >
+                                                {[2, 3, 4, 5].map((stage) => (
+                                                    <option
+                                                        key={stage}
+                                                        value={stage}
+                                                    >
+                                                        مرحله{' '}
+                                                        {stage.toLocaleString(
+                                                            'fa-IR',
+                                                        )}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <InputError
+                                                message={
+                                                    errors.game_stage_index
+                                                }
+                                            />
+                                        </div>
+                                    </div>
+                                ) : null}
                                 <DateTimePickerField
                                     id="starts_at"
                                     name="starts_at"
@@ -419,6 +534,7 @@ export default function PartnerAds({
                                     <textarea
                                         id="body_copy"
                                         name="body_copy"
+                                        required={isRewardedPopup}
                                         className="min-h-24 rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                                         placeholder="پیام تبلیغاتی یا توضیح پیشنهاد فروشگاه"
                                     />

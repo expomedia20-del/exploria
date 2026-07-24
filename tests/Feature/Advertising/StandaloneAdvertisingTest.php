@@ -414,6 +414,93 @@ class StandaloneAdvertisingTest extends TestCase
         $this->assertSame('pending_review', $adRequest->fresh()->status);
     }
 
+    public function test_rewarded_game_popup_rejects_video_and_incomplete_settings(): void
+    {
+        $partnerUser = User::query()->where('email', 'cafe.eco@example.test')->firstOrFail();
+
+        $this->actingAs($partnerUser)
+            ->postJson(route('partner.ads.api.store'), [
+                'title' => 'Rewarded video must be rejected',
+                'ad_type' => 'rewarded_content',
+                'creative_type' => 'video',
+                'placement_type' => 'fixed_display',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors([
+                'body_copy',
+                'creative_type',
+                'asset_url',
+                'rewarded_points',
+                'required_seconds',
+                'game_stage_index',
+                'placement_type',
+            ]);
+
+        $this->assertDatabaseMissing('ad_requests', [
+            'title' => 'Rewarded video must be rejected',
+        ]);
+    }
+
+    public function test_partner_can_submit_complete_image_and_text_rewarded_game_popup(): void
+    {
+        $partnerUser = User::query()->where('email', 'cafe.eco@example.test')->firstOrFail();
+
+        $this->actingAs($partnerUser)
+            ->postJson(route('partner.ads.api.store'), [
+                'title' => 'پیشنهاد امتیازآور کافه اکو',
+                'body_copy' => 'پیشنهاد کوتاه کافه را ببینید و امتیاز اختیاری دریافت کنید.',
+                'cta_text' => 'مشاهده پیشنهاد',
+                'target_url' => 'https://example.com/rewarded-offer',
+                'ad_type' => 'rewarded_content',
+                'creative_type' => 'image',
+                'placement_type' => 'map_route',
+                'asset_url' => 'https://example.com/rewarded-offer.webp',
+                'rewarded_points' => 35,
+                'required_seconds' => 10,
+                'game_stage_index' => 3,
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.status', 'pending_review');
+
+        $adRequest = AdRequest::query()
+            ->where('title', 'پیشنهاد امتیازآور کافه اکو')
+            ->with(['creatives', 'placements'])
+            ->firstOrFail();
+
+        $this->assertSame('rewarded_content', $adRequest->ad_type);
+        $this->assertSame(35, $adRequest->metadata['rewarded_points']);
+        $this->assertSame(10, $adRequest->metadata['required_seconds']);
+        $this->assertSame(3, $adRequest->metadata['game_stage_index']);
+        $this->assertSame('paid_stage_placement', $adRequest->metadata['commercial_model']);
+        $this->assertSame('image', $adRequest->creatives->firstOrFail()->creative_type);
+        $this->assertSame('map_route', $adRequest->placements->firstOrFail()->placement_type);
+    }
+
+    public function test_admin_cannot_approve_legacy_incomplete_rewarded_popup(): void
+    {
+        $adRequest = $this->submitAdRequest(
+            'cafe.eco@example.test',
+            'Legacy incomplete rewarded popup',
+            'map_route',
+        );
+        $adRequest->update([
+            'ad_type' => 'rewarded_content',
+            'metadata' => ['source' => 'legacy_import'],
+        ]);
+        $adRequest->creatives()->update([
+            'creative_type' => 'video',
+            'asset_url' => 'https://example.com/legacy.mp4',
+        ]);
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.ads.api.approve', $adRequest))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('ad_request');
+
+        $this->assertSame('pending_review', $adRequest->fresh()->status);
+    }
+
     /** @param array<string, mixed> $overrides */
     private function submitAdRequest(string $email = 'cafe.eco@example.test', string $title = 'Test cafe ad', string $placementType = 'fixed_display', array $overrides = []): AdRequest
     {

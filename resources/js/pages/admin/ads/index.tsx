@@ -35,6 +35,10 @@ type AdRequest = {
     placementStatus: string | null;
     creativeType: string | null;
     assetUrl: string | null;
+    isRewardedPopup: boolean;
+    rewardedPoints: number | null;
+    requiredSeconds: number | null;
+    gameStageIndex: number | null;
 };
 
 type DisplayDevice = {
@@ -71,6 +75,7 @@ type SharedProps = {
     flash?: {
         success?: string;
     };
+    errors?: Record<string, string>;
 };
 
 const statusLabels: Record<string, string> = {
@@ -130,7 +135,7 @@ export default function AdminAdsIndex({
     adRequests,
     displayDevices,
 }: Props) {
-    const { flash } = usePage<SharedProps>().props;
+    const { errors, flash } = usePage<SharedProps>().props;
 
     return (
         <>
@@ -217,6 +222,11 @@ export default function AdminAdsIndex({
                         <AlertDescription>{flash.success}</AlertDescription>
                     </Alert>
                 ) : null}
+                {errors?.ad_request ? (
+                    <Alert variant="destructive">
+                        <AlertDescription>{errors.ad_request}</AlertDescription>
+                    </Alert>
+                ) : null}
 
                 <Alert>
                     <AlertDescription>
@@ -263,6 +273,48 @@ export default function AdminAdsIndex({
                                         <p className="line-clamp-2 text-xs text-muted-foreground">
                                             {adRequest.bodyCopy}
                                         </p>
+                                    ) : null}
+                                    {adRequest.isRewardedPopup ? (
+                                        <div className="grid gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 md:grid-cols-[minmax(0,18rem)_1fr]">
+                                            {adRequest.creativeType ===
+                                                'image' &&
+                                            adRequest.assetUrl ? (
+                                                <img
+                                                    src={adRequest.assetUrl}
+                                                    alt={adRequest.title}
+                                                    className="aspect-video w-full rounded-md bg-white object-cover"
+                                                />
+                                            ) : (
+                                                <div className="grid aspect-video place-items-center rounded-md bg-white text-xs text-red-700">
+                                                    تصویر ثابت معتبر ثبت نشده
+                                                </div>
+                                            )}
+                                            <div className="grid content-center gap-2 text-xs text-amber-950">
+                                                <p className="font-semibold">
+                                                    پیش‌نمایش پاپ‌آپ امتیازآور
+                                                    بازی
+                                                </p>
+                                                <p>
+                                                    مرحله:{' '}
+                                                    {adRequest.gameStageIndex?.toLocaleString(
+                                                        'fa-IR',
+                                                    ) ?? '—'}{' '}
+                                                    · زمان:{' '}
+                                                    {adRequest.requiredSeconds?.toLocaleString(
+                                                        'fa-IR',
+                                                    ) ?? '—'}{' '}
+                                                    ثانیه · امتیاز:{' '}
+                                                    {adRequest.rewardedPoints?.toLocaleString(
+                                                        'fa-IR',
+                                                    ) ?? '—'}
+                                                </p>
+                                                <p>
+                                                    نوع مجاز: تصویر ثابت ۱۶:۹
+                                                    به‌همراه متن؛ ویدئو در این
+                                                    جایگاه پخش نمی‌شود.
+                                                </p>
+                                            </div>
+                                        </div>
                                     ) : null}
                                     <p className="text-xs text-muted-foreground">
                                         واحد/حامی مرتبط:{' '}

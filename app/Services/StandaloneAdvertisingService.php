@@ -26,6 +26,12 @@ class StandaloneAdvertisingService
         'post_mission',
     ];
 
+    private const REWARDED_POPUP_PLACEMENT_TYPES = [
+        'map_route',
+        'post_mission',
+        'reward_page',
+    ];
+
     public function __construct(private readonly PartnerDashboardService $partnerDashboardService, private readonly UserAccessScopeService $accessScopes) {}
 
     /** @return array<string, mixed> */
@@ -158,8 +164,19 @@ class StandaloneAdvertisingService
     private function createAdRequestForPartner(User $user, PartnerAccount $partner, array $data, string $source): AdRequest
     {
         $hub = $this->hubForPartner($partner, $data['hub_id'] ?? null);
+        $metadata = ['source' => $source];
 
-        return DB::transaction(function () use ($data, $hub, $partner, $source, $user): AdRequest {
+        if (($data['ad_type'] ?? null) === 'rewarded_content') {
+            $metadata = [
+                ...$metadata,
+                'rewarded_points' => (int) $data['rewarded_points'],
+                'required_seconds' => (int) $data['required_seconds'],
+                'game_stage_index' => (int) $data['game_stage_index'],
+                'commercial_model' => 'paid_stage_placement',
+            ];
+        }
+
+        return DB::transaction(function () use ($data, $hub, $metadata, $partner, $source, $user): AdRequest {
             $adRequest = AdRequest::query()->create([
                 'venue_id' => $partner->venue_id,
                 'partner_account_id' => $partner->id,
@@ -179,7 +196,7 @@ class StandaloneAdvertisingService
                 'budget_amount' => $data['budget_amount'] ?? null,
                 'impression_cap' => $data['impression_cap'] ?? null,
                 'click_cap' => $data['click_cap'] ?? null,
-                'metadata' => ['source' => $source],
+                'metadata' => $metadata,
             ]);
 
             $adRequest->creatives()->create([
@@ -231,6 +248,10 @@ class StandaloneAdvertisingService
     /** @param array<string, mixed> $data */
     private function review(User $reviewer, AdRequest $adRequest, string $status, array $data): AdRequest
     {
+        if ($status === 'approved') {
+            $this->assertRewardedPopupReady($adRequest);
+        }
+
         return DB::transaction(function () use ($adRequest, $data, $reviewer, $status): AdRequest {
             $adRequest->update([
                 'status' => $status,
@@ -474,6 +495,7 @@ class StandaloneAdvertisingService
     {
         $placement = $adRequest->placements->first();
         $creative = $adRequest->creatives->first();
+        $metadata = $this->metadataArray($adRequest->metadata);
 
         return [
             'id' => $adRequest->id,
@@ -501,7 +523,49 @@ class StandaloneAdvertisingService
             'placementStatus' => $placement?->status,
             'creativeType' => $creative?->creative_type,
             'assetUrl' => $creative?->asset_url,
+            'isRewardedPopup' => $adRequest->ad_type === 'rewarded_content',
+            'rewardedPoints' => isset($metadata['rewarded_points']) ? (int) $metadata['rewarded_points'] : null,
+            'requiredSeconds' => isset($metadata['required_seconds']) ? (int) $metadata['required_seconds'] : null,
+            'gameStageIndex' => isset($metadata['game_stage_index']) ? (int) $metadata['game_stage_index'] : null,
         ];
+    }
+
+    private function assertRewardedPopupReady(AdRequest $adRequest): void
+    {
+        if ($adRequest->ad_type !== 'rewarded_content') {
+            return;
+        }
+
+        $adRequest->loadMissing(['creatives', 'placements']);
+        $creative = $adRequest->creatives->first();
+        $metadata = $this->metadataArray($adRequest->metadata);
+        $points = filter_var($metadata['rewarded_points'] ?? null, FILTER_VALIDATE_INT);
+        $seconds = filter_var($metadata['required_seconds'] ?? null, FILTER_VALIDATE_INT);
+        $stage = filter_var($metadata['game_stage_index'] ?? null, FILTER_VALIDATE_INT);
+        $hasGamePlacement = $adRequest->placements
+            ->pluck('placement_type')
+            ->intersect(self::REWARDED_POPUP_PLACEMENT_TYPES)
+            ->isNotEmpty();
+
+        if (
+            ! $creative
+            || $creative->creative_type !== 'image'
+            || blank($creative->asset_url)
+            || blank($adRequest->body_copy)
+            || $points === false
+            || $points < 1
+            || $points > 100
+            || $seconds === false
+            || $seconds < 8
+            || $seconds > 15
+            || $stage === false
+            || ! in_array($stage, [2, 3, 4, 5], true)
+            || ! $hasGamePlacement
+        ) {
+            throw ValidationException::withMessages([
+                'ad_request' => 'پاپ‌آپ امتیازآور ناقص است: تصویر ثابت، متن، امتیاز، زمان ۸ تا ۱۵ ثانیه، مرحله ۲ تا ۵ و جایگاه داخل بازی را تکمیل کنید.',
+            ]);
+        }
     }
 
     private function isOnlinePlacement(string $placementType): bool

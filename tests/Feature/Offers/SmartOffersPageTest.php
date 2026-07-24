@@ -63,9 +63,12 @@ class SmartOffersPageTest extends TestCase
         $rewardedAd = $this->createApprovedOnlineAd('Rewarded stage content', 'approved', [
             'ad_type' => 'rewarded_content',
             'placement_type' => 'post_mission',
+            'creative_type' => 'image',
+            'asset_url' => 'https://example.com/rewarded-stage.webp',
             'metadata' => [
                 'source' => 'smart_offers_test',
                 'rewarded_points' => 30,
+                'required_seconds' => 10,
                 'game_stage_index' => 2,
             ],
         ]);
@@ -78,12 +81,16 @@ class SmartOffersPageTest extends TestCase
             ->assertJsonMissing(['id' => $rewardedAd->id, 'title' => 'Rewarded stage content']);
 
         $campaign = Campaign::query()->where('venue_id', $publicAd->venue_id)->firstOrFail();
-        $gameTitles = app(SmartOffersService::class)
-            ->gameOffersForCampaign($campaign)
-            ->pluck('title');
+        $gameOffers = app(SmartOffersService::class)
+            ->gameOffersForCampaign($campaign);
+        $gameTitles = $gameOffers->pluck('title');
+        $rewardedOffer = $gameOffers->firstWhere('adRequestId', $rewardedAd->id);
 
         $this->assertTrue($gameTitles->contains('Rewarded stage content'));
         $this->assertFalse($gameTitles->contains('Explicit public storefront ad'));
+        $this->assertSame('image', $rewardedOffer['creativeType']);
+        $this->assertSame('https://example.com/rewarded-stage.webp', $rewardedOffer['assetUrl']);
+        $this->assertSame('https://example.com/offers', $rewardedOffer['targetUrl']);
     }
 
     public function test_public_feed_requires_active_approved_placement_and_creative_and_remaining_caps(): void
@@ -184,7 +191,8 @@ class SmartOffersPageTest extends TestCase
         ]);
 
         $adRequest->creatives()->create([
-            'creative_type' => 'text_card',
+            'creative_type' => $options['creative_type'] ?? 'text_card',
+            'asset_url' => $options['asset_url'] ?? null,
             'headline' => $title,
             'body_copy' => 'کارت تبلیغاتی برای صفحه پیشنهادها.',
             'cta_text' => 'مشاهده',

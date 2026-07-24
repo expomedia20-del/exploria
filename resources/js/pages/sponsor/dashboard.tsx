@@ -303,6 +303,10 @@ export default function SponsorDashboard({
     ]);
     const [editingProposal, setEditingProposal] =
         useState<SponsorProposal | null>(null);
+    const [advertisingType, setAdvertisingType] = useState('standalone');
+    const [advertisingPlacement, setAdvertisingPlacement] =
+        useState('fixed_display');
+    const isRewardedPopup = advertisingType === 'rewarded_content';
 
     const addProposalItem = () => {
         setProposalItems((items) => [...items, newDefaultProposalItem()]);
@@ -1193,7 +1197,18 @@ export default function SponsorDashboard({
                                         name="ad_type"
                                         required
                                         className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                                        defaultValue="standalone"
+                                        value={advertisingType}
+                                        onChange={(event) => {
+                                            const value = event.target.value;
+
+                                            setAdvertisingType(value);
+
+                                            if (value === 'rewarded_content') {
+                                                setAdvertisingPlacement(
+                                                    'map_route',
+                                                );
+                                            }
+                                        }}
                                     >
                                         <option value="standalone">
                                             تبلیغ مستقل اسپانسر
@@ -1203,6 +1218,9 @@ export default function SponsorDashboard({
                                         </option>
                                         <option value="reward_moment">
                                             پیام کنار پاداش
+                                        </option>
+                                        <option value="rewarded_content">
+                                            پاپ‌آپ امتیازآور داخل بازی
                                         </option>
                                     </select>
                                     <InputError message={errors.ad_type} />
@@ -1219,20 +1237,29 @@ export default function SponsorDashboard({
                                         name="placement_type"
                                         required
                                         className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                                        defaultValue="fixed_display"
+                                        value={advertisingPlacement}
+                                        onChange={(event) =>
+                                            setAdvertisingPlacement(
+                                                event.target.value,
+                                            )
+                                        }
                                     >
-                                        <option value="fixed_display">
-                                            نمایشگر ثابت
-                                        </option>
-                                        <option value="mobile_display">
-                                            نمایشگر سیار
-                                        </option>
-                                        <option value="public_feed">
-                                            ویترین عمومی فروشگاه‌ها
-                                        </option>
-                                        <option value="qr_landing">
-                                            صفحه QR
-                                        </option>
+                                        {!isRewardedPopup ? (
+                                            <>
+                                                <option value="fixed_display">
+                                                    نمایشگر ثابت
+                                                </option>
+                                                <option value="mobile_display">
+                                                    نمایشگر سیار
+                                                </option>
+                                                <option value="public_feed">
+                                                    ویترین عمومی فروشگاه‌ها
+                                                </option>
+                                                <option value="qr_landing">
+                                                    صفحه QR
+                                                </option>
+                                            </>
+                                        ) : null}
                                         <option value="reward_page">
                                             صفحه پاداش
                                         </option>
@@ -1286,22 +1313,36 @@ export default function SponsorDashboard({
                                     >
                                         نوع محتوا
                                     </label>
-                                    <select
-                                        id="creative_type"
-                                        name="creative_type"
-                                        required
-                                        className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                                        defaultValue="image"
-                                    >
-                                        <option value="image">تصویر</option>
-                                        <option value="video">ویدئو</option>
-                                        <option value="text_card">
-                                            کارت متنی
-                                        </option>
-                                        <option value="display_banner">
-                                            بنر نمایشگر
-                                        </option>
-                                    </select>
+                                    {isRewardedPopup ? (
+                                        <>
+                                            <input
+                                                type="hidden"
+                                                name="creative_type"
+                                                value="image"
+                                            />
+                                            <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm leading-6 text-emerald-950">
+                                                تصویر ثابت ۱۶:۹ — ویدئو فقط برای
+                                                نمایشگرهای محیطی قابل ثبت است.
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <select
+                                            id="creative_type"
+                                            name="creative_type"
+                                            required
+                                            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                            defaultValue="image"
+                                        >
+                                            <option value="image">تصویر</option>
+                                            <option value="video">ویدئو</option>
+                                            <option value="text_card">
+                                                کارت متنی
+                                            </option>
+                                            <option value="display_banner">
+                                                بنر نمایشگر
+                                            </option>
+                                        </select>
+                                    )}
                                     <InputError
                                         message={errors.creative_type}
                                     />
@@ -1311,7 +1352,9 @@ export default function SponsorDashboard({
                                         htmlFor="asset_url"
                                         className="text-xs font-medium"
                                     >
-                                        لینک فایل محتوا
+                                        {isRewardedPopup
+                                            ? 'لینک تصویر ثابت تبلیغ'
+                                            : 'لینک فایل محتوا'}
                                     </label>
                                     <input
                                         id="asset_url"
@@ -1320,9 +1363,96 @@ export default function SponsorDashboard({
                                         dir="ltr"
                                         className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                         placeholder="https://example.com/sponsor-ad.jpg"
+                                        required={isRewardedPopup}
                                     />
+                                    {isRewardedPopup ? (
+                                        <p className="text-xs leading-6 text-muted-foreground">
+                                            پیشنهاد: ۱۲۰۰×۶۷۵ پیکسل، WebP یا
+                                            JPEG، حجم کمتر از ۲۵۰ کیلوبایت.
+                                        </p>
+                                    ) : null}
                                     <InputError message={errors.asset_url} />
                                 </div>
+                                {isRewardedPopup ? (
+                                    <div className="grid gap-3 rounded-md border border-amber-200 bg-amber-50 p-3 sm:grid-cols-3 md:col-span-2">
+                                        <div className="grid gap-1.5">
+                                            <label
+                                                htmlFor="rewarded_points"
+                                                className="text-xs font-medium"
+                                            >
+                                                امتیاز کاربر
+                                            </label>
+                                            <input
+                                                id="rewarded_points"
+                                                name="rewarded_points"
+                                                type="number"
+                                                min="1"
+                                                max="100"
+                                                defaultValue="30"
+                                                required
+                                                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                            />
+                                            <InputError
+                                                message={errors.rewarded_points}
+                                            />
+                                        </div>
+                                        <div className="grid gap-1.5">
+                                            <label
+                                                htmlFor="required_seconds"
+                                                className="text-xs font-medium"
+                                            >
+                                                زمان مشاهده (ثانیه)
+                                            </label>
+                                            <input
+                                                id="required_seconds"
+                                                name="required_seconds"
+                                                type="number"
+                                                min="8"
+                                                max="15"
+                                                defaultValue="10"
+                                                required
+                                                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                            />
+                                            <InputError
+                                                message={
+                                                    errors.required_seconds
+                                                }
+                                            />
+                                        </div>
+                                        <div className="grid gap-1.5">
+                                            <label
+                                                htmlFor="game_stage_index"
+                                                className="text-xs font-medium"
+                                            >
+                                                مرحله نمایش
+                                            </label>
+                                            <select
+                                                id="game_stage_index"
+                                                name="game_stage_index"
+                                                required
+                                                defaultValue="3"
+                                                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                            >
+                                                {[2, 3, 4, 5].map((stage) => (
+                                                    <option
+                                                        key={stage}
+                                                        value={stage}
+                                                    >
+                                                        مرحله{' '}
+                                                        {stage.toLocaleString(
+                                                            'fa-IR',
+                                                        )}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <InputError
+                                                message={
+                                                    errors.game_stage_index
+                                                }
+                                            />
+                                        </div>
+                                    </div>
+                                ) : null}
                                 <div className="grid gap-1.5">
                                     <label
                                         htmlFor="starts_at"
@@ -1399,6 +1529,7 @@ export default function SponsorDashboard({
                                     <textarea
                                         id="body_copy"
                                         name="body_copy"
+                                        required={isRewardedPopup}
                                         className="min-h-24 rounded-md border border-input bg-background px-3 py-2 text-sm"
                                         placeholder="پیام برند، پیشنهاد اسپانسری یا متن فراخوان"
                                     />

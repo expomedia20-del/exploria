@@ -156,6 +156,8 @@ type GameOffer = {
     partnerName: string | null;
     bodyCopy: string | null;
     ctaText: string;
+    targetUrl: string | null;
+    creativeType: string | null;
     assetUrl: string | null;
     points: number | null;
     bonusPoints: number | null;
@@ -1758,10 +1760,10 @@ function SponsorBonus({ party, offer }: { party: Party; offer: GameOffer }) {
                                 <X className="size-5" />
                             </button>
                         </header>
-                        {offer.assetUrl ? (
+                        {offer.creativeType === 'image' && offer.assetUrl ? (
                             <img
                                 src={offer.assetUrl}
-                                alt=""
+                                alt={offer.title}
                                 className="aspect-video w-full bg-slate-100 object-cover"
                             />
                         ) : (
@@ -1774,6 +1776,16 @@ function SponsorBonus({ party, offer }: { party: Party; offer: GameOffer }) {
                                 {offer.bodyCopy ??
                                     'پیشنهاد کوتاه اسپانسر این کمپین را مشاهده می‌کنید.'}
                             </p>
+                            {offer.targetUrl ? (
+                                <a
+                                    href={offer.targetUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="mt-4 inline-flex min-h-10 items-center rounded-xl border border-amber-700 px-4 text-sm font-bold text-amber-900"
+                                >
+                                    {offer.ctaText || 'مشاهده جزئیات پیشنهاد'}
+                                </a>
+                            ) : null}
                             <div className="mt-5 h-2 overflow-hidden rounded-full bg-slate-100">
                                 <div
                                     className="h-full bg-emerald-600 transition-all"
