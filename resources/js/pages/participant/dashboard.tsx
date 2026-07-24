@@ -1,19 +1,21 @@
 import { Form, Head, Link, usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 import {
-    CheckCircle2,
+    BadgeCheck,
+    Check,
     Compass,
-    Gem,
     Gift,
     History,
+    LockKeyhole,
     LogOut,
-    MapPin,
+    Megaphone,
     Play,
     QrCode,
     Sparkles,
     Store,
-    Trophy,
+    TicketCheck,
     UsersRound,
+    WalletCards,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { logout } from '@/routes';
@@ -33,15 +35,18 @@ type LatestVisit = {
     id: string;
     status: string;
     occurredAt: string;
-    qrCode: string | null;
     qrLandingUrl: string | null;
     venueName: string | null;
     city: string | null;
-    zoneName: string | null;
     hubName: string | null;
-    touchpointLabel: string | null;
     campaignName: string | null;
-    isDemo: boolean;
+};
+
+type MissionItem = {
+    id: string;
+    title: string;
+    status: 'available' | 'started' | 'completed' | 'locked';
+    points: number;
 };
 
 type MissionFlow = {
@@ -52,46 +57,65 @@ type MissionFlow = {
         rewards: number;
     };
     missions: MissionItem[];
-    rewards: UserRewardItem[];
 } | null;
-
-type MissionItem = {
-    id: string;
-    title: string;
-    status: 'available' | 'started' | 'completed' | 'locked';
-    isLocked: boolean;
-    points: number;
-    cycleStep: { index: number | null; label: string | null };
-    hubName: string | null;
-    treasureName: string | null;
-};
-
-type UserRewardItem = {
-    id: string;
-    status: string;
-    redemption: {
-        redemptionCode: string;
-        status: string;
-        partnerName: string | null;
-    } | null;
-    reward: {
-        name: string;
-        partnerName: string | null;
-    } | null;
-};
-
-type VisitorPreviewOption = {
-    id: number;
-    name: string;
-    email: string;
-    visitsCount: number;
-};
 
 type ViewerMode = {
     canPreviewVisitors: boolean;
     isAdminPreview: boolean;
     currentVisitorId: number | null;
-    previewOptions: VisitorPreviewOption[];
+    previewOptions: {
+        id: number;
+        name: string;
+        email: string;
+        visitsCount: number;
+    }[];
+};
+
+type TimelineStep = {
+    index: number;
+    title: string;
+    phase: 'online' | 'physical';
+    status: 'locked' | 'available' | 'completed';
+};
+
+type OnlineGame = {
+    id: string;
+    status: 'active' | 'ready_for_visit' | 'onsite_active' | 'completed';
+    mode: 'individual' | 'family' | 'team';
+    name: string | null;
+    score: number;
+    members: { displayName: string; role: string }[];
+    journeyTimeline: TimelineStep[];
+    currentStage: {
+        index: number | null;
+        title: string;
+        phase: 'online' | 'physical' | 'completed';
+        phaseLabel: string;
+        instruction: string;
+        completedSteps: number;
+        totalSteps: number;
+    };
+    commerce: {
+        optionalAdsCompleted: number;
+        commercialRedemptions: number;
+        issuedStageRewards: number;
+        finalTier: 'base' | 'boosted' | 'premium';
+        finalTierLabel: string;
+        nextBoostRequirement: string | null;
+    };
+};
+
+type CurrentOffer = {
+    id: string;
+    kind: 'ad';
+    title: string;
+    bodyCopy: string | null;
+    partnerName: string | null;
+    bonusPoints: number | null;
+    requiredSeconds: number | null;
+    stageIndex: number | null;
+    checkpointKey: string | null;
+    commercialModel: string | null;
 };
 
 type Journey = {
@@ -122,16 +146,11 @@ type Journey = {
     rewardCatalog: {
         id: string;
         name: string;
-        rewardType: string;
         rewardTypeLabel: string;
         campaignName: string | null;
-        campaignCode: string | null;
         partnerName: string | null;
-        partnerType: string | null;
         pointCost: number | null;
-        stockQuantity: number | null;
         remainingStock: number | null;
-        source: string | null;
         tier: string | null;
     }[];
     rewardWallet: {
@@ -140,24 +159,18 @@ type Journey = {
         awardedAt: string | null;
         expiresAt: string | null;
         campaignName: string | null;
-        campaignCode: string | null;
         rewardName: string | null;
-        rewardType: string | null;
         rewardTypeLabel: string;
         pointCost: number | null;
         partnerName: string | null;
         redemptionCode: string | null;
         redemptionStatus: string | null;
         redeemedAt: string | null;
-        redemption?: { partnerName: string | null } | null;
-        reward?: { partnerName: string | null } | null;
     }[];
     history: {
         id: string;
         venueName: string | null;
-        city: string | null;
         campaignName: string | null;
-        campaignCode: string | null;
         hubName: string | null;
         status: string;
         occurredAt: string;
@@ -165,126 +178,52 @@ type Journey = {
     }[];
     partners: {
         name: string;
-        type: string | null;
         rewardName: string | null;
-        rewardType: string | null;
         rewardTypeLabel: string;
         campaignName: string | null;
-        pointCost: number | null;
         status: string;
         redeemedAt: string | null;
-    }[];
-    treasures: {
-        name: string;
-        type: string;
-        campaignName: string | null;
     }[];
     nextAction: {
         label: string;
         description: string;
         href: string | null;
     };
+    currentOffer: CurrentOffer | null;
 };
 
 type Props = {
     participant: Participant;
     latestVisit: LatestVisit | null;
     missionFlow: MissionFlow;
-    onlineGame: {
-        id: string;
-        status: 'active' | 'ready_for_visit' | 'onsite_active' | 'completed';
-        mode: 'individual' | 'family' | 'team';
-        name: string | null;
-        score: number;
-        members: { displayName: string; role: string }[];
-        steps: {
-            index: number;
-            status: 'locked' | 'available' | 'completed';
-            points: number;
-        }[];
-        entryPass: {
-            code: string;
-            status: 'active' | 'redeemed' | 'expired';
-        } | null;
-        physicalJourney: {
-            phase: 'awaiting_gate' | 'active' | 'completed';
-            steps: {
-                index: number;
-                status: 'locked' | 'available' | 'completed';
-            }[];
-            nextCheckpointKey: string | null;
-        };
-    } | null;
+    onlineGame: OnlineGame | null;
     journey: Journey;
     viewerMode: ViewerMode;
 };
 
 type SharedProps = {
-    flash?: {
-        success?: string;
-    };
+    flash?: { success?: string };
 };
 
-const missionStatusLabels: Record<MissionItem['status'], string> = {
-    available: 'آماده شروع',
-    started: 'در حال انجام',
-    completed: 'تکمیل شده',
-    locked: 'قفل',
-};
+const heroImage = '/images/ecopark/proposal/participant-route-card-3-2.jpg';
 
 const rewardStatusLabels: Record<string, string> = {
-    awarded: 'صادر شده',
+    awarded: 'آماده استفاده',
     reserved: 'رزرو شده',
     redeemed: 'مصرف شده',
     confirmed: 'تحویل شده',
     expired: 'منقضی شده',
 };
 
-const participantHeroImage =
-    '/images/ecopark/proposal/participant-route-card-3-2.jpg';
-
-const journeySegments = [
-    {
-        title: 'چالش',
-        body: 'ماموریت‌های مکان را مرحله‌به‌مرحله دنبال کنید.',
-        icon: Compass,
-        tone: 'border-cyan-200 bg-cyan-50 text-cyan-950 dark:border-cyan-900 dark:bg-cyan-950 dark:text-cyan-100',
-    },
-    {
-        title: 'گنج',
-        body: 'با پیشرفت در مسیر، گنج‌ها و نقاط ویژه باز می‌شوند.',
-        icon: Gem,
-        tone: 'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-950 dark:border-fuchsia-900 dark:bg-fuchsia-950 dark:text-fuchsia-100',
-    },
-    {
-        title: 'پاداش',
-        body: 'امتیازها به کوپن، هدیه یا تخفیف قابل استفاده تبدیل می‌شوند.',
-        icon: Gift,
-        tone: 'border-amber-200 bg-amber-50 text-amber-950 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-100',
-    },
-    {
-        title: 'فروشگاه',
-        body: 'پاداش در واحدهای عضو مصرف می‌شود و فرصت فروش می‌سازد.',
-        icon: Store,
-        tone: 'border-emerald-200 bg-emerald-50 text-emerald-950 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-100',
-    },
-];
+function faNumber(value: number) {
+    return value.toLocaleString('fa-IR');
+}
 
 function formatDate(value: string) {
     return new Intl.DateTimeFormat('fa-IR', {
         dateStyle: 'medium',
         timeStyle: 'short',
     }).format(new Date(value));
-}
-
-function progressPercent(flow: MissionFlow) {
-    if (!flow || flow.missions.length === 0) {
-        return 0;
-    }
-
-    return Math.round(
-        (flow.stats.completedMissions / flow.missions.length) * 100,
-    );
 }
 
 export default function ParticipantDashboard({
@@ -296,33 +235,30 @@ export default function ParticipantDashboard({
     viewerMode,
 }: Props) {
     const { flash } = usePage<SharedProps>().props;
-    const progress = onlineGame
-        ? Math.round(
-              (onlineGame.steps.filter((step) => step.status === 'completed')
-                  .length /
-                  9) *
-                  100,
-          )
-        : progressPercent(missionFlow);
-    const activeCampaignsCount = journey.activeCampaigns.length;
-    const rewardCatalogCount = journey.rewardCatalog.length;
-    const discoveredTreasuresCount = journey.treasures.length;
-    const nextMission =
-        missionFlow?.missions.find((mission) => mission.status === 'started') ??
-        missionFlow?.missions.find(
-            (mission) => mission.status === 'available',
-        ) ??
-        missionFlow?.missions.find((mission) => mission.status === 'locked') ??
-        null;
+    const otherCampaigns = journey.activeCampaigns.filter(
+        (campaign) => !campaign.isOnlineGame,
+    );
 
     return (
         <main
             dir="rtl"
-            className="flex h-full flex-1 flex-col gap-5 overflow-x-auto p-4"
+            className="mx-auto flex w-full max-w-[1500px] flex-1 flex-col gap-5 overflow-x-hidden p-3 sm:p-5"
         >
-            <Head title="پنل مشارکت‌کننده" />
+            <Head title="پنل من" />
 
-            <div className="flex justify-end">
+            <header className="flex flex-col gap-3 rounded-2xl border border-sidebar-border/70 bg-background p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <p className="text-xs font-medium text-emerald-700">
+                        پنل من در اکسپلوریا
+                    </p>
+                    <h1 className="mt-1 text-xl font-black sm:text-2xl">
+                        سلام {participant.name}؛ اینجا وضعیت واقعی مسیر شماست
+                    </h1>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                        اقدام جاری، پاداش‌ها و سوابق از یکدیگر جدا شده‌اند تا
+                        دقیقاً بدانید قدم بعدی چیست.
+                    </p>
+                </div>
                 <Form {...logout.form()}>
                     {({ processing }) => (
                         <Button
@@ -336,832 +272,804 @@ export default function ParticipantDashboard({
                         </Button>
                     )}
                 </Form>
-            </div>
-
-            {flash?.success && (
-                <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">
-                    {flash.success}
-                </div>
-            )}
-
-            <header className="relative overflow-hidden rounded-lg border border-white/10 bg-zinc-950 text-white shadow-sm dark:border-sidebar-border">
-                <img
-                    src={participantHeroImage}
-                    alt=""
-                    className="absolute inset-0 h-full w-full object-cover opacity-50"
-                />
-                <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(8,13,34,0.78),rgba(8,13,34,0.9)_48%,rgba(8,13,34,0.64))]" />
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_20%,rgba(16,185,129,0.26),transparent_28%),radial-gradient(circle_at_18%_70%,rgba(217,70,239,0.18),transparent_34%)]" />
-                <div className="relative grid gap-6 p-5 sm:p-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-                    <div className="max-w-3xl">
-                        <p className="inline-flex rounded-full border border-emerald-200/35 bg-white/10 px-4 py-2 text-sm font-medium text-emerald-100">
-                            خانه بازدیدکننده اکسپلوریا
-                        </p>
-                        <h1 className="mt-5 text-3xl leading-tight font-semibold sm:text-4xl">
-                            مسیر چالش، گنج و پاداش شما آماده است
-                        </h1>
-                        <p className="mt-3 text-sm leading-7 text-zinc-200 sm:text-base">
-                            اینجا ادامه تجربه مکان را می‌بینید: کمپین فعال، قدم
-                            بعدی، امتیازها، کیف پاداش، گنج‌های کشف‌شده و
-                            پیشنهادهایی که به فروش واحدهای عضو وصل می‌شوند.
-                        </p>
-                        <div className="mt-5 flex flex-wrap gap-2">
-                            {journey.nextAction.href ? (
-                                <Button asChild>
-                                    <Link href={journey.nextAction.href}>
-                                        <Play className="size-4" />
-                                        {journey.nextAction.label}
-                                    </Link>
-                                </Button>
-                            ) : null}
-                            {latestVisit?.qrLandingUrl ? (
-                                <Button asChild variant="secondary">
-                                    <Link href={latestVisit.qrLandingUrl}>
-                                        <QrCode className="size-4" />
-                                        صفحه QR کمپین
-                                    </Link>
-                                </Button>
-                            ) : null}
-                        </div>
-                    </div>
-                    <div className="grid gap-3 text-sm sm:grid-cols-2">
-                        {[
-                            ['کمپین فعال', activeCampaignsCount],
-                            [
-                                'ماموریت کامل',
-                                onlineGame
-                                    ? onlineGame.steps.filter(
-                                          (step) => step.status === 'completed',
-                                      ).length
-                                    : (missionFlow?.stats.completedMissions ??
-                                      0),
-                            ],
-                            ['پاداش قابل انتخاب', rewardCatalogCount],
-                            ['گنج کشف‌شده', discoveredTreasuresCount],
-                        ].map(([label, value]) => (
-                            <div
-                                key={label}
-                                className="rounded-lg border border-white/15 bg-white/10 p-4 backdrop-blur-sm"
-                            >
-                                <p className="text-zinc-300">{label}</p>
-                                <p className="mt-2 text-2xl font-semibold">
-                                    {Number(value).toLocaleString('fa-IR')}
-                                </p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
             </header>
 
-            <section className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
-                <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
-                    <div>
-                        <div className="flex flex-wrap items-center gap-2">
-                            <span className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
-                                وضعیت عمومی
-                            </span>
-                            <span className="rounded-full bg-cyan-100 px-2.5 py-1 text-xs font-medium text-cyan-800 dark:bg-cyan-950 dark:text-cyan-200">
-                                {participant.publicStatusLabel}
-                            </span>
-                        </div>
-                        <h2 className="mt-3 font-semibold">
-                            شروع مشارکت در کمپین
-                        </h2>
-                        <p className="mt-1 text-sm leading-7 text-muted-foreground">
-                            ورود با موبایل شما را به کاربر عادی تبدیل می‌کند.
-                            برای دریافت ماموریت، امتیاز، گنج و پاداش، نوع مشارکت
-                            را انتخاب و تایید کنید. این کار نیازی به تایید ادمین
-                            ندارد.
-                        </p>
-                    </div>
-
-                    {participant.publicStatus === 'participant' ? (
-                        <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-100">
-                            مشارکت فعال است. حالا می‌توانید کمپین را انتخاب کنید
-                            یا QR همان کمپین را اسکن کنید.
-                        </div>
-                    ) : (
-                        <Form
-                            action="/participant/participation"
-                            method="post"
-                            options={{ preserveScroll: true }}
-                            className="grid min-w-72 gap-3"
-                        >
-                            {({ processing, errors }) => (
-                                <>
-                                    <select
-                                        name="mode"
-                                        defaultValue="individual"
-                                        className="min-h-10 rounded-md border border-input bg-background px-3 text-sm"
-                                    >
-                                        <option value="individual">
-                                            مشارکت فردی
-                                        </option>
-                                        <option value="family">
-                                            مشارکت خانوادگی
-                                        </option>
-                                        <option value="team">
-                                            مشارکت تیمی / گروهی
-                                        </option>
-                                    </select>
-                                    {errors.mode && (
-                                        <p className="text-xs text-destructive">
-                                            {errors.mode}
-                                        </p>
-                                    )}
-                                    <Button type="submit" disabled={processing}>
-                                        تایید و شروع مشارکت
-                                    </Button>
-                                </>
-                            )}
-                        </Form>
-                    )}
+            {flash?.success ? (
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
+                    {flash.success}
                 </div>
-            </section>
-
-            <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                {journeySegments.map((segment) => (
-                    <article
-                        key={segment.title}
-                        className={`rounded-lg border p-4 text-sm ${segment.tone}`}
-                    >
-                        <div className="flex items-center gap-2">
-                            <segment.icon className="size-5" />
-                            <h2 className="font-semibold">{segment.title}</h2>
-                        </div>
-                        <p className="mt-3 leading-7 opacity-80">
-                            {segment.body}
-                        </p>
-                    </article>
-                ))}
-            </section>
-
-            {viewerMode.canPreviewVisitors ? (
-                <section className="rounded-lg border border-sidebar-border/70 bg-background p-4 text-sm dark:border-sidebar-border">
-                    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                        <div>
-                            <h2 className="font-semibold">
-                                پیش‌نمایش پنل مشارکت‌کننده برای ادمین
-                            </h2>
-                            <p className="mt-1 text-muted-foreground">
-                                برای پشتیبانی یا دمو، یک بازدیدکننده واقعی را
-                                انتخاب کنید؛ نیازی به خروج از اکانت ادمین نیست.
-                            </p>
-                        </div>
-                        <select
-                            className="min-h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
-                            value={viewerMode.currentVisitorId ?? ''}
-                            onChange={(event) => {
-                                const visitorId = event.currentTarget.value;
-
-                                if (visitorId) {
-                                    window.location.href = `/participant/dashboard?visitor_id=${visitorId}`;
-                                }
-                            }}
-                        >
-                            <option value="" disabled>
-                                انتخاب بازدیدکننده
-                            </option>
-                            {viewerMode.previewOptions.length === 0 ? (
-                                <option value="" disabled>
-                                    هنوز بازدیدکننده دارای بازدید ثبت‌شده وجود
-                                    ندارد
-                                </option>
-                            ) : null}
-                            {viewerMode.previewOptions.map((option) => (
-                                <option key={option.id} value={option.id}>
-                                    {option.name} - {option.email} (
-                                    {option.visitsCount.toLocaleString('fa-IR')}{' '}
-                                    بازدید)
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    {viewerMode.isAdminPreview ? (
-                        <p className="mt-3 rounded-md bg-sky-50 px-3 py-2 text-xs text-sky-900 dark:bg-sky-950 dark:text-sky-100">
-                            این صفحه در حالت پیش‌نمایش ادمین نمایش داده می‌شود؛
-                            عملیات واقعی همچنان متعلق به اکانت بازدیدکننده
-                            انتخاب‌شده است.
-                        </p>
-                    ) : null}
-                </section>
             ) : null}
 
-            <section className="grid gap-4 xl:grid-cols-[1fr_1.2fr]">
-                <div className="overflow-hidden rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border">
-                    <div className="grid gap-0 lg:grid-cols-[0.95fr_1.05fr]">
-                        <div className="relative min-h-44">
-                            <img
-                                src={participantHeroImage}
-                                alt=""
-                                className="absolute inset-0 h-full w-full object-cover"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-l from-background via-background/30 to-transparent" />
-                        </div>
-                        <div className="p-4">
-                            <div className="flex items-center gap-2">
-                                <Compass className="size-5 text-emerald-600" />
-                                <h2 className="font-semibold">قدم بعدی شما</h2>
-                            </div>
-                            <p className="mt-3 text-sm font-medium">
-                                {journey.nextAction.label}
-                            </p>
-                            <p className="mt-2 text-sm leading-7 text-muted-foreground">
-                                {journey.nextAction.description}
-                            </p>
-                            <div className="mt-4 flex flex-wrap gap-2">
-                                {journey.nextAction.href ? (
-                                    <Button asChild>
-                                        <Link href={journey.nextAction.href}>
-                                            <Play className="size-4" />
-                                            {journey.nextAction.label}
-                                        </Link>
-                                    </Button>
-                                ) : null}
-                                {latestVisit?.qrLandingUrl ? (
-                                    <Button asChild variant="outline">
-                                        <Link href={latestVisit.qrLandingUrl}>
-                                            <QrCode className="size-4" />
-                                            راهنمای QR کمپین
-                                        </Link>
-                                    </Button>
-                                ) : null}
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            {viewerMode.canPreviewVisitors ? (
+                <AdminPreview viewerMode={viewerMode} />
+            ) : null}
 
-                <div className="grid gap-3 sm:grid-cols-4">
-                    <StatCard label="کسب‌شده" value={journey.points.earned} />
-                    <StatCard label="مصرف‌شده" value={journey.points.spent} />
-                    <StatCard
-                        label="ذخیره فعلی"
-                        value={journey.points.stored}
-                    />
-                    <StatCard
-                        label="قابل دریافت"
-                        value={journey.points.nextPotential}
-                    />
-                </div>
-            </section>
+            {participant.publicStatus !== 'participant' ? (
+                <ParticipationSetup />
+            ) : null}
 
-            <section className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
-                <div className="flex items-center gap-2">
-                    <QrCode className="size-5 text-sky-600" />
-                    <h2 className="font-semibold">
-                        کمپین‌های فعال و مسیرهای قابل شروع
-                    </h2>
-                </div>
-                <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                    {journey.activeCampaigns.length === 0 ? (
-                        <EmptyBox text="کمپین فعالی برای انتخاب مستقیم ثبت نشده است؛ با اسکن QRهای محیطی، مسیر مشارکت فعال می‌شود." />
-                    ) : (
-                        journey.activeCampaigns.map((campaign) => (
-                            <article
-                                key={campaign.id}
-                                className="rounded-md border border-sidebar-border/70 p-3 text-sm dark:border-sidebar-border"
-                            >
-                                <div className="flex flex-wrap items-start justify-between gap-2">
-                                    <div>
-                                        <p className="font-medium">
-                                            {campaign.name}
-                                        </p>
-                                        <p className="mt-1 text-xs text-muted-foreground">
-                                            {campaign.venueName ?? 'مکان پروژه'}{' '}
-                                            - {campaign.city ?? 'شهر'}
-                                        </p>
-                                    </div>
-                                    <span
-                                        className={`rounded-full px-2.5 py-1 text-xs ${campaign.hasVisit ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-100' : 'bg-sky-50 text-sky-800 dark:bg-sky-950 dark:text-sky-100'}`}
-                                    >
-                                        {campaign.hasVisit
-                                            ? 'قبلا شروع شده'
-                                            : 'شروع جدید'}
-                                    </span>
-                                </div>
-                                <p className="mt-3 text-xs leading-6 text-muted-foreground">
-                                    {campaign.hasVisit
-                                        ? 'این کمپین در سابقه شما وجود دارد؛ می‌توانید از همان مسیر ادامه دهید و امتیازها، ماموریت‌ها و پاداش‌های باقی‌مانده را دنبال کنید.'
-                                        : 'برای شروع از صفر، راهنمای QR را ببینید؛ مسیر، ماموریت‌ها، پاداش‌ها و واحدهای تجاری همان کمپین مشخص می‌شود.'}
-                                </p>
-                                {campaign.hasVisit ? (
-                                    <div className="mt-3">
-                                        <div className="h-2 overflow-hidden rounded-full bg-muted">
-                                            <div
-                                                className="h-full rounded-full bg-emerald-600"
-                                                style={{
-                                                    width: `${campaign.progressPercent}%`,
-                                                }}
-                                            />
-                                        </div>
-                                        <p className="mt-2 text-xs text-muted-foreground">
-                                            {campaign.completedMissions.toLocaleString(
-                                                'fa-IR',
-                                            )}{' '}
-                                            از{' '}
-                                            {campaign.totalMissions.toLocaleString(
-                                                'fa-IR',
-                                            )}{' '}
-                                            ماموریت تکمیل شده
-                                            {campaign.lastVisitedAt
-                                                ? ` - آخرین مراجعه: ${formatDate(campaign.lastVisitedAt)}`
-                                                : ''}
-                                        </p>
-                                    </div>
-                                ) : null}
-                                <div className="mt-3 flex flex-wrap gap-2">
-                                    {campaign.hasVisit &&
-                                    campaign.latestVisitId ? (
-                                        <Button asChild size="sm">
-                                            <Link
-                                                href={
-                                                    campaign.experienceUrl ??
-                                                    `/visits/${campaign.latestVisitId}`
-                                                }
-                                            >
-                                                {campaign.experienceLabel}
-                                            </Link>
-                                        </Button>
-                                    ) : null}
-                                    {campaign.scanUrl ? (
-                                        <Button
-                                            asChild
-                                            variant={
-                                                campaign.hasVisit
-                                                    ? 'outline'
-                                                    : 'default'
-                                            }
-                                            size="sm"
-                                        >
-                                            <Link href={campaign.scanUrl}>
-                                                {campaign.hasVisit
-                                                    ? 'راهنمای QR'
-                                                    : 'شروع با راهنمای QR'}
-                                            </Link>
-                                        </Button>
-                                    ) : !campaign.isOnlineGame ? (
-                                        <p className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
-                                            QR فعال برای شروع مستقیم ندارد.
-                                        </p>
-                                    ) : null}
-                                </div>
-                            </article>
-                        ))
-                    )}
-                </div>
-            </section>
-
-            <section className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
-                <div className="flex items-center gap-2">
-                    <Gift className="size-5 text-rose-500" />
-                    <h2 className="font-semibold">
-                        پاداش‌ها و مشوق‌های قابل دریافت
-                    </h2>
-                </div>
-                <p className="mt-2 text-sm leading-7 text-muted-foreground">
-                    این بخش نشان می‌دهد در کمپین‌های فعال چه نوع مشوقی ممکن است
-                    دریافت شود؛ کوپن فروشگاهی، تخفیف اسپانسری، هدیه محصولی یا
-                    جایزه.
-                </p>
-                <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                    {journey.rewardCatalog.length === 0 ? (
-                        <EmptyBox text="هنوز پاداش فعالی برای کمپین‌های قابل انتخاب ثبت نشده است." />
-                    ) : (
-                        journey.rewardCatalog.map((reward) => (
-                            <article
-                                key={reward.id}
-                                className="rounded-md border border-sidebar-border/70 p-3 text-sm dark:border-sidebar-border"
-                            >
-                                <div className="flex flex-wrap items-start justify-between gap-2">
-                                    <p className="font-medium">{reward.name}</p>
-                                    <span className="rounded-full bg-rose-50 px-2.5 py-1 text-xs text-rose-800 dark:bg-rose-950 dark:text-rose-100">
-                                        {reward.rewardTypeLabel}
-                                    </span>
-                                </div>
-                                <p className="mt-2 text-xs leading-6 text-muted-foreground">
-                                    {reward.campaignName ?? 'کمپین'} -{' '}
-                                    {reward.partnerName ?? 'اکسپلوریا'}
-                                </p>
-                                <p className="mt-2 text-xs text-muted-foreground">
-                                    {reward.pointCost !== null
-                                        ? `${reward.pointCost.toLocaleString('fa-IR')} امتیاز`
-                                        : 'بدون هزینه امتیازی'}
-                                    {reward.remainingStock !== null
-                                        ? ` - موجودی قابل صدور: ${reward.remainingStock.toLocaleString('fa-IR')}`
-                                        : ''}
-                                </p>
-                            </article>
-                        ))
-                    )}
-                </div>
-            </section>
-
-            {!latestVisit ? (
-                <section className="rounded-lg border border-dashed border-sidebar-border/70 bg-background p-6 text-sm leading-7 dark:border-sidebar-border">
-                    <div className="flex items-center gap-2 font-semibold">
-                        <QrCode className="size-5 text-muted-foreground" />
-                        هنوز بازدید فعالی ثبت نشده است
-                    </div>
-                    <p className="mt-2 text-muted-foreground">
-                        با اسکن QR کمپین، مسیر بازدید، ماموریت‌ها، کیف پاداش و
-                        امتیازهای شما در همین پنل فعال می‌شود.
-                    </p>
-                </section>
+            {onlineGame && latestVisit ? (
+                <CurrentJourney
+                    game={onlineGame}
+                    visit={latestVisit}
+                    participant={participant}
+                    action={journey.nextAction}
+                    offer={journey.currentOffer}
+                />
             ) : (
-                <>
-                    <section className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
-                        <div className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
-                            <div className="flex items-center gap-2">
-                                <UsersRound className="size-5 text-sky-600" />
-                                <h2 className="font-semibold">
-                                    پروفایل مشارکت
-                                </h2>
-                            </div>
-                            <dl className="mt-4 grid gap-3 text-sm">
-                                <InfoRow label="نام" value={participant.name} />
-                                <InfoRow
-                                    label="نوع شرکت"
-                                    value={participant.modeLabel}
-                                />
-                                <InfoRow
-                                    label="تیم/خانواده"
-                                    value={participant.teamName ?? 'ثبت نشده'}
-                                />
-                            </dl>
-                            <div className="mt-4 flex flex-wrap gap-2">
-                                {participant.members.map((member) => (
-                                    <span
-                                        key={member}
-                                        className="rounded-full bg-muted px-3 py-1 text-xs"
-                                    >
-                                        {member}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
-                            <div className="flex items-center gap-2">
-                                <MapPin className="size-5 text-emerald-600" />
-                                <h2 className="font-semibold">
-                                    آخرین کمپین فعال
-                                </h2>
-                            </div>
-                            <div className="mt-4 grid gap-3 text-sm md:grid-cols-2">
-                                <p>
-                                    <span className="text-muted-foreground">
-                                        مکان:
-                                    </span>{' '}
-                                    {latestVisit.venueName}
-                                </p>
-                                <p>
-                                    <span className="text-muted-foreground">
-                                        کمپین:
-                                    </span>{' '}
-                                    {latestVisit.campaignName}
-                                </p>
-                                <p>
-                                    <span className="text-muted-foreground">
-                                        هاب:
-                                    </span>{' '}
-                                    {latestVisit.hubName}
-                                </p>
-                                <p>
-                                    <span className="text-muted-foreground">
-                                        زمان:
-                                    </span>{' '}
-                                    {formatDate(latestVisit.occurredAt)}
-                                </p>
-                            </div>
-                            <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted">
-                                <div
-                                    className="h-full rounded-full bg-emerald-600"
-                                    style={{ width: `${progress}%` }}
-                                />
-                            </div>
-                            <p className="mt-2 text-xs text-muted-foreground">
-                                {progress.toLocaleString('fa-IR')}٪ از مسیر این
-                                بازدید تکمیل شده است.
-                            </p>
-                            <div className="mt-4 flex flex-wrap gap-2">
-                                <Button asChild>
-                                    <Link
-                                        href={
-                                            onlineGame
-                                                ? `/games/ecopark-treasure?visit=${latestVisit.id}`
-                                                : `/visits/${latestVisit.id}`
-                                        }
-                                    >
-                                        {onlineGame
-                                            ? journey.nextAction.label
-                                            : 'ادامه ماموریت‌ها'}
-                                    </Link>
-                                </Button>
-                                {latestVisit.qrLandingUrl ? (
-                                    <Button asChild variant="outline">
-                                        <Link href={latestVisit.qrLandingUrl}>
-                                            صفحه QR کمپین
-                                        </Link>
-                                    </Button>
-                                ) : null}
-                            </div>
-                        </div>
-                    </section>
-
-                    <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-                        <div className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
-                            <div className="flex items-center gap-2">
-                                <Trophy className="size-5 text-amber-500" />
-                                <h2 className="font-semibold">
-                                    {onlineGame
-                                        ? 'بازی آنلاین و قدم بعدی'
-                                        : 'ماموریت‌ها و قدم بعدی'}
-                                </h2>
-                            </div>
-                            {onlineGame ? (
-                                <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-100">
-                                    <p className="font-semibold">
-                                        {onlineGame.name ??
-                                            'مسیر بازی آنلاین اکوپارک'}
-                                    </p>
-                                    <p className="mt-2 leading-7">
-                                        این کمپین پنج گام آنلاین و چهار گام
-                                        حضوری دارد. دکمه‌های عمومی «شروع/تکمیل
-                                        مأموریت» برای آن نمایش داده نمی‌شوند؛
-                                        مرحله حضوری فقط با QR درست و مطابق ترتیب
-                                        مسیر تأیید می‌شود.
-                                    </p>
-                                    <p className="mt-2 text-xs">
-                                        اعضا:{' '}
-                                        {onlineGame.members
-                                            .map((member) => member.displayName)
-                                            .join('، ')}{' '}
-                                        · امتیاز:{' '}
-                                        {onlineGame.score.toLocaleString(
-                                            'fa-IR',
-                                        )}
-                                    </p>
-                                    <Button asChild className="mt-4">
-                                        <Link
-                                            href={`/games/ecopark-treasure?visit=${latestVisit.id}`}
-                                        >
-                                            {onlineGame.status === 'completed'
-                                                ? 'مشاهده نتیجه کامل کمپین'
-                                                : onlineGame.status ===
-                                                    'onsite_active'
-                                                  ? 'ادامه مسیر حضوری'
-                                                  : onlineGame.status ===
-                                                      'ready_for_visit'
-                                                    ? 'ورود به مرحله حضوری'
-                                                    : 'بازگشت به گام آنلاین جاری'}
-                                        </Link>
-                                    </Button>
-                                </div>
-                            ) : nextMission ? (
-                                <div className="mt-4 rounded-md bg-muted/40 p-3 text-sm">
-                                    <p className="font-medium">
-                                        قدم بعدی: {nextMission.title}
-                                    </p>
-                                    <p className="mt-1 text-xs text-muted-foreground">
-                                        وضعیت:{' '}
-                                        {
-                                            missionStatusLabels[
-                                                nextMission.status
-                                            ]
-                                        }{' '}
-                                        · امتیاز:{' '}
-                                        {nextMission.points.toLocaleString(
-                                            'fa-IR',
-                                        )}
-                                    </p>
-                                </div>
-                            ) : null}
-                            {!onlineGame ? (
-                                <div className="mt-4 grid gap-2">
-                                    {(missionFlow?.missions ?? []).map(
-                                        (mission) => (
-                                            <div
-                                                key={mission.id}
-                                                className="flex items-center justify-between gap-3 rounded-md border border-sidebar-border/70 p-3 text-sm dark:border-sidebar-border"
-                                            >
-                                                <div className="min-w-0">
-                                                    <div className="flex items-center gap-2">
-                                                        {mission.status ===
-                                                        'completed' ? (
-                                                            <CheckCircle2 className="size-4 text-emerald-600" />
-                                                        ) : (
-                                                            <Sparkles className="size-4 text-sky-600" />
-                                                        )}
-                                                        <p className="truncate font-medium">
-                                                            {mission.title}
-                                                        </p>
-                                                    </div>
-                                                    <p className="mt-1 text-xs text-muted-foreground">
-                                                        {mission.cycleStep
-                                                            .label ??
-                                                            mission.hubName ??
-                                                            'مسیر اصلی'}
-                                                        {mission.treasureName
-                                                            ? ` · گنج: ${mission.treasureName}`
-                                                            : ''}
-                                                    </p>
-                                                </div>
-                                                <span className="rounded-full bg-muted px-2.5 py-1 text-xs">
-                                                    {
-                                                        missionStatusLabels[
-                                                            mission.status
-                                                        ]
-                                                    }
-                                                </span>
-                                            </div>
-                                        ),
-                                    )}
-                                </div>
-                            ) : null}
-                        </div>
-
-                        <div className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
-                            <div className="flex items-center gap-2">
-                                <Gift className="size-5 text-rose-500" />
-                                <h2 className="font-semibold">کیف پاداش</h2>
-                            </div>
-                            {journey.rewardWallet.length === 0 ? (
-                                <EmptyBox text="هنوز پاداشی صادر نشده است." />
-                            ) : (
-                                <div className="mt-4 grid gap-3">
-                                    {journey.rewardWallet.map((reward) => (
-                                        <div
-                                            key={reward.id}
-                                            className="rounded-md border border-sidebar-border/70 p-3 text-sm dark:border-sidebar-border"
-                                        >
-                                            <p className="font-medium">
-                                                {reward.rewardName ?? 'پاداش'}
-                                            </p>
-                                            <p className="mt-1 text-xs text-muted-foreground">
-                                                محل مصرف:{' '}
-                                                {reward.redemption
-                                                    ?.partnerName ??
-                                                    reward.reward
-                                                        ?.partnerName ??
-                                                    'پلتفرم'}{' '}
-                                                · وضعیت:{' '}
-                                                {rewardStatusLabels[
-                                                    reward.status
-                                                ] ?? reward.status}
-                                            </p>
-                                            {reward.redemptionCode ? (
-                                                <p
-                                                    className="mt-3 rounded-md bg-amber-50 px-3 py-2 font-mono text-base font-semibold text-amber-900 dark:bg-amber-950 dark:text-amber-100"
-                                                    dir="ltr"
-                                                >
-                                                    {reward.redemptionCode}
-                                                </p>
-                                            ) : null}
-                                            <p className="mt-2 text-xs leading-6 text-muted-foreground">
-                                                {reward.rewardTypeLabel} -{' '}
-                                                {reward.campaignName ?? 'کمپین'}{' '}
-                                                -{' '}
-                                                {reward.partnerName ??
-                                                    'اکسپلوریا'}
-                                                {reward.pointCost !== null
-                                                    ? ` - ${reward.pointCost.toLocaleString('fa-IR')} امتیاز`
-                                                    : ''}
-                                                {reward.awardedAt
-                                                    ? ` - صدور: ${formatDate(reward.awardedAt)}`
-                                                    : ''}
-                                                {reward.redeemedAt
-                                                    ? ` - مصرف: ${formatDate(reward.redeemedAt)}`
-                                                    : ''}
-                                            </p>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    </section>
-                </>
+                <NoCurrentJourney
+                    latestVisit={latestVisit}
+                    action={journey.nextAction}
+                />
             )}
 
-            <section className="grid gap-4 xl:grid-cols-3">
-                <InfoPanel
-                    icon={<History className="size-5 text-slate-600" />}
-                    title="سوابق مراجعه، مکان و کمپین"
-                >
-                    {journey.history.length === 0 ? (
-                        <EmptyBox text="هنوز سابقه‌ای ثبت نشده است." />
-                    ) : (
-                        journey.history.map((visit) => (
-                            <Link
-                                key={visit.id}
-                                href={`/visits/${visit.id}`}
-                                className="rounded-md border border-sidebar-border/70 p-3 text-sm hover:bg-muted/40 dark:border-sidebar-border"
-                            >
-                                <div className="flex items-start justify-between gap-2">
-                                    <p className="font-medium">
-                                        {visit.campaignName ?? 'کمپین'} -{' '}
-                                        {visit.venueName ?? 'مکان'}
-                                    </p>
-                                    <span className="shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
-                                        ادامه
-                                    </span>
-                                </div>
-                                <p className="mt-1 text-xs text-muted-foreground">
-                                    {visit.hubName ?? 'مسیر عمومی'} -{' '}
-                                    {formatDate(visit.occurredAt)} -{' '}
-                                    {visit.points.toLocaleString('fa-IR')}{' '}
-                                    امتیاز
-                                </p>
-                            </Link>
-                        ))
-                    )}
-                </InfoPanel>
+            <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <StatCard
+                    icon={<Sparkles className="size-5 text-amber-600" />}
+                    label="امتیاز کسب‌شده"
+                    value={journey.points.earned}
+                    hint="امتیاز مراحل و پیشنهادهای اختیاری"
+                />
+                <StatCard
+                    icon={<WalletCards className="size-5 text-emerald-700" />}
+                    label="اعتبار فعلی"
+                    value={journey.points.stored}
+                    hint="پس از کسر پاداش‌های مصرف‌شده"
+                />
+                <StatCard
+                    icon={<Gift className="size-5 text-rose-600" />}
+                    label="پاداش صادرشده"
+                    value={journey.rewardWallet.length}
+                    hint="کدها و مشوق‌های داخل کیف"
+                />
+                <StatCard
+                    icon={<TicketCheck className="size-5 text-sky-700" />}
+                    label="مصرف تأییدشده"
+                    value={journey.points.redeemedRewards}
+                    hint="تبدیل واقعی در واحد عضو"
+                />
+            </section>
 
-                <InfoPanel
-                    icon={<Store className="size-5 text-emerald-700" />}
-                    title="واحدهای تجاری و مشوق‌ها"
-                >
-                    {journey.partners.length === 0 ? (
-                        <EmptyBox text="هنوز مراجعه یا مصرف پاداش در واحد تجاری ثبت نشده است." />
-                    ) : (
-                        journey.partners.map((partner, index) => (
-                            <div
-                                key={`${partner.name}-${index}`}
-                                className="rounded-md border border-sidebar-border/70 p-3 text-sm dark:border-sidebar-border"
-                            >
-                                <p className="font-medium">{partner.name}</p>
-                                <p className="mt-1 text-xs text-muted-foreground">
-                                    وضعیت مشوق: {partner.status}
-                                    {partner.redeemedAt
-                                        ? ` · ${formatDate(partner.redeemedAt)}`
-                                        : ''}
-                                </p>
-                                <p className="mt-2 text-xs leading-6 text-muted-foreground">
-                                    {partner.rewardName ?? 'مشوق ثبت‌شده'} -{' '}
-                                    {partner.rewardTypeLabel} -{' '}
-                                    {partner.campaignName ?? 'کمپین'}
-                                    {partner.pointCost !== null
-                                        ? ` - ${partner.pointCost.toLocaleString('fa-IR')} امتیاز`
-                                        : ''}
-                                </p>
-                            </div>
-                        ))
-                    )}
-                </InfoPanel>
+            <section className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
+                <RewardWallet rewards={journey.rewardWallet} />
+                <RewardEconomy
+                    game={onlineGame}
+                    catalog={journey.rewardCatalog}
+                />
+            </section>
 
-                <InfoPanel
-                    icon={<Gem className="size-5 text-rose-600" />}
-                    title="گنج‌ها و انگیزه ادامه"
-                >
-                    {journey.treasures.length === 0 ? (
-                        <EmptyBox text="هنوز گنجی کشف نشده است؛ با ادامه ماموریت‌ها گنج و پاداش‌های بعدی فعال می‌شوند." />
-                    ) : (
-                        journey.treasures.map((treasure, index) => (
-                            <div
-                                key={`${treasure.name}-${index}`}
-                                className="rounded-md border border-sidebar-border/70 p-3 text-sm dark:border-sidebar-border"
-                            >
-                                <p className="font-medium">{treasure.name}</p>
-                                <p className="mt-1 text-xs text-muted-foreground">
-                                    {treasure.campaignName ?? 'کمپین'} ·{' '}
-                                    {treasure.type}
-                                </p>
-                            </div>
-                        ))
-                    )}
-                    <p className="rounded-md bg-muted/50 px-3 py-2 text-xs leading-6 text-muted-foreground">
-                        ادامه مشارکت فردی، خانوادگی یا تیمی می‌تواند امتیاز
-                        مرحله بعدی، پاداش فروشگاهی و گنج‌های اسپانسری بیشتری
-                        فعال کند.
-                    </p>
-                </InfoPanel>
+            <Campaigns campaigns={otherCampaigns} />
+
+            <section className="grid gap-5 xl:grid-cols-2">
+                <HistoryPanel
+                    history={journey.history}
+                    latestVisitId={latestVisit?.id ?? null}
+                />
+                <ProfileAndGuide
+                    participant={participant}
+                    partners={journey.partners}
+                    missionFlow={missionFlow}
+                />
             </section>
         </main>
     );
 }
 
-function StatCard({ label, value }: { label: string; value: number }) {
+function CurrentJourney({
+    game,
+    visit,
+    participant,
+    action,
+    offer,
+}: {
+    game: OnlineGame;
+    visit: LatestVisit;
+    participant: Participant;
+    action: Journey['nextAction'];
+    offer: CurrentOffer | null;
+}) {
+    const progress = Math.round(
+        (game.currentStage.completedSteps / game.currentStage.totalSteps) * 100,
+    );
+
     return (
-        <div className="rounded-lg border border-sidebar-border/70 bg-background p-3 text-sm dark:border-sidebar-border">
-            <p className="text-muted-foreground">{label}</p>
-            <p className="mt-2 text-xl font-semibold">
-                {value.toLocaleString('fa-IR')}
+        <section className="overflow-hidden rounded-3xl border border-emerald-200 bg-white shadow-sm">
+            <div className="grid lg:grid-cols-[1.25fr_0.75fr]">
+                <div className="order-2 p-4 sm:p-6 lg:order-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800">
+                            کمپین جاری
+                        </span>
+                        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700">
+                            {game.currentStage.phaseLabel}
+                        </span>
+                        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700">
+                            {participant.modeLabel}
+                        </span>
+                    </div>
+
+                    <p className="mt-5 text-sm text-slate-500">قدم بعدی شما</p>
+                    <h2 className="mt-1 text-2xl font-black text-slate-950 sm:text-3xl">
+                        {game.currentStage.title}
+                    </h2>
+                    <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
+                        {game.currentStage.instruction}
+                    </p>
+
+                    <div className="mt-5">
+                        <div className="flex items-center justify-between text-xs text-slate-600">
+                            <span>
+                                {faNumber(game.currentStage.completedSteps)} از{' '}
+                                {faNumber(game.currentStage.totalSteps)} مرحله
+                            </span>
+                            <span>{faNumber(progress)}٪</span>
+                        </div>
+                        <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
+                            <div
+                                className="h-full rounded-full bg-emerald-600 transition-all"
+                                style={{ width: `${progress}%` }}
+                            />
+                        </div>
+                    </div>
+
+                    {action.href ? (
+                        <Button
+                            asChild
+                            size="lg"
+                            className="mt-6 min-h-12 w-full text-base sm:w-auto"
+                            data-test="current-journey-action"
+                        >
+                            <Link href={action.href}>
+                                {game.status === 'completed' ? (
+                                    <Gift className="size-5" />
+                                ) : (
+                                    <Play className="size-5" />
+                                )}
+                                {action.label}
+                            </Link>
+                        </Button>
+                    ) : null}
+
+                    <Timeline steps={game.journeyTimeline} />
+
+                    {offer ? (
+                        <StageOffer offer={offer} actionHref={action.href} />
+                    ) : null}
+                </div>
+
+                <div className="relative order-1 min-h-52 overflow-hidden bg-slate-950 lg:order-2 lg:min-h-full">
+                    <img
+                        src={heroImage}
+                        alt=""
+                        className="absolute inset-0 size-full object-cover opacity-70"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
+                    <div className="absolute inset-x-0 bottom-0 p-5 text-white">
+                        <p className="text-xs text-emerald-200">
+                            {visit.venueName ?? 'مکان کمپین'}
+                        </p>
+                        <p className="mt-1 text-xl font-black">
+                            {visit.campaignName ?? 'مسیر اکسپلوریا'}
+                        </p>
+                        <p className="mt-2 text-xs text-slate-200">
+                            امتیاز گروه: {faNumber(game.score)} · اعضا:{' '}
+                            {faNumber(game.members.length)}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    );
+}
+
+function Timeline({ steps }: { steps: TimelineStep[] }) {
+    return (
+        <div className="mt-7">
+            <div className="mb-3 flex items-center gap-2">
+                <Compass className="size-4 text-emerald-700" />
+                <h3 className="text-sm font-bold">نقشه پیشرفت واقعی</h3>
+            </div>
+            <ol className="grid gap-2 sm:grid-cols-3 xl:grid-cols-5">
+                {steps.map((step) => (
+                    <li
+                        key={step.index}
+                        className={`flex min-h-16 items-center gap-2 rounded-xl border p-2.5 ${
+                            step.status === 'available'
+                                ? 'border-amber-300 bg-amber-50 text-amber-950'
+                                : step.status === 'completed'
+                                  ? 'border-emerald-200 bg-emerald-50 text-emerald-950'
+                                  : 'border-slate-200 bg-slate-50 text-slate-400'
+                        }`}
+                    >
+                        <span
+                            className={`grid size-8 shrink-0 place-items-center rounded-full text-xs font-black ${
+                                step.status === 'available'
+                                    ? 'bg-amber-400 text-slate-950'
+                                    : step.status === 'completed'
+                                      ? 'bg-emerald-600 text-white'
+                                      : 'bg-slate-200 text-slate-500'
+                            }`}
+                        >
+                            {step.status === 'completed' ? (
+                                <Check className="size-4" />
+                            ) : step.status === 'locked' ? (
+                                <LockKeyhole className="size-3.5" />
+                            ) : (
+                                faNumber(step.index)
+                            )}
+                        </span>
+                        <span className="min-w-0">
+                            <span className="block text-[10px] opacity-70">
+                                {step.phase === 'online' ? 'آنلاین' : 'حضوری'}
+                            </span>
+                            <span className="line-clamp-2 text-xs font-bold">
+                                {step.title}
+                            </span>
+                        </span>
+                    </li>
+                ))}
+            </ol>
+        </div>
+    );
+}
+
+function StageOffer({
+    offer,
+    actionHref,
+}: {
+    offer: CurrentOffer;
+    actionHref: string | null;
+}) {
+    return (
+        <aside className="mt-5 rounded-2xl border border-violet-200 bg-violet-50 p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex gap-3">
+                    <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-violet-600 text-white">
+                        <Megaphone className="size-5" />
+                    </span>
+                    <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                            <p className="text-sm font-black text-violet-950">
+                                پیشنهاد حمایت‌شده همین مرحله
+                            </p>
+                            <span className="rounded-full bg-white px-2 py-1 text-[10px] text-violet-700">
+                                کاملاً اختیاری
+                            </span>
+                        </div>
+                        <p className="mt-1 text-sm font-bold text-violet-950">
+                            {offer.title}
+                        </p>
+                        {offer.bodyCopy ? (
+                            <p className="mt-1 line-clamp-2 text-xs leading-6 text-violet-800">
+                                {offer.bodyCopy}
+                            </p>
+                        ) : null}
+                        <p className="mt-1 text-xs leading-6 text-violet-800">
+                            {offer.partnerName ?? 'حامی کمپین'} ·{' '}
+                            {offer.requiredSeconds
+                                ? `${faNumber(offer.requiredSeconds)} ثانیه`
+                                : 'محتوای کوتاه'}{' '}
+                            · تا {faNumber(offer.bonusPoints ?? 0)} امتیاز
+                        </p>
+                    </div>
+                </div>
+                {actionHref ? (
+                    <Button asChild variant="outline" className="bg-white">
+                        <Link href={actionHref}>مشاهده در همین مرحله</Link>
+                    </Button>
+                ) : null}
+            </div>
+        </aside>
+    );
+}
+
+function RewardEconomy({
+    game,
+    catalog,
+}: {
+    game: OnlineGame | null;
+    catalog: Journey['rewardCatalog'];
+}) {
+    return (
+        <section className="rounded-2xl border border-sidebar-border/70 bg-background p-4 sm:p-5">
+            <div className="flex items-center gap-2">
+                <Store className="size-5 text-amber-700" />
+                <h2 className="font-black">چگونه پاداش قوی‌تر می‌شود؟</h2>
+            </div>
+            <p className="mt-2 text-sm leading-7 text-muted-foreground">
+                کشف مکان‌ها امتیاز اصلی را می‌دهد. مشاهده تبلیغ یا خرید اجباری
+                نیست؛ اما تعامل اختیاری و مصرف واقعی در واحد عضو، سطح پاداش
+                پایانی را تقویت می‌کند.
             </p>
+
+            {game ? (
+                <>
+                    <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+                        <MiniMetric
+                            value={game.commerce.optionalAdsCompleted}
+                            label="پیشنهاد کامل"
+                        />
+                        <MiniMetric
+                            value={game.commerce.commercialRedemptions}
+                            label="مصرف فروشگاهی"
+                        />
+                        <MiniMetric
+                            value={game.commerce.issuedStageRewards}
+                            label="مشوق صادرشده"
+                        />
+                    </div>
+                    <div className="mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-950">
+                        <p className="font-black">
+                            سطح فعلی: {game.commerce.finalTierLabel}
+                        </p>
+                        {game.commerce.nextBoostRequirement ? (
+                            <p className="mt-1 text-xs leading-6 text-amber-800">
+                                {game.commerce.nextBoostRequirement}
+                            </p>
+                        ) : (
+                            <p className="mt-1 text-xs text-amber-800">
+                                بالاترین سطح سبد مشوق برای این مسیر فعال است.
+                            </p>
+                        )}
+                    </div>
+                </>
+            ) : null}
+
+            <details className="mt-4 rounded-xl border border-sidebar-border/70 p-3">
+                <summary className="cursor-pointer text-sm font-bold">
+                    مشاهده پاداش‌های قابل دستیابی ({faNumber(catalog.length)})
+                </summary>
+                <div className="mt-3 grid gap-2">
+                    {catalog.length === 0 ? (
+                        <EmptyBox text="هنوز پاداش فعالی برای این کمپین منتشر نشده است." />
+                    ) : (
+                        catalog.map((reward) => (
+                            <div
+                                key={reward.id}
+                                className="rounded-xl bg-muted/40 p-3 text-sm"
+                            >
+                                <div className="flex items-start justify-between gap-3">
+                                    <div>
+                                        <p className="font-bold">
+                                            {reward.name}
+                                        </p>
+                                        <p className="mt-1 text-xs text-muted-foreground">
+                                            {reward.rewardTypeLabel} ·{' '}
+                                            {reward.partnerName ?? 'اکسپلوریا'}
+                                        </p>
+                                    </div>
+                                    <span className="shrink-0 rounded-full bg-background px-2 py-1 text-xs">
+                                        {reward.pointCost
+                                            ? `${faNumber(reward.pointCost)} امتیاز`
+                                            : 'مرحله‌ای'}
+                                    </span>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </details>
+        </section>
+    );
+}
+
+function RewardWallet({ rewards }: { rewards: Journey['rewardWallet'] }) {
+    return (
+        <section className="rounded-2xl border border-sidebar-border/70 bg-background p-4 sm:p-5">
+            <div className="flex items-center gap-2">
+                <WalletCards className="size-5 text-emerald-700" />
+                <h2 className="font-black">کیف پاداش من</h2>
+                <span className="mr-auto rounded-full bg-emerald-50 px-2.5 py-1 text-xs text-emerald-800">
+                    {faNumber(rewards.length)} مورد
+                </span>
+            </div>
+            <p className="mt-2 text-sm text-muted-foreground">
+                فقط پاداش‌های واقعاً صادرشده و کد قابل مصرف در این بخش هستند.
+            </p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {rewards.length === 0 ? (
+                    <div className="sm:col-span-2">
+                        <EmptyBox text="هنوز پاداشی صادر نشده است؛ مسیر جاری را ادامه دهید." />
+                    </div>
+                ) : (
+                    rewards.map((reward) => (
+                        <article
+                            key={reward.id}
+                            className="rounded-xl border border-sidebar-border/70 p-3"
+                        >
+                            <div className="flex items-start gap-2">
+                                <BadgeCheck className="mt-0.5 size-5 shrink-0 text-emerald-600" />
+                                <div className="min-w-0">
+                                    <p className="font-bold">
+                                        {reward.rewardName ?? 'پاداش کمپین'}
+                                    </p>
+                                    <p className="mt-1 text-xs leading-6 text-muted-foreground">
+                                        {reward.rewardTypeLabel} · محل مصرف:{' '}
+                                        {reward.partnerName ?? 'اکسپلوریا'} ·{' '}
+                                        {rewardStatusLabels[reward.status] ??
+                                            reward.status}
+                                    </p>
+                                </div>
+                            </div>
+                            {reward.redemptionCode ? (
+                                <div className="mt-3 rounded-lg bg-slate-950 px-3 py-2 text-center text-white">
+                                    <p className="text-[10px] text-slate-300">
+                                        کد ارائه به واحد عضو
+                                    </p>
+                                    <p
+                                        dir="ltr"
+                                        className="mt-1 font-mono text-lg font-black tracking-wider"
+                                    >
+                                        {reward.redemptionCode}
+                                    </p>
+                                </div>
+                            ) : null}
+                            {reward.expiresAt ? (
+                                <p className="mt-2 text-[11px] text-muted-foreground">
+                                    اعتبار تا {formatDate(reward.expiresAt)}
+                                </p>
+                            ) : null}
+                        </article>
+                    ))
+                )}
+            </div>
+        </section>
+    );
+}
+
+function Campaigns({ campaigns }: { campaigns: Journey['activeCampaigns'] }) {
+    if (campaigns.length === 0) {
+        return null;
+    }
+
+    return (
+        <section className="rounded-2xl border border-sidebar-border/70 bg-background p-4 sm:p-5">
+            <div className="flex items-center gap-2">
+                <QrCode className="size-5 text-sky-700" />
+                <div>
+                    <h2 className="font-black">کمپین‌های دیگر</h2>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                        این بخش برای شروع یک تجربه دیگر است؛ با مسیر جاری اشتباه
+                        نگیرید.
+                    </p>
+                </div>
+            </div>
+            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {campaigns.map((campaign) => (
+                    <article
+                        key={campaign.id}
+                        className="rounded-xl border border-sidebar-border/70 p-4"
+                    >
+                        <p className="font-bold">{campaign.name}</p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                            {campaign.venueName ?? 'مکان کمپین'} ·{' '}
+                            {campaign.city ?? 'تهران'}
+                        </p>
+                        {campaign.hasVisit && campaign.totalMissions > 0 ? (
+                            <div className="mt-3">
+                                <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+                                    <div
+                                        className="h-full bg-sky-600"
+                                        style={{
+                                            width: `${campaign.progressPercent}%`,
+                                        }}
+                                    />
+                                </div>
+                                <p className="mt-1 text-[11px] text-muted-foreground">
+                                    سابقه شما:{' '}
+                                    {faNumber(campaign.progressPercent)}٪
+                                </p>
+                            </div>
+                        ) : null}
+                        <div className="mt-4">
+                            {campaign.experienceUrl ? (
+                                <Button asChild size="sm" variant="outline">
+                                    <Link href={campaign.experienceUrl}>
+                                        {campaign.experienceLabel}
+                                    </Link>
+                                </Button>
+                            ) : campaign.scanUrl ? (
+                                <Button asChild size="sm" variant="outline">
+                                    <Link href={campaign.scanUrl}>
+                                        شروع با راهنمای QR
+                                    </Link>
+                                </Button>
+                            ) : (
+                                <span className="text-xs text-muted-foreground">
+                                    شروع این کمپین فعلاً در دسترس نیست
+                                </span>
+                            )}
+                        </div>
+                    </article>
+                ))}
+            </div>
+        </section>
+    );
+}
+
+function HistoryPanel({
+    history,
+    latestVisitId,
+}: {
+    history: Journey['history'];
+    latestVisitId: string | null;
+}) {
+    return (
+        <InfoPanel
+            icon={<History className="size-5 text-slate-700" />}
+            title="سوابق من"
+            subtitle="این بخش فقط سابقه است و دکمه ادامه مسیر ندارد."
+        >
+            {history.length === 0 ? (
+                <EmptyBox text="هنوز سابقه‌ای ثبت نشده است." />
+            ) : (
+                history.map((visit) => (
+                    <div
+                        key={visit.id}
+                        className="rounded-xl border border-sidebar-border/70 p-3 text-sm"
+                    >
+                        <div className="flex items-start justify-between gap-2">
+                            <p className="font-bold">
+                                {visit.campaignName ?? 'کمپین'} ·{' '}
+                                {visit.venueName ?? 'مکان'}
+                            </p>
+                            {visit.id === latestVisitId ? (
+                                <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-1 text-[10px] text-emerald-800">
+                                    آخرین ثبت
+                                </span>
+                            ) : null}
+                        </div>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                            {visit.hubName ?? 'مسیر عمومی'} ·{' '}
+                            {formatDate(visit.occurredAt)} ·{' '}
+                            {faNumber(visit.points)} امتیاز
+                        </p>
+                    </div>
+                ))
+            )}
+        </InfoPanel>
+    );
+}
+
+function ProfileAndGuide({
+    participant,
+    partners,
+    missionFlow,
+}: {
+    participant: Participant;
+    partners: Journey['partners'];
+    missionFlow: MissionFlow;
+}) {
+    return (
+        <InfoPanel
+            icon={<UsersRound className="size-5 text-violet-700" />}
+            title="پروفایل، راهنما و تعامل تجاری"
+            subtitle="اطلاعات زمینه‌ای؛ اقدام اصلی همیشه در بالای پنل است."
+        >
+            <div className="grid gap-2 rounded-xl bg-muted/40 p-3 text-sm sm:grid-cols-2">
+                <InfoRow label="نوع شرکت" value={participant.modeLabel} />
+                <InfoRow
+                    label="تیم/خانواده"
+                    value={participant.teamName ?? 'ثبت نشده'}
+                />
+                <InfoRow
+                    label="تعداد اعضا"
+                    value={faNumber(Math.max(1, participant.members.length))}
+                />
+                <InfoRow label="وضعیت" value={participant.publicStatusLabel} />
+            </div>
+
+            <details className="rounded-xl border border-sidebar-border/70 p-3">
+                <summary className="cursor-pointer text-sm font-bold">
+                    راهنمای خیلی کوتاه پنل
+                </summary>
+                <ol className="mt-3 grid gap-2 text-xs leading-6 text-muted-foreground">
+                    <li>۱. فقط دکمه بزرگ بالای پنل، ادامه مسیر جاری است.</li>
+                    <li>
+                        ۲. QR حضوری باید از استند واقعیِ اعلام‌شده در همان مرحله
+                        اسکن شود.
+                    </li>
+                    <li>
+                        ۳. پیشنهاد حمایت‌شده اختیاری است و بدون مشاهده آن نیز
+                        بازی ادامه دارد.
+                    </li>
+                    <li>
+                        ۴. کدهای صادرشده در «کیف پاداش من» به واحد عضو ارائه
+                        می‌شوند.
+                    </li>
+                </ol>
+            </details>
+
+            {partners.length > 0 ? (
+                <details className="rounded-xl border border-sidebar-border/70 p-3">
+                    <summary className="cursor-pointer text-sm font-bold">
+                        سوابق مصرف در واحدهای عضو ({faNumber(partners.length)})
+                    </summary>
+                    <div className="mt-3 grid gap-2">
+                        {partners.map((partner, index) => (
+                            <div
+                                key={`${partner.name}-${index}`}
+                                className="rounded-lg bg-muted/40 p-2.5 text-xs"
+                            >
+                                <p className="font-bold">{partner.name}</p>
+                                <p className="mt-1 text-muted-foreground">
+                                    {partner.rewardName ??
+                                        partner.rewardTypeLabel}{' '}
+                                    · وضعیت: {partner.status}
+                                </p>
+                            </div>
+                        ))}
+                    </div>
+                </details>
+            ) : null}
+
+            {!missionFlow ? null : (
+                <p className="rounded-xl bg-sky-50 p-3 text-xs leading-6 text-sky-900">
+                    کمپین عمومی شما{' '}
+                    {faNumber(missionFlow.stats.completedMissions)} مأموریت
+                    تکمیل‌شده دارد.
+                </p>
+            )}
+        </InfoPanel>
+    );
+}
+
+function ParticipationSetup() {
+    return (
+        <section className="rounded-2xl border border-sky-200 bg-sky-50 p-4">
+            <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
+                <div>
+                    <h2 className="font-black">فعال‌سازی مشارکت</h2>
+                    <p className="mt-1 text-sm leading-7 text-sky-900">
+                        نوع مشارکت را یک‌بار انتخاب کنید. تنظیم دقیق فردی،
+                        خانوادگی یا تیمی داخل خود کمپین نیز قابل تکمیل است.
+                    </p>
+                </div>
+                <Form
+                    action="/participant/participation"
+                    method="post"
+                    options={{ preserveScroll: true }}
+                    className="grid gap-2 sm:grid-cols-[12rem_auto]"
+                >
+                    {({ processing, errors }) => (
+                        <>
+                            <div>
+                                <select
+                                    name="mode"
+                                    defaultValue="individual"
+                                    className="min-h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                                >
+                                    <option value="individual">انفرادی</option>
+                                    <option value="family">خانوادگی</option>
+                                    <option value="team">تیمی / گروهی</option>
+                                </select>
+                                {errors.mode ? (
+                                    <p className="mt-1 text-xs text-destructive">
+                                        {errors.mode}
+                                    </p>
+                                ) : null}
+                            </div>
+                            <Button type="submit" disabled={processing}>
+                                تأیید مشارکت
+                            </Button>
+                        </>
+                    )}
+                </Form>
+            </div>
+        </section>
+    );
+}
+
+function NoCurrentJourney({
+    latestVisit,
+    action,
+}: {
+    latestVisit: LatestVisit | null;
+    action: Journey['nextAction'];
+}) {
+    return (
+        <section className="rounded-3xl border border-dashed border-sidebar-border bg-background p-6 text-center">
+            <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-muted">
+                <QrCode className="size-7 text-muted-foreground" />
+            </span>
+            <h2 className="mt-4 text-xl font-black">
+                {latestVisit
+                    ? 'مسیر عمومی آماده ادامه است'
+                    : 'هنوز کمپین جاری ندارید'}
+            </h2>
+            <p className="mx-auto mt-2 max-w-xl text-sm leading-7 text-muted-foreground">
+                {action.description}
+            </p>
+            {action.href ? (
+                <Button asChild className="mt-4">
+                    <Link href={action.href}>{action.label}</Link>
+                </Button>
+            ) : null}
+        </section>
+    );
+}
+
+function AdminPreview({ viewerMode }: { viewerMode: ViewerMode }) {
+    return (
+        <section className="rounded-xl border border-sky-200 bg-sky-50 p-3 text-sm">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <p className="font-bold">پیش‌نمایش پشتیبانی</p>
+                    <p className="mt-1 text-xs text-sky-800">
+                        وضعیت یک بازدیدکننده واقعی را بدون خروج از حساب مدیر
+                        بررسی کنید.
+                    </p>
+                </div>
+                <select
+                    className="min-h-10 rounded-md border border-input bg-background px-3 text-sm"
+                    value={viewerMode.currentVisitorId ?? ''}
+                    onChange={(event) => {
+                        const visitorId = event.currentTarget.value;
+
+                        if (visitorId) {
+                            window.location.href = `/participant/dashboard?visitor_id=${visitorId}`;
+                        }
+                    }}
+                >
+                    <option value="" disabled>
+                        انتخاب بازدیدکننده
+                    </option>
+                    {viewerMode.previewOptions.map((option) => (
+                        <option key={option.id} value={option.id}>
+                            {option.name} ({faNumber(option.visitsCount)}{' '}
+                            بازدید)
+                        </option>
+                    ))}
+                </select>
+            </div>
+        </section>
+    );
+}
+
+function StatCard({
+    icon,
+    label,
+    value,
+    hint,
+}: {
+    icon: ReactNode;
+    label: string;
+    value: number;
+    hint: string;
+}) {
+    return (
+        <article className="rounded-2xl border border-sidebar-border/70 bg-background p-4">
+            <div className="flex items-center gap-2">
+                {icon}
+                <p className="text-sm font-bold">{label}</p>
+            </div>
+            <p className="mt-3 text-2xl font-black">{faNumber(value)}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
+        </article>
+    );
+}
+
+function MiniMetric({ value, label }: { value: number; label: string }) {
+    return (
+        <div className="rounded-xl bg-muted/40 p-2">
+            <p className="text-lg font-black">{faNumber(value)}</p>
+            <p className="mt-1 text-[10px] text-muted-foreground">{label}</p>
         </div>
     );
 }
 
 function InfoRow({ label, value }: { label: string; value: string }) {
     return (
-        <div className="flex justify-between gap-4">
-            <dt className="text-muted-foreground">{label}</dt>
-            <dd className="font-medium">{value}</dd>
+        <div className="flex items-center justify-between gap-3">
+            <span className="text-muted-foreground">{label}</span>
+            <span className="font-bold">{value}</span>
         </div>
     );
 }
 
 function EmptyBox({ text }: { text: string }) {
     return (
-        <p className="rounded-md border border-dashed border-sidebar-border/70 p-3 text-sm leading-7 text-muted-foreground dark:border-sidebar-border">
+        <p className="rounded-xl border border-dashed border-sidebar-border/70 p-3 text-sm leading-7 text-muted-foreground">
             {text}
         </p>
     );
@@ -1170,19 +1078,26 @@ function EmptyBox({ text }: { text: string }) {
 function InfoPanel({
     icon,
     title,
+    subtitle,
     children,
 }: {
     icon: ReactNode;
     title: string;
+    subtitle: string;
     children: ReactNode;
 }) {
     return (
-        <div className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
-            <div className="flex items-center gap-2">
+        <section className="rounded-2xl border border-sidebar-border/70 bg-background p-4 sm:p-5">
+            <div className="flex items-start gap-2">
                 {icon}
-                <h2 className="font-semibold">{title}</h2>
+                <div>
+                    <h2 className="font-black">{title}</h2>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                        {subtitle}
+                    </p>
+                </div>
             </div>
-            <div className="mt-4 grid gap-2">{children}</div>
-        </div>
+            <div className="mt-4 grid gap-3">{children}</div>
+        </section>
     );
 }

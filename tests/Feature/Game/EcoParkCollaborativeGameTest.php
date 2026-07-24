@@ -9,7 +9,10 @@ use App\Models\GameEntryPass;
 use App\Models\GameParty;
 use App\Models\PartnerAccount;
 use App\Models\QrCode;
+use App\Models\RewardDefinition;
+use App\Models\RewardRedemption;
 use App\Models\User;
+use App\Models\UserReward;
 use App\Models\Visit;
 use App\Services\EcoParkOnlineGameService;
 use Database\Seeders\PilotLocationSeeder;
@@ -176,7 +179,14 @@ class EcoParkCollaborativeGameTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->where('onlineGame.id', $party->id)
                 ->where('onlineGame.score', 20)
+                ->where('onlineGame.currentStage.index', 2)
+                ->where('onlineGame.currentStage.title', 'انتخاب مسیر')
+                ->where('onlineGame.currentStage.completedSteps', 1)
+                ->has('onlineGame.journeyTimeline', 9)
+                ->where('onlineGame.commerce.finalTier', 'base')
                 ->where('missionFlow', null)
+                ->where('journey.nextAction.label', 'ادامه: انتخاب مسیر')
+                ->where('journey.currentOffer', null)
                 ->where(
                     'journey.nextAction.href',
                     route('games.ecopark-treasure', ['visit' => $visit->id]),
@@ -281,6 +291,49 @@ class EcoParkCollaborativeGameTest extends TestCase
 
         $service = app(EcoParkOnlineGameService::class);
         $wrongVisit = $this->physicalVisit($user, $visit, 'mina');
+        $partner = PartnerAccount::query()->where('venue_id', $campaign->venue_id)->firstOrFail();
+        $checkpointReward = RewardDefinition::query()->create([
+            'campaign_id' => $campaign->id,
+            'venue_id' => $campaign->venue_id,
+            'partner_account_id' => $partner->id,
+            'code' => 'test-fire-water-reward',
+            'name' => 'پاداش ایستگاه آب‌وآتش',
+            'reward_type' => 'partner_coupon',
+            'stock_quantity' => 20,
+            'status' => 'active',
+            'metadata' => [
+                'game_auto_award' => true,
+                'game_checkpoint_key' => 'fire-water',
+            ],
+        ]);
+        $baseReward = RewardDefinition::query()->create([
+            'campaign_id' => $campaign->id,
+            'venue_id' => $campaign->venue_id,
+            'partner_account_id' => $partner->id,
+            'code' => 'test-final-base-reward',
+            'name' => 'پاداش پایه پایان',
+            'reward_type' => 'partner_coupon',
+            'stock_quantity' => 20,
+            'status' => 'active',
+            'metadata' => [
+                'game_auto_award' => true,
+                'game_final_level' => 'base',
+            ],
+        ]);
+        $boostedReward = RewardDefinition::query()->create([
+            'campaign_id' => $campaign->id,
+            'venue_id' => $campaign->venue_id,
+            'partner_account_id' => $partner->id,
+            'code' => 'test-final-boosted-reward',
+            'name' => 'پاداش تقویت‌شده پایان',
+            'reward_type' => 'sponsor_discount',
+            'stock_quantity' => 20,
+            'status' => 'active',
+            'metadata' => [
+                'game_auto_award' => true,
+                'game_final_level' => 'boosted',
+            ],
+        ]);
 
         try {
             $service->redeemOnsiteVisit($user, $wrongVisit->load('qrCode'));
@@ -292,6 +345,20 @@ class EcoParkCollaborativeGameTest extends TestCase
         foreach (['fire-water', 'nature', 'ravaq-finish'] as $checkpoint) {
             $physicalVisit = $this->physicalVisit($user, $visit, $checkpoint);
             $service->redeemOnsiteVisit($user, $physicalVisit->load('qrCode'));
+
+            if ($checkpoint === 'fire-water') {
+                $issuedCheckpointReward = UserReward::query()
+                    ->where('user_id', $user->id)
+                    ->where('reward_definition_id', $checkpointReward->id)
+                    ->firstOrFail();
+                $redemption = RewardRedemption::query()
+                    ->where('user_reward_id', $issuedCheckpointReward->id)
+                    ->firstOrFail();
+                $redemption->update([
+                    'status' => 'confirmed',
+                    'redeemed_at' => now(),
+                ]);
+            }
         }
 
         $this->assertDatabaseHas('game_parties', [
@@ -304,6 +371,18 @@ class EcoParkCollaborativeGameTest extends TestCase
             'step_index' => 9,
             'status' => 'completed',
         ]);
+        $this->assertDatabaseHas('user_rewards', [
+            'user_id' => $user->id,
+            'reward_definition_id' => $baseReward->id,
+        ]);
+        $this->assertDatabaseHas('user_rewards', [
+            'user_id' => $user->id,
+            'reward_definition_id' => $boostedReward->id,
+        ]);
+
+        $serialized = $service->serializeParty($party->refresh(), $user);
+        $this->assertSame('boosted', $serialized['commerce']['finalTier']);
+        $this->assertSame(3, $serialized['commerce']['issuedStageRewards']);
     }
 
     public function test_rewarded_sponsor_content_is_optional_delayed_and_once_per_party(): void
@@ -330,6 +409,12 @@ class EcoParkCollaborativeGameTest extends TestCase
             'status' => 'approved',
             'starts_at' => now()->subHour(),
             'ends_at' => now()->addDay(),
+            'metadata' => [
+                'rewarded_points' => 47,
+                'required_seconds' => 12,
+                'game_stage_index' => 2,
+                'commercial_model' => 'paid_stage_placement',
+            ],
         ]);
         $ad->placements()->create([
             'placement_type' => 'post_mission',
@@ -337,6 +422,31 @@ class EcoParkCollaborativeGameTest extends TestCase
             'starts_at' => now()->subHour(),
             'ends_at' => now()->addDay(),
         ]);
+
+        $wrongStageAd = AdRequest::query()->create([
+            'venue_id' => $campaign->venue_id,
+            'partner_account_id' => $partner->id,
+            'code' => 'wrong-stage-rewarded-test-ad',
+            'title' => 'پیشنهاد مرحله دیگر',
+            'advertiser_type' => 'sponsor',
+            'ad_type' => 'rewarded_content',
+            'status' => 'approved',
+            'starts_at' => now()->subHour(),
+            'ends_at' => now()->addDay(),
+            'metadata' => ['game_stage_index' => 5],
+        ]);
+        $wrongStageAd->placements()->create([
+            'placement_type' => 'post_mission',
+            'status' => 'approved',
+            'starts_at' => now()->subHour(),
+            'ends_at' => now()->addDay(),
+        ]);
+
+        $this->actingAs($user)->from(route('games.ecopark-treasure'))
+            ->post(route('games.ecopark-treasure.parties.sponsor-bonus.start', $party), [
+                'ad_request_id' => $wrongStageAd->id,
+            ])
+            ->assertSessionHasErrors('ad_request_id');
 
         $this->actingAs($user)->post(route('games.ecopark-treasure.parties.sponsor-bonus.start', $party), [
             'ad_request_id' => $ad->id,
@@ -349,16 +459,16 @@ class EcoParkCollaborativeGameTest extends TestCase
             ])
             ->assertSessionHasErrors('ad_request_id');
 
-        $this->travel(11)->seconds();
+        $this->travel(13)->seconds();
         $this->actingAs($user)->post(route('games.ecopark-treasure.parties.sponsor-bonus.complete', $party), [
             'ad_request_id' => $ad->id,
         ])->assertRedirect();
 
-        $this->assertSame(50, $party->refresh()->score);
+        $this->assertSame(67, $party->refresh()->score);
         $this->assertDatabaseHas('game_bonus_claims', [
             'game_party_id' => $party->id,
             'status' => 'completed',
-            'points_awarded' => 30,
+            'points_awarded' => 47,
         ]);
     }
 

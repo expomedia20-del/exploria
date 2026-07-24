@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Demo;
 
+use App\Models\AdRequest;
 use App\Models\Campaign;
 use App\Models\PartnerAccount;
 use App\Models\QrCode;
@@ -55,6 +56,25 @@ class StressDemoCommandTest extends TestCase
                 ->where('metadata->online_game_role', 'onsite_gate')
                 ->count(),
         );
+        $this->assertSame(
+            10,
+            AdRequest::query()
+                ->where('venue_id', $venue->id)
+                ->where('metadata->commercial_model', 'paid_stage_placement')
+                ->count(),
+        );
+        $this->assertSame(
+            4,
+            RewardDefinition::query()
+                ->where('campaign_id', $campaign->id)
+                ->where('metadata->source', 'game_commercial_checkpoint')
+                ->count(),
+        );
+        $this->assertDatabaseHas('reward_definitions', [
+            'campaign_id' => $campaign->id,
+            'code' => 'ecopark-final-explorer-base',
+            'status' => 'active',
+        ]);
 
         $discount = RewardDefinition::query()
             ->where('campaign_id', $campaign->id)
@@ -104,6 +124,19 @@ class StressDemoCommandTest extends TestCase
                 ->count(),
         );
         $this->assertSame(1, SponsorProposal::query()->where('code', 'stress-family-brand-proposal-0001')->count());
+        $this->assertSame(
+            10,
+            AdRequest::query()
+                ->where('metadata->commercial_model', 'paid_stage_placement')
+                ->count(),
+        );
+        $this->assertSame(
+            4,
+            RewardDefinition::query()
+                ->where('campaign_id', $campaign->id)
+                ->where('metadata->source', 'game_commercial_checkpoint')
+                ->count(),
+        );
         $this->assertSame(2, RewardInventoryAllocation::query()->where('reward_definition_id', $discount->id)->count());
         $this->assertSame(1, RewardRedemption::query()->where('redemption_code', 'STRESS-DEMO-REDEEM-001')->count());
     }

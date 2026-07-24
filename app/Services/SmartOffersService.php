@@ -7,6 +7,8 @@ use App\Models\AdEvent;
 use App\Models\AdPlacement;
 use App\Models\AdRequest;
 use App\Models\Campaign;
+use App\Models\GameChallengeProgress;
+use App\Models\GameParty;
 use App\Models\RewardDefinition;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
@@ -28,7 +30,12 @@ use Illuminate\Validation\ValidationException;
  *     partnerName: string|null,
  *     partnerType: string|null,
  *     startsAt: string|null,
- *     endsAt: string|null
+ *     endsAt: string|null,
+ *     rewardedPoints: int|null,
+ *     requiredSeconds: int|null,
+ *     gameStageIndex: int|null,
+ *     checkpointKey: string|null,
+ *     commercialModel: string|null
  * }
  * @phpstan-type PartnerOffer array{
  *     id: string,
@@ -61,7 +68,12 @@ use Illuminate\Validation\ValidationException;
  *     assetUrl: string|null,
  *     placementType: string|null,
  *     points: int|null,
- *     terms: mixed
+ *     terms: mixed,
+ *     bonusPoints: int|null,
+ *     requiredSeconds: int|null,
+ *     stageIndex: int|null,
+ *     checkpointKey: string|null,
+ *     commercialModel: string|null
  * }
  */
 class SmartOffersService
@@ -116,7 +128,55 @@ class SmartOffersService
             ->merge($rewards)
             ->filter(fn (array $offer): bool => filled($offer['title']))
             ->values()
-            ->take(8);
+            ->take(24);
+    }
+
+    /** @return Collection<int, covariant GameOffer> */
+    public function gameOffersForParty(?Campaign $campaign, ?GameParty $party): Collection
+    {
+        $offers = $this->gameOffersForCampaign($campaign);
+
+        if (! $party) {
+            return $offers;
+        }
+
+        $party->loadMissing(['progress', 'bonusClaims']);
+        $current = $party->progress
+            ->where('status', 'available')
+            ->sortBy('step_index')
+            ->first();
+        $startedAdIds = $party->bonusClaims
+            ->where('status', 'started')
+            ->pluck('ad_request_id')
+            ->all();
+
+        if (! $current instanceof GameChallengeProgress) {
+            return $offers
+                ->filter(fn (array $offer): bool => $offer['kind'] === 'reward'
+                    || in_array($offer['adRequestId'], $startedAdIds, true))
+                ->values();
+        }
+
+        $checkpointKey = data_get($current->metadata, 'checkpoint_key');
+
+        return $offers
+            ->filter(function (array $offer) use ($checkpointKey, $current, $startedAdIds): bool {
+                if ($offer['kind'] === 'reward') {
+                    return true;
+                }
+
+                if (in_array($offer['adRequestId'], $startedAdIds, true)) {
+                    return true;
+                }
+
+                $matchesStage = $offer['stageIndex'] === null
+                    || $offer['stageIndex'] === $current->step_index;
+                $matchesCheckpoint = $offer['checkpointKey'] === null
+                    || $offer['checkpointKey'] === $checkpointKey;
+
+                return $matchesStage && $matchesCheckpoint;
+            })
+            ->values();
     }
 
     /** @param array<string, mixed> $data */
@@ -239,6 +299,11 @@ class SmartOffersService
             'placementType' => $gamePlacement,
             'points' => null,
             'terms' => null,
+            'bonusPoints' => $ad['rewardedPoints'],
+            'requiredSeconds' => $ad['requiredSeconds'],
+            'stageIndex' => $ad['gameStageIndex'],
+            'checkpointKey' => $ad['checkpointKey'],
+            'commercialModel' => $ad['commercialModel'],
         ];
     }
 
@@ -261,6 +326,11 @@ class SmartOffersService
             'placementType' => 'game_reward',
             'points' => $reward['pointCost'],
             'terms' => $reward['terms'],
+            'bonusPoints' => null,
+            'requiredSeconds' => null,
+            'stageIndex' => null,
+            'checkpointKey' => null,
+            'commercialModel' => null,
         ];
     }
 
@@ -291,6 +361,21 @@ class SmartOffersService
             'partnerType' => $adRequest->partnerAccount?->partner_type,
             'startsAt' => $adRequest->starts_at?->toIso8601String(),
             'endsAt' => $adRequest->ends_at?->toIso8601String(),
+            'rewardedPoints' => is_numeric(data_get($adRequest->metadata, 'rewarded_points'))
+                ? (int) data_get($adRequest->metadata, 'rewarded_points')
+                : null,
+            'requiredSeconds' => is_numeric(data_get($adRequest->metadata, 'required_seconds'))
+                ? (int) data_get($adRequest->metadata, 'required_seconds')
+                : null,
+            'gameStageIndex' => is_numeric(data_get($adRequest->metadata, 'game_stage_index'))
+                ? (int) data_get($adRequest->metadata, 'game_stage_index')
+                : null,
+            'checkpointKey' => is_string(data_get($adRequest->metadata, 'checkpoint_key'))
+                ? data_get($adRequest->metadata, 'checkpoint_key')
+                : null,
+            'commercialModel' => is_string(data_get($adRequest->metadata, 'commercial_model'))
+                ? data_get($adRequest->metadata, 'commercial_model')
+                : null,
         ];
     }
 

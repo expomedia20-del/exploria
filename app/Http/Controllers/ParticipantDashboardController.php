@@ -16,6 +16,7 @@ use App\Models\UserReward;
 use App\Models\Visit;
 use App\Services\EcoParkOnlineGameService;
 use App\Services\MissionFlowService;
+use App\Services\SmartOffersService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -30,6 +31,7 @@ class ParticipantDashboardController extends Controller
         Request $request,
         MissionFlowService $missionFlow,
         EcoParkOnlineGameService $onlineGameService,
+        SmartOffersService $offers,
     ): Response {
         $viewer = $request->user();
 
@@ -54,19 +56,22 @@ class ParticipantDashboardController extends Controller
         $journey = $this->journeySummary($user, $latestVisit, $flow, $onlineParty, $onlineGame);
 
         if ($onlineGame) {
-            $nextLabel = match ($onlineGame['status']) {
-                'ready_for_visit' => 'ورود به مرحله حضوری',
-                'onsite_active' => 'ادامه مسیر حضوری',
-                'completed' => 'مشاهده نتیجه کامل کمپین',
-                default => 'ادامه بخش آنلاین',
-            };
+            $currentStage = is_array($onlineGame['currentStage'] ?? null)
+                ? $onlineGame['currentStage']
+                : null;
+            $nextLabel = $onlineGame['status'] === 'completed'
+                ? 'مشاهده نتیجه و کیف پاداش'
+                : 'ادامه: '.($currentStage['title'] ?? 'مرحله جاری');
             $journey['nextAction'] = [
                 'label' => $nextLabel,
-                'description' => $onlineGame['status'] === 'active'
-                    ? 'گام آنلاین جاری را در صفحه بازی و با اعتبارسنجی سرور کامل کنید.'
-                    : 'صفحه واحد کمپین، محل مجوز حضور، نشانی استند و راهنمای ایستگاه فیزیکی جاری است.',
+                'description' => $currentStage['instruction']
+                    ?? 'مرحله جاری را در صفحه واحد کمپین ادامه دهید.',
                 'href' => route('games.ecopark-treasure', ['visit' => $latestVisit?->id]),
             ];
+            $journey['currentOffer'] = $latestVisit?->campaign
+                ? $offers->gameOffersForParty($latestVisit->campaign, $onlineParty)
+                    ->first(fn (array $offer): bool => $offer['kind'] === 'ad')
+                : null;
         }
 
         return Inertia::render('participant/dashboard', [
@@ -143,6 +148,10 @@ class ParticipantDashboardController extends Controller
             ->where('user_id', $user->id)
             ->where('status', 'completed')
             ->sum('points_awarded');
+        $earnedPoints = max(
+            $earnedPoints,
+            $onlineParty instanceof GameParty ? $onlineParty->score : 0,
+        );
         $spentPoints = (int) UserReward::query()
             ->where('user_rewards.user_id', $user->id)
             ->join('reward_definitions', 'reward_definitions.id', '=', 'user_rewards.reward_definition_id')
@@ -377,6 +386,7 @@ class ParticipantDashboardController extends Controller
                     : 'با انتخاب یک کمپین یا اسکن QR، مسیر مشارکت و کیف پاداش فعال می‌شود.',
                 'href' => $latestVisit ? route('visits.show', ['visit' => $latestVisit->id]) : null,
             ],
+            'currentOffer' => null,
         ];
     }
 

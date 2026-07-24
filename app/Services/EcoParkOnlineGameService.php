@@ -11,7 +11,11 @@ use App\Models\GameEntryPass;
 use App\Models\GameParty;
 use App\Models\GamePartyMember;
 use App\Models\QrCode;
+use App\Models\RewardDefinition;
+use App\Models\RewardInventoryAllocation;
+use App\Models\RewardRedemption;
 use App\Models\User;
+use App\Models\UserReward;
 use App\Models\Visit;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -402,10 +406,18 @@ class EcoParkOnlineGameService
     {
         $this->assertMember($user, $party);
         $ad = $this->approvedGameAd($party, $adRequestId);
+        $this->assertAdEligibleForCurrentStep($party, $ad);
 
         if ($party->bonusClaims()->where('ad_request_id', $ad->id)->exists()) {
             throw ValidationException::withMessages(['ad_request_id' => 'این پیشنهاد اختیاری قبلاً برای گروه شما آغاز یا دریافت شده است.']);
         }
+
+        $requiredSeconds = min(60, max(5, (int) data_get($ad->metadata, 'required_seconds', 10)));
+        $bonusPoints = min(100, max(1, (int) data_get($ad->metadata, 'rewarded_points', self::SPONSOR_BONUS)));
+        $currentProgress = $party->progress()
+            ->where('status', 'available')
+            ->orderBy('step_index')
+            ->first();
 
         GameBonusClaim::query()->create([
             'game_party_id' => $party->id,
@@ -413,7 +425,13 @@ class EcoParkOnlineGameService
             'started_by_user_id' => $user->id,
             'status' => 'started',
             'started_at' => now(),
-            'metadata' => ['required_seconds' => 10],
+            'metadata' => [
+                'required_seconds' => $requiredSeconds,
+                'bonus_points' => $bonusPoints,
+                'game_stage_index' => $currentProgress?->step_index,
+                'checkpoint_key' => data_get($currentProgress?->metadata, 'checkpoint_key'),
+                'commercial_model' => data_get($ad->metadata, 'commercial_model'),
+            ],
         ]);
         $this->recordAdEvent($ad, 'game_offer_view', $party);
 
@@ -429,13 +447,16 @@ class EcoParkOnlineGameService
         if (! $claim || $claim->status !== 'started') {
             throw ValidationException::withMessages(['ad_request_id' => 'ابتدا نمایش اختیاری این پیشنهاد را آغاز کنید.']);
         }
-        if ($claim->started_at->isAfter(now()->subSeconds(10))) {
+        $requiredSeconds = min(60, max(5, (int) data_get($claim->metadata, 'required_seconds', 10)));
+        $bonusPoints = min(100, max(1, (int) data_get($claim->metadata, 'bonus_points', self::SPONSOR_BONUS)));
+
+        if ($claim->started_at->isAfter(now()->subSeconds($requiredSeconds))) {
             throw ValidationException::withMessages(['ad_request_id' => 'برای دریافت امتیاز، محتوای کوتاه را تا پایان مشاهده کنید.']);
         }
 
-        return DB::transaction(function () use ($party, $claim, $ad): GameParty {
-            $claim->update(['status' => 'completed', 'points_awarded' => self::SPONSOR_BONUS, 'completed_at' => now()]);
-            $party->increment('score', self::SPONSOR_BONUS);
+        return DB::transaction(function () use ($party, $claim, $ad, $bonusPoints): GameParty {
+            $claim->update(['status' => 'completed', 'points_awarded' => $bonusPoints, 'completed_at' => now()]);
+            $party->increment('score', $bonusPoints);
             $this->recordAdEvent($ad, 'game_clue_complete', $party);
 
             return $party->load($this->partyRelations());
@@ -579,6 +600,8 @@ class EcoParkOnlineGameService
                 'qr_code' => $qr->code,
             ]);
             $party->increment('score', $points);
+            $party->refresh()->load($this->partyRelations());
+            $this->issueCommercialRewards($party, $checkpoint['step'], $checkpoint['key']);
 
             if ($checkpoint['step'] === 9) {
                 $party->update([
@@ -626,6 +649,8 @@ class EcoParkOnlineGameService
             && ! $physicalFinalCompleted
                 ? 'onsite_active'
                 : $party->status;
+        $journeyTimeline = $this->journeyTimelineSnapshot($party, $physicalJourney);
+        $currentStage = $this->currentStageSnapshot($effectiveStatus, $journeyTimeline);
 
         return [
             'id' => $party->id,
@@ -656,6 +681,9 @@ class EcoParkOnlineGameService
             'foundFragments' => $foundFragments,
             'nextHotspotHint' => $nextHotspot['hint'] ?? null,
             'physicalJourney' => $physicalJourney,
+            'journeyTimeline' => $journeyTimeline,
+            'currentStage' => $currentStage,
+            'commerce' => $this->commerceSnapshot($party),
             'entryPass' => $party->entryPass ? [
                 'code' => $party->entryPass->code,
                 'status' => $party->entryPass->status,
@@ -668,6 +696,24 @@ class EcoParkOnlineGameService
                 'startedAt' => $claim->started_at->toIso8601String(),
             ])->values()->all(),
         ];
+    }
+
+    /**
+     * Backfill newly configured checkpoint rewards for physical steps that were
+     * completed before those rewards existed. Repeated calls are idempotent.
+     */
+    public function syncCommercialRewards(GameParty $party): void
+    {
+        $this->ensurePhysicalProgress($party);
+        $party->loadMissing(['members', 'progress', 'bonusClaims']);
+
+        foreach ($party->progress->where('status', 'completed')->whereBetween('step_index', [7, 9]) as $progress) {
+            $checkpointKey = data_get($progress->metadata, 'checkpoint_key');
+
+            if (is_string($checkpointKey) && $checkpointKey !== '') {
+                $this->issueCommercialRewards($party, $progress->step_index, $checkpointKey);
+            }
+        }
     }
 
     /** @return list<string> */
@@ -832,6 +878,228 @@ class EcoParkOnlineGameService
 
         return collect($this->physicalRoute((string) $party->route_key))
             ->firstWhere('step', (int) $availableStep);
+    }
+
+    /**
+     * @param  array{phase: string, steps: list<array<string, mixed>>, nextCheckpointKey: string|null}  $physicalJourney
+     * @return list<array{index: int, title: string, phase: string, status: string}>
+     */
+    private function journeyTimelineSnapshot(GameParty $party, array $physicalJourney): array
+    {
+        $onlineTitles = [
+            1 => 'ساخت گروه بازی',
+            2 => 'انتخاب مسیر',
+            3 => 'کشف سه نقطه آنلاین',
+            4 => 'ساخت رمز سرنخ',
+            5 => 'دریافت مجوز حضور',
+        ];
+        $timeline = [];
+
+        foreach ($onlineTitles as $index => $title) {
+            $progress = $party->progress->firstWhere('step_index', $index);
+            $timeline[] = [
+                'index' => $index,
+                'title' => $title,
+                'phase' => 'online',
+                'status' => $progress instanceof GameChallengeProgress ? $progress->status : 'locked',
+            ];
+        }
+
+        foreach ($physicalJourney['steps'] as $step) {
+            $timeline[] = [
+                'index' => (int) $step['index'],
+                'title' => (string) $step['title'],
+                'phase' => 'physical',
+                'status' => (string) $step['status'],
+            ];
+        }
+
+        return $timeline;
+    }
+
+    /**
+     * @param  list<array{index: int, title: string, phase: string, status: string}>  $timeline
+     * @return array{index: int|null, title: string, phase: string, phaseLabel: string, instruction: string, completedSteps: int, totalSteps: int}
+     */
+    private function currentStageSnapshot(string $partyStatus, array $timeline): array
+    {
+        $current = collect($timeline)->firstWhere('status', 'available');
+        $completedSteps = collect($timeline)->where('status', 'completed')->count();
+        $phase = is_array($current)
+            ? (string) $current['phase']
+            : ($partyStatus === 'completed' ? 'completed' : 'online');
+        $instruction = match ($partyStatus) {
+            'ready_for_visit' => 'مجوز شما صادر شده است؛ به دروازه حضور بروید و QR فیزیکی را اسکن کنید.',
+            'onsite_active' => 'نشانی ایستگاه جاری را ببینید و فقط QR همان استند را اسکن کنید.',
+            'completed' => 'کل مسیر تمام شده است؛ پاداش‌ها و کدهای قابل‌مصرف را در کیف پاداش بررسی کنید.',
+            default => 'گام آنلاین جاری را در صفحه بازی کامل کنید.',
+        };
+
+        return [
+            'index' => is_array($current) ? (int) $current['index'] : null,
+            'title' => is_array($current)
+                ? (string) $current['title']
+                : ($partyStatus === 'completed' ? 'کمپین کامل شده است' : 'در انتظار اقدام'),
+            'phase' => $phase,
+            'phaseLabel' => match ($phase) {
+                'physical' => 'مرحله حضوری',
+                'completed' => 'پایان کمپین',
+                default => 'مرحله آنلاین',
+            },
+            'instruction' => $instruction,
+            'completedSteps' => $completedSteps,
+            'totalSteps' => count($timeline),
+        ];
+    }
+
+    /** @return array{optionalAdsCompleted: int, commercialRedemptions: int, issuedStageRewards: int, finalTier: string, finalTierLabel: string, nextBoostRequirement: string|null} */
+    private function commerceSnapshot(GameParty $party): array
+    {
+        $userIds = $party->members
+            ->pluck('user_id')
+            ->filter(fn (mixed $id): bool => is_numeric($id))
+            ->map(fn (mixed $id): int => (int) $id)
+            ->values();
+        $optionalAdsCompleted = $party->bonusClaims->where('status', 'completed')->count();
+        $commercialRedemptions = $userIds->isEmpty()
+            ? 0
+            : RewardRedemption::query()
+                ->whereIn('user_id', $userIds)
+                ->whereIn('status', ['confirmed', 'redeemed'])
+                ->whereHas('userReward', fn ($query) => $query
+                    ->where('campaign_id', $party->campaign_id))
+                ->count();
+        $issuedStageRewards = $userIds->isEmpty()
+            ? 0
+            : UserReward::query()
+                ->whereIn('user_id', $userIds)
+                ->where('campaign_id', $party->campaign_id)
+                ->whereIn('metadata->source', ['game_physical_checkpoint', 'game_final_reward'])
+                ->count();
+        $finalTier = $optionalAdsCompleted >= 2 && $commercialRedemptions >= 1
+            ? 'premium'
+            : (($optionalAdsCompleted >= 2 || $commercialRedemptions >= 1) ? 'boosted' : 'base');
+
+        return [
+            'optionalAdsCompleted' => $optionalAdsCompleted,
+            'commercialRedemptions' => $commercialRedemptions,
+            'issuedStageRewards' => $issuedStageRewards,
+            'finalTier' => $finalTier,
+            'finalTierLabel' => match ($finalTier) {
+                'premium' => 'سبد ممتاز خرید و ماجراجویی',
+                'boosted' => 'پاداش تقویت‌شده',
+                default => 'پاداش پایه مسیر',
+            },
+            'nextBoostRequirement' => match ($finalTier) {
+                'premium' => null,
+                'boosted' => $commercialRedemptions < 1
+                    ? 'برای سبد ممتاز، یک پاداش را در واحد عضو مصرف کنید.'
+                    : 'برای سبد ممتاز، یک پیشنهاد اختیاری دیگر را کامل کنید.',
+                default => 'دو پیشنهاد اختیاری یا یک مصرف واقعی در واحد عضو، تخفیف نهایی را تقویت می‌کند.',
+            },
+        ];
+    }
+
+    private function issueCommercialRewards(GameParty $party, int $step, string $checkpointKey): void
+    {
+        $commerce = $this->commerceSnapshot($party);
+        $rewards = RewardDefinition::query()
+            ->where('campaign_id', $party->campaign_id)
+            ->where('status', 'active')
+            ->get()
+            ->filter(function (RewardDefinition $reward) use ($checkpointKey, $commerce, $step): bool {
+                if (! (bool) data_get($reward->metadata, 'game_auto_award', false)) {
+                    return false;
+                }
+
+                $rewardCheckpoint = data_get($reward->metadata, 'game_checkpoint_key');
+                $rewardLevel = data_get($reward->metadata, 'game_final_level');
+
+                if (is_string($rewardCheckpoint) && $rewardCheckpoint === $checkpointKey && $rewardLevel === null) {
+                    return true;
+                }
+
+                if ($step !== 9 || ! is_string($rewardLevel)) {
+                    return false;
+                }
+
+                return match ($rewardLevel) {
+                    'base' => true,
+                    'boosted' => in_array($commerce['finalTier'], ['boosted', 'premium'], true),
+                    'premium' => $commerce['finalTier'] === 'premium',
+                    default => false,
+                };
+            });
+
+        foreach ($party->members->where('member_type', 'registered') as $member) {
+            if (! is_numeric($member->user_id)) {
+                continue;
+            }
+
+            foreach ($rewards as $reward) {
+                if (
+                    $reward->stock_quantity !== null
+                    && $reward->userRewards()->count() >= $reward->stock_quantity
+                ) {
+                    continue;
+                }
+
+                $userReward = UserReward::query()->firstOrCreate(
+                    [
+                        'user_id' => (int) $member->user_id,
+                        'reward_definition_id' => $reward->id,
+                        'campaign_id' => $party->campaign_id,
+                    ],
+                    [
+                        'status' => 'awarded',
+                        'awarded_at' => now(),
+                        'expires_at' => now()->addDays(7),
+                        'metadata' => [
+                            'source' => $step === 9 ? 'game_final_reward' : 'game_physical_checkpoint',
+                            'game_party_id' => $party->id,
+                            'step_index' => $step,
+                            'checkpoint_key' => $checkpointKey,
+                            'final_tier' => $step === 9 ? $commerce['finalTier'] : null,
+                        ],
+                    ],
+                );
+
+                $hasInventory = RewardInventoryAllocation::query()
+                    ->where('reward_definition_id', $reward->id)
+                    ->whereRaw('allocated_quantity > reserved_quantity + redeemed_quantity')
+                    ->exists();
+
+                if ($userReward->wasRecentlyCreated && ($reward->partner_account_id || $hasInventory)) {
+                    app(PartnerDashboardService::class)->ensureRedemptionForReward($userReward);
+                }
+            }
+        }
+    }
+
+    private function assertAdEligibleForCurrentStep(GameParty $party, AdRequest $ad): void
+    {
+        $party->loadMissing('progress');
+        $current = $party->progress
+            ->where('status', 'available')
+            ->sortBy('step_index')
+            ->first();
+        $stageIndex = data_get($ad->metadata, 'game_stage_index');
+        $checkpointKey = data_get($ad->metadata, 'checkpoint_key');
+
+        if (! $current instanceof GameChallengeProgress) {
+            throw ValidationException::withMessages(['ad_request_id' => 'در حال حاضر مرحله فعالی برای این پیشنهاد وجود ندارد.']);
+        }
+
+        if (is_numeric($stageIndex) && (int) $stageIndex !== $current->step_index) {
+            throw ValidationException::withMessages(['ad_request_id' => 'این پیشنهاد متعلق به مرحله دیگری از مسیر است.']);
+        }
+
+        if (
+            is_string($checkpointKey)
+            && $checkpointKey !== data_get($current->metadata, 'checkpoint_key')
+        ) {
+            throw ValidationException::withMessages(['ad_request_id' => 'این پیشنهاد برای ایستگاه حضوری جاری شما فعال نیست.']);
+        }
     }
 
     private function normalizeDigits(string $value): string

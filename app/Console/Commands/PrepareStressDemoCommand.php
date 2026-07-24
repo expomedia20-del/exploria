@@ -8,6 +8,7 @@ use App\Models\AdRequest;
 use App\Models\Campaign;
 use App\Models\CampaignParticipant;
 use App\Models\DisplayDevice;
+use App\Models\GameParty;
 use App\Models\Hub;
 use App\Models\PartnerAccount;
 use App\Models\PartnerLocation;
@@ -29,6 +30,7 @@ use App\Models\UserReward;
 use App\Models\Venue;
 use App\Models\Visit;
 use App\Models\Zone;
+use App\Services\EcoParkOnlineGameService;
 use App\Services\MissionRewardRegistryService;
 use App\Services\SponsorActivationService;
 use App\Services\VenueRegistryService;
@@ -51,11 +53,12 @@ class PrepareStressDemoCommand extends Command
         SponsorActivationService $sponsors,
         MissionRewardRegistryService $registry,
         VenueRegistryService $venues,
+        EcoParkOnlineGameService $onlineGame,
     ): int {
         $campaignCode = Str::lower((string) $this->option('campaign'));
         $venueCode = Str::lower((string) $this->option('venue'));
 
-        $result = DB::transaction(function () use ($campaignCode, $sponsors, $venueCode): array {
+        $result = DB::transaction(function () use ($campaignCode, $onlineGame, $sponsors, $venueCode): array {
             $actor = $this->adminUser();
             $venue = $this->venue($venueCode);
             $zone = $this->zone($venue);
@@ -116,7 +119,7 @@ class PrepareStressDemoCommand extends Command
 
             $this->qrCodes($venue, $campaign, $touchpoint, $onsiteTouchpoint, $physicalTouchpoints);
             $this->partnerReward($campaign, $partners[0]);
-            $this->rewardedGameAd($campaign, $partners[2]);
+            $this->rewardedGameAds($campaign, $partners);
             $proposal = $this->sponsorProposal($sponsors, $actor, $campaign, $venue, $partners->take(2)->values());
             $this->manualSponsorTrack($sponsors, $campaign, $venue, $partners[1]);
 
@@ -128,6 +131,11 @@ class PrepareStressDemoCommand extends Command
 
             $campaign->refresh();
             $this->finalTreasure($campaign);
+            $this->gameCommerceRewards($campaign, $partners);
+            GameParty::query()
+                ->where('campaign_id', $campaign->id)
+                ->with(['members', 'progress', 'bonusClaims'])
+                ->each(fn (GameParty $party) => $onlineGame->syncCommercialRewards($party));
 
             if ($this->option('execute-visitor')) {
                 $this->executeVisitorJourney($campaign, $partners[0]);
@@ -494,49 +502,191 @@ class PrepareStressDemoCommand extends Command
         );
     }
 
-    private function rewardedGameAd(Campaign $campaign, PartnerAccount $partner): void
+    /** @param Collection<int, PartnerAccount> $partners */
+    private function rewardedGameAds(Campaign $campaign, Collection $partners): void
     {
-        $ad = AdRequest::query()->updateOrCreate(
-            ['code' => 'ecopark-rewarded-family-tip-1405'],
+        $definitions = [
+            ['code' => 'ecopark-rewarded-family-tip-1405', 'partner' => 2, 'title' => 'تقسیم نقش برای یک کاوش بهتر', 'body' => 'نقشه‌خوان، نشانه‌یاب و ثبت‌کننده انتخاب کنید تا هر عضو در کشف مسیر سهم واقعی داشته باشد.', 'stage' => 2, 'checkpoint' => null, 'points' => 15],
+            ['code' => 'ecopark-rewarded-map-tip-1405', 'partner' => 1, 'title' => 'پیشنهاد ویژه مسیر نقشه', 'body' => 'فروشگاه X برای کاوشگرانی که نقشه را دقیق دنبال می‌کنند یک مشوق خرید مرحله‌ای آماده کرده است.', 'stage' => 3, 'checkpoint' => null, 'points' => 20],
+            ['code' => 'ecopark-rewarded-clue-tip-1405', 'partner' => 2, 'title' => 'سرنخ کوتاه برند حامی', 'body' => 'روایت کوتاه اسپانسر درباره تبدیل تکه‌های سرنخ به رمز نهایی را ببینید.', 'stage' => 4, 'checkpoint' => null, 'points' => 25],
+            ['code' => 'ecopark-rewarded-pass-tip-1405', 'partner' => 0, 'title' => 'آمادگی برای حضور در اکوپارک', 'body' => 'کافه اکو نکات کوتاه مسیر حضوری و زمان مناسب توقف در واحدهای عضو را معرفی می‌کند.', 'stage' => 5, 'checkpoint' => null, 'points' => 20],
+            ['code' => 'ecopark-rewarded-gate-welcome-1405', 'partner' => 2, 'title' => 'خوش‌آمدگویی حامی مرحله حضوری', 'body' => 'پیام کوتاه حامی کمپین و راهنمای شروع ایمن مسیر حضوری را مشاهده کنید.', 'stage' => 6, 'checkpoint' => 'onsite-gate', 'points' => 20],
+            ['code' => 'ecopark-rewarded-fire-water-1405', 'partner' => 0, 'title' => 'توقف خوش‌طعم آب‌وآتش', 'body' => 'پیشنهاد امروز کافه اکو برای کاوشگران میدان آب‌وآتش را ببینید؛ خرید کاملاً اختیاری است.', 'stage' => null, 'checkpoint' => 'fire-water', 'points' => 25],
+            ['code' => 'ecopark-rewarded-nature-1405', 'partner' => 1, 'title' => 'انتخاب سبز فروشگاه X', 'body' => 'محصول منتخب و کم‌حجم مسیر پل طبیعت با تخفیف ویژه اعضای اکسپلوریا معرفی می‌شود.', 'stage' => null, 'checkpoint' => 'nature', 'points' => 30],
+            ['code' => 'ecopark-rewarded-book-garden-1405', 'partner' => 2, 'title' => 'پیشنهاد فرهنگی باغ کتاب', 'body' => 'حامی خانواده یک انتخاب فرهنگی کوتاه برای توقف خانوادگی این ایستگاه معرفی می‌کند.', 'stage' => null, 'checkpoint' => 'book-garden', 'points' => 25],
+            ['code' => 'ecopark-rewarded-mina-1405', 'partner' => 1, 'title' => 'یادگاری علمی گنبد مینا', 'body' => 'پیشنهاد فروشگاه عضو برای یک یادگاری علمی و تخفیف مرحله‌ای را مشاهده کنید.', 'stage' => null, 'checkpoint' => 'mina', 'points' => 30],
+            ['code' => 'ecopark-rewarded-ravaq-finish-1405', 'partner' => 1, 'title' => 'پیشنهاد پایانی رواق', 'body' => 'سبد نهایی فروشگاه‌های عضو و شرایط تقویت تخفیف پایانی را پیش از کشف گنج ببینید.', 'stage' => 9, 'checkpoint' => 'ravaq-finish', 'points' => 40],
+        ];
+
+        foreach ($definitions as $index => $definition) {
+            $partner = $partners->get($definition['partner']);
+
+            if (! $partner instanceof PartnerAccount) {
+                continue;
+            }
+
+            $ad = AdRequest::query()->updateOrCreate(
+                ['code' => $definition['code']],
+                [
+                    'venue_id' => $campaign->venue_id,
+                    'partner_account_id' => $partner->id,
+                    'title' => $definition['title'],
+                    'body_copy' => $definition['body'],
+                    'cta_text' => 'مشاهده اختیاری',
+                    'target_url' => null,
+                    'advertiser_type' => $partner->partner_type === 'sponsor' ? 'sponsor' : 'member_partner',
+                    'ad_type' => 'rewarded_content',
+                    'status' => 'approved',
+                    'starts_at' => now()->subDay(),
+                    'ends_at' => now()->addMonths(6),
+                    'budget_amount' => 3000000 + ($index * 500000),
+                    'impression_cap' => 10000,
+                    'click_cap' => 5000,
+                    'metadata' => [
+                        'is_demo' => true,
+                        'stress_demo' => true,
+                        'rewarded_points' => $definition['points'],
+                        'required_seconds' => 10,
+                        'game_stage_index' => $definition['stage'],
+                        'checkpoint_key' => $definition['checkpoint'],
+                        'commercial_model' => 'paid_stage_placement',
+                    ],
+                ],
+            );
+
+            $ad->creatives()->updateOrCreate(
+                ['creative_type' => 'text_card'],
+                [
+                    'headline' => $definition['title'],
+                    'body_copy' => $definition['body'],
+                    'cta_text' => 'مشاهده اختیاری',
+                    'status' => 'approved',
+                    'metadata' => ['is_demo' => true, 'rewarded' => true],
+                ],
+            );
+
+            $ad->placements()->updateOrCreate(
+                ['placement_type' => 'post_mission'],
+                [
+                    'status' => 'approved',
+                    'starts_at' => now()->subDay(),
+                    'ends_at' => now()->addMonths(6),
+                    'priority' => $index + 1,
+                    'metadata' => [
+                        'is_demo' => true,
+                        'rewarded' => true,
+                        'game_stage_index' => $definition['stage'],
+                        'checkpoint_key' => $definition['checkpoint'],
+                    ],
+                ],
+            );
+        }
+    }
+
+    /** @param Collection<int, PartnerAccount> $partners */
+    private function gameCommerceRewards(Campaign $campaign, Collection $partners): void
+    {
+        $definitions = [
+            ['code' => 'ecopark-fire-water-cafe-15', 'partner' => 0, 'name' => 'تخفیف ۱۵٪ کافه اکو', 'type' => 'partner_coupon', 'checkpoint' => 'fire-water'],
+            ['code' => 'ecopark-nature-store-20', 'partner' => 1, 'name' => 'تخفیف ۲۰٪ انتخاب سبز فروشگاه X', 'type' => 'partner_coupon', 'checkpoint' => 'nature'],
+            ['code' => 'ecopark-book-garden-family-gift', 'partner' => 2, 'name' => 'هدیه فرهنگی خانواده', 'type' => 'sponsor_product', 'checkpoint' => 'book-garden'],
+            ['code' => 'ecopark-mina-science-20', 'partner' => 1, 'name' => 'تخفیف ۲۰٪ یادگاری علمی', 'type' => 'partner_coupon', 'checkpoint' => 'mina'],
+        ];
+
+        foreach ($definitions as $definition) {
+            $partner = $partners->get($definition['partner']);
+
+            if (! $partner instanceof PartnerAccount) {
+                continue;
+            }
+
+            RewardDefinition::query()->updateOrCreate(
+                ['campaign_id' => $campaign->id, 'code' => $definition['code']],
+                [
+                    'venue_id' => $campaign->venue_id,
+                    'partner_account_id' => $partner->id,
+                    'name' => $definition['name'],
+                    'reward_type' => $definition['type'],
+                    'point_cost' => 0,
+                    'stock_quantity' => 200,
+                    'status' => RecordStatus::Active,
+                    'metadata' => [
+                        'is_demo' => true,
+                        'stress_demo' => true,
+                        'source' => 'game_commercial_checkpoint',
+                        'approval_status' => 'approved',
+                        'availability_status' => 'active',
+                        'game_auto_award' => true,
+                        'game_checkpoint_key' => $definition['checkpoint'],
+                        'description' => 'پس از کشف ایستگاه صادر می‌شود و مصرف آن در واحد عضو، مراجعه تجاری را ثبت می‌کند.',
+                        'terms' => 'تا هفت روز پس از صدور؛ خرید اختیاری و مصرف کد توسط واحد عضو تأیید می‌شود.',
+                    ],
+                ],
+            );
+        }
+
+        $finalPartner = $partners->get(1);
+
+        RewardDefinition::query()->updateOrCreate(
+            ['campaign_id' => $campaign->id, 'code' => 'ecopark-final-explorer-base'],
             [
                 'venue_id' => $campaign->venue_id,
-                'partner_account_id' => $partner->id,
-                'title' => 'یک نکته کوتاه برای کاوش خانوادگی',
-                'body_copy' => 'با تقسیم نقش‌های نقشه‌خوان، نشانه‌یاب و ثبت‌کننده، هر عضو خانواده در کشف مسیر سهم واقعی پیدا می‌کند.',
-                'cta_text' => 'مشاهده نکته',
-                'target_url' => null,
-                'advertiser_type' => 'sponsor',
-                'ad_type' => 'rewarded_content',
-                'status' => 'approved',
-                'starts_at' => now()->subDay(),
-                'ends_at' => now()->addMonths(6),
-                'impression_cap' => 10000,
-                'click_cap' => 5000,
-                'metadata' => ['is_demo' => true, 'stress_demo' => true, 'rewarded_points' => 30],
+                'partner_account_id' => $finalPartner instanceof PartnerAccount ? $finalPartner->id : null,
+                'name' => 'مشوق پایه پایان مسیر',
+                'reward_type' => 'partner_coupon',
+                'point_cost' => 0,
+                'stock_quantity' => 300,
+                'status' => RecordStatus::Active,
+                'metadata' => [
+                    'is_demo' => true,
+                    'stress_demo' => true,
+                    'source' => 'game_final_reward',
+                    'approval_status' => 'approved',
+                    'availability_status' => 'active',
+                    'game_auto_award' => true,
+                    'game_final_level' => 'base',
+                    'description' => 'پاداش پایه برای همه کسانی که گنج پایانی را کشف می‌کنند.',
+                    'terms' => 'مصرف در واحد عضو تا هفت روز پس از پایان مسیر.',
+                ],
             ],
         );
 
-        $ad->creatives()->updateOrCreate(
-            ['creative_type' => 'text_card'],
-            [
-                'headline' => 'کاوش بهتر با تقسیم نقش‌ها',
-                'body_copy' => 'یک محتوای ده‌ثانیه‌ای و اختیاری برای تشویق همکاری؛ بدون قفل‌کردن هیچ مرحله.',
-                'cta_text' => 'مشاهده اختیاری',
-                'status' => 'approved',
-                'metadata' => ['is_demo' => true, 'rewarded' => true],
-            ],
-        );
+        $boostedReward = RewardDefinition::query()
+            ->where('campaign_id', $campaign->id)
+            ->where('reward_type', 'sponsor_discount')
+            ->orderByDesc('stock_quantity')
+            ->first();
+        $premiumReward = RewardDefinition::query()
+            ->where('campaign_id', $campaign->id)
+            ->where('reward_type', 'sponsor_product')
+            ->orderByDesc('stock_quantity')
+            ->first();
 
-        $ad->placements()->updateOrCreate(
-            ['placement_type' => 'post_mission'],
-            [
-                'status' => 'approved',
-                'starts_at' => now()->subDay(),
-                'ends_at' => now()->addMonths(6),
-                'priority' => 1,
-                'metadata' => ['is_demo' => true, 'rewarded' => true],
-            ],
-        );
+        if ($boostedReward) {
+            $boostedReward->update([
+                'status' => RecordStatus::Active,
+                'metadata' => array_merge($boostedReward->metadata ?? [], [
+                    'availability_status' => 'active',
+                    'game_auto_award' => true,
+                    'game_final_level' => 'boosted',
+                    'description' => 'تخفیف ۷۰٪ با ترکیب پیشرفت ماجراجویی و تعامل اختیاری یا مصرف واقعی در واحد عضو.',
+                    'terms' => 'پس از تکمیل مسیر و تحقق شرط تقویت، کد مصرف هفت‌روزه صادر می‌شود.',
+                ]),
+            ]);
+        }
+
+        if ($premiumReward) {
+            $premiumReward->update([
+                'status' => RecordStatus::Active,
+                'metadata' => array_merge($premiumReward->metadata ?? [], [
+                    'availability_status' => 'active',
+                    'game_auto_award' => true,
+                    'game_final_level' => 'premium',
+                    'description' => 'سبد ممتاز برای کاربری که هم تعامل اختیاری و هم تبدیل واقعی فروشگاهی داشته است.',
+                    'terms' => 'پس از پایان مسیر؛ موجودی محدود و مصرف در واحدهای عضو تعیین‌شده.',
+                ]),
+            ]);
+        }
     }
 
     /**

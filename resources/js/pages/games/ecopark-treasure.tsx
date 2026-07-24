@@ -17,6 +17,7 @@ import {
     Route,
     ShieldCheck,
     Sparkles,
+    Store,
     TicketCheck,
     Trophy,
     UserRound,
@@ -105,6 +106,29 @@ type Party = {
         }[];
         nextCheckpointKey: string | null;
     };
+    journeyTimeline: {
+        index: number;
+        title: string;
+        phase: 'online' | 'physical';
+        status: 'locked' | 'available' | 'completed';
+    }[];
+    currentStage: {
+        index: number | null;
+        title: string;
+        phase: 'online' | 'physical' | 'completed';
+        phaseLabel: string;
+        instruction: string;
+        completedSteps: number;
+        totalSteps: number;
+    };
+    commerce: {
+        optionalAdsCompleted: number;
+        commercialRedemptions: number;
+        issuedStageRewards: number;
+        finalTier: 'base' | 'boosted' | 'premium';
+        finalTierLabel: string;
+        nextBoostRequirement: string | null;
+    };
     bonusClaims: {
         adRequestId: string;
         status: 'started' | 'completed';
@@ -123,6 +147,11 @@ type GameOffer = {
     ctaText: string;
     assetUrl: string | null;
     points: number | null;
+    bonusPoints: number | null;
+    requiredSeconds: number | null;
+    stageIndex: number | null;
+    checkpointKey: string | null;
+    commercialModel: string | null;
 };
 
 type Props = {
@@ -270,6 +299,51 @@ function JourneyProgress({
                 );
             })}
         </ol>
+    );
+}
+
+function CommerceProgress({ party }: { party: Party }) {
+    return (
+        <section className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+            <div className="flex items-center gap-2">
+                <Store className="size-5 text-amber-800" />
+                <h2 className="text-sm font-black text-amber-950">
+                    مسیر فروش و پاداش
+                </h2>
+            </div>
+            <p className="mt-2 text-xs leading-6 text-amber-900">
+                کشف مکان امتیاز اصلی می‌دهد؛ تبلیغ و خرید اختیاری‌اند، اما سطح
+                پاداش پایانی را تقویت می‌کنند.
+            </p>
+            <dl className="mt-3 grid grid-cols-3 gap-2 text-center text-[11px]">
+                <div className="rounded-xl bg-white p-2">
+                    <dt className="text-slate-500">پیشنهاد کامل</dt>
+                    <dd className="mt-1 text-base font-black">
+                        {faNumber(party.commerce.optionalAdsCompleted)}
+                    </dd>
+                </div>
+                <div className="rounded-xl bg-white p-2">
+                    <dt className="text-slate-500">مصرف فروشگاهی</dt>
+                    <dd className="mt-1 text-base font-black">
+                        {faNumber(party.commerce.commercialRedemptions)}
+                    </dd>
+                </div>
+                <div className="rounded-xl bg-white p-2">
+                    <dt className="text-slate-500">مشوق صادرشده</dt>
+                    <dd className="mt-1 text-base font-black">
+                        {faNumber(party.commerce.issuedStageRewards)}
+                    </dd>
+                </div>
+            </dl>
+            <p className="mt-3 text-xs font-black text-amber-950">
+                سطح فعلی: {party.commerce.finalTierLabel}
+            </p>
+            {party.commerce.nextBoostRequirement ? (
+                <p className="mt-1 text-[11px] leading-5 text-amber-800">
+                    {party.commerce.nextBoostRequirement}
+                </p>
+            ) : null}
+        </section>
     );
 }
 
@@ -1141,7 +1215,9 @@ function SponsorBonus({ party, offer }: { party: Party; offer: GameOffer }) {
     const claim = party.bonusClaims.find(
         (item) => item.adRequestId === offer.adRequestId,
     );
-    const [remaining, setRemaining] = useState(10);
+    const requiredSeconds = offer.requiredSeconds ?? 10;
+    const bonusPoints = offer.bonusPoints ?? 30;
+    const [remaining, setRemaining] = useState(requiredSeconds);
     const [isOpen, setIsOpen] = useState(claim?.status === 'started');
 
     useEffect(() => {
@@ -1153,14 +1229,14 @@ function SponsorBonus({ party, offer }: { party: Party; offer: GameOffer }) {
             const elapsed = Math.floor(
                 (Date.now() - new Date(claim.startedAt).getTime()) / 1000,
             );
-            setRemaining(Math.max(0, 10 - elapsed));
+            setRemaining(Math.max(0, requiredSeconds - elapsed));
         };
 
         updateRemaining();
         const timer = window.setInterval(updateRemaining, 1000);
 
         return () => window.clearInterval(timer);
-    }, [claim?.startedAt, claim?.status]);
+    }, [claim?.startedAt, claim?.status, requiredSeconds]);
 
     if (!offer.adRequestId) {
         return null;
@@ -1175,7 +1251,8 @@ function SponsorBonus({ party, offer }: { party: Party; offer: GameOffer }) {
                     </span>
                     <div>
                         <span className="text-[11px] font-bold text-amber-800">
-                            محتوای تبلیغاتی • کاملاً اختیاری • ۳۰ امتیاز
+                            جایگاه حمایت‌شده • کاملاً اختیاری •{' '}
+                            {faNumber(bonusPoints)} امتیاز
                         </span>
                         <h3 className="mt-1 font-black">{offer.title}</h3>
                         <p className="mt-1 text-xs text-slate-600">
@@ -1284,7 +1361,7 @@ function SponsorBonus({ party, offer }: { party: Party; offer: GameOffer }) {
                                 <div
                                     className="h-full bg-emerald-600 transition-all"
                                     style={{
-                                        width: `${Math.min(100, ((10 - remaining) / 10) * 100)}%`,
+                                        width: `${Math.min(100, ((requiredSeconds - remaining) / requiredSeconds) * 100)}%`,
                                     }}
                                 />
                             </div>
@@ -1313,7 +1390,7 @@ function SponsorBonus({ party, offer }: { party: Party; offer: GameOffer }) {
                                         >
                                             {remaining > 0
                                                 ? 'در حال مشاهده'
-                                                : 'دریافت ۳۰ امتیاز'}
+                                                : `دریافت ${faNumber(bonusPoints)} امتیاز`}
                                         </SubmitButton>
                                         <FieldError
                                             message={errors.ad_request_id}
@@ -1380,6 +1457,7 @@ function ActiveGame({ game, party }: { game: Props['game']; party: Party }) {
                     steps={party.steps}
                     definitions={game.definition.steps}
                 />
+                <CommerceProgress party={party} />
 
                 {party.mode === 'team' && party.inviteCode ? (
                     <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4">
