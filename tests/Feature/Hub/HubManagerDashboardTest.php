@@ -12,6 +12,7 @@ use App\Models\PartnerUser;
 use App\Models\QrCode;
 use App\Models\RewardDefinition;
 use App\Models\User;
+use App\Services\DisplayDeviceTokenService;
 use App\Services\MissionRewardBlueprintService;
 use Database\Seeders\PilotLocationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -184,7 +185,8 @@ class HubManagerDashboardTest extends TestCase
         $this->assertSame($displayDevice->id, $placement->display_device_id);
         $this->assertSame(2, $placement->priority);
 
-        $this->getJson(route('display.schedule', $displayDevice))
+        $this->withToken($this->displayToken($displayDevice))
+            ->getJson(route('display.schedule', $displayDevice))
             ->assertOk()
             ->assertJsonPath('data.items.0.adRequestId', $adRequest->id)
             ->assertJsonPath('data.items.0.priority', 2);
@@ -224,7 +226,8 @@ class HubManagerDashboardTest extends TestCase
         $this->assertNull($placement->fresh()->display_device_id);
         $this->assertSame('approved', $placement->fresh()->status);
 
-        $this->getJson(route('display.schedule', $displayDevice))
+        $this->withToken($this->displayToken($displayDevice))
+            ->getJson(route('display.schedule', $displayDevice))
             ->assertOk()
             ->assertJsonCount(0, 'data.items');
 
@@ -347,5 +350,10 @@ class HubManagerDashboardTest extends TestCase
             'reward_tier' => (string) ($step['rewardTier'] ?? $tierKey),
             'reward_option' => $tier['options'][0] ?? null,
         ];
+    }
+
+    private function displayToken(DisplayDevice $device): string
+    {
+        return app(DisplayDeviceTokenService::class)->tokenFor($device);
     }
 }

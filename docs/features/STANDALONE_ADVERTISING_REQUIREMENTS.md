@@ -43,23 +43,52 @@ The current demo covers this conceptually in `/demo/ecosystem`:
 - Display placement table
 - Ad performance report
 
-## Not Yet Implemented
+## وضعیت اجرایی تا ۱۴۰۵/۰۵/۰۳
 
-- Real database schema for ads, creatives, display inventory, schedules, and approvals
-- Real file upload and media validation
-- Real approval workflow
-- Real publishing to fixed or mobile displays
-- Real tracking events for impressions/clicks/display playback
-- Real billing, sponsor packages, or partner invoices
+موارد زیر اکنون در کد اصلی Laravel + React پیاده‌سازی شده‌اند:
 
-## Suggested Implementation Order
+- مدل‌های واقعی درخواست تبلیغ، محتوای خلاقه، جایگاه، نمایشگر، تایید و رویداد
+- فرم مستقل فروشگاه و اسپانسر با بارگذاری JPEG/WebP، پیش‌نمایش و کنترل ۱۶:۹، حداقل `800×450` و حداکثر `250KB`
+- ویترین عمومی بدون امتیاز با تصویر ثابت و سیاست پنج انتشار نخست رایگان
+- پاپ‌آپ اختیاری امتیازآور با تصویر ثابت، متن، زمان ۸ تا ۱۵ ثانیه و اتصال به مراحل ۲ تا ۹ بازی
+- چرخه بازبینی شامل تایید، درخواست اصلاح مستدل، ارسال مجدد، رد مستدل، توقف، فعال‌سازی مجدد و بایگانی
+- نمایش دلیل آخرین تصمیم برای فروشگاه، اسپانسر، مدیر هاب و ادمین
+- زمان‌بندی محلی تبلیغ تاییدشده توسط مدیر هاب فقط روی نمایشگر فعال، هم‌نوع، هم‌مکان و سازگار با فرمت محتوا
+- عملیات مرکزی نمایشگر با محدودسازی داده بر اساس scope نقش
+- API نمایشگر با توکن مشتق‌شده از کلید برنامه، محدودسازی نرخ و کنترل تعلق جایگاه/تبلیغ به همان دستگاه
+- شناسه یکتای رویداد برای جلوگیری از ثبت تکراری آمار نمایشگر و بازی
+- کنترل هم‌زمان سقف نمایش و سقف کلیک
+- نمونه‌های تصویری سبک ۱۶:۹ برای بازی، ویترین واحدهای غذایی مستقل و نمایشگر محیطی
 
-1. Model advertisers, ad requests, creatives, placements, displays, schedules, approvals, and metrics.
-2. Build upload flow for image/video creatives with validation and preview.
-3. Build partner/shop ad submission panel.
-4. Build ravaq manager approval queue.
-5. Build platform admin moderation and scheduling panel.
-6. Build display inventory management for fixed and mobile screens.
-7. Add publishing API for display clients.
-8. Add impression, interaction, playback, and attribution tracking.
-9. Add reporting and billing exports.
+موارد زیر هنوز خارج از تکمیل این مرحله‌اند و باید در Backlog تجاری جداگانه مدیریت شوند:
+
+- صورتحساب واقعی، درگاه پرداخت تعرفه و صدور فاکتور تبلیغ‌دهنده
+- تسویه درآمد و گزارش مالی قراردادی اسپانسر
+- Attribution خرید حضوری بدون اتصال به صندوق/POS واحد تجاری
+- CDN و پردازش خودکار تصاویر در محیط Production
+
+## قرارداد امنیت API نمایشگر
+
+- هر درخواست برنامه پخش، heartbeat یا رویداد باید `Authorization: Bearer <device-token>` یا هدر `X-Exploria-Display-Token` داشته باشد.
+- توکن از `APP_KEY` و کد نمایشگر مشتق می‌شود و نباید در کد، لاگ یا Inertia props منتشر شود.
+- اپراتور مجاز توکن راه‌اندازی هر دستگاه را با دستور `php artisan exploria:display-token {device-code}` دریافت و فقط در تنظیمات امن همان دستگاه ثبت می‌کند.
+- رویداد فقط وقتی پذیرفته می‌شود که `placement_id` روی همان نمایشگر، در بازه زمانی فعال و برای تبلیغ تاییدشده زمان‌بندی شده باشد.
+- `event_id` یک UUID یکتا است؛ ارسال مجدد همان رخداد نتیجه قبلی را برمی‌گرداند و شمارنده را دوباره افزایش نمی‌دهد.
+
+## چک‌لیست UAT تبلیغات
+
+1. فروشگاه و اسپانسر تبلیغ تصویری را ثبت و پیش‌نمایش کنند.
+2. ادمین علت اصلاح یا رد را ثبت کند و تبلیغ‌دهنده همان علت را در پنل خود ببیند.
+3. نسخه اصلاح‌شده بدون ایجاد درخواست گم‌شده دوباره وارد صف بررسی شود.
+4. تایید تبلیغ محیطی به معنی زمان‌بندی خودکار نباشد.
+5. مدیر هاب فقط نمایشگر سازگار و داخل scope خود را ببیند و زمان‌بندی/لغو کند.
+6. مدیر مکان وضعیت را فقط پایش کند و عملیات خارج از اختیارش نمایش داده نشود.
+7. ویترین عمومی تصویر را بدون امتیاز نمایش دهد؛ پاپ‌آپ مرحله‌ای فقط پس از تعامل اختیاری امتیاز بدهد.
+8. توقف یا بایگانی تبلیغ آن را از برنامه پخش و پیشنهادهای فعال خارج کند.
+
+## ترتیب توسعه بعدی
+
+1. اتصال تعرفه، سفارش و صورتحساب به چرخه تاییدشده فعلی.
+2. افزودن CDN و پردازش امن تصویر در محیط عملیاتی.
+3. اتصال خرید/مصرف پاداش به Attribution تبلیغ.
+4. گزارش خروجی مالی و عملکرد برای تبلیغ‌دهنده، مدیر مکان و ادمین.

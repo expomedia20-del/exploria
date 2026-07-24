@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Form, Head } from '@inertiajs/react';
 import {
     AlertTriangle,
     Building2,
@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { Button } from '@/components/ui/button';
 
 type HubItem = {
     id: string;
@@ -39,6 +40,7 @@ type AdRequestItem = {
     hubName: string | null;
     venueName: string | null;
     creativeType: string | null;
+    placementId: string | null;
     placementType: string | null;
     placementStatus: string | null;
     displayDeviceId: string | null;
@@ -70,6 +72,7 @@ type DisplayDeviceItem = {
     name: string;
     deviceType: string;
     status: string;
+    formats: string[];
     hubName: string | null;
     venueName: string | null;
 };
@@ -120,6 +123,26 @@ const statusLabels: Record<string, string> = {
     approved: 'تایید شده',
     rejected: 'رد شده',
     scheduled: 'زمان‌بندی شده',
+    revision_requested: 'نیازمند اصلاح',
+    paused: 'متوقف شده',
+    archived: 'بایگانی شده',
+};
+
+const placementLabels: Record<string, string> = {
+    fixed_display: 'نمایشگر ثابت',
+    mobile_display: 'نمایشگر سیار',
+    public_feed: 'ویترین عمومی',
+    qr_landing: 'صفحه ورود QR',
+    reward_page: 'صفحه پاداش',
+    map_route: 'نقشه بازی',
+    post_mission: 'پس از مأموریت',
+};
+
+const creativeLabels: Record<string, string> = {
+    image: 'تصویر ثابت',
+    video: 'ویدئو نمایشگر',
+    text_card: 'کارت متنی',
+    display_banner: 'بنر نمایشگر',
 };
 
 function formatDate(value: string | null) {
@@ -250,7 +273,7 @@ function DisplayScheduleQueue({ items }: { items: DisplayScheduleItem[] }) {
     return (
         <Panel
             title="برنامه فعال نمایشگرها"
-            description="برای اطلاع مدیر رواق از نظم پخش در محدوده؛ تغییر زمان‌بندی در اختیار تیم تبلیغات اکسپلوریا است."
+            description="برنامه فعال محدوده؛ مدیر هاب می‌تواند زمان‌بندی تبلیغ تاییدشده را لغو و دوباره تنظیم کند."
             isEmpty={items.length === 0}
         >
             {items.map((item) => (
@@ -264,7 +287,9 @@ function DisplayScheduleQueue({ items }: { items: DisplayScheduleItem[] }) {
                                 className="mt-1 truncate text-xs text-muted-foreground"
                                 dir="ltr"
                             >
-                                {item.adCode ?? '-'} · {item.placementType}
+                                {item.adCode ?? '-'} ·{' '}
+                                {placementLabels[item.placementType] ??
+                                    item.placementType}
                             </p>
                         </div>
                         <span className="shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
@@ -281,9 +306,9 @@ function DisplayScheduleQueue({ items }: { items: DisplayScheduleItem[] }) {
                         {formatDate(item.endsAt) ?? '-'}
                     </p>
                     <OperationalBoundaryNote title="حد اختیار مدیر رواق">
-                        مدیر رواق می‌تواند مشکل اجرایی، ازدحام، مغایرت با قوانین
-                        مجموعه یا خرابی نمایشگر را گزارش کند؛ لغو یا تغییر پخش
-                        از این پنل انجام نمی‌شود.
+                        زمان‌بندی محلی فقط برای تبلیغی که تیم اکسپلوریا تایید
+                        کرده مجاز است؛ محتوای تبلیغ از این پنل تایید یا تغییر
+                        نمی‌کند.
                     </OperationalBoundaryNote>
                 </article>
             ))}
@@ -405,7 +430,7 @@ export default function HubDashboard({
 
                     <Panel
                         title="نمایشگرهای محدوده"
-                        description="پایش سلامت و محل نمایشگر؛ برنامه‌ریزی محتوا با تیم تبلیغات اکسپلوریا است."
+                        description="پایش سلامت، فرمت قابل پخش و انتخاب نمایشگر برای تبلیغ تاییدشده."
                         isEmpty={displayDevices.length === 0}
                     >
                         {displayDevices.map((device) => (
@@ -422,7 +447,17 @@ export default function HubDashboard({
                                     </span>
                                 </div>
                                 <p className="text-xs text-muted-foreground">
-                                    {device.hubName ?? '-'}
+                                    {device.hubName ?? '-'} · نوع:{' '}
+                                    {placementLabels[device.deviceType] ??
+                                        device.deviceType}{' '}
+                                    · فرمت:{' '}
+                                    {device.formats
+                                        .map(
+                                            (format) =>
+                                                creativeLabels[format] ??
+                                                format,
+                                        )
+                                        .join('، ')}
                                 </p>
                             </article>
                         ))}
@@ -456,7 +491,11 @@ export default function HubDashboard({
                                     واحد/حامی مرتبط:{' '}
                                     {adRequest.partnerName ?? '-'} · محدوده:{' '}
                                     {adRequest.hubName ?? '-'} · جایگاه:{' '}
-                                    {adRequest.placementType ?? '-'}
+                                    {placementLabels[
+                                        adRequest.placementType ?? ''
+                                    ] ??
+                                        adRequest.placementType ??
+                                        '-'}
                                 </p>
                                 {adRequest.displayDeviceName ? (
                                     <p className="text-xs text-muted-foreground">
@@ -464,6 +503,89 @@ export default function HubDashboard({
                                         {adRequest.displayDeviceName} · اولویت:{' '}
                                         {formatNumber(adRequest.priority)}
                                     </p>
+                                ) : null}
+                                {adRequest.status === 'approved' &&
+                                adRequest.placementId &&
+                                adRequest.placementType &&
+                                ['fixed_display', 'mobile_display'].includes(
+                                    adRequest.placementType,
+                                ) &&
+                                !adRequest.displayDeviceId ? (
+                                    <Form
+                                        action={`/hub/ads/${adRequest.id}/schedule`}
+                                        method="post"
+                                        className="grid gap-2 rounded-md border bg-muted/30 p-3 sm:grid-cols-[1fr_auto]"
+                                        options={{ preserveScroll: true }}
+                                    >
+                                        {({ processing, errors }) => (
+                                            <>
+                                                <select
+                                                    name="display_device_id"
+                                                    required
+                                                    defaultValue=""
+                                                    className="h-9 rounded-md border bg-background px-3 text-xs"
+                                                >
+                                                    <option value="" disabled>
+                                                        انتخاب نمایشگر سازگار
+                                                    </option>
+                                                    {displayDevices
+                                                        .filter(
+                                                            (device) =>
+                                                                device.status ===
+                                                                    'active' &&
+                                                                device.deviceType ===
+                                                                    adRequest.placementType &&
+                                                                (adRequest.creativeType ===
+                                                                    null ||
+                                                                    device.formats.includes(
+                                                                        adRequest.creativeType,
+                                                                    )),
+                                                        )
+                                                        .map((device) => (
+                                                            <option
+                                                                key={device.id}
+                                                                value={
+                                                                    device.id
+                                                                }
+                                                            >
+                                                                {device.name}
+                                                            </option>
+                                                        ))}
+                                                </select>
+                                                <Button
+                                                    size="sm"
+                                                    disabled={processing}
+                                                >
+                                                    زمان‌بندی محلی
+                                                </Button>
+                                                {errors.display_device_id ? (
+                                                    <p className="text-xs text-destructive sm:col-span-2">
+                                                        {
+                                                            errors.display_device_id
+                                                        }
+                                                    </p>
+                                                ) : null}
+                                            </>
+                                        )}
+                                    </Form>
+                                ) : null}
+                                {adRequest.displayDeviceId &&
+                                adRequest.placementId ? (
+                                    <Form
+                                        action={`/hub/ad-placements/${adRequest.placementId}/cancel`}
+                                        method="post"
+                                        options={{ preserveScroll: true }}
+                                    >
+                                        {({ processing }) => (
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                disabled={processing}
+                                            >
+                                                لغو زمان‌بندی این نمایشگر
+                                            </Button>
+                                        )}
+                                    </Form>
                                 ) : null}
                                 {adRequest.status === 'pending_review' ? (
                                     <OperationalBoundaryNote

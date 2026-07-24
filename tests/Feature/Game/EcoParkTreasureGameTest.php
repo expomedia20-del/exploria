@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Models\Visit;
 use Database\Seeders\PilotLocationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -68,8 +69,10 @@ class EcoParkTreasureGameTest extends TestCase
     public function test_game_offer_event_is_recorded_for_approved_game_ad(): void
     {
         $adRequest = $this->createGameAd('Trackable game clue', 'approved', 'post_mission');
+        $visitor = User::factory()->create(['role' => UserRole::Visitor]);
 
-        $this->postJson(route('offers.game-events.store'), [
+        $this->actingAs($visitor)->postJson(route('offers.game-events.store'), [
+            'event_id' => (string) Str::uuid(),
             'ad_request_id' => $adRequest->id,
             'event_type' => 'game_offer_click',
             'mission_code' => 'scan-entry-qr',
@@ -94,13 +97,16 @@ class EcoParkTreasureGameTest extends TestCase
     {
         $pending = $this->createGameAd('Pending event clue', 'pending_review', 'map_route');
         $displayOnly = $this->createGameAd('Display event clue', 'approved', 'screen_loop');
+        $visitor = User::factory()->create(['role' => UserRole::Visitor]);
 
-        $this->postJson(route('offers.game-events.store'), [
+        $this->actingAs($visitor)->postJson(route('offers.game-events.store'), [
+            'event_id' => (string) Str::uuid(),
             'ad_request_id' => $pending->id,
             'event_type' => 'game_offer_click',
         ])->assertUnprocessable();
 
         $this->postJson(route('offers.game-events.store'), [
+            'event_id' => (string) Str::uuid(),
             'ad_request_id' => $displayOnly->id,
             'event_type' => 'game_offer_click',
         ])->assertUnprocessable();

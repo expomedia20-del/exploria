@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\Partner;
 
+use App\Models\AdRequest;
+use App\Rules\SafeAdvertisingImageUrl;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -18,8 +20,11 @@ class StoreAdRequestRequest extends FormRequest
     {
         $isRewardedPopup = $this->isRewardedPopup();
         $requiresStaticImage = $isRewardedPopup || $this->hasPublicFeedPlacement();
-        $requiresAssetUrl = $requiresStaticImage && ! $this->hasFile('asset_file');
-        $requiresAssetFile = $requiresStaticImage && blank($this->input('asset_url'));
+        $routeAdRequest = $this->route('adRequest');
+        $hasExistingAsset = $routeAdRequest instanceof AdRequest
+            && $routeAdRequest->creatives()->whereNotNull('asset_url')->exists();
+        $requiresAssetUrl = $requiresStaticImage && ! $this->hasFile('asset_file') && ! $hasExistingAsset;
+        $requiresAssetFile = $requiresStaticImage && blank($this->input('asset_url')) && ! $hasExistingAsset;
 
         return [
             'title' => ['required', 'string', 'max:160'],
@@ -32,7 +37,7 @@ class StoreAdRequestRequest extends FormRequest
             'placement_type' => ['required', 'string', Rule::in(['fixed_display', 'mobile_display', 'public_feed', 'qr_landing', 'reward_page', 'map_route', 'post_mission'])],
             'online_placements' => ['nullable', 'array', 'max:5'],
             'online_placements.*' => ['string', 'distinct', Rule::in(['public_feed', 'qr_landing', 'reward_page', 'map_route', 'post_mission'])],
-            'asset_url' => [Rule::requiredIf($requiresAssetUrl), 'nullable', 'url', 'max:2048'],
+            'asset_url' => [Rule::requiredIf($requiresAssetUrl), 'nullable', 'url', 'max:2048', new SafeAdvertisingImageUrl],
             'asset_file' => [
                 Rule::requiredIf($requiresAssetFile),
                 'nullable',
@@ -43,7 +48,7 @@ class StoreAdRequestRequest extends FormRequest
             ],
             'rewarded_points' => [Rule::requiredIf($isRewardedPopup), 'nullable', 'integer', 'min:1', 'max:100'],
             'required_seconds' => [Rule::requiredIf($isRewardedPopup), 'nullable', 'integer', 'min:8', 'max:15'],
-            'game_stage_index' => [Rule::requiredIf($isRewardedPopup), 'nullable', 'integer', Rule::in([2, 3, 4, 5])],
+            'game_stage_index' => [Rule::requiredIf($isRewardedPopup), 'nullable', 'integer', Rule::in(range(2, 9))],
             'starts_at' => ['nullable', 'date'],
             'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
             'budget_amount' => ['nullable', 'integer', 'min:0', 'max:1000000000'],
@@ -100,7 +105,7 @@ class StoreAdRequestRequest extends FormRequest
             'required_seconds.min' => 'زمان مشاهده پاپ‌آپ نباید کمتر از ۸ ثانیه باشد.',
             'required_seconds.max' => 'زمان مشاهده پاپ‌آپ نباید بیشتر از ۱۵ ثانیه باشد.',
             'game_stage_index.required' => 'مرحله نمایش تبلیغ را مشخص کنید.',
-            'game_stage_index.in' => 'مرحله نمایش تبلیغ باید یکی از مراحل ۲ تا ۵ بازی باشد.',
+            'game_stage_index.in' => 'مرحله نمایش تبلیغ باید یکی از مراحل ۲ تا ۹ بازی باشد.',
         ];
     }
 

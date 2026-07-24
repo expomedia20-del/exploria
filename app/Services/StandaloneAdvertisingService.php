@@ -57,6 +57,7 @@ class StandaloneAdvertisingService
                 'pending' => $adRequests->where('status', 'pending_review')->count(),
                 'approved' => $adRequests->where('status', 'approved')->count(),
                 'rejected' => $adRequests->where('status', 'rejected')->count(),
+                'needsRevision' => $adRequests->where('status', 'revision_requested')->count(),
             ],
             'hubOptions' => $this->hubOptionsForPartner($partner),
             'adRequests' => $adRequests,
@@ -67,7 +68,13 @@ class StandaloneAdvertisingService
     public function adRequestsForPartner(PartnerAccount $partner): Collection
     {
         return $partner->adRequests()
-            ->with(['venue:id,code,name', 'hub:id,code,name', 'placements.displayDevice:id,code,name,device_type', 'creatives:id,ad_request_id,creative_type,asset_url,status'])
+            ->with([
+                'venue:id,code,name',
+                'hub:id,code,name',
+                'placements.displayDevice:id,code,name,device_type',
+                'creatives:id,ad_request_id,creative_type,asset_url,status',
+                'approvals.reviewer:id,name,email',
+            ])
             ->withCount(['events as impressions_count' => fn ($query) => $query->where('event_type', 'impression')])
             ->latest('created_at')
             ->get()
@@ -129,12 +136,16 @@ class StandaloneAdvertisingService
                 'reviewOwner' => 'تیم داخلی اکسپلوریا',
                 'localExecutionOwner' => 'مدیر مکان/هاب در محدوده نمایشگرهای خودش',
                 'policy' => 'مدیران مکان و هاب می‌توانند اجرای محلی تبلیغ تاییدشده را زمان‌بندی کنند، اما اختیار تایید یا رد نهایی تبلیغ با تیم اکسپلوریا است.',
+                'executionUrl' => $user?->role === UserRole::HubManager ? '/ravaq/dashboard' : ($user?->role === UserRole::Viewer ? '/venue/dashboard' : '/admin/display-operations'),
+                'executionLabel' => $user?->role === UserRole::HubManager ? 'اجرای محلی در پنل هاب' : ($user?->role === UserRole::Viewer ? 'پایش اجرا در پنل مکان' : 'عملیات نمایشگرها'),
             ],
             'stats' => [
                 'requests' => $adRequests->count(),
                 'pending' => $adRequests->where('status', 'pending_review')->count(),
                 'approved' => $adRequests->where('status', 'approved')->count(),
                 'rejected' => $adRequests->where('status', 'rejected')->count(),
+                'needsRevision' => $adRequests->where('status', 'revision_requested')->count(),
+                'paused' => $adRequests->where('status', 'paused')->count(),
                 'devices' => $devices->count(),
             ],
             'adRequests' => $adRequests,
@@ -160,6 +171,20 @@ class StandaloneAdvertisingService
         }
 
         return $this->createAdRequestForPartner($user, $partner, $data, 'sponsor_ad_submission');
+    }
+
+    /** @param array<string, mixed> $data */
+    public function revisePartnerAdRequest(User $user, AdRequest $adRequest, array $data): AdRequest
+    {
+        $partner = $this->partnerDashboardService->partnerForUser($user);
+
+        return $this->reviseAdRequestForPartner($user, $partner, $adRequest, $data, 'partner_ad_resubmission');
+    }
+
+    /** @param array<string, mixed> $data */
+    public function reviseSponsorAdRequest(User $user, PartnerAccount $partner, AdRequest $adRequest, array $data): AdRequest
+    {
+        return $this->reviseAdRequestForPartner($user, $partner, $adRequest, $data, 'sponsor_ad_resubmission');
     }
 
     /** @param array<string, mixed> $data */
@@ -251,6 +276,106 @@ class StandaloneAdvertisingService
     }
 
     /** @param array<string, mixed> $data */
+    private function reviseAdRequestForPartner(User $user, PartnerAccount $partner, AdRequest $adRequest, array $data, string $source): AdRequest
+    {
+        if ($adRequest->partner_account_id !== $partner->id || ! in_array($adRequest->status, ['revision_requested', 'rejected'], true)) {
+            throw ValidationException::withMessages([
+                'ad_request' => 'فقط تبلیغ متعلق به همین حساب که نیازمند اصلاح است قابل ارسال دوباره است.',
+            ]);
+        }
+
+        $hub = $this->hubForPartner($partner, $data['hub_id'] ?? $adRequest->hub_id);
+        $assetUrl = $data['asset_url'] ?? $adRequest->creatives()->value('asset_url');
+        $storedAssetPath = null;
+
+        if (isset($data['asset_file'])) {
+            $storedAssetPath = $data['asset_file']->store('advertising', 'public');
+            $assetUrl = Storage::disk('public')->url($storedAssetPath);
+        }
+
+        $metadata = [
+            ...$this->metadataArray($adRequest->metadata),
+            'source' => $source,
+            'resubmitted_at' => now()->toIso8601String(),
+        ];
+
+        if (($data['ad_type'] ?? null) === 'rewarded_content') {
+            $metadata = [
+                ...$metadata,
+                'rewarded_points' => (int) $data['rewarded_points'],
+                'required_seconds' => (int) $data['required_seconds'],
+                'game_stage_index' => (int) $data['game_stage_index'],
+                'commercial_model' => 'paid_stage_placement',
+            ];
+        }
+
+        try {
+            return DB::transaction(function () use ($adRequest, $assetUrl, $data, $hub, $metadata, $source, $user): AdRequest {
+                $adRequest->update([
+                    'hub_id' => $hub?->id,
+                    'title' => $data['title'],
+                    'body_copy' => $data['body_copy'] ?? null,
+                    'cta_text' => $data['cta_text'] ?? null,
+                    'target_url' => $data['target_url'] ?? null,
+                    'ad_type' => $data['ad_type'],
+                    'status' => 'pending_review',
+                    'starts_at' => $data['starts_at'] ?? null,
+                    'ends_at' => $data['ends_at'] ?? null,
+                    'budget_amount' => $data['budget_amount'] ?? null,
+                    'impression_cap' => $data['impression_cap'] ?? null,
+                    'click_cap' => $data['click_cap'] ?? null,
+                    'metadata' => $metadata,
+                ]);
+
+                $adRequest->creatives()->delete();
+                $adRequest->placements()->delete();
+                $adRequest->creatives()->create([
+                    'creative_type' => $data['creative_type'],
+                    'asset_url' => $assetUrl,
+                    'headline' => $data['title'],
+                    'body_copy' => $data['body_copy'] ?? null,
+                    'cta_text' => $data['cta_text'] ?? null,
+                    'status' => 'pending_review',
+                    'metadata' => ['source' => $source],
+                ]);
+
+                collect([$data['placement_type']])
+                    ->merge($data['online_placements'] ?? [])
+                    ->filter(fn (mixed $placementType): bool => is_string($placementType) && $placementType !== '')
+                    ->unique()
+                    ->each(function (string $placementType) use ($adRequest, $data, $hub): void {
+                        $adRequest->placements()->create([
+                            'placement_type' => $placementType,
+                            'status' => 'pending_review',
+                            'starts_at' => $data['starts_at'] ?? null,
+                            'ends_at' => $data['ends_at'] ?? null,
+                            'priority' => $data['priority'] ?? ($this->isOnlinePlacement($placementType) ? 6 : 5),
+                            'metadata' => [
+                                'requested_hub_id' => $hub?->id,
+                                'channel' => $this->isOnlinePlacement($placementType) ? 'online' : 'display',
+                            ],
+                        ]);
+                    });
+
+                $adRequest->approvals()->create([
+                    'reviewer_user_id' => $user->id,
+                    'action' => 'resubmitted',
+                    'notes' => 'نسخه اصلاح‌شده توسط تبلیغ‌دهنده ارسال شد.',
+                    'metadata' => ['source' => $source],
+                ]);
+
+                return $adRequest->fresh(['creatives', 'placements', 'approvals.reviewer']) ?? $adRequest;
+            });
+        } catch (Throwable $exception) {
+            if ($storedAssetPath) {
+                Storage::disk('public')->delete($storedAssetPath);
+            }
+
+            throw $exception;
+        }
+    }
+
+    /** @param array<string, mixed> $data */
     public function approve(User $reviewer, AdRequest $adRequest, array $data): AdRequest
     {
         return $this->review($reviewer, $adRequest, 'approved', $data);
@@ -263,8 +388,38 @@ class StandaloneAdvertisingService
     }
 
     /** @param array<string, mixed> $data */
+    public function requestRevision(User $reviewer, AdRequest $adRequest, array $data): AdRequest
+    {
+        return $this->review($reviewer, $adRequest, 'revision_requested', $data);
+    }
+
+    /** @param array<string, mixed> $data */
+    public function pause(User $reviewer, AdRequest $adRequest, array $data): AdRequest
+    {
+        return $this->transition($reviewer, $adRequest, 'paused', ['approved'], $data);
+    }
+
+    /** @param array<string, mixed> $data */
+    public function resume(User $reviewer, AdRequest $adRequest, array $data): AdRequest
+    {
+        return $this->transition($reviewer, $adRequest, 'approved', ['paused'], $data);
+    }
+
+    /** @param array<string, mixed> $data */
+    public function archive(User $reviewer, AdRequest $adRequest, array $data): AdRequest
+    {
+        return $this->transition($reviewer, $adRequest, 'archived', ['approved', 'paused', 'rejected', 'revision_requested'], $data);
+    }
+
+    /** @param array<string, mixed> $data */
     private function review(User $reviewer, AdRequest $adRequest, string $status, array $data): AdRequest
     {
+        if (! in_array($adRequest->status, ['pending_review', 'revision_requested'], true)) {
+            throw ValidationException::withMessages([
+                'ad_request' => 'این درخواست اکنون در صف بازبینی نیست.',
+            ]);
+        }
+
         if ($status === 'approved') {
             $this->assertRewardedPopupReady($adRequest);
             $this->assertPublicStorefrontReady($adRequest);
@@ -280,7 +435,7 @@ class StandaloneAdvertisingService
                 ],
             ]);
             $adRequest->creatives()->update(['status' => $status]);
-            $adRequest->placements()->update(['status' => $status === 'approved' ? 'approved' : 'rejected']);
+            $adRequest->placements()->update(['status' => $status]);
             $adRequest->approvals()->create([
                 'reviewer_user_id' => $reviewer->id,
                 'action' => $status,
@@ -303,6 +458,46 @@ class StandaloneAdvertisingService
             }
 
             return $freshAdRequest;
+        });
+    }
+
+    /**
+     * @param  array<int, string>  $allowedStatuses
+     * @param  array<string, mixed>  $data
+     */
+    private function transition(User $reviewer, AdRequest $adRequest, string $status, array $allowedStatuses, array $data): AdRequest
+    {
+        if (! in_array($adRequest->status, $allowedStatuses, true)) {
+            throw ValidationException::withMessages([
+                'ad_request' => 'تغییر وضعیت در شرایط فعلی تبلیغ مجاز نیست.',
+            ]);
+        }
+
+        return DB::transaction(function () use ($adRequest, $data, $reviewer, $status): AdRequest {
+            $adRequest->update([
+                'status' => $status,
+                'metadata' => [
+                    ...$this->metadataArray($adRequest->metadata),
+                    'last_status_changed_by_user_id' => $reviewer->id,
+                    'last_status_changed_at' => now()->toIso8601String(),
+                ],
+            ]);
+            $adRequest->creatives()->update(['status' => $status]);
+            $adRequest->placements()->get()->each(function (AdPlacement $placement) use ($status): void {
+                $placement->update([
+                    'status' => $status === 'approved'
+                        ? ($placement->display_device_id ? 'scheduled' : 'approved')
+                        : $status,
+                ]);
+            });
+            $adRequest->approvals()->create([
+                'reviewer_user_id' => $reviewer->id,
+                'action' => $status,
+                'notes' => $data['notes'] ?? null,
+                'metadata' => ['source' => 'admin_ad_lifecycle'],
+            ]);
+
+            return $adRequest->fresh(['creatives', 'placements', 'approvals.reviewer']) ?? $adRequest;
         });
     }
 
@@ -350,24 +545,46 @@ class StandaloneAdvertisingService
     /** @param array<string, mixed> $data */
     public function recordDisplayEvent(DisplayDevice $displayDevice, array $data): AdEvent
     {
-        $adRequest = AdRequest::query()
-            ->where('id', $data['ad_request_id'])
-            ->where('status', 'approved')
+        $existingEvent = AdEvent::query()->where('external_event_id', $data['event_id'])->first();
+
+        if ($existingEvent) {
+            if (
+                $existingEvent->display_device_id !== $displayDevice->id
+                || $existingEvent->ad_request_id !== $data['ad_request_id']
+            ) {
+                throw ValidationException::withMessages([
+                    'event_id' => 'شناسه رویداد قبلاً برای نمایشگر یا تبلیغ دیگری ثبت شده است.',
+                ]);
+            }
+
+            return $existingEvent;
+        }
+
+        $now = now();
+        $placement = $displayDevice->placements()
+            ->whereKey($data['placement_id'])
+            ->where('ad_request_id', $data['ad_request_id'])
+            ->where('status', 'scheduled')
+            ->where(fn ($query) => $query->whereNull('starts_at')->orWhere('starts_at', '<=', $now))
+            ->where(fn ($query) => $query->whereNull('ends_at')->orWhere('ends_at', '>=', $now))
+            ->whereHas('adRequest', fn ($query) => $query->where('status', 'approved'))
             ->first();
 
-        if (! $adRequest) {
+        if (! $placement) {
             throw ValidationException::withMessages([
-                'ad_request_id' => 'تبلیغ برای ثبت رویداد نمایشگر معتبر نیست.',
+                'placement_id' => 'این تبلیغ اکنون روی نمایشگر انتخاب‌شده زمان‌بندی نشده است.',
             ]);
         }
 
         return AdEvent::query()->create([
-            'ad_request_id' => $adRequest->id,
+            'ad_request_id' => $placement->ad_request_id,
             'display_device_id' => $displayDevice->id,
+            'external_event_id' => $data['event_id'],
             'event_type' => $data['event_type'],
             'occurred_at' => $data['occurred_at'] ?? now(),
             'metadata' => [
                 ...$this->metadataArray($data['metadata'] ?? []),
+                'placement_id' => $placement->id,
                 'device_code' => $displayDevice->code,
                 'source' => 'display_client_api',
             ],
@@ -377,6 +594,29 @@ class StandaloneAdvertisingService
     /** @param array<string, mixed> $data */
     public function recordDisplayHeartbeat(DisplayDevice $displayDevice, array $data): DisplayDevice
     {
+        $currentAdRequestId = $data['current_ad_request_id'] ?? null;
+        $currentPlacementId = $data['current_placement_id'] ?? null;
+
+        if (($currentAdRequestId === null) !== ($currentPlacementId === null)) {
+            throw ValidationException::withMessages([
+                'current_placement_id' => 'شناسه تبلیغ و جایگاه جاری باید با هم ارسال شوند.',
+            ]);
+        }
+
+        if ($currentPlacementId !== null) {
+            $isAssigned = $displayDevice->placements()
+                ->whereKey($currentPlacementId)
+                ->where('ad_request_id', $currentAdRequestId)
+                ->where('status', 'scheduled')
+                ->exists();
+
+            if (! $isAssigned) {
+                throw ValidationException::withMessages([
+                    'current_placement_id' => 'جایگاه جاری به این نمایشگر اختصاص ندارد.',
+                ]);
+            }
+        }
+
         $heartbeatAt = isset($data['reported_at']) ? now()->parse($data['reported_at']) : now();
         $metadata = $this->metadataArray($displayDevice->metadata);
 
@@ -390,8 +630,8 @@ class StandaloneAdvertisingService
                 ...$metadata,
                 'last_heartbeat' => [
                     'source' => 'display_client_api',
-                    'current_ad_request_id' => $data['current_ad_request_id'] ?? null,
-                    'current_placement_id' => $data['current_placement_id'] ?? null,
+                    'current_ad_request_id' => $currentAdRequestId,
+                    'current_placement_id' => $currentPlacementId,
                     'metadata' => $this->metadataArray($data['metadata'] ?? []),
                     'received_at' => now()->toIso8601String(),
                 ],
@@ -407,15 +647,27 @@ class StandaloneAdvertisingService
             return false;
         }
 
-        if ($adRequest->impression_cap === null) {
-            return true;
+        if ($adRequest->impression_cap !== null) {
+            $impressions = $adRequest->events()
+                ->where('event_type', 'impression')
+                ->count();
+
+            if ($impressions >= $adRequest->impression_cap) {
+                return false;
+            }
         }
 
-        $impressions = $adRequest->events()
-            ->where('event_type', 'impression')
-            ->count();
+        if ($adRequest->click_cap !== null) {
+            $clicks = $adRequest->events()
+                ->where('event_type', 'click')
+                ->count();
 
-        return $impressions < $adRequest->impression_cap;
+            if ($clicks >= $adRequest->click_cap) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function canReviewAds(User $user): bool
@@ -513,6 +765,7 @@ class StandaloneAdvertisingService
     {
         $placement = $adRequest->placements->first();
         $creative = $adRequest->creatives->first();
+        $latestReview = $adRequest->approvals->sortByDesc('created_at')->first();
         $metadata = $this->metadataArray($adRequest->metadata);
 
         return [
@@ -545,6 +798,12 @@ class StandaloneAdvertisingService
             'rewardedPoints' => isset($metadata['rewarded_points']) ? (int) $metadata['rewarded_points'] : null,
             'requiredSeconds' => isset($metadata['required_seconds']) ? (int) $metadata['required_seconds'] : null,
             'gameStageIndex' => isset($metadata['game_stage_index']) ? (int) $metadata['game_stage_index'] : null,
+            'latestReview' => $latestReview ? [
+                'action' => $latestReview->action,
+                'notes' => $latestReview->notes,
+                'reviewerName' => $latestReview->reviewer?->name,
+                'createdAt' => $latestReview->created_at?->toIso8601String(),
+            ] : null,
         ];
     }
 
@@ -577,11 +836,11 @@ class StandaloneAdvertisingService
             || $seconds < 8
             || $seconds > 15
             || $stage === false
-            || ! in_array($stage, [2, 3, 4, 5], true)
+            || ! in_array($stage, range(2, 9), true)
             || ! $hasGamePlacement
         ) {
             throw ValidationException::withMessages([
-                'ad_request' => 'پاپ‌آپ امتیازآور ناقص است: تصویر ثابت، متن، امتیاز، زمان ۸ تا ۱۵ ثانیه، مرحله ۲ تا ۵ و جایگاه داخل بازی را تکمیل کنید.',
+                'ad_request' => 'پاپ‌آپ امتیازآور ناقص است: تصویر ثابت، متن، امتیاز، زمان ۸ تا ۱۵ ثانیه، مرحله ۲ تا ۹ و جایگاه داخل بازی را تکمیل کنید.',
             ]);
         }
     }

@@ -64,6 +64,31 @@ class StressDemoCommandTest extends TestCase
                 ->count(),
         );
         $this->assertSame(
+            10,
+            AdRequest::query()
+                ->where('metadata->commercial_model', 'paid_stage_placement')
+                ->whereHas('creatives', fn ($query) => $query
+                    ->where('creative_type', 'image')
+                    ->whereNotNull('asset_url'))
+                ->count(),
+        );
+        $this->assertDatabaseHas('ad_requests', [
+            'code' => 'ecopark-public-cafe-showcase-1405',
+            'status' => 'approved',
+        ]);
+        $this->assertDatabaseHas('ad_placements', [
+            'placement_type' => 'public_feed',
+            'status' => 'approved',
+        ]);
+        $this->assertDatabaseHas('ad_requests', [
+            'code' => 'ecopark-entry-display-campaign-1405',
+            'status' => 'approved',
+        ]);
+        $this->assertDatabaseHas('ad_placements', [
+            'placement_type' => 'fixed_display',
+            'status' => 'scheduled',
+        ]);
+        $this->assertSame(
             4,
             RewardDefinition::query()
                 ->where('campaign_id', $campaign->id)

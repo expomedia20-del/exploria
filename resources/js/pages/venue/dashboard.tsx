@@ -157,6 +157,31 @@ const statusLabels: Record<string, string> = {
     approved: 'تایید شده',
     rejected: 'رد شده',
     scheduled: 'زمان‌بندی شده',
+    revision_requested: 'نیازمند اصلاح',
+    paused: 'متوقف شده',
+    archived: 'بایگانی شده',
+};
+
+const adTypeLabels: Record<string, string> = {
+    standalone: 'تبلیغ مستقل',
+    display_takeover: 'جایگاه ویژه نمایشگر',
+    reward_moment: 'همراه لحظه پاداش',
+    rewarded_content: 'پیشنهاد اختیاری امتیازآور',
+};
+
+const advertiserTypeLabels: Record<string, string> = {
+    member_partner: 'واحد تجاری عضو',
+    sponsor: 'اسپانسر',
+};
+
+const placementLabels: Record<string, string> = {
+    fixed_display: 'نمایشگر ثابت',
+    mobile_display: 'نمایشگر سیار',
+    public_feed: 'ویترین عمومی',
+    qr_landing: 'صفحه ورود QR',
+    reward_page: 'صفحه پاداش',
+    map_route: 'نقشه بازی',
+    post_mission: 'پس از مأموریت',
 };
 
 function formatDate(value: string | null) {
@@ -506,8 +531,12 @@ export default function VenueDashboard({
                                             className="mt-1 truncate text-xs text-muted-foreground"
                                             dir="ltr"
                                         >
-                                            {adRequest.adType} ·{' '}
-                                            {adRequest.advertiserType}
+                                            {adTypeLabels[adRequest.adType] ??
+                                                adRequest.adType}{' '}
+                                            ·{' '}
+                                            {advertiserTypeLabels[
+                                                adRequest.advertiserType
+                                            ] ?? adRequest.advertiserType}
                                         </p>
                                     </div>
                                     <span className="w-fit shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
@@ -533,9 +562,11 @@ export default function VenueDashboard({
                                     {item.displayDeviceName ?? '-'}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
-                                    جایگاه: {item.placementType} · وضعیت:{' '}
-                                    {labelForStatus(item.status)} · بازه:{' '}
-                                    {formatDate(item.startsAt)} تا{' '}
+                                    جایگاه:{' '}
+                                    {placementLabels[item.placementType] ??
+                                        item.placementType}{' '}
+                                    · وضعیت: {labelForStatus(item.status)} ·
+                                    بازه: {formatDate(item.startsAt)} تا{' '}
                                     {formatDate(item.endsAt)}
                                 </p>
                             </article>

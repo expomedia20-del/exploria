@@ -11,10 +11,12 @@ use App\Models\PartnerLocation;
 use App\Models\PartnerUser;
 use App\Models\User;
 use App\Models\UserAccessScope;
+use App\Services\DisplayDeviceTokenService;
 use Database\Seeders\PilotLocationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -221,7 +223,8 @@ class StandaloneAdvertisingTest extends TestCase
 
         $this->approveAdRequest($adRequest);
 
-        $this->getJson(route('display.schedule', $device))
+        $this->withToken($this->displayToken($device))
+            ->getJson(route('display.schedule', $device))
             ->assertOk()
             ->assertJsonCount(0, 'data.items');
 
@@ -234,11 +237,24 @@ class StandaloneAdvertisingTest extends TestCase
             ])
             ->assertOk();
 
-        $this->getJson(route('display.schedule', $device))
+        $this->withToken($this->displayToken($device))
+            ->getJson(route('display.schedule', $device))
             ->assertOk()
             ->assertJsonPath('data.device.code', 'ecopark-mobile-promo-display')
             ->assertJsonPath('data.items.0.adRequestId', $adRequest->id)
             ->assertJsonPath('data.items.0.placementType', 'mobile_display');
+    }
+
+    public function test_display_api_rejects_missing_or_invalid_device_token(): void
+    {
+        $device = DisplayDevice::query()->where('code', 'ecopark-entry-fixed-display')->firstOrFail();
+
+        $this->getJson(route('display.schedule', $device))->assertUnauthorized();
+        $this->withToken('invalid-device-token')
+            ->postJson(route('display.heartbeat.store', $device), [
+                'playback_status' => 'idle',
+            ])
+            ->assertUnauthorized();
     }
 
     public function test_partner_ad_can_complete_display_online_offers_and_game_journey(): void
@@ -295,7 +311,8 @@ class StandaloneAdvertisingTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.status', 'scheduled');
 
-        $this->getJson(route('display.schedule', $device))
+        $this->withToken($this->displayToken($device))
+            ->getJson(route('display.schedule', $device))
             ->assertOk()
             ->assertJsonPath('data.items.0.adRequestId', $adRequest->id)
             ->assertJsonPath('data.items.0.title', 'Full journey cafe campaign ad');
@@ -309,6 +326,7 @@ class StandaloneAdvertisingTest extends TestCase
             ->assertSee('Full journey cafe campaign ad');
 
         $this->postJson(route('offers.game-events.store'), [
+            'event_id' => (string) Str::uuid(),
             'ad_request_id' => $adRequest->id,
             'event_type' => 'game_offer_click',
             'mission_code' => 'scan-entry-qr',
@@ -466,19 +484,107 @@ class StandaloneAdvertisingTest extends TestCase
             ])
             ->assertOk();
 
-        $this->postJson(route('display.events.store', $device), [
-            'ad_request_id' => $adRequest->id,
-            'event_type' => 'impression',
-            'metadata' => ['slot' => 'entry-main'],
-        ])
+        $placement = $adRequest->placements()->firstOrFail();
+
+        $eventId = (string) Str::uuid();
+        $response = $this->withToken($this->displayToken($device))
+            ->postJson(route('display.events.store', $device), [
+                'event_id' => $eventId,
+                'ad_request_id' => $adRequest->id,
+                'placement_id' => $placement->id,
+                'event_type' => 'impression',
+                'metadata' => ['slot' => 'entry-main'],
+            ])
             ->assertCreated()
             ->assertJsonPath('data.eventType', 'impression');
+        $recordedEventId = $response->json('data.id');
+
+        $this->withToken($this->displayToken($device))
+            ->postJson(route('display.events.store', $device), [
+                'event_id' => $eventId,
+                'ad_request_id' => $adRequest->id,
+                'placement_id' => $placement->id,
+                'event_type' => 'impression',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.id', $recordedEventId);
 
         $this->assertDatabaseHas('ad_events', [
             'ad_request_id' => $adRequest->id,
             'display_device_id' => $device->id,
             'event_type' => 'impression',
         ]);
+        $this->assertDatabaseCount('ad_events', 1);
+    }
+
+    public function test_ad_review_revision_and_lifecycle_are_auditable(): void
+    {
+        $adRequest = $this->submitAdRequest('ravaq.store@example.test', 'Lifecycle ad', 'mobile_display');
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $partner = User::query()->where('email', 'ravaq.store@example.test')->firstOrFail();
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.ads.api.revision', $adRequest), [
+                'notes' => 'عنوان و متن تبلیغ باید شفاف‌تر شود.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'revision_requested');
+
+        $this->actingAs($partner)
+            ->patchJson(route('partner.ads.api.update', $adRequest), [
+                'title' => 'Lifecycle ad revised',
+                'body_copy' => 'نسخه شفاف و اصلاح‌شده تبلیغ برای نمایشگر.',
+                'ad_type' => 'standalone',
+                'creative_type' => 'image',
+                'placement_type' => 'mobile_display',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'pending_review');
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.ads.api.approve', $adRequest->fresh()))
+            ->assertOk()
+            ->assertJsonPath('data.status', 'approved');
+        $this->postJson(route('admin.ads.api.pause', $adRequest->fresh()))
+            ->assertOk()
+            ->assertJsonPath('data.status', 'paused');
+        $this->postJson(route('admin.ads.api.resume', $adRequest->fresh()))
+            ->assertOk()
+            ->assertJsonPath('data.status', 'approved');
+        $this->postJson(route('admin.ads.api.archive', $adRequest->fresh()))
+            ->assertOk()
+            ->assertJsonPath('data.status', 'archived');
+
+        $this->assertDatabaseHas('ad_approvals', [
+            'ad_request_id' => $adRequest->id,
+            'action' => 'revision_requested',
+            'notes' => 'عنوان و متن تبلیغ باید شفاف‌تر شود.',
+        ]);
+        $this->assertDatabaseHas('ad_approvals', [
+            'ad_request_id' => $adRequest->id,
+            'action' => 'resubmitted',
+        ]);
+        $this->assertDatabaseHas('ad_approvals', [
+            'ad_request_id' => $adRequest->id,
+            'action' => 'archived',
+        ]);
+    }
+
+    public function test_public_storefront_rejects_local_or_insecure_image_url(): void
+    {
+        $partner = User::query()->where('email', 'cafe.eco@example.test')->firstOrFail();
+
+        $this->actingAs($partner)
+            ->postJson(route('partner.ads.api.store'), [
+                'title' => 'Unsafe public image',
+                'body_copy' => 'تبلیغ عمومی با نشانی نامعتبر.',
+                'ad_type' => 'standalone',
+                'creative_type' => 'image',
+                'placement_type' => 'public_feed',
+                'asset_url' => 'http://127.0.0.1/private.jpg',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('asset_url');
     }
 
     public function test_display_schedule_excludes_pending_ads(): void
@@ -486,16 +592,20 @@ class StandaloneAdvertisingTest extends TestCase
         $adRequest = $this->submitAdRequest();
         $device = DisplayDevice::query()->where('code', 'ecopark-entry-fixed-display')->firstOrFail();
 
-        $this->getJson(route('display.schedule', $device))
+        $this->withToken($this->displayToken($device))
+            ->getJson(route('display.schedule', $device))
             ->assertOk()
             ->assertJsonCount(0, 'data.items');
 
-        $this->postJson(route('display.events.store', $device), [
-            'ad_request_id' => $adRequest->id,
-            'event_type' => 'impression',
-        ])
+        $this->withToken($this->displayToken($device))
+            ->postJson(route('display.events.store', $device), [
+                'event_id' => (string) Str::uuid(),
+                'ad_request_id' => $adRequest->id,
+                'placement_id' => $adRequest->placements()->firstOrFail()->id,
+                'event_type' => 'impression',
+            ])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors('ad_request_id');
+            ->assertJsonValidationErrors('placement_id');
     }
 
     public function test_hub_manager_cannot_review_foreign_ad_request(): void
@@ -669,5 +779,10 @@ class StandaloneAdvertisingTest extends TestCase
         $content = $header.str_repeat("\0", max(0, ($kilobytes * 1024) - strlen($header)));
 
         return UploadedFile::fake()->createWithContent($name, $content);
+    }
+
+    private function displayToken(DisplayDevice $device): string
+    {
+        return app(DisplayDeviceTokenService::class)->tokenFor($device);
     }
 }

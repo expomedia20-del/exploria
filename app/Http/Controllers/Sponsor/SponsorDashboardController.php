@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Sponsor;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Partner\StoreAdRequestRequest;
 use App\Http\Requests\Sponsor\StoreSponsorProposalRequest;
+use App\Models\AdRequest;
 use App\Models\SponsorProposal;
 use App\Services\SponsorPortalService;
 use App\Services\StandaloneAdvertisingService;
@@ -56,6 +57,22 @@ class SponsorDashboardController extends Controller
         }
 
         return back()->with('success', 'درخواست تبلیغ اسپانسری برای بررسی تیم اکسپلوریا ارسال شد.');
+    }
+
+    public function updateAdRequest(StoreAdRequestRequest $request, AdRequest $adRequest, SponsorPortalService $portal, StandaloneAdvertisingService $advertising): JsonResponse|RedirectResponse
+    {
+        $partner = $portal->sponsorPartnerForUser($request->user());
+        $adRequest = $advertising->reviseSponsorAdRequest($request->user(), $partner, $adRequest, $request->validated());
+
+        if ($request->expectsJson()) {
+            return response()->json(['status' => 'success', 'data' => [
+                'id' => $adRequest->id,
+                'code' => $adRequest->code,
+                'status' => $adRequest->status,
+            ]]);
+        }
+
+        return back()->with('success', 'نسخه اصلاح‌شده تبلیغ اسپانسری دوباره برای بررسی ارسال شد.');
     }
 
     public function updateProposal(StoreSponsorProposalRequest $request, SponsorProposal $proposal, SponsorPortalService $service): JsonResponse|RedirectResponse

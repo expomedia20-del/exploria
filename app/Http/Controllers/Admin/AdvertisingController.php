@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Actions\Events\RecordAdminAuditAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\RequestAdRevisionRequest;
 use App\Http\Requests\Admin\ReviewAdRequestRequest;
 use App\Models\AdRequest;
 use App\Services\HubManagerAccessService;
@@ -41,10 +42,10 @@ class AdvertisingController extends Controller
             ]]);
         }
 
-        return back()->with('success', 'درخواست تبلیغ تایید و برای انتشار زمان‌بندی شد.');
+        return back()->with('success', 'درخواست تبلیغ تایید شد؛ جایگاه محیطی آن اکنون آماده زمان‌بندی است.');
     }
 
-    public function reject(ReviewAdRequestRequest $request, AdRequest $adRequest, StandaloneAdvertisingService $service, HubManagerAccessService $access, RecordAdminAuditAction $audit): JsonResponse|RedirectResponse
+    public function reject(RequestAdRevisionRequest $request, AdRequest $adRequest, StandaloneAdvertisingService $service, HubManagerAccessService $access, RecordAdminAuditAction $audit): JsonResponse|RedirectResponse
     {
         $access->ensureCanReviewAdRequest($request->user(), $adRequest);
 
@@ -62,7 +63,56 @@ class AdvertisingController extends Controller
         return back()->with('success', 'درخواست تبلیغ رد شد.');
     }
 
-    private function audit(ReviewAdRequestRequest $request, AdRequest $adRequest, RecordAdminAuditAction $audit, string $action): void
+    public function requestRevision(RequestAdRevisionRequest $request, AdRequest $adRequest, StandaloneAdvertisingService $service, HubManagerAccessService $access, RecordAdminAuditAction $audit): JsonResponse|RedirectResponse
+    {
+        $access->ensureCanReviewAdRequest($request->user(), $adRequest);
+        $adRequest = $service->requestRevision($request->user(), $adRequest, $request->validated());
+        $this->audit($request, $adRequest, $audit, 'ad_revision_requested');
+
+        return $this->statusResponse($request, $adRequest, 'اصلاحات لازم برای تبلیغ به تبلیغ‌دهنده اعلام شد.');
+    }
+
+    public function pause(ReviewAdRequestRequest $request, AdRequest $adRequest, StandaloneAdvertisingService $service, HubManagerAccessService $access, RecordAdminAuditAction $audit): JsonResponse|RedirectResponse
+    {
+        $access->ensureCanReviewAdRequest($request->user(), $adRequest);
+        $adRequest = $service->pause($request->user(), $adRequest, $request->validated());
+        $this->audit($request, $adRequest, $audit, 'ad_paused');
+
+        return $this->statusResponse($request, $adRequest, 'انتشار تبلیغ متوقف شد.');
+    }
+
+    public function resume(ReviewAdRequestRequest $request, AdRequest $adRequest, StandaloneAdvertisingService $service, HubManagerAccessService $access, RecordAdminAuditAction $audit): JsonResponse|RedirectResponse
+    {
+        $access->ensureCanReviewAdRequest($request->user(), $adRequest);
+        $adRequest = $service->resume($request->user(), $adRequest, $request->validated());
+        $this->audit($request, $adRequest, $audit, 'ad_resumed');
+
+        return $this->statusResponse($request, $adRequest, 'انتشار تبلیغ دوباره فعال شد.');
+    }
+
+    public function archive(ReviewAdRequestRequest $request, AdRequest $adRequest, StandaloneAdvertisingService $service, HubManagerAccessService $access, RecordAdminAuditAction $audit): JsonResponse|RedirectResponse
+    {
+        $access->ensureCanReviewAdRequest($request->user(), $adRequest);
+        $adRequest = $service->archive($request->user(), $adRequest, $request->validated());
+        $this->audit($request, $adRequest, $audit, 'ad_archived');
+
+        return $this->statusResponse($request, $adRequest, 'تبلیغ بایگانی شد.');
+    }
+
+    private function statusResponse(Request $request, AdRequest $adRequest, string $message): JsonResponse|RedirectResponse
+    {
+        if ($request->expectsJson()) {
+            return response()->json(['status' => 'success', 'data' => [
+                'id' => $adRequest->id,
+                'code' => $adRequest->code,
+                'status' => $adRequest->status,
+            ]]);
+        }
+
+        return back()->with('success', $message);
+    }
+
+    private function audit(Request $request, AdRequest $adRequest, RecordAdminAuditAction $audit, string $action): void
     {
         $audit->execute($request->user(), $action, 'ad_request', $adRequest->id, $request->session()->getId(), [
             'code' => $adRequest->code,

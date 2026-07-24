@@ -1,11 +1,15 @@
 import { Form, Head, Link, usePage } from '@inertiajs/react';
 import {
     BadgeCheck,
+    Archive,
     CalendarClock,
     CheckCircle2,
     Megaphone,
     MonitorPlay,
+    PauseCircle,
+    PlayCircle,
     RadioTower,
+    RotateCcw,
     XCircle,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -39,6 +43,12 @@ type AdRequest = {
     rewardedPoints: number | null;
     requiredSeconds: number | null;
     gameStageIndex: number | null;
+    latestReview: {
+        action: string;
+        notes: string | null;
+        reviewerName: string | null;
+        createdAt: string | null;
+    } | null;
 };
 
 type DisplayDevice = {
@@ -59,12 +69,16 @@ type Props = {
         reviewOwner: string;
         localExecutionOwner: string;
         policy: string;
+        executionUrl: string;
+        executionLabel: string;
     };
     stats: {
         requests: number;
         pending: number;
         approved: number;
         rejected: number;
+        needsRevision: number;
+        paused: number;
         devices: number;
     };
     adRequests: AdRequest[];
@@ -82,6 +96,9 @@ const statusLabels: Record<string, string> = {
     pending_review: 'در انتظار تایید',
     approved: 'تایید شده',
     rejected: 'رد شده',
+    revision_requested: 'نیازمند اصلاح',
+    paused: 'متوقف شده',
+    archived: 'بایگانی شده',
     scheduled: 'زمان‌بندی شده',
     active: 'فعال',
     inactive: 'غیرفعال',
@@ -90,10 +107,18 @@ const statusLabels: Record<string, string> = {
 const placementLabels: Record<string, string> = {
     fixed_display: 'نمایشگر ثابت',
     mobile_display: 'نمایشگر سیار',
+    public_feed: 'ویترین عمومی فروشگاه‌ها',
     qr_landing: 'صفحه QR',
     reward_page: 'صفحه پاداش',
     map_route: 'نقشه و مسیر',
     post_mission: 'بعد از ماموریت',
+};
+
+const creativeLabels: Record<string, string> = {
+    image: 'تصویر ثابت',
+    video: 'ویدئو نمایشگر محیطی',
+    text_card: 'کارت متنی',
+    display_banner: 'بنر نمایشگر',
 };
 
 function Stat({
@@ -147,13 +172,13 @@ export default function AdminAdsIndex({
                 <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                     <div>
                         <p className="text-sm text-muted-foreground">
-                            Sprint 1.6
+                            مرکز کنترل چرخه تبلیغ
                         </p>
                         <h1 className="mt-1 text-2xl font-semibold">
                             تبلیغات مستقل و نمایشگرها
                         </h1>
                     </div>
-                    <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-5">
+                    <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4 xl:grid-cols-7">
                         <Stat
                             icon={Megaphone}
                             label="درخواست"
@@ -179,16 +204,26 @@ export default function AdminAdsIndex({
                             label="نمایشگر"
                             value={stats.devices}
                         />
+                        <Stat
+                            icon={RotateCcw}
+                            label="نیازمند اصلاح"
+                            value={stats.needsRevision}
+                        />
+                        <Stat
+                            icon={PauseCircle}
+                            label="متوقف"
+                            value={stats.paused}
+                        />
                     </div>
                 </header>
 
                 <section className="grid gap-3 md:grid-cols-3">
                     <Link
-                        href="/admin/display-operations"
+                        href={governance.executionUrl}
                         className="rounded-lg border border-sidebar-border/70 bg-background p-3 text-sm dark:border-sidebar-border"
                     >
                         <p className="font-semibold">
-                            ارسال تبلیغ تاییدشده به نمایشگر
+                            {governance.executionLabel}
                         </p>
                         <p className="mt-2 leading-6 text-muted-foreground">
                             بعد از تایید، زمان‌بندی و انتخاب نمایشگر از عملیات
@@ -261,7 +296,11 @@ export default function AdminAdsIndex({
                                                 dir="ltr"
                                             >
                                                 {adRequest.code} ·{' '}
-                                                {adRequest.creativeType}
+                                                {creativeLabels[
+                                                    adRequest.creativeType ?? ''
+                                                ] ??
+                                                    adRequest.creativeType ??
+                                                    'بدون محتوای ثبت‌شده'}
                                             </p>
                                         </div>
                                         <span className="shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
@@ -339,9 +378,32 @@ export default function AdminAdsIndex({
                                             'fa-IR',
                                         ) ?? 'نامحدود'}
                                     </p>
+                                    {adRequest.latestReview ? (
+                                        <div className="rounded-md bg-muted/70 px-3 py-2 text-xs leading-6">
+                                            <span className="font-medium">
+                                                آخرین تصمیم:{' '}
+                                                {statusLabels[
+                                                    adRequest.latestReview
+                                                        .action
+                                                ] ??
+                                                    adRequest.latestReview
+                                                        .action}
+                                            </span>
+                                            {adRequest.latestReview.notes ? (
+                                                <span>
+                                                    {' '}
+                                                    —{' '}
+                                                    {
+                                                        adRequest.latestReview
+                                                            .notes
+                                                    }
+                                                </span>
+                                            ) : null}
+                                        </div>
+                                    ) : null}
                                     {adRequest.status === 'pending_review' &&
                                     canReviewAds ? (
-                                        <div className="flex flex-wrap gap-2 pt-1">
+                                        <div className="grid gap-2 pt-1 md:grid-cols-3">
                                             <Form
                                                 action={`/admin/ads/${adRequest.id}/approve`}
                                                 method="post"
@@ -360,7 +422,74 @@ export default function AdminAdsIndex({
                                                 )}
                                             </Form>
                                             <Form
+                                                action={`/admin/ads/${adRequest.id}/request-revision`}
+                                                method="post"
+                                                className="grid gap-2"
+                                                options={{
+                                                    preserveScroll: true,
+                                                }}
+                                            >
+                                                {({ processing }) => (
+                                                    <>
+                                                        <textarea
+                                                            name="notes"
+                                                            required
+                                                            minLength={5}
+                                                            className="min-h-16 rounded-md border bg-background px-3 py-2 text-xs"
+                                                            placeholder="موارد دقیق لازم برای اصلاح"
+                                                        />
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            disabled={
+                                                                processing
+                                                            }
+                                                        >
+                                                            <RotateCcw className="size-4" />
+                                                            درخواست اصلاح
+                                                        </Button>
+                                                    </>
+                                                )}
+                                            </Form>
+                                            <Form
                                                 action={`/admin/ads/${adRequest.id}/reject`}
+                                                method="post"
+                                                className="grid gap-2"
+                                                options={{
+                                                    preserveScroll: true,
+                                                }}
+                                            >
+                                                {({ processing }) => (
+                                                    <>
+                                                        <textarea
+                                                            name="notes"
+                                                            required
+                                                            minLength={5}
+                                                            className="min-h-16 rounded-md border bg-background px-3 py-2 text-xs"
+                                                            placeholder="دلیل روشن رد درخواست"
+                                                        />
+                                                        <Button
+                                                            size="sm"
+                                                            variant="destructive"
+                                                            disabled={
+                                                                processing
+                                                            }
+                                                        >
+                                                            <XCircle className="size-4" />
+                                                            رد نهایی
+                                                        </Button>
+                                                    </>
+                                                )}
+                                            </Form>
+                                        </div>
+                                    ) : null}
+                                    {canReviewAds &&
+                                    ['approved', 'paused'].includes(
+                                        adRequest.status,
+                                    ) ? (
+                                        <div className="flex flex-wrap gap-2 pt-1">
+                                            <Form
+                                                action={`/admin/ads/${adRequest.id}/${adRequest.status === 'approved' ? 'pause' : 'resume'}`}
                                                 method="post"
                                                 options={{
                                                     preserveScroll: true,
@@ -372,8 +501,34 @@ export default function AdminAdsIndex({
                                                         variant="outline"
                                                         disabled={processing}
                                                     >
-                                                        <XCircle className="size-4" />
-                                                        رد
+                                                        {adRequest.status ===
+                                                        'approved' ? (
+                                                            <PauseCircle className="size-4" />
+                                                        ) : (
+                                                            <PlayCircle className="size-4" />
+                                                        )}
+                                                        {adRequest.status ===
+                                                        'approved'
+                                                            ? 'توقف انتشار'
+                                                            : 'فعال‌سازی دوباره'}
+                                                    </Button>
+                                                )}
+                                            </Form>
+                                            <Form
+                                                action={`/admin/ads/${adRequest.id}/archive`}
+                                                method="post"
+                                                options={{
+                                                    preserveScroll: true,
+                                                }}
+                                            >
+                                                {({ processing }) => (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        disabled={processing}
+                                                    >
+                                                        <Archive className="size-4" />
+                                                        بایگانی
                                                     </Button>
                                                 )}
                                             </Form>
@@ -414,14 +569,23 @@ export default function AdminAdsIndex({
                                         className="mt-1 truncate text-xs text-muted-foreground"
                                         dir="ltr"
                                     >
-                                        {device.code} · {device.deviceType}
+                                        {device.code} ·{' '}
+                                        {placementLabels[device.deviceType] ??
+                                            device.deviceType}
                                     </p>
                                 </div>
                                 <p className="text-xs text-muted-foreground">
                                     {device.venueName} · {device.hubName ?? '-'}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
-                                    فرمت‌ها: {device.formats.join(', ')}
+                                    فرمت‌ها:{' '}
+                                    {device.formats
+                                        .map(
+                                            (format) =>
+                                                creativeLabels[format] ??
+                                                format,
+                                        )
+                                        .join('، ')}
                                 </p>
                                 <span className="w-fit rounded-full bg-muted px-2.5 py-1 text-xs">
                                     {statusLabels[device.status] ??

@@ -120,6 +120,7 @@ class PrepareStressDemoCommand extends Command
             $this->qrCodes($venue, $campaign, $touchpoint, $onsiteTouchpoint, $physicalTouchpoints);
             $this->partnerReward($campaign, $partners[0]);
             $this->rewardedGameAds($campaign, $partners);
+            $this->storefrontAndDisplayAds($campaign, $partners);
             $proposal = $this->sponsorProposal($sponsors, $actor, $campaign, $venue, $partners->take(2)->values());
             $this->manualSponsorTrack($sponsors, $campaign, $venue, $partners[1]);
 
@@ -506,16 +507,16 @@ class PrepareStressDemoCommand extends Command
     private function rewardedGameAds(Campaign $campaign, Collection $partners): void
     {
         $definitions = [
-            ['code' => 'ecopark-rewarded-family-tip-1405', 'partner' => 2, 'title' => 'تقسیم نقش برای یک کاوش بهتر', 'body' => 'نقشه‌خوان، نشانه‌یاب و ثبت‌کننده انتخاب کنید تا هر عضو در کشف مسیر سهم واقعی داشته باشد.', 'stage' => 2, 'checkpoint' => null, 'points' => 15],
-            ['code' => 'ecopark-rewarded-map-tip-1405', 'partner' => 1, 'title' => 'پیشنهاد ویژه مسیر نقشه', 'body' => 'فروشگاه X برای کاوشگرانی که نقشه را دقیق دنبال می‌کنند یک مشوق خرید مرحله‌ای آماده کرده است.', 'stage' => 3, 'checkpoint' => null, 'points' => 20],
-            ['code' => 'ecopark-rewarded-clue-tip-1405', 'partner' => 2, 'title' => 'سرنخ کوتاه برند حامی', 'body' => 'روایت کوتاه اسپانسر درباره تبدیل تکه‌های سرنخ به رمز نهایی را ببینید.', 'stage' => 4, 'checkpoint' => null, 'points' => 25],
-            ['code' => 'ecopark-rewarded-pass-tip-1405', 'partner' => 0, 'title' => 'آمادگی برای حضور در اکوپارک', 'body' => 'کافه اکو نکات کوتاه مسیر حضوری و زمان مناسب توقف در واحدهای عضو را معرفی می‌کند.', 'stage' => 5, 'checkpoint' => null, 'points' => 20],
-            ['code' => 'ecopark-rewarded-gate-welcome-1405', 'partner' => 2, 'title' => 'خوش‌آمدگویی حامی مرحله حضوری', 'body' => 'پیام کوتاه حامی کمپین و راهنمای شروع ایمن مسیر حضوری را مشاهده کنید.', 'stage' => 6, 'checkpoint' => 'onsite-gate', 'points' => 20],
-            ['code' => 'ecopark-rewarded-fire-water-1405', 'partner' => 0, 'title' => 'توقف خوش‌طعم آب‌وآتش', 'body' => 'پیشنهاد امروز کافه اکو برای کاوشگران میدان آب‌وآتش را ببینید؛ خرید کاملاً اختیاری است.', 'stage' => null, 'checkpoint' => 'fire-water', 'points' => 25],
-            ['code' => 'ecopark-rewarded-nature-1405', 'partner' => 1, 'title' => 'انتخاب سبز فروشگاه X', 'body' => 'محصول منتخب و کم‌حجم مسیر پل طبیعت با تخفیف ویژه اعضای اکسپلوریا معرفی می‌شود.', 'stage' => null, 'checkpoint' => 'nature', 'points' => 30],
-            ['code' => 'ecopark-rewarded-book-garden-1405', 'partner' => 2, 'title' => 'پیشنهاد فرهنگی باغ کتاب', 'body' => 'حامی خانواده یک انتخاب فرهنگی کوتاه برای توقف خانوادگی این ایستگاه معرفی می‌کند.', 'stage' => null, 'checkpoint' => 'book-garden', 'points' => 25],
-            ['code' => 'ecopark-rewarded-mina-1405', 'partner' => 1, 'title' => 'یادگاری علمی گنبد مینا', 'body' => 'پیشنهاد فروشگاه عضو برای یک یادگاری علمی و تخفیف مرحله‌ای را مشاهده کنید.', 'stage' => null, 'checkpoint' => 'mina', 'points' => 30],
-            ['code' => 'ecopark-rewarded-ravaq-finish-1405', 'partner' => 1, 'title' => 'پیشنهاد پایانی رواق', 'body' => 'سبد نهایی فروشگاه‌های عضو و شرایط تقویت تخفیف پایانی را پیش از کشف گنج ببینید.', 'stage' => 9, 'checkpoint' => 'ravaq-finish', 'points' => 40],
+            ['code' => 'ecopark-rewarded-family-tip-1405', 'partner' => 2, 'title' => 'تقسیم نقش برای یک کاوش بهتر', 'body' => 'نقشه‌خوان، نشانه‌یاب و ثبت‌کننده انتخاب کنید تا هر عضو در کشف مسیر سهم واقعی داشته باشد.', 'stage' => 2, 'checkpoint' => null, 'points' => 15, 'asset' => '/images/ads/demo/family-exploration.jpg'],
+            ['code' => 'ecopark-rewarded-map-tip-1405', 'partner' => 1, 'title' => 'پیشنهاد ویژه مسیر نقشه', 'body' => 'فروشگاه X برای کاوشگرانی که نقشه را دقیق دنبال می‌کنند یک مشوق خرید مرحله‌ای آماده کرده است.', 'stage' => 3, 'checkpoint' => null, 'points' => 20, 'asset' => '/images/ads/demo/independent-cafe.jpg'],
+            ['code' => 'ecopark-rewarded-clue-tip-1405', 'partner' => 2, 'title' => 'سرنخ کوتاه برند حامی', 'body' => 'روایت کوتاه اسپانسر درباره تبدیل تکه‌های سرنخ به رمز نهایی را ببینید.', 'stage' => 4, 'checkpoint' => null, 'points' => 25, 'asset' => '/images/ads/demo/family-exploration.jpg'],
+            ['code' => 'ecopark-rewarded-pass-tip-1405', 'partner' => 0, 'title' => 'آمادگی برای حضور در اکوپارک', 'body' => 'کافه اکو نکات کوتاه مسیر حضوری و زمان مناسب توقف در واحدهای عضو را معرفی می‌کند.', 'stage' => 5, 'checkpoint' => null, 'points' => 20, 'asset' => '/images/ads/demo/independent-cafe.jpg'],
+            ['code' => 'ecopark-rewarded-gate-welcome-1405', 'partner' => 2, 'title' => 'خوش‌آمدگویی حامی مرحله حضوری', 'body' => 'پیام کوتاه حامی کمپین و راهنمای شروع ایمن مسیر حضوری را مشاهده کنید.', 'stage' => 6, 'checkpoint' => 'onsite-gate', 'points' => 20, 'asset' => '/images/ads/demo/family-exploration.jpg'],
+            ['code' => 'ecopark-rewarded-fire-water-1405', 'partner' => 0, 'title' => 'توقف خوش‌طعم آب‌وآتش', 'body' => 'پیشنهاد امروز کافه اکو برای کاوشگران میدان آب‌وآتش را ببینید؛ خرید کاملاً اختیاری است.', 'stage' => 6, 'checkpoint' => 'fire-water', 'points' => 25, 'asset' => '/images/ads/demo/independent-cafe.jpg'],
+            ['code' => 'ecopark-rewarded-nature-1405', 'partner' => 1, 'title' => 'انتخاب سبز فروشگاه X', 'body' => 'محصول منتخب و کم‌حجم مسیر پل طبیعت با تخفیف ویژه اعضای اکسپلوریا معرفی می‌شود.', 'stage' => 7, 'checkpoint' => 'nature', 'points' => 30, 'asset' => '/images/ads/demo/family-exploration.jpg'],
+            ['code' => 'ecopark-rewarded-book-garden-1405', 'partner' => 2, 'title' => 'پیشنهاد فرهنگی باغ کتاب', 'body' => 'حامی خانواده یک انتخاب فرهنگی کوتاه برای توقف خانوادگی این ایستگاه معرفی می‌کند.', 'stage' => 7, 'checkpoint' => 'book-garden', 'points' => 25, 'asset' => '/images/ads/demo/family-exploration.jpg'],
+            ['code' => 'ecopark-rewarded-mina-1405', 'partner' => 1, 'title' => 'یادگاری علمی گنبد مینا', 'body' => 'پیشنهاد فروشگاه عضو برای یک یادگاری علمی و تخفیف مرحله‌ای را مشاهده کنید.', 'stage' => 8, 'checkpoint' => 'mina', 'points' => 30, 'asset' => '/images/ads/demo/park-display.jpg'],
+            ['code' => 'ecopark-rewarded-ravaq-finish-1405', 'partner' => 1, 'title' => 'پیشنهاد پایانی رواق', 'body' => 'سبد نهایی فروشگاه‌های عضو و شرایط تقویت تخفیف پایانی را پیش از کشف گنج ببینید.', 'stage' => 9, 'checkpoint' => 'ravaq-finish', 'points' => 40, 'asset' => '/images/ads/demo/independent-cafe.jpg'],
         ];
 
         foreach ($definitions as $index => $definition) {
@@ -554,16 +555,16 @@ class PrepareStressDemoCommand extends Command
                 ],
             );
 
-            $ad->creatives()->updateOrCreate(
-                ['creative_type' => 'text_card'],
-                [
-                    'headline' => $definition['title'],
-                    'body_copy' => $definition['body'],
-                    'cta_text' => 'مشاهده اختیاری',
-                    'status' => 'approved',
-                    'metadata' => ['is_demo' => true, 'rewarded' => true],
-                ],
-            );
+            $ad->creatives()->delete();
+            $ad->creatives()->create([
+                'creative_type' => 'image',
+                'asset_url' => $definition['asset'],
+                'headline' => $definition['title'],
+                'body_copy' => $definition['body'],
+                'cta_text' => 'مشاهده اختیاری',
+                'status' => 'approved',
+                'metadata' => ['is_demo' => true, 'rewarded' => true],
+            ]);
 
             $ad->placements()->updateOrCreate(
                 ['placement_type' => 'post_mission'],
@@ -581,6 +582,95 @@ class PrepareStressDemoCommand extends Command
                 ],
             );
         }
+    }
+
+    /** @param Collection<int, PartnerAccount> $partners */
+    private function storefrontAndDisplayAds(Campaign $campaign, Collection $partners): void
+    {
+        $cafe = $partners->get(0);
+
+        if (! $cafe instanceof PartnerAccount) {
+            return;
+        }
+
+        $publicAd = AdRequest::query()->updateOrCreate(
+            ['code' => 'ecopark-public-cafe-showcase-1405'],
+            [
+                'venue_id' => $campaign->venue_id,
+                'partner_account_id' => $cafe->id,
+                'title' => 'طعم تازه در مسیر اکوپارک',
+                'body_copy' => 'کافه‌ها، رستوران‌ها و جزیره غذایی مستقل اکوپارک را در مسیر خود کشف کنید.',
+                'cta_text' => 'دیدن پیشنهاد',
+                'advertiser_type' => 'member_partner',
+                'ad_type' => 'standalone',
+                'status' => 'approved',
+                'starts_at' => now()->subDay(),
+                'ends_at' => now()->addMonths(6),
+                'impression_cap' => 20000,
+                'click_cap' => 3000,
+                'metadata' => ['is_demo' => true, 'stress_demo' => true, 'commercial_model' => 'public_storefront'],
+            ],
+        );
+        $publicAd->creatives()->delete();
+        $publicAd->creatives()->create([
+            'creative_type' => 'image',
+            'asset_url' => '/images/ads/demo/independent-cafe.jpg',
+            'headline' => $publicAd->title,
+            'body_copy' => $publicAd->body_copy,
+            'cta_text' => $publicAd->cta_text,
+            'status' => 'approved',
+            'metadata' => ['is_demo' => true],
+        ]);
+        $publicAd->placements()->updateOrCreate(
+            ['placement_type' => 'public_feed'],
+            [
+                'status' => 'approved',
+                'starts_at' => now()->subDay(),
+                'ends_at' => now()->addMonths(6),
+                'priority' => 3,
+                'metadata' => ['is_demo' => true, 'channel' => 'online'],
+            ],
+        );
+
+        $display = DisplayDevice::query()->where('code', 'stress-demo-entry-display')->first();
+        $displayAd = AdRequest::query()->updateOrCreate(
+            ['code' => 'ecopark-entry-display-campaign-1405'],
+            [
+                'venue_id' => $campaign->venue_id,
+                'partner_account_id' => $cafe->id,
+                'hub_id' => $display?->hub_id,
+                'title' => 'شروع مسیر سبز اکسپلوریا',
+                'body_copy' => 'راهنمای شروع کمپین و پیشنهادهای واحدهای عضو را از نمایشگر ورودی ببینید.',
+                'advertiser_type' => 'member_partner',
+                'ad_type' => 'display_takeover',
+                'status' => 'approved',
+                'starts_at' => now()->subDay(),
+                'ends_at' => now()->addMonths(6),
+                'impression_cap' => 50000,
+                'click_cap' => 5000,
+                'metadata' => ['is_demo' => true, 'stress_demo' => true, 'commercial_model' => 'display'],
+            ],
+        );
+        $displayAd->creatives()->delete();
+        $displayAd->creatives()->create([
+            'creative_type' => 'image',
+            'asset_url' => '/images/ads/demo/park-display.jpg',
+            'headline' => $displayAd->title,
+            'body_copy' => $displayAd->body_copy,
+            'status' => 'approved',
+            'metadata' => ['is_demo' => true],
+        ]);
+        $displayAd->placements()->updateOrCreate(
+            ['placement_type' => 'fixed_display'],
+            [
+                'display_device_id' => $display?->id,
+                'status' => $display ? 'scheduled' : 'approved',
+                'starts_at' => now()->subDay(),
+                'ends_at' => now()->addMonths(6),
+                'priority' => 2,
+                'metadata' => ['is_demo' => true, 'channel' => 'display'],
+            ],
+        );
     }
 
     /** @param Collection<int, PartnerAccount> $partners */

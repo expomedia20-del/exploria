@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\RecordStatus;
+use App\Enums\UserRole;
 use App\Models\AdEvent;
 use App\Models\AdPlacement;
 use App\Models\DisplayDevice;
@@ -19,10 +20,19 @@ class AdminDisplayOperationsService
         'mobile_display',
     ];
 
+    public function __construct(private readonly UserAccessScopeService $accessScopes) {}
+
     /** @return array<string, mixed> */
-    public function overview(): array
+    public function overview(User $user): array
     {
+        $venueIds = $this->accessScopes->venueIds($user);
+        $hubIds = $this->accessScopes->hubIds($user);
+        $isGlobal = $this->accessScopes->hasGlobalAccess($user);
+
         $displayDevices = DisplayDevice::query()
+            ->when(! $isGlobal, fn ($query) => $query->where(function ($query) use ($venueIds, $hubIds): void {
+                $query->whereIn('venue_id', $venueIds)->orWhereIn('hub_id', $hubIds);
+            }))
             ->with(['venue:id,code,name', 'hub:id,code,name', 'touchpoint:id,code,label'])
             ->withCount([
                 'placements as scheduled_placements_count' => fn ($query) => $query->where('status', 'scheduled'),
@@ -31,6 +41,9 @@ class AdminDisplayOperationsService
             ->get();
 
         $deviceEventStats = AdEvent::query()
+            ->when(! $isGlobal, fn ($query) => $query->whereHas('displayDevice', fn ($query) => $query
+                ->whereIn('venue_id', $venueIds)
+                ->orWhereIn('hub_id', $hubIds)))
             ->select('display_device_id')
             ->selectRaw('COUNT(*) as events_count')
             ->selectRaw("SUM(CASE WHEN event_type = 'impression' THEN 1 ELSE 0 END) as impressions_count")
@@ -42,6 +55,9 @@ class AdminDisplayOperationsService
             ->keyBy('display_device_id');
 
         $adEventStats = AdEvent::query()
+            ->when(! $isGlobal, fn ($query) => $query->whereHas('adRequest', fn ($query) => $query
+                ->whereIn('venue_id', $venueIds)
+                ->orWhereIn('hub_id', $hubIds)))
             ->select('ad_request_id')
             ->selectRaw('COUNT(*) as events_count')
             ->selectRaw("SUM(CASE WHEN event_type = 'impression' THEN 1 ELSE 0 END) as impressions_count")
@@ -51,6 +67,9 @@ class AdminDisplayOperationsService
             ->keyBy('ad_request_id');
 
         $scheduledPlacements = AdPlacement::query()
+            ->when(! $isGlobal, fn ($query) => $query->whereHas('displayDevice', fn ($query) => $query
+                ->whereIn('venue_id', $venueIds)
+                ->orWhereIn('hub_id', $hubIds)))
             ->with([
                 'adRequest:id,code,title,status,partner_account_id,impression_cap,click_cap',
                 'adRequest.partnerAccount:id,code,name,partner_type',
@@ -66,9 +85,13 @@ class AdminDisplayOperationsService
             ->map(fn (AdPlacement $placement): array => $this->serializePlacement($placement, $adEventStats->get($placement->ad_request_id)));
 
         $readyPlacements = AdPlacement::query()
+            ->when(! $isGlobal, fn ($query) => $query->whereHas('adRequest', fn ($query) => $query
+                ->whereIn('venue_id', $venueIds)
+                ->orWhereIn('hub_id', $hubIds)))
             ->with([
                 'adRequest:id,code,title,status,partner_account_id,hub_id,venue_id,impression_cap,click_cap',
                 'adRequest.partnerAccount:id,code,name,partner_type',
+                'adRequest.creatives:id,ad_request_id,creative_type,status',
                 'adRequest.hub:id,code,name',
                 'adRequest.venue:id,code,name',
             ])
@@ -83,6 +106,10 @@ class AdminDisplayOperationsService
         $devices = $displayDevices
             ->map(fn (DisplayDevice $device): array => $this->serializeDevice($device, $deviceEventStats->get($device->id)))
             ->values();
+        $scopedEvents = AdEvent::query()
+            ->when(! $isGlobal, fn ($query) => $query->whereHas('adRequest', fn ($query) => $query
+                ->whereIn('venue_id', $venueIds)
+                ->orWhereIn('hub_id', $hubIds)));
 
         return [
             'stats' => [
@@ -90,8 +117,8 @@ class AdminDisplayOperationsService
                 'activeDevices' => $devices->where('status', RecordStatus::Active->value)->count(),
                 'scheduledPlacements' => $scheduledPlacements->count(),
                 'readyPlacements' => $readyPlacements->count(),
-                'eventsToday' => AdEvent::query()->whereDate('occurred_at', today())->count(),
-                'impressions' => AdEvent::query()->where('event_type', 'impression')->count(),
+                'eventsToday' => (clone $scopedEvents)->whereDate('occurred_at', today())->count(),
+                'impressions' => (clone $scopedEvents)->where('event_type', 'impression')->count(),
                 'onlineDevices' => $devices->where('isOnline', true)->count(),
                 'errorDevices' => $devices->where('playbackStatus', 'error')->count(),
             ],
@@ -105,7 +132,7 @@ class AdminDisplayOperationsService
     public function schedulePlacement(User $user, AdPlacement $placement, array $data): AdPlacement
     {
         return DB::transaction(function () use ($data, $placement, $user): AdPlacement {
-            $placement->load(['adRequest:id,status,title', 'displayDevice:id,code,name,device_type']);
+            $placement->load(['adRequest:id,status,title,venue_id,hub_id', 'adRequest.creatives:id,ad_request_id,creative_type,status', 'displayDevice:id,code,name,device_type']);
 
             if (! $placement->adRequest || $placement->adRequest->status !== 'approved') {
                 throw ValidationException::withMessages([
@@ -130,6 +157,27 @@ class AdminDisplayOperationsService
                 ]);
             }
 
+            if ($placement->adRequest->venue_id !== $displayDevice->venue_id) {
+                throw ValidationException::withMessages([
+                    'display_device_id' => 'نمایشگر باید در همان مکان تبلیغ قرار داشته باشد.',
+                ]);
+            }
+
+            if ($placement->adRequest->hub_id !== null && $placement->adRequest->hub_id !== $displayDevice->hub_id) {
+                throw ValidationException::withMessages([
+                    'display_device_id' => 'نمایشگر خارج از هاب انتخاب‌شده برای تبلیغ است.',
+                ]);
+            }
+
+            $creativeType = $placement->adRequest->creatives->first()?->creative_type;
+            $supportedFormats = $displayDevice->supported_media_formats ?? [];
+
+            if (! is_string($creativeType) || ! in_array($creativeType, $supportedFormats, true)) {
+                throw ValidationException::withMessages([
+                    'display_device_id' => 'فرمت محتوای تبلیغ با قابلیت پخش این نمایشگر سازگار نیست.',
+                ]);
+            }
+
             $placement->update([
                 'display_device_id' => $displayDevice->id,
                 'status' => 'scheduled',
@@ -140,7 +188,7 @@ class AdminDisplayOperationsService
                     ...($placement->metadata ?? []),
                     'scheduled_by_user_id' => $user->id,
                     'scheduled_at' => now()->toIso8601String(),
-                    'source' => 'admin_display_operations',
+                    'source' => $user->role === UserRole::HubManager ? 'hub_manager_dashboard' : 'admin_display_operations',
                 ],
             ]);
 
@@ -245,22 +293,37 @@ class AdminDisplayOperationsService
      */
     private function serializeReadyPlacement(AdPlacement $placement, Collection $displayDevices): array
     {
+        $adRequest = $placement->adRequest;
+
+        if (! $adRequest) {
+            throw new \LogicException('Ready display placement must belong to an advertising request.');
+        }
+
         return [
             'id' => $placement->id,
             'adRequestId' => $placement->ad_request_id,
-            'adCode' => $placement->adRequest?->code,
-            'adTitle' => $placement->adRequest?->title,
-            'partnerName' => $placement->adRequest?->partnerAccount?->name,
+            'adCode' => $adRequest->code,
+            'adTitle' => $adRequest->title,
+            'partnerName' => $adRequest->partnerAccount?->name,
             'placementType' => $placement->placement_type,
             'priority' => $placement->priority,
             'startsAt' => $placement->starts_at?->toIso8601String(),
             'endsAt' => $placement->ends_at?->toIso8601String(),
-            'venueName' => $placement->adRequest?->venue?->name,
-            'hubName' => $placement->adRequest?->hub?->name,
-            'impressionCap' => $placement->adRequest?->impression_cap,
-            'clickCap' => $placement->adRequest?->click_cap,
+            'venueName' => $adRequest->venue?->name,
+            'hubName' => $adRequest->hub?->name,
+            'impressionCap' => $adRequest->impression_cap,
+            'clickCap' => $adRequest->click_cap,
             'compatibleDisplayIds' => $displayDevices
-                ->filter(fn (DisplayDevice $device): bool => $device->status === RecordStatus::Active && $device->device_type === $placement->placement_type)
+                ->filter(function (DisplayDevice $device) use ($adRequest, $placement): bool {
+                    $creativeType = $adRequest->creatives->first()?->creative_type;
+
+                    return $device->status === RecordStatus::Active
+                        && $device->device_type === $placement->placement_type
+                        && $device->venue_id === $adRequest->venue_id
+                        && ($adRequest->hub_id === null || $device->hub_id === $adRequest->hub_id)
+                        && is_string($creativeType)
+                        && in_array($creativeType, $device->supported_media_formats ?? [], true);
+                })
                 ->pluck('id')
                 ->values()
                 ->all(),

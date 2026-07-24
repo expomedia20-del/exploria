@@ -48,6 +48,9 @@ class HubManagerDashboardService
             ->get()
             ->map(function (AdRequest $adRequest): array {
                 $latestApproval = $adRequest->approvals->sortByDesc('created_at')->first();
+                $placement = $adRequest->placements
+                    ->first(fn (AdPlacement $placement): bool => in_array($placement->placement_type, ['fixed_display', 'mobile_display'], true))
+                    ?? $adRequest->placements->first();
 
                 return [
                     'id' => $adRequest->id,
@@ -58,14 +61,15 @@ class HubManagerDashboardService
                     'hubName' => $adRequest->hub?->name,
                     'venueName' => $adRequest->venue?->name,
                     'creativeType' => $adRequest->creatives->first()?->creative_type,
-                    'placementType' => $adRequest->placements->first()?->placement_type,
-                    'placementStatus' => $adRequest->placements->first()?->status,
-                    'displayDeviceId' => $adRequest->placements->first()?->display_device_id,
-                    'displayDeviceName' => $adRequest->placements->first()?->displayDevice?->name,
-                    'displayDeviceCode' => $adRequest->placements->first()?->displayDevice?->code,
-                    'startsAt' => $adRequest->placements->first()?->starts_at?->toIso8601String(),
-                    'endsAt' => $adRequest->placements->first()?->ends_at?->toIso8601String(),
-                    'priority' => $adRequest->placements->first()?->priority,
+                    'placementId' => $placement?->id,
+                    'placementType' => $placement?->placement_type,
+                    'placementStatus' => $placement?->status,
+                    'displayDeviceId' => $placement?->display_device_id,
+                    'displayDeviceName' => $placement?->displayDevice?->name,
+                    'displayDeviceCode' => $placement?->displayDevice?->code,
+                    'startsAt' => $placement?->starts_at?->toIso8601String(),
+                    'endsAt' => $placement?->ends_at?->toIso8601String(),
+                    'priority' => $placement?->priority,
                     'reviewNotes' => $latestApproval?->notes,
                     'reviewedAt' => $latestApproval?->created_at?->toIso8601String(),
                 ];
@@ -100,6 +104,7 @@ class HubManagerDashboardService
                 'name' => $device->name,
                 'deviceType' => $device->device_type,
                 'status' => $device->status->value,
+                'formats' => $device->supported_media_formats ?? [],
                 'hubName' => $device->hub?->name,
                 'venueName' => $device->venue?->name,
             ]);

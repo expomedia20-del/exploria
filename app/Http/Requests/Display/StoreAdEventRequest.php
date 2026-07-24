@@ -16,7 +16,9 @@ class StoreAdEventRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'event_id' => ['required', 'uuid'],
             'ad_request_id' => ['required', 'uuid', 'exists:ad_requests,id'],
+            'placement_id' => ['required', 'uuid', 'exists:ad_placements,id'],
             'event_type' => ['required', 'string', Rule::in(['impression', 'click', 'playback_start', 'playback_complete', 'scan'])],
             'occurred_at' => ['nullable', 'date'],
             'metadata' => ['nullable', 'array'],

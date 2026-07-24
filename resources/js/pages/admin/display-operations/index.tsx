@@ -110,6 +110,8 @@ const statusLabels: Record<string, string> = {
     idle: 'آماده',
     playing: 'در حال پخش',
     error: 'خطا',
+    paused: 'متوقف شده',
+    archived: 'بایگانی شده',
 };
 
 const placementLabels: Record<string, string> = {
@@ -298,7 +300,9 @@ export default function AdminDisplayOperationsIndex({
                                         className="mt-1 truncate text-xs text-muted-foreground"
                                         dir="ltr"
                                     >
-                                        {device.code} · {device.deviceType}
+                                        {device.code} ·{' '}
+                                        {placementLabels[device.deviceType] ??
+                                            device.deviceType}
                                     </p>
                                 </div>
                                 <p className="text-xs text-muted-foreground">
@@ -344,7 +348,7 @@ export default function AdminDisplayOperationsIndex({
                                             : '-'}
                                     </span>
                                     <span className="text-xs text-muted-foreground">
-                                        heartbeat:{' '}
+                                        آخرین ارتباط:{' '}
                                         {formatDate(device.lastHeartbeatAt)}
                                     </span>
                                     <span className="text-xs text-muted-foreground">
@@ -392,7 +396,9 @@ export default function AdminDisplayOperationsIndex({
                                                 dir="ltr"
                                             >
                                                 {placement.adCode} ·{' '}
-                                                {placement.placementType}
+                                                {placementLabels[
+                                                    placement.placementType
+                                                ] ?? placement.placementType}
                                             </p>
                                             <p className="mt-1 text-xs text-muted-foreground">
                                                 واحد/حامی مرتبط:{' '}
@@ -511,7 +517,9 @@ export default function AdminDisplayOperationsIndex({
                                         dir="ltr"
                                     >
                                         {placement.adCode} ·{' '}
-                                        {placement.placementType}
+                                        {placementLabels[
+                                            placement.placementType
+                                        ] ?? placement.placementType}
                                     </p>
                                     <p className="mt-1 text-xs text-muted-foreground">
                                         واحد/حامی مرتبط:{' '}

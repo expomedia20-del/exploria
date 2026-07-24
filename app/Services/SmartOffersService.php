@@ -298,6 +298,18 @@ class SmartOffersService
     /** @param array<string, mixed> $data */
     public function recordGameOfferEvent(array $data): AdEvent
     {
+        $existingEvent = AdEvent::query()->where('external_event_id', $data['event_id'])->first();
+
+        if ($existingEvent) {
+            if ($existingEvent->ad_request_id !== $data['ad_request_id']) {
+                throw ValidationException::withMessages([
+                    'event_id' => 'شناسه رویداد قبلاً برای تبلیغ دیگری ثبت شده است.',
+                ]);
+            }
+
+            return $existingEvent;
+        }
+
         if (! in_array($data['event_type'], self::GAME_EVENT_TYPES, true)) {
             throw ValidationException::withMessages([
                 'event_type' => 'نوع رخداد بازی معتبر نیست.',
@@ -334,6 +346,7 @@ class SmartOffersService
         return AdEvent::query()->create([
             'ad_request_id' => $adRequest->id,
             'display_device_id' => null,
+            'external_event_id' => $data['event_id'],
             'event_type' => $data['event_type'],
             'occurred_at' => now(),
             'metadata' => [

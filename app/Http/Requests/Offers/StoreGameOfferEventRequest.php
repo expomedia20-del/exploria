@@ -9,13 +9,14 @@ class StoreGameOfferEventRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->user() !== null;
     }
 
     /** @return array<string, mixed> */
     public function rules(): array
     {
         return [
+            'event_id' => ['required', 'uuid'],
             'ad_request_id' => ['required', 'uuid', 'exists:ad_requests,id'],
             'event_type' => ['required', 'string', Rule::in(['game_offer_view', 'game_offer_click', 'game_clue_complete'])],
             'mission_code' => ['nullable', 'string', 'max:96'],

@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Hub;
 
-use App\Enums\RecordStatus;
 use App\Http\Controllers\Controller;
 use App\Models\AdPlacement;
 use App\Models\AdRequest;
 use App\Models\DisplayDevice;
+use App\Services\AdminDisplayOperationsService;
 use App\Services\HubManagerAccessService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -15,7 +15,7 @@ use Illuminate\Validation\ValidationException;
 
 class HubAdScheduleController extends Controller
 {
-    public function store(Request $request, AdRequest $adRequest, HubManagerAccessService $access): JsonResponse|RedirectResponse
+    public function store(Request $request, AdRequest $adRequest, HubManagerAccessService $access, AdminDisplayOperationsService $operations): JsonResponse|RedirectResponse
     {
         $access->ensureCanScheduleAdRequest($request->user(), $adRequest);
 
@@ -33,8 +33,7 @@ class HubAdScheduleController extends Controller
         }
 
         $displayDevice = DisplayDevice::query()
-            ->where('id', $data['display_device_id'])
-            ->where('status', RecordStatus::Active)
+            ->whereKey($data['display_device_id'])
             ->firstOrFail();
 
         $access->ensureCanManageDisplayDevice($request->user(), $displayDevice);
@@ -49,21 +48,7 @@ class HubAdScheduleController extends Controller
             ]);
         }
 
-        $placement->update([
-            'display_device_id' => $displayDevice->id,
-            'status' => 'scheduled',
-            'starts_at' => $data['starts_at'] ?? $placement->starts_at,
-            'ends_at' => $data['ends_at'] ?? $placement->ends_at,
-            'priority' => $data['priority'] ?? $placement->priority,
-            'metadata' => [
-                ...($placement->metadata ?? []),
-                'scheduled_by_user_id' => $request->user()?->id,
-                'scheduled_at' => now()->toIso8601String(),
-                'source' => 'hub_manager_dashboard',
-            ],
-        ]);
-
-        $placement = $placement->fresh(['displayDevice:id,code,name,device_type']);
+        $placement = $operations->schedulePlacement($request->user(), $placement, $data);
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -75,7 +60,7 @@ class HubAdScheduleController extends Controller
         return back()->with('success', 'تبلیغ روی نمایشگر زمان‌بندی شد.');
     }
 
-    public function cancel(Request $request, AdPlacement $adPlacement, HubManagerAccessService $access): JsonResponse|RedirectResponse
+    public function cancel(Request $request, AdPlacement $adPlacement, HubManagerAccessService $access, AdminDisplayOperationsService $operations): JsonResponse|RedirectResponse
     {
         $adPlacement->load(['displayDevice:id,hub_id,code,name,device_type']);
 
@@ -87,15 +72,7 @@ class HubAdScheduleController extends Controller
 
         $access->ensureCanManageDisplayDevice($request->user(), $adPlacement->displayDevice);
 
-        $adPlacement->update([
-            'display_device_id' => null,
-            'status' => 'approved',
-            'metadata' => [
-                ...($adPlacement->metadata ?? []),
-                'cancelled_by_user_id' => $request->user()?->id,
-                'cancelled_at' => now()->toIso8601String(),
-            ],
-        ]);
+        $adPlacement = $operations->cancelPlacement($request->user(), $adPlacement);
 
         if ($request->expectsJson()) {
             return response()->json([

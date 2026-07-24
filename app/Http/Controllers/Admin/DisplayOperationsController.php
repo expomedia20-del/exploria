@@ -14,14 +14,14 @@ use Inertia\Response;
 
 class DisplayOperationsController extends Controller
 {
-    public function page(AdminDisplayOperationsService $service): Response
+    public function page(Request $request, AdminDisplayOperationsService $service): Response
     {
-        return Inertia::render('admin/display-operations/index', $service->overview());
+        return Inertia::render('admin/display-operations/index', $service->overview($request->user()));
     }
 
-    public function index(AdminDisplayOperationsService $service): JsonResponse
+    public function index(Request $request, AdminDisplayOperationsService $service): JsonResponse
     {
-        return response()->json(['status' => 'success', 'data' => $service->overview()]);
+        return response()->json(['status' => 'success', 'data' => $service->overview($request->user())]);
     }
 
     public function schedule(Request $request, AdPlacement $adPlacement, AdminDisplayOperationsService $service): JsonResponse|RedirectResponse

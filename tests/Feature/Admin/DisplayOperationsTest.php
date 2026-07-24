@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Models\AdRequest;
 use App\Models\DisplayDevice;
 use App\Models\User;
+use App\Services\DisplayDeviceTokenService;
 use Database\Seeders\PilotLocationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -73,7 +74,8 @@ class DisplayOperationsTest extends TestCase
             ->assertJsonPath('data.stats.readyPlacements', 0)
             ->assertJsonPath('data.scheduledPlacements.0.adRequestId', $adRequest->id);
 
-        $this->getJson(route('display.schedule', $displayDevice))
+        $this->withToken($this->displayToken($displayDevice))
+            ->getJson(route('display.schedule', $displayDevice))
             ->assertOk()
             ->assertJsonPath('data.items.0.adRequestId', $adRequest->id);
     }
@@ -105,7 +107,8 @@ class DisplayOperationsTest extends TestCase
         $this->assertNull($placement->fresh()->display_device_id);
         $this->assertSame('approved', $placement->fresh()->status);
 
-        $this->getJson(route('display.schedule', $displayDevice))
+        $this->withToken($this->displayToken($displayDevice))
+            ->getJson(route('display.schedule', $displayDevice))
             ->assertOk()
             ->assertJsonCount(0, 'data.items');
     }
@@ -140,14 +143,21 @@ class DisplayOperationsTest extends TestCase
 
         $placement = $adRequest->placements()->firstOrFail();
 
-        $this->postJson(route('display.heartbeat.store', $displayDevice), [
-            'playback_status' => 'playing',
-            'current_slot' => 'hero-loop-1',
-            'current_ad_request_id' => $adRequest->id,
-            'current_placement_id' => $placement->id,
-            'last_playback_result' => 'ok',
-            'metadata' => ['client_version' => 'display-demo-1'],
-        ])
+        $this->actingAs($admin)
+            ->postJson(route('admin.display-operations.placements.api.schedule', $placement), [
+                'display_device_id' => $displayDevice->id,
+            ])
+            ->assertOk();
+
+        $this->withToken($this->displayToken($displayDevice))
+            ->postJson(route('display.heartbeat.store', $displayDevice), [
+                'playback_status' => 'playing',
+                'current_slot' => 'hero-loop-1',
+                'current_ad_request_id' => $adRequest->id,
+                'current_placement_id' => $placement->id,
+                'last_playback_result' => 'ok',
+                'metadata' => ['client_version' => 'display-demo-1'],
+            ])
             ->assertOk()
             ->assertJsonPath('data.code', 'ecopark-entry-fixed-display')
             ->assertJsonPath('data.playbackStatus', 'playing');
@@ -170,10 +180,11 @@ class DisplayOperationsTest extends TestCase
         $admin = User::factory()->create(['role' => UserRole::Admin]);
         $displayDevice = DisplayDevice::query()->where('code', 'ecopark-entry-fixed-display')->firstOrFail();
 
-        $this->postJson(route('display.heartbeat.store', $displayDevice), [
-            'playback_status' => 'idle',
-            'reported_at' => now()->subMinutes(5)->toIso8601String(),
-        ])->assertOk();
+        $this->withToken($this->displayToken($displayDevice))
+            ->postJson(route('display.heartbeat.store', $displayDevice), [
+                'playback_status' => 'idle',
+                'reported_at' => now()->subMinutes(5)->toIso8601String(),
+            ])->assertOk();
 
         $this->actingAs($admin)
             ->getJson(route('admin.display-operations.index'))
@@ -201,5 +212,10 @@ class DisplayOperationsTest extends TestCase
             ->assertCreated();
 
         return AdRequest::query()->where('title', $title)->firstOrFail();
+    }
+
+    private function displayToken(DisplayDevice $device): string
+    {
+        return app(DisplayDeviceTokenService::class)->tokenFor($device);
     }
 }

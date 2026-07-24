@@ -126,6 +126,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/partner/ads', [PartnerAdvertisingController::class, 'store'])
         ->middleware('role:admin,shop_partner')
         ->name('partner.ads.store');
+    Route::patch('/partner/ads/{adRequest}', [PartnerAdvertisingController::class, 'update'])
+        ->middleware('role:admin,shop_partner')
+        ->name('partner.ads.update');
     Route::get('/sponsor/dashboard', [SponsorDashboardController::class, 'page'])
         ->middleware('role:admin,operator,sponsor')
         ->name('sponsor.dashboard');
@@ -135,6 +138,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/sponsor/ads', [SponsorDashboardController::class, 'storeAdRequest'])
         ->middleware('role:admin,operator,sponsor')
         ->name('sponsor.ads.store');
+    Route::patch('/sponsor/ads/{adRequest}', [SponsorDashboardController::class, 'updateAdRequest'])
+        ->middleware('role:admin,operator,sponsor')
+        ->name('sponsor.ads.update');
     Route::patch('/sponsor/proposals/{proposal}', [SponsorDashboardController::class, 'updateProposal'])
         ->middleware('role:admin,operator,sponsor')
         ->name('sponsor.proposals.update');
@@ -156,6 +162,7 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::get('/api/v1/display/{displayDevice:code}/schedule', [DisplayAdvertisingController::class, 'schedule'])
+    ->middleware('throttle:120,1')
     ->name('display.schedule');
 Route::post('/api/v1/display/{displayDevice:code}/events', [DisplayAdvertisingController::class, 'event'])
     ->middleware('throttle:120,1')
@@ -165,7 +172,7 @@ Route::post('/api/v1/display/{displayDevice:code}/heartbeat', [DisplayAdvertisin
     ->name('display.heartbeat.store');
 Route::get('/api/v1/offers', [SmartOffersController::class, 'index'])->name('offers.index');
 Route::post('/api/v1/offers/game-events', [SmartOffersController::class, 'storeGameEvent'])
-    ->middleware('throttle:120,1')
+    ->middleware(['auth', 'throttle:120,1'])
     ->name('offers.game-events.store');
 Route::prefix('api/v1/auth/otp')->middleware('throttle:5,1')->group(function () {
     Route::post('request', [OtpController::class, 'request'])->name('otp.request');
@@ -192,6 +199,9 @@ Route::patch('/api/v1/sponsor/proposals/{proposal}', [SponsorDashboardController
 Route::post('/api/v1/sponsor/ads', [SponsorDashboardController::class, 'storeAdRequest'])
     ->middleware(['auth', 'role:admin,operator,sponsor'])
     ->name('sponsor.ads.api.store');
+Route::patch('/api/v1/sponsor/ads/{adRequest}', [SponsorDashboardController::class, 'updateAdRequest'])
+    ->middleware(['auth', 'role:admin,operator,sponsor'])
+    ->name('sponsor.ads.api.update');
 
 Route::get('/admin/qr-codes', [QrRegistryController::class, 'page'])
     ->middleware(['auth', 'role:admin,regional_admin,operator,viewer'])
@@ -357,6 +367,18 @@ Route::post('/admin/ads/{adRequest}/approve', [AdvertisingController::class, 'ap
 Route::post('/admin/ads/{adRequest}/reject', [AdvertisingController::class, 'reject'])
     ->middleware(['auth', 'role:admin,regional_admin,operator'])
     ->name('admin.ads.reject');
+Route::post('/admin/ads/{adRequest}/request-revision', [AdvertisingController::class, 'requestRevision'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator'])
+    ->name('admin.ads.revision');
+Route::post('/admin/ads/{adRequest}/pause', [AdvertisingController::class, 'pause'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator'])
+    ->name('admin.ads.pause');
+Route::post('/admin/ads/{adRequest}/resume', [AdvertisingController::class, 'resume'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator'])
+    ->name('admin.ads.resume');
+Route::post('/admin/ads/{adRequest}/archive', [AdvertisingController::class, 'archive'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator'])
+    ->name('admin.ads.archive');
 
 Route::post('/admin/campaigns', [CampaignRegistryController::class, 'store'])
     ->middleware(['auth', 'role:admin,operator'])
@@ -507,6 +529,18 @@ Route::post('/api/v1/admin/ads/{adRequest}/approve', [AdvertisingController::cla
 Route::post('/api/v1/admin/ads/{adRequest}/reject', [AdvertisingController::class, 'reject'])
     ->middleware(['auth', 'role:admin,regional_admin,operator'])
     ->name('admin.ads.api.reject');
+Route::post('/api/v1/admin/ads/{adRequest}/request-revision', [AdvertisingController::class, 'requestRevision'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator'])
+    ->name('admin.ads.api.revision');
+Route::post('/api/v1/admin/ads/{adRequest}/pause', [AdvertisingController::class, 'pause'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator'])
+    ->name('admin.ads.api.pause');
+Route::post('/api/v1/admin/ads/{adRequest}/resume', [AdvertisingController::class, 'resume'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator'])
+    ->name('admin.ads.api.resume');
+Route::post('/api/v1/admin/ads/{adRequest}/archive', [AdvertisingController::class, 'archive'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator'])
+    ->name('admin.ads.api.archive');
 
 Route::get('/api/v1/admin/display-operations', [DisplayOperationsController::class, 'index'])
     ->middleware(['auth', 'role:admin,regional_admin,operator'])
@@ -559,6 +593,9 @@ Route::get('/api/v1/partner/ads', [PartnerAdvertisingController::class, 'index']
 Route::post('/api/v1/partner/ads', [PartnerAdvertisingController::class, 'store'])
     ->middleware(['auth', 'role:admin,shop_partner'])
     ->name('partner.ads.api.store');
+Route::patch('/api/v1/partner/ads/{adRequest}', [PartnerAdvertisingController::class, 'update'])
+    ->middleware(['auth', 'role:admin,shop_partner'])
+    ->name('partner.ads.api.update');
 Route::get('/api/v1/hub/dashboard', [HubManagerDashboardController::class, 'index'])
     ->middleware(['auth', 'role:admin,hub_manager'])
     ->name('hub.dashboard.index');

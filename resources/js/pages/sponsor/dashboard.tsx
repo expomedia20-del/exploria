@@ -83,12 +83,22 @@ type AdRequest = {
     endsAt: string | null;
     budgetAmount: number | null;
     impressionCap: number | null;
+    clickCap: number | null;
     impressionsCount: number;
     hubName: string | null;
     placementType: string | null;
     placementTypes: string[];
     creativeType: string | null;
     assetUrl: string | null;
+    rewardedPoints: number | null;
+    requiredSeconds: number | null;
+    gameStageIndex: number | null;
+    latestReview: {
+        action: string;
+        notes: string | null;
+        reviewerName: string | null;
+        createdAt: string | null;
+    } | null;
 };
 
 type Props = {
@@ -121,6 +131,8 @@ const statusLabels: Record<string, string> = {
     approved: 'تأیید شده',
     rejected: 'رد شده',
     revision_requested: 'نیازمند اصلاح',
+    paused: 'متوقف شده',
+    archived: 'بایگانی شده',
 };
 
 const proposalTypeLabels: Record<string, string> = {
@@ -150,6 +162,13 @@ const onlinePlacementOptions = [
     ['map_route', placementLabels.map_route],
     ['post_mission', placementLabels.post_mission],
 ] as const;
+
+const creativeLabels: Record<string, string> = {
+    image: 'تصویر ثابت',
+    video: 'ویدئو نمایشگر محیطی',
+    text_card: 'کارت متنی',
+    display_banner: 'بنر نمایشگر',
+};
 
 type ProposalItemForm = {
     item_type: string;
@@ -1494,17 +1513,19 @@ export default function SponsorDashboard({
                                                 defaultValue="3"
                                                 className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                             >
-                                                {[2, 3, 4, 5].map((stage) => (
-                                                    <option
-                                                        key={stage}
-                                                        value={stage}
-                                                    >
-                                                        مرحله{' '}
-                                                        {stage.toLocaleString(
-                                                            'fa-IR',
-                                                        )}
-                                                    </option>
-                                                ))}
+                                                {[2, 3, 4, 5, 6, 7, 8, 9].map(
+                                                    (stage) => (
+                                                        <option
+                                                            key={stage}
+                                                            value={stage}
+                                                        >
+                                                            مرحله{' '}
+                                                            {stage.toLocaleString(
+                                                                'fa-IR',
+                                                            )}
+                                                        </option>
+                                                    ),
+                                                )}
                                             </select>
                                             <InputError
                                                 message={
@@ -1672,7 +1693,11 @@ export default function SponsorDashboard({
                                                 dir="ltr"
                                             >
                                                 {adRequest.code} ·{' '}
-                                                {adRequest.creativeType ?? '-'}
+                                                {creativeLabels[
+                                                    adRequest.creativeType ?? ''
+                                                ] ??
+                                                    adRequest.creativeType ??
+                                                    'بدون محتوا'}
                                             </p>
                                         </div>
                                         <span className="w-fit shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
@@ -1698,6 +1723,218 @@ export default function SponsorDashboard({
                                         تا {formatDate(adRequest.endsAt)} ·
                                         نمایش: {fa(adRequest.impressionsCount)}
                                     </p>
+                                    {adRequest.assetUrl ? (
+                                        <img
+                                            src={adRequest.assetUrl}
+                                            alt={adRequest.title}
+                                            className="aspect-video w-full max-w-md rounded-md border object-cover"
+                                        />
+                                    ) : null}
+                                    {adRequest.latestReview?.notes ? (
+                                        <p className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs leading-6 text-amber-950">
+                                            توضیح آخرین بررسی:{' '}
+                                            {adRequest.latestReview.notes}
+                                        </p>
+                                    ) : null}
+                                    {[
+                                        'rejected',
+                                        'revision_requested',
+                                    ].includes(adRequest.status) ? (
+                                        <Form
+                                            action={`/sponsor/ads/${adRequest.id}`}
+                                            method="patch"
+                                            encType="multipart/form-data"
+                                            className="grid gap-3 rounded-lg border border-amber-200 bg-amber-50/60 p-3 md:grid-cols-2"
+                                            options={{ preserveScroll: true }}
+                                        >
+                                            {({ processing, errors }) => (
+                                                <>
+                                                    <input
+                                                        type="hidden"
+                                                        name="ad_type"
+                                                        value={adRequest.adType}
+                                                    />
+                                                    <input
+                                                        type="hidden"
+                                                        name="creative_type"
+                                                        value={
+                                                            adRequest.creativeType ??
+                                                            'image'
+                                                        }
+                                                    />
+                                                    <input
+                                                        type="hidden"
+                                                        name="placement_type"
+                                                        value={
+                                                            adRequest
+                                                                .placementTypes[0] ??
+                                                            adRequest.placementType ??
+                                                            'public_feed'
+                                                        }
+                                                    />
+                                                    {adRequest.placementTypes
+                                                        .slice(1)
+                                                        .map((placement) => (
+                                                            <input
+                                                                key={placement}
+                                                                type="hidden"
+                                                                name="online_placements[]"
+                                                                value={
+                                                                    placement
+                                                                }
+                                                            />
+                                                        ))}
+                                                    {adRequest.rewardedPoints ? (
+                                                        <input
+                                                            type="hidden"
+                                                            name="rewarded_points"
+                                                            value={
+                                                                adRequest.rewardedPoints
+                                                            }
+                                                        />
+                                                    ) : null}
+                                                    {adRequest.requiredSeconds ? (
+                                                        <input
+                                                            type="hidden"
+                                                            name="required_seconds"
+                                                            value={
+                                                                adRequest.requiredSeconds
+                                                            }
+                                                        />
+                                                    ) : null}
+                                                    {adRequest.gameStageIndex ? (
+                                                        <input
+                                                            type="hidden"
+                                                            name="game_stage_index"
+                                                            value={
+                                                                adRequest.gameStageIndex
+                                                            }
+                                                        />
+                                                    ) : null}
+                                                    {adRequest.startsAt ? (
+                                                        <input
+                                                            type="hidden"
+                                                            name="starts_at"
+                                                            value={
+                                                                adRequest.startsAt
+                                                            }
+                                                        />
+                                                    ) : null}
+                                                    {adRequest.endsAt ? (
+                                                        <input
+                                                            type="hidden"
+                                                            name="ends_at"
+                                                            value={
+                                                                adRequest.endsAt
+                                                            }
+                                                        />
+                                                    ) : null}
+                                                    {adRequest.budgetAmount !==
+                                                    null ? (
+                                                        <input
+                                                            type="hidden"
+                                                            name="budget_amount"
+                                                            value={
+                                                                adRequest.budgetAmount
+                                                            }
+                                                        />
+                                                    ) : null}
+                                                    {adRequest.impressionCap !==
+                                                    null ? (
+                                                        <input
+                                                            type="hidden"
+                                                            name="impression_cap"
+                                                            value={
+                                                                adRequest.impressionCap
+                                                            }
+                                                        />
+                                                    ) : null}
+                                                    {adRequest.clickCap !==
+                                                    null ? (
+                                                        <input
+                                                            type="hidden"
+                                                            name="click_cap"
+                                                            value={
+                                                                adRequest.clickCap
+                                                            }
+                                                        />
+                                                    ) : null}
+                                                    <label className="grid gap-2 text-xs font-medium">
+                                                        عنوان اصلاح‌شده
+                                                        <input
+                                                            name="title"
+                                                            defaultValue={
+                                                                adRequest.title
+                                                            }
+                                                            required
+                                                            className="h-10 rounded-md border bg-background px-3 text-sm"
+                                                        />
+                                                        <InputError
+                                                            message={
+                                                                errors.title
+                                                            }
+                                                        />
+                                                    </label>
+                                                    <label className="grid gap-2 text-xs font-medium">
+                                                        تصویر جایگزین (اختیاری)
+                                                        <input
+                                                            name="asset_file"
+                                                            type="file"
+                                                            accept=".jpg,.jpeg,.webp,image/jpeg,image/webp"
+                                                            className="h-10 rounded-md border bg-background px-3 py-2 text-xs"
+                                                        />
+                                                        <InputError
+                                                            message={
+                                                                errors.asset_file
+                                                            }
+                                                        />
+                                                    </label>
+                                                    <label className="grid gap-2 text-xs font-medium md:col-span-2">
+                                                        متن اصلاح‌شده
+                                                        <textarea
+                                                            name="body_copy"
+                                                            defaultValue={
+                                                                adRequest.bodyCopy ??
+                                                                ''
+                                                            }
+                                                            required={
+                                                                adRequest.adType ===
+                                                                'rewarded_content'
+                                                            }
+                                                            className="min-h-24 rounded-md border bg-background px-3 py-2 text-sm"
+                                                        />
+                                                        <InputError
+                                                            message={
+                                                                errors.body_copy
+                                                            }
+                                                        />
+                                                    </label>
+                                                    <input
+                                                        type="hidden"
+                                                        name="cta_text"
+                                                        value={
+                                                            adRequest.ctaText ??
+                                                            ''
+                                                        }
+                                                    />
+                                                    <input
+                                                        type="hidden"
+                                                        name="target_url"
+                                                        value={
+                                                            adRequest.targetUrl ??
+                                                            ''
+                                                        }
+                                                    />
+                                                    <Button
+                                                        disabled={processing}
+                                                        className="md:col-span-2 md:w-fit"
+                                                    >
+                                                        ارسال نسخه اصلاح‌شده
+                                                    </Button>
+                                                </>
+                                            )}
+                                        </Form>
+                                    ) : null}
                                 </article>
                             ))
                         )}

@@ -6,21 +6,26 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Display\StoreAdEventRequest;
 use App\Http\Requests\Display\StoreDisplayHeartbeatRequest;
 use App\Models\DisplayDevice;
+use App\Services\DisplayDeviceTokenService;
 use App\Services\StandaloneAdvertisingService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class DisplayAdvertisingController extends Controller
 {
-    public function schedule(DisplayDevice $displayDevice, StandaloneAdvertisingService $service): JsonResponse
+    public function schedule(Request $request, DisplayDevice $displayDevice, StandaloneAdvertisingService $service, DisplayDeviceTokenService $tokens): JsonResponse
     {
+        $tokens->ensureAuthenticated($request, $displayDevice);
+
         return response()->json([
             'status' => 'success',
             'data' => $service->displaySchedule($displayDevice),
         ]);
     }
 
-    public function event(StoreAdEventRequest $request, DisplayDevice $displayDevice, StandaloneAdvertisingService $service): JsonResponse
+    public function event(StoreAdEventRequest $request, DisplayDevice $displayDevice, StandaloneAdvertisingService $service, DisplayDeviceTokenService $tokens): JsonResponse
     {
+        $tokens->ensureAuthenticated($request, $displayDevice);
         $event = $service->recordDisplayEvent($displayDevice, $request->validated());
 
         return response()->json([
@@ -33,8 +38,9 @@ class DisplayAdvertisingController extends Controller
         ], 201);
     }
 
-    public function heartbeat(StoreDisplayHeartbeatRequest $request, DisplayDevice $displayDevice, StandaloneAdvertisingService $service): JsonResponse
+    public function heartbeat(StoreDisplayHeartbeatRequest $request, DisplayDevice $displayDevice, StandaloneAdvertisingService $service, DisplayDeviceTokenService $tokens): JsonResponse
     {
+        $tokens->ensureAuthenticated($request, $displayDevice);
         $device = $service->recordDisplayHeartbeat($displayDevice, $request->validated());
 
         return response()->json([

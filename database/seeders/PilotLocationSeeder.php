@@ -207,7 +207,7 @@ class PilotLocationSeeder extends Seeder
 
         $projectManager = User::query()->updateOrCreate(
             ['email' => 'project.manager.ecopark@example.test'],
-            ['name' => 'Ù…Ø¯ÛŒØ± Ù¾Ø±ÙˆÚ˜Ù‡ Ù…Ú©Ø§Ù†ÛŒ Ø§Ú©ÙˆÙ¾Ø§Ø±Ú©', 'password' => 'password', 'role' => UserRole::Operator],
+            ['name' => 'مدیر پروژه مکانی اکوپارک', 'password' => 'password', 'role' => UserRole::Operator],
         );
 
         UserAccessScope::query()->updateOrCreate(
@@ -284,7 +284,7 @@ class PilotLocationSeeder extends Seeder
             $partnerHub = $partnerData['hub'];
             /** @var Zone|null $partnerZone */
             $partnerZone = $partnerData['zone'] ?? null;
-            $partnerZoneId = $partnerHub?->zone_id ?? $partnerZone?->id;
+            $partnerZoneId = $partnerHub instanceof Hub ? $partnerHub->zone_id : $partnerZone?->id;
 
             $partner = PartnerAccount::query()->updateOrCreate(
                 ['venue_id' => $ecoPark->id, 'code' => $partnerData['code']],
