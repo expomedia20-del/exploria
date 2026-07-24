@@ -6,13 +6,14 @@ use App\Enums\UserRole;
 use App\Models\User;
 use App\Models\Visit;
 use App\Services\MissionFlowService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class VisitExperienceController extends Controller
 {
-    public function __invoke(Request $request, Visit $visit, MissionFlowService $missionFlow): Response
+    public function __invoke(Request $request, Visit $visit, MissionFlowService $missionFlow): Response|RedirectResponse
     {
         $user = $request->user();
 
@@ -27,6 +28,16 @@ class VisitExperienceController extends Controller
         }
 
         $visit->load(['venue', 'touchpoint.hub.zone', 'campaign', 'qrCode']);
+
+        if (
+            $user->id === $participant->id
+            && (
+                $visit->campaign?->code === 'ecopark-online-treasure-map-game-campaign'
+                || data_get($visit->campaign?->metadata, 'blueprint_code') === 'ecopark-online-treasure-map-game'
+            )
+        ) {
+            return redirect()->route('games.ecopark-treasure', ['visit' => $visit->id]);
+        }
 
         return Inertia::render('visits/show', [
             'visit' => [

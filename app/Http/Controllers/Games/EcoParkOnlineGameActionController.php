@@ -60,7 +60,7 @@ class EcoParkOnlineGameActionController extends Controller
             $request->validated('member_id'),
         );
 
-        return back()->with('success', 'نشانه با موفقیت ثبت شد.');
+        return back()->with('success', 'نقطه درست بود؛ یک تکه از رمز ثبت شد.');
     }
 
     public function submitClue(SubmitGameClueRequest $request, GameParty $party): RedirectResponse

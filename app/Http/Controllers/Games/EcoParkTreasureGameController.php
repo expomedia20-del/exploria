@@ -39,6 +39,7 @@ class EcoParkTreasureGameController extends Controller
             'game' => [
                 'campaign' => $campaign ? $this->serializeCampaign($campaign) : null,
                 'entryQr' => $campaign ? $this->entryQr($campaign) : null,
+                'onsiteGate' => $campaign ? $this->onsiteGate($campaign) : null,
                 'missionNodes' => $campaign ? $this->missionNodes($campaign) : [],
                 'gameOffers' => $offers->gameOffersForCampaign($campaign)->all(),
                 'definition' => $onlineGame->definition(),
@@ -110,6 +111,31 @@ class EcoParkTreasureGameController extends Controller
             'code' => $qr->code,
             'label' => $qr->touchpoint?->label,
             'scanUrl' => route('scan.landing', ['code' => $qr->code]),
+        ];
+    }
+
+    /** @return array<string, string|null>|null */
+    private function onsiteGate(Campaign $campaign): ?array
+    {
+        $qr = $campaign->qrCodes->first(fn ($qr): bool => $qr->isAvailableForLanding()
+            && data_get($qr->metadata, 'online_game_role') === 'onsite_gate');
+
+        if (! $qr) {
+            return null;
+        }
+
+        return [
+            'label' => $qr->touchpoint->label ?? 'دروازه حضور بازی اکسپلوریا',
+            'location' => data_get(
+                $qr->metadata,
+                'public_location',
+                'ورودی اصلی اکوپارک عباس‌آباد، کنار میز راهنمای بازدیدکنندگان',
+            ),
+            'findingInstruction' => data_get(
+                $qr->metadata,
+                'finding_instruction',
+                'استند سبز اکسپلوریا با عنوان «دروازه حضور بازی» را پیدا کنید.',
+            ),
         ];
     }
 

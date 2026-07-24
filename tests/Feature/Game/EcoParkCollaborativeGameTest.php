@@ -52,10 +52,23 @@ class EcoParkCollaborativeGameTest extends TestCase
         $leaderMember = $party->members->firstWhere('user_id', $leader->id);
         $companion = $party->members->firstWhere('member_type', 'companion');
 
+        $this->actingAs($leader)
+            ->from(route('games.ecopark-treasure'))
+            ->post(route('games.ecopark-treasure.parties.hotspots', $party), [
+                'hotspot_key' => 'book-garden',
+                'member_id' => $leaderMember->id,
+            ])
+            ->assertSessionHasErrors('hotspot_key');
+
+        $this->assertSame(
+            0,
+            count($party->progress()->where('step_index', 3)->firstOrFail()->metadata['found'] ?? []),
+        );
+
         foreach ([
-            ['mina', $leaderMember->id],
-            ['nature', $companion->id],
+            ['nature', $leaderMember->id],
             ['fire-water', $companion->id],
+            ['mina', $companion->id],
         ] as [$hotspot, $memberId]) {
             $this->actingAs($leader)->post(route('games.ecopark-treasure.parties.hotspots', $party), [
                 'hotspot_key' => $hotspot,
@@ -68,11 +81,11 @@ class EcoParkCollaborativeGameTest extends TestCase
         $this->assertSame(140, $party->score);
 
         $this->actingAs($leader)->from(route('games.ecopark-treasure'))
-            ->post(route('games.ecopark-treasure.parties.clue', $party), ['answer_key' => 'faster'])
+            ->post(route('games.ecopark-treasure.parties.clue', $party), ['answer_key' => '999'])
             ->assertSessionHasErrors('answer_key');
 
         $this->actingAs($leader)->post(route('games.ecopark-treasure.parties.clue', $party), [
-            'answer_key' => 'together',
+            'answer_key' => '۲۴۵',
         ])->assertRedirect();
 
         $this->actingAs($leader)->post(route('games.ecopark-treasure.parties.pass', $party))
@@ -136,7 +149,40 @@ class EcoParkCollaborativeGameTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->where('game.party.id', $party->id)
                 ->where('game.party.foundHotspots', ['mina', 'nature', 'fire-water'])
+                ->where('game.party.foundFragments', ['۳', '۱', '۷'])
+                ->where('game.party.nextHotspotHint', null)
                 ->where('game.party.collaborationBonusAwarded', true));
+    }
+
+    public function test_participant_dashboard_uses_single_online_game_flow_instead_of_legacy_missions(): void
+    {
+        $this->withoutVite();
+
+        $user = User::factory()->create(['role' => UserRole::Visitor]);
+        $visit = $this->visitFor($user);
+
+        $this->actingAs($user)->post(route('games.ecopark-treasure.parties.create'), [
+            'visit_id' => $visit->id,
+            'mode' => 'individual',
+        ])->assertRedirect();
+
+        $party = GameParty::query()->firstOrFail();
+
+        $this->actingAs($user)
+            ->get(route('participant.dashboard'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('onlineGame.id', $party->id)
+                ->where('onlineGame.score', 20)
+                ->where('missionFlow', null)
+                ->where(
+                    'journey.nextAction.href',
+                    route('games.ecopark-treasure', ['visit' => $visit->id]),
+                )
+                ->where(
+                    'journey.activeCampaigns.0.experienceUrl',
+                    route('games.ecopark-treasure', ['visit' => $visit->id]),
+                ));
     }
 
     public function test_onsite_gate_redeems_active_pass_once(): void

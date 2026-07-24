@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\RecordStatus;
 use App\Enums\UserRole;
 use App\Models\Campaign;
+use App\Models\GameParty;
 use App\Models\MissionInstance;
 use App\Models\RewardDefinition;
 use App\Models\RewardRedemption;
@@ -13,6 +14,7 @@ use App\Models\User;
 use App\Models\UserMissionProgress;
 use App\Models\UserReward;
 use App\Models\Visit;
+use App\Services\EcoParkOnlineGameService;
 use App\Services\MissionFlowService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -24,8 +26,11 @@ use Inertia\Response;
 
 class ParticipantDashboardController extends Controller
 {
-    public function __invoke(Request $request, MissionFlowService $missionFlow): Response
-    {
+    public function __invoke(
+        Request $request,
+        MissionFlowService $missionFlow,
+        EcoParkOnlineGameService $onlineGameService,
+    ): Response {
         $viewer = $request->user();
 
         abort_unless($viewer instanceof User, 401);
@@ -38,8 +43,25 @@ class ParticipantDashboardController extends Controller
             ->latest('occurred_at')
             ->first();
 
-        $flow = $latestVisit ? $missionFlow->visitMissionSummary($user, $latestVisit) : null;
+        $onlineParty = $latestVisit?->campaign
+            ? $onlineGameService->partyFor($user, $latestVisit->campaign)
+            : null;
+        $onlineGame = $onlineGameService->serializeParty($onlineParty, $user);
+        $flow = $latestVisit && ! $onlineGame
+            ? $missionFlow->visitMissionSummary($user, $latestVisit)
+            : null;
         $participation = $this->participationProfile($latestVisit);
+        $journey = $this->journeySummary($user, $latestVisit, $flow, $onlineParty);
+
+        if ($onlineGame) {
+            $journey['nextAction'] = [
+                'label' => $onlineGame['status'] === 'completed'
+                    ? 'مشاهده نتیجه بازی آنلاین'
+                    : 'ادامه بازی آنلاین',
+                'description' => 'همه مرحله‌های این کمپین فقط در صفحه بازی آنلاین انجام و در سرور تأیید می‌شوند.',
+                'href' => route('games.ecopark-treasure', ['visit' => $latestVisit?->id]),
+            ];
+        }
 
         return Inertia::render('participant/dashboard', [
             'participant' => [
@@ -69,7 +91,8 @@ class ParticipantDashboardController extends Controller
                 'isDemo' => (bool) data_get($latestVisit->metadata, 'is_demo', false),
             ] : null,
             'missionFlow' => $flow,
-            'journey' => $this->journeySummary($user, $latestVisit, $flow),
+            'onlineGame' => $onlineGame,
+            'journey' => $journey,
             'viewerMode' => [
                 'canPreviewVisitors' => $this->canPreviewVisitors($viewer),
                 'isAdminPreview' => $viewer->id !== $user->id,
@@ -102,8 +125,12 @@ class ParticipantDashboardController extends Controller
      * @param  array<string, mixed>|null  $flow
      * @return array<string, mixed>
      */
-    private function journeySummary(User $user, ?Visit $latestVisit, ?array $flow): array
-    {
+    private function journeySummary(
+        User $user,
+        ?Visit $latestVisit,
+        ?array $flow,
+        ?GameParty $onlineParty = null,
+    ): array {
         $earnedPoints = (int) UserMissionProgress::query()
             ->where('user_id', $user->id)
             ->where('status', 'completed')
@@ -179,13 +206,22 @@ class ParticipantDashboardController extends Controller
             ->selectRaw('mission_instances.campaign_id, count(*) as completed')
             ->groupBy('mission_instances.campaign_id')
             ->pluck('completed', 'mission_instances.campaign_id');
+        $onlineCampaignId = $onlineParty?->campaign_id;
+        $completedOnlineSteps = $onlineParty?->progress
+            ->where('status', 'completed')
+            ->count() ?? 0;
 
         $activeCampaigns = $activeCampaignModels
-            ->map(function (Campaign $campaign) use ($latestVisitsByCampaign, $missionTotalsByCampaign, $completedMissionsByCampaign): array {
+            ->map(function (Campaign $campaign) use ($latestVisitsByCampaign, $missionTotalsByCampaign, $completedMissionsByCampaign, $onlineCampaignId, $completedOnlineSteps): array {
                 $qr = $campaign->qrCodes->first(fn ($qr): bool => $qr->isAvailableForLanding());
                 $visit = $latestVisitsByCampaign->get($campaign->id);
-                $totalMissions = (int) ($missionTotalsByCampaign[$campaign->id] ?? 0);
-                $completedMissions = (int) ($completedMissionsByCampaign[$campaign->id] ?? 0);
+                $isCurrentOnlineGame = $onlineCampaignId === $campaign->id;
+                $totalMissions = $isCurrentOnlineGame
+                    ? 5
+                    : (int) ($missionTotalsByCampaign[$campaign->id] ?? 0);
+                $completedMissions = $isCurrentOnlineGame
+                    ? $completedOnlineSteps
+                    : (int) ($completedMissionsByCampaign[$campaign->id] ?? 0);
 
                 return [
                     'id' => $campaign->id,
@@ -196,6 +232,9 @@ class ParticipantDashboardController extends Controller
                     'scanUrl' => $qr ? route('scan.landing', ['code' => $qr->code]) : null,
                     'hasVisit' => $visit !== null,
                     'latestVisitId' => $visit?->id,
+                    'experienceUrl' => $isCurrentOnlineGame
+                        ? route('games.ecopark-treasure', ['visit' => $visit?->id])
+                        : ($visit ? route('visits.show', ['visit' => $visit->id]) : null),
                     'lastVisitedAt' => $visit?->occurred_at?->toIso8601String(),
                     'completedMissions' => $completedMissions,
                     'totalMissions' => $totalMissions,

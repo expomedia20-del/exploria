@@ -111,6 +111,7 @@ type Journey = {
         scanUrl: string | null;
         hasVisit: boolean;
         latestVisitId: string | null;
+        experienceUrl: string | null;
         lastVisitedAt: string | null;
         completedMissions: number;
         totalMissions: number;
@@ -187,6 +188,23 @@ type Props = {
     participant: Participant;
     latestVisit: LatestVisit | null;
     missionFlow: MissionFlow;
+    onlineGame: {
+        id: string;
+        status: 'active' | 'ready_for_visit' | 'completed';
+        mode: 'individual' | 'family' | 'team';
+        name: string | null;
+        score: number;
+        members: { displayName: string; role: string }[];
+        steps: {
+            index: number;
+            status: 'locked' | 'available' | 'completed';
+            points: number;
+        }[];
+        entryPass: {
+            code: string;
+            status: 'active' | 'redeemed' | 'expired';
+        } | null;
+    } | null;
     journey: Journey;
     viewerMode: ViewerMode;
 };
@@ -263,11 +281,19 @@ export default function ParticipantDashboard({
     participant,
     latestVisit,
     missionFlow,
+    onlineGame,
     journey,
     viewerMode,
 }: Props) {
     const { flash } = usePage<SharedProps>().props;
-    const progress = progressPercent(missionFlow);
+    const progress = onlineGame
+        ? Math.round(
+              (onlineGame.steps.filter((step) => step.status === 'completed')
+                  .length /
+                  5) *
+                  100,
+          )
+        : progressPercent(missionFlow);
     const activeCampaignsCount = journey.activeCampaigns.length;
     const rewardCatalogCount = journey.rewardCatalog.length;
     const discoveredTreasuresCount = journey.treasures.length;
@@ -353,7 +379,12 @@ export default function ParticipantDashboard({
                             ['کمپین فعال', activeCampaignsCount],
                             [
                                 'ماموریت کامل',
-                                missionFlow?.stats.completedMissions ?? 0,
+                                onlineGame
+                                    ? onlineGame.steps.filter(
+                                          (step) => step.status === 'completed',
+                                      ).length
+                                    : (missionFlow?.stats.completedMissions ??
+                                      0),
                             ],
                             ['پاداش قابل انتخاب', rewardCatalogCount],
                             ['گنج کشف‌شده', discoveredTreasuresCount],
@@ -633,7 +664,10 @@ export default function ParticipantDashboard({
                                     campaign.latestVisitId ? (
                                         <Button asChild size="sm">
                                             <Link
-                                                href={`/visits/${campaign.latestVisitId}`}
+                                                href={
+                                                    campaign.experienceUrl ??
+                                                    `/visits/${campaign.latestVisitId}`
+                                                }
                                             >
                                                 ادامه مشارکت
                                             </Link>
@@ -801,8 +835,16 @@ export default function ParticipantDashboard({
                             </p>
                             <div className="mt-4 flex flex-wrap gap-2">
                                 <Button asChild>
-                                    <Link href={`/visits/${latestVisit.id}`}>
-                                        ادامه ماموریت‌ها
+                                    <Link
+                                        href={
+                                            onlineGame
+                                                ? `/games/ecopark-treasure?visit=${latestVisit.id}`
+                                                : `/visits/${latestVisit.id}`
+                                        }
+                                    >
+                                        {onlineGame
+                                            ? 'ادامه بازی آنلاین'
+                                            : 'ادامه ماموریت‌ها'}
                                     </Link>
                                 </Button>
                                 {latestVisit.qrLandingUrl ? (
@@ -821,10 +863,45 @@ export default function ParticipantDashboard({
                             <div className="flex items-center gap-2">
                                 <Trophy className="size-5 text-amber-500" />
                                 <h2 className="font-semibold">
-                                    ماموریت‌ها و قدم بعدی
+                                    {onlineGame
+                                        ? 'بازی آنلاین و قدم بعدی'
+                                        : 'ماموریت‌ها و قدم بعدی'}
                                 </h2>
                             </div>
-                            {nextMission ? (
+                            {onlineGame ? (
+                                <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-100">
+                                    <p className="font-semibold">
+                                        {onlineGame.name ??
+                                            'مسیر بازی آنلاین اکوپارک'}
+                                    </p>
+                                    <p className="mt-2 leading-7">
+                                        این کمپین یک جریان واحد پنج‌مرحله‌ای
+                                        دارد. دکمه‌های عمومی «شروع/تکمیل
+                                        مأموریت» برای آن نمایش داده نمی‌شوند؛ هر
+                                        مرحله فقط داخل صفحه بازی و با اعتبارسنجی
+                                        خودش کامل می‌شود.
+                                    </p>
+                                    <p className="mt-2 text-xs">
+                                        اعضا:{' '}
+                                        {onlineGame.members
+                                            .map((member) => member.displayName)
+                                            .join('، ')}{' '}
+                                        · امتیاز:{' '}
+                                        {onlineGame.score.toLocaleString(
+                                            'fa-IR',
+                                        )}
+                                    </p>
+                                    <Button asChild className="mt-4">
+                                        <Link
+                                            href={`/games/ecopark-treasure?visit=${latestVisit.id}`}
+                                        >
+                                            {onlineGame.status === 'completed'
+                                                ? 'مشاهده نتیجه و مجوز'
+                                                : 'بازگشت به مرحله جاری بازی'}
+                                        </Link>
+                                    </Button>
+                                </div>
+                            ) : nextMission ? (
                                 <div className="mt-4 rounded-md bg-muted/40 p-3 text-sm">
                                     <p className="font-medium">
                                         قدم بعدی: {nextMission.title}
@@ -843,45 +920,48 @@ export default function ParticipantDashboard({
                                     </p>
                                 </div>
                             ) : null}
-                            <div className="mt-4 grid gap-2">
-                                {(missionFlow?.missions ?? []).map(
-                                    (mission) => (
-                                        <div
-                                            key={mission.id}
-                                            className="flex items-center justify-between gap-3 rounded-md border border-sidebar-border/70 p-3 text-sm dark:border-sidebar-border"
-                                        >
-                                            <div className="min-w-0">
-                                                <div className="flex items-center gap-2">
-                                                    {mission.status ===
-                                                    'completed' ? (
-                                                        <CheckCircle2 className="size-4 text-emerald-600" />
-                                                    ) : (
-                                                        <Sparkles className="size-4 text-sky-600" />
-                                                    )}
-                                                    <p className="truncate font-medium">
-                                                        {mission.title}
+                            {!onlineGame ? (
+                                <div className="mt-4 grid gap-2">
+                                    {(missionFlow?.missions ?? []).map(
+                                        (mission) => (
+                                            <div
+                                                key={mission.id}
+                                                className="flex items-center justify-between gap-3 rounded-md border border-sidebar-border/70 p-3 text-sm dark:border-sidebar-border"
+                                            >
+                                                <div className="min-w-0">
+                                                    <div className="flex items-center gap-2">
+                                                        {mission.status ===
+                                                        'completed' ? (
+                                                            <CheckCircle2 className="size-4 text-emerald-600" />
+                                                        ) : (
+                                                            <Sparkles className="size-4 text-sky-600" />
+                                                        )}
+                                                        <p className="truncate font-medium">
+                                                            {mission.title}
+                                                        </p>
+                                                    </div>
+                                                    <p className="mt-1 text-xs text-muted-foreground">
+                                                        {mission.cycleStep
+                                                            .label ??
+                                                            mission.hubName ??
+                                                            'مسیر اصلی'}
+                                                        {mission.treasureName
+                                                            ? ` · گنج: ${mission.treasureName}`
+                                                            : ''}
                                                     </p>
                                                 </div>
-                                                <p className="mt-1 text-xs text-muted-foreground">
-                                                    {mission.cycleStep.label ??
-                                                        mission.hubName ??
-                                                        'مسیر اصلی'}
-                                                    {mission.treasureName
-                                                        ? ` · گنج: ${mission.treasureName}`
-                                                        : ''}
-                                                </p>
+                                                <span className="rounded-full bg-muted px-2.5 py-1 text-xs">
+                                                    {
+                                                        missionStatusLabels[
+                                                            mission.status
+                                                        ]
+                                                    }
+                                                </span>
                                             </div>
-                                            <span className="rounded-full bg-muted px-2.5 py-1 text-xs">
-                                                {
-                                                    missionStatusLabels[
-                                                        mission.status
-                                                    ]
-                                                }
-                                            </span>
-                                        </div>
-                                    ),
-                                )}
-                            </div>
+                                        ),
+                                    )}
+                                </div>
+                            ) : null}
                         </div>
 
                         <div className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">

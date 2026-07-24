@@ -16,7 +16,7 @@ class DiscoverGameHotspotRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'hotspot_key' => ['required', Rule::in(['mina', 'nature', 'fire-water'])],
+            'hotspot_key' => ['required', Rule::in(['mina', 'nature', 'fire-water', 'book-garden', 'art-lake', 'taleghani'])],
             'member_id' => ['nullable', 'uuid'],
         ];
     }

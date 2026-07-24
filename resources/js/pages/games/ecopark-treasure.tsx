@@ -1,4 +1,4 @@
-import { Form, Head, Link } from '@inertiajs/react';
+import { Form, Head, Link, usePage } from '@inertiajs/react';
 import {
     BadgeCheck,
     Check,
@@ -17,10 +17,10 @@ import {
     Route,
     ShieldCheck,
     Sparkles,
-    Target,
     TicketCheck,
     UserRound,
     UsersRound,
+    X,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -40,14 +40,14 @@ type RouteOption = {
 type Hotspot = {
     key: string;
     title: string;
-    hint: string;
+    description: string;
     x: number;
     y: number;
 };
 
 type Clue = {
     question: string;
-    choices: { key: string; label: string }[];
+    instruction: string;
 };
 
 type StepDefinition = {
@@ -84,6 +84,8 @@ type Party = {
     }[];
     steps: PartyStep[];
     foundHotspots: string[];
+    foundFragments: string[];
+    nextHotspotHint: string | null;
     entryPass: {
         code: string;
         status: 'active' | 'redeemed' | 'expired';
@@ -118,6 +120,11 @@ type Props = {
             city: string | null;
         } | null;
         entryQr: { code: string; label: string | null; scanUrl: string } | null;
+        onsiteGate: {
+            label: string;
+            location: string | null;
+            findingInstruction: string | null;
+        } | null;
         latestVisit: { id: string; occurredAt: string; showUrl: string } | null;
         visitorState: {
             isAuthenticated: boolean;
@@ -321,7 +328,7 @@ function ParticipationSetup({ game }: { game: Props['game'] }) {
                     onClick={() => setShowJoin((value) => !value)}
                     className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-bold hover:border-emerald-500"
                 >
-                    {showJoin ? 'ساخت گروه جدید' : 'کد دعوت دارم'}
+                    {showJoin ? 'بازگشت و ساخت تیم' : 'پیوستن به تیم موجود'}
                 </button>
             </div>
 
@@ -334,6 +341,12 @@ function ParticipationSetup({ game }: { game: Props['game'] }) {
                 >
                     {({ processing, errors }) => (
                         <div className="mx-auto max-w-md">
+                            <div className="mb-5 rounded-xl border border-sky-200 bg-sky-50 p-4 text-xs leading-6 text-sky-950">
+                                این بخش فقط برای عضوی است که یک راهبر قبلاً تیم
+                                را ساخته و کد واقعی را برای او فرستاده است. اگر
+                                هنوز کدی نگرفته‌اید، «بازگشت و ساخت تیم» را
+                                بزنید؛ حالت تیمی را انتخاب کنید و تیم را بسازید.
+                            </div>
                             <label
                                 htmlFor="invite_code"
                                 className="text-sm font-bold"
@@ -345,15 +358,19 @@ function ParticipationSetup({ game }: { game: Props['game'] }) {
                                 name="invite_code"
                                 maxLength={6}
                                 dir="ltr"
-                                placeholder="AB12CD"
+                                placeholder="کد دریافتی"
                                 className="mt-2 h-12 w-full rounded-xl border border-slate-300 px-4 text-center text-lg font-black tracking-[0.25em] uppercase outline-none focus:border-emerald-500"
                             />
+                            <p className="mt-2 text-[11px] leading-5 text-slate-500">
+                                این کد شش‌حرفی نمونه یا پیش‌فرض ندارد و فقط پس
+                                از ساخت یک تیم واقعی تولید می‌شود.
+                            </p>
                             <FieldError message={errors.invite_code} />
                             <SubmitButton
                                 processing={processing}
                                 className="mt-4 w-full"
                             >
-                                پیوستن به تیم
+                                پیوستن با کد تیم موجود
                             </SubmitButton>
                         </div>
                     )}
@@ -526,21 +543,31 @@ function RouteChallenge({
 }
 
 function MapChallenge({ game, party }: { game: Props['game']; party: Party }) {
+    const { errors: pageErrors } = usePage<{
+        errors: Record<string, string>;
+    }>().props;
     const [contributor, setContributor] = useState(
         party.members.find((member) => member.isViewer)?.id ??
             party.members[0]?.id,
     );
+    const currentClueNumber = Math.min(party.foundFragments.length + 1, 3);
 
     return (
         <div className="grid gap-5 lg:grid-cols-[1fr_18rem]">
-            <div className="relative min-h-[25rem] overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-950 via-teal-900 to-slate-950 p-5 text-white shadow-inner">
+            <div className="relative min-h-[32rem] overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-950 via-teal-900 to-slate-950 p-5 text-white shadow-inner">
                 <div className="absolute inset-0 [background-image:radial-gradient(circle_at_center,white_1px,transparent_1px)] [background-size:24px_24px] opacity-20" />
                 <div className="relative z-10 flex items-start justify-between">
                     <div>
-                        <p className="text-xs text-emerald-200">نقشه آنلاین</p>
+                        <p className="text-xs font-bold text-emerald-200">
+                            مرحله کاملاً آنلاین
+                        </p>
                         <h3 className="mt-1 text-xl font-black">
-                            سه نشانه پنهان را پیدا کنید
+                            پاسخ راهنمای جاری را روی نقشه بزنید
                         </h3>
+                        <p className="mt-2 max-w-xl text-xs leading-6 text-slate-200">
+                            لازم نیست اکنون در پارک باشید. از میان شش مکان فقط
+                            نقطه‌ای را انتخاب کنید که با متن راهنما تطبیق دارد.
+                        </p>
                     </div>
                     <span className="rounded-full bg-white/10 px-3 py-1 text-xs backdrop-blur">
                         {faNumber(party.foundHotspots.length)} از ۳
@@ -579,23 +606,29 @@ function MapChallenge({ game, party }: { game: Props['game']; party: Party }) {
                                     <button
                                         type="submit"
                                         disabled={processing || found}
-                                        aria-label={
-                                            found
-                                                ? `${hotspot.title} پیدا شد`
-                                                : hotspot.hint
-                                        }
-                                        className={`grid size-14 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-4 shadow-xl transition ${
+                                        aria-label={`${hotspot.title}: ${hotspot.description}`}
+                                        className={`group grid min-h-16 w-24 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-2xl border-2 px-2 py-2 text-center shadow-xl transition ${
                                             found
                                                 ? 'border-emerald-200 bg-emerald-500'
-                                                : 'animate-pulse border-amber-200 bg-amber-400 text-slate-950 hover:scale-110'
+                                                : 'border-white/40 bg-slate-950/80 hover:scale-105 hover:border-amber-300 hover:bg-amber-300 hover:text-slate-950'
                                         }`}
                                     >
                                         {processing ? (
                                             <LoaderCircle className="size-5 animate-spin" />
                                         ) : found ? (
-                                            <Check className="size-6" />
+                                            <>
+                                                <Check className="size-5" />
+                                                <span className="text-[10px] font-bold">
+                                                    کشف شد
+                                                </span>
+                                            </>
                                         ) : (
-                                            <Target className="size-6" />
+                                            <>
+                                                <MapPin className="size-4" />
+                                                <span className="text-[10px] leading-4 font-bold">
+                                                    {hotspot.title}
+                                                </span>
+                                            </>
                                         )}
                                     </button>
                                 </>
@@ -607,6 +640,19 @@ function MapChallenge({ game, party }: { game: Props['game']; party: Party }) {
             </div>
 
             <aside className="space-y-3">
+                <div className="rounded-2xl border-2 border-amber-300 bg-amber-50 p-4 text-slate-950">
+                    <span className="text-xs font-bold text-amber-800">
+                        راهنمای {faNumber(currentClueNumber)} از ۳
+                    </span>
+                    <p className="mt-2 text-sm leading-7 font-bold">
+                        {party.nextHotspotHint}
+                    </p>
+                    <p className="mt-3 text-[11px] leading-5 text-amber-900">
+                        انتخاب نادرست فقط یک پیام راهنما نشان می‌دهد و شما را به
+                        مرحله بعد نمی‌برد.
+                    </p>
+                    <FieldError message={pageErrors.hotspot_key} />
+                </div>
                 {party.mode === 'family' ? (
                     <label className="block rounded-2xl border border-violet-200 bg-violet-50 p-4 text-sm font-bold">
                         چه کسی این نشانه را پیدا کرد؟
@@ -625,30 +671,27 @@ function MapChallenge({ game, party }: { game: Props['game']; party: Party }) {
                         </select>
                     </label>
                 ) : null}
-                {game.definition.hotspots.map((hotspot) => {
-                    const found = party.foundHotspots.includes(hotspot.key);
-
-                    return (
-                        <div
-                            key={hotspot.key}
-                            className={`rounded-2xl border p-4 ${found ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200 bg-white'}`}
-                        >
-                            <div className="flex items-center gap-2">
-                                {found ? (
-                                    <BadgeCheck className="size-5 text-emerald-700" />
-                                ) : (
-                                    <Compass className="size-5 text-amber-600" />
-                                )}
-                                <strong>
-                                    {found ? hotspot.title : 'نشانه پنهان'}
-                                </strong>
-                            </div>
-                            <p className="mt-2 text-xs leading-6 text-slate-600">
-                                {found ? 'این تکه سرنخ ثبت شد.' : hotspot.hint}
-                            </p>
-                        </div>
-                    );
-                })}
+                <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                    <strong className="text-sm">تکه‌های رمز شما</strong>
+                    <div className="mt-3 flex gap-2" dir="ltr">
+                        {[0, 1, 2].map((index) => (
+                            <span
+                                key={index}
+                                className={`grid size-11 place-items-center rounded-xl text-lg font-black ${
+                                    party.foundFragments[index]
+                                        ? 'bg-emerald-100 text-emerald-900'
+                                        : 'bg-slate-100 text-slate-400'
+                                }`}
+                            >
+                                {party.foundFragments[index] ?? '؟'}
+                            </span>
+                        ))}
+                    </div>
+                    <p className="mt-3 text-[11px] leading-5 text-slate-500">
+                        ترتیب رقم‌ها را نگه دارید؛ در مرحله بعد به آن‌ها نیاز
+                        دارید.
+                    </p>
+                </div>
                 {party.mode !== 'individual' ? (
                     <p className="rounded-2xl bg-amber-50 p-3 text-xs leading-6 text-amber-900">
                         اگر حداقل دو عضو در کشف‌ها سهیم باشند، ۳۰ امتیاز همکاری
@@ -674,39 +717,54 @@ function ClueChallenge({ game, party }: { game: Props['game']; party: Party }) {
                 <h3 className="mt-2 text-lg leading-8 font-black">
                     {clue.question}
                 </h3>
+                <p className="mt-2 text-sm leading-7 text-slate-300">
+                    {clue.instruction}
+                </p>
             </div>
-            <div className="mt-4 grid gap-3">
-                {clue.choices.map((choice) => (
-                    <Form
-                        key={choice.key}
-                        action={`/games/ecopark-treasure/parties/${party.id}/clue`}
-                        method="post"
-                        options={{ preserveScroll: true }}
-                    >
-                        {({ processing, errors }) => (
-                            <>
-                                <input
-                                    type="hidden"
-                                    name="answer_key"
-                                    value={choice.key}
-                                />
-                                <button
-                                    type="submit"
-                                    disabled={processing}
-                                    className="flex min-h-14 w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 text-right text-sm font-bold transition hover:border-emerald-500 hover:bg-emerald-50 disabled:opacity-60"
-                                >
-                                    <span>{choice.label}</span>
-                                    {processing ? (
-                                        <LoaderCircle className="size-4 animate-spin" />
-                                    ) : (
-                                        <ChevronLeft className="size-4" />
-                                    )}
-                                </button>
-                                <FieldError message={errors.answer_key} />
-                            </>
-                        )}
-                    </Form>
-                ))}
+            <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-5">
+                <div className="flex justify-center gap-2" dir="ltr">
+                    {party.foundFragments.map((fragment, index) => (
+                        <span
+                            key={`${fragment}-${index}`}
+                            className="grid size-12 place-items-center rounded-xl bg-emerald-100 text-xl font-black text-emerald-900"
+                        >
+                            {fragment}
+                        </span>
+                    ))}
+                </div>
+                <Form
+                    action={`/games/ecopark-treasure/parties/${party.id}/clue`}
+                    method="post"
+                    options={{ preserveScroll: true }}
+                    className="mx-auto mt-5 max-w-md"
+                >
+                    {({ processing, errors }) => (
+                        <>
+                            <label
+                                htmlFor="answer_key"
+                                className="block text-sm font-bold"
+                            >
+                                رمز سه‌رقمی
+                            </label>
+                            <input
+                                id="answer_key"
+                                name="answer_key"
+                                inputMode="numeric"
+                                maxLength={3}
+                                autoComplete="off"
+                                dir="ltr"
+                                className="mt-2 h-14 w-full rounded-xl border border-slate-300 px-4 text-center text-2xl font-black tracking-[0.35em] outline-none focus:border-emerald-500"
+                            />
+                            <FieldError message={errors.answer_key} />
+                            <SubmitButton
+                                processing={processing}
+                                className="mt-4 w-full"
+                            >
+                                بررسی رمز و ادامه
+                            </SubmitButton>
+                        </>
+                    )}
+                </Form>
             </div>
         </div>
     );
@@ -747,9 +805,17 @@ function PassChallenge({ party }: { party: Party }) {
     );
 }
 
-function EntryPass({ party }: { party: Party }) {
+function EntryPass({ game, party }: { game: Props['game']; party: Party }) {
     const pass = party.entryPass;
     const [copied, setCopied] = useState(false);
+    const modeTitle =
+        game.definition.modes.find((mode) => mode.key === party.mode)?.title ??
+        party.mode;
+    const routeTitle =
+        game.definition.routes.find(
+            (routeOption) => routeOption.key === party.routeKey,
+        )?.title ?? 'مسیر ثبت‌شده';
+    const redeemed = pass?.status === 'redeemed';
 
     if (!pass) {
         return null;
@@ -761,18 +827,56 @@ function EntryPass({ party }: { party: Party }) {
                 <div>
                     <span className="inline-flex items-center gap-2 rounded-full bg-emerald-400/15 px-3 py-1 text-xs font-bold text-emerald-300">
                         <BadgeCheck className="size-4" />
-                        مرحله آنلاین تکمیل شد
+                        {redeemed
+                            ? 'حضور در اکوپارک تأیید شد'
+                            : 'بخش آنلاین تکمیل شد'}
                     </span>
                     <h2 className="mt-4 text-2xl font-black">
-                        مجوز حضور اکوپارک
+                        {redeemed
+                            ? 'تجربه این کمپین کامل شد'
+                            : `مجوز ${modeTitle} حضور اکوپارک`}
                     </h2>
                     <p className="mt-2 text-sm leading-7 text-slate-300">
-                        در محل، QR با عنوان «دروازه حضور بازی» را اسکن کنید.
-                        امتیاز حضوری پس از همان اسکن معتبر ثبت می‌شود.
+                        {redeemed
+                            ? 'اسکن دروازه ثبت شده و ۱۵۰ امتیاز حضور به امتیاز مشترک اضافه شده است. نتیجه و پاداش‌ها در «پنل من» باقی می‌مانند.'
+                            : 'این کد، شماره پیگیری مجوز شماست و قرار نیست آن را اسکن کنید. برای تأیید حضور باید QR نصب‌شده روی استند اکسپلوریا را در محل اسکن کنید.'}
                     </p>
+                    {redeemed ? (
+                        <p className="mt-3 rounded-xl bg-white/10 p-3 text-xs leading-6 text-slate-200">
+                            شرکت امتیازدار دوباره با همین حساب در همین دوره ممکن
+                            نیست. امکان ساخت مسیر جدید با آغاز دوره بعدی فعال
+                            می‌شود؛ حالت تمرینیِ بدون امتیاز فعلاً تعریف نشده
+                            است.
+                        </p>
+                    ) : null}
+                    <div className="mt-5 grid gap-2 text-xs text-slate-300 sm:grid-cols-2">
+                        <p>
+                            <strong className="text-white">نام مسیر: </strong>
+                            {routeTitle}
+                        </p>
+                        <p>
+                            <strong className="text-white">نام گروه: </strong>
+                            {party.name ?? 'بازیکن انفرادی'}
+                        </p>
+                        <p>
+                            <strong className="text-white">
+                                تعداد نفرات:{' '}
+                            </strong>
+                            {faNumber(party.members.length)}
+                        </p>
+                        <p>
+                            <strong className="text-white">اعضا: </strong>
+                            {party.members
+                                .map((member) => member.displayName)
+                                .join('، ')}
+                        </p>
+                    </div>
                 </div>
                 <div className="rounded-2xl bg-white p-5 text-center text-slate-950">
-                    <QrCode className="mx-auto size-12" />
+                    <TicketCheck className="mx-auto size-12" />
+                    <p className="mt-2 text-xs font-bold text-slate-500">
+                        شماره پیگیری مجوز
+                    </p>
                     <p className="mt-3 font-mono text-xl font-black tracking-wider">
                         {pass.code}
                     </p>
@@ -793,6 +897,41 @@ function EntryPass({ party }: { party: Party }) {
                     </button>
                 </div>
             </div>
+            {!redeemed ? (
+                <div className="border-t border-white/10 bg-white/5 p-6 sm:p-8">
+                    <h3 className="font-black">حالا دقیقاً چه کار کنید؟</h3>
+                    <ol className="mt-4 grid gap-3 text-sm leading-7 text-slate-200">
+                        <li>
+                            <strong className="text-white">
+                                ۱. به محل بروید:{' '}
+                            </strong>
+                            {game.onsiteGate?.location ??
+                                'ورودی اصلی اکوپارک عباس‌آباد، کنار میز راهنما'}
+                        </li>
+                        <li>
+                            <strong className="text-white">
+                                ۲. استند را پیدا کنید:{' '}
+                            </strong>
+                            {game.onsiteGate?.findingInstruction ??
+                                'استند سبز با عنوان «دروازه حضور بازی اکسپلوریا» را پیدا کنید.'}
+                        </li>
+                        <li>
+                            <strong className="text-white">
+                                ۳. QR همان استند را اسکن کنید:{' '}
+                            </strong>
+                            QR شروع بازی را دوباره اسکن نکنید. با همین حساب وارد
+                            بمانید؛ در حالت تیمی یا خانوادگی، یک اسکن توسط یکی
+                            از اعضای ثبت‌شده برای مجوز مشترک کافی است.
+                        </li>
+                        <li>
+                            <strong className="text-white">۴. نتیجه: </strong>
+                            مجوز یک‌بار مصرف می‌شود، ۱۵۰ امتیاز حضور ثبت می‌شود
+                            و این کمپین پایان می‌یابد. در نسخه فعلی، مرحله حضوری
+                            دیگری پس از آن تعریف نشده است.
+                        </li>
+                    </ol>
+                </div>
+            ) : null}
             <div className="border-t border-white/10 bg-white/5 px-6 py-4 text-xs text-slate-300 sm:px-8">
                 اعتبار تا{' '}
                 {new Intl.DateTimeFormat('fa-IR', {
@@ -800,7 +939,12 @@ function EntryPass({ party }: { party: Party }) {
                     timeStyle: 'short',
                 }).format(new Date(pass.expiresAt))}
                 {' • '}
-                وضعیت: {pass.status === 'redeemed' ? 'مصرف‌شده' : 'فعال'}
+                وضعیت:{' '}
+                {pass.status === 'redeemed'
+                    ? 'مصرف‌شده'
+                    : pass.status === 'expired'
+                      ? 'منقضی‌شده'
+                      : 'فعال'}
             </div>
         </div>
     );
@@ -811,6 +955,7 @@ function SponsorBonus({ party, offer }: { party: Party; offer: GameOffer }) {
         (item) => item.adRequestId === offer.adRequestId,
     );
     const [remaining, setRemaining] = useState(10);
+    const [isOpen, setIsOpen] = useState(claim?.status === 'started');
 
     useEffect(() => {
         if (claim?.status !== 'started') {
@@ -835,89 +980,172 @@ function SponsorBonus({ party, offer }: { party: Party; offer: GameOffer }) {
     }
 
     return (
-        <aside className="rounded-3xl border border-amber-200 bg-amber-50 p-5">
-            <div className="flex items-start gap-3">
-                <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-amber-200 text-amber-900">
-                    <Gift className="size-5" />
-                </span>
-                <div>
-                    <span className="text-[11px] font-bold text-amber-800">
-                        کاملاً اختیاری • ۳۰ امتیاز اضافه
+        <>
+            <aside className="rounded-3xl border border-amber-200 bg-amber-50 p-5">
+                <div className="flex items-start gap-3">
+                    <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-amber-200 text-amber-900">
+                        <Gift className="size-5" />
                     </span>
-                    <h3 className="mt-1 font-black">{offer.title}</h3>
-                    <p className="mt-1 text-xs text-slate-600">
-                        {offer.partnerName}
-                    </p>
+                    <div>
+                        <span className="text-[11px] font-bold text-amber-800">
+                            محتوای تبلیغاتی • کاملاً اختیاری • ۳۰ امتیاز
+                        </span>
+                        <h3 className="mt-1 font-black">{offer.title}</h3>
+                        <p className="mt-1 text-xs text-slate-600">
+                            {offer.partnerName}
+                        </p>
+                    </div>
                 </div>
-            </div>
-            <p className="mt-4 text-sm leading-7 text-slate-700">
-                {offer.bodyCopy}
-            </p>
-            {claim?.status === 'completed' ? (
-                <p className="mt-4 flex items-center gap-2 rounded-xl bg-emerald-100 p-3 text-sm font-bold text-emerald-900">
-                    <BadgeCheck className="size-5" />
-                    امتیاز اختیاری دریافت شد
+                <p className="mt-4 text-sm leading-7 text-slate-700">
+                    با انتخاب مشاهده، محتوای واقعی اسپانسر در یک پنجره جدا نمایش
+                    داده می‌شود. بستن آن هیچ اثری بر مسیر اصلی ندارد.
                 </p>
-            ) : claim?.status === 'started' ? (
-                <Form
-                    action={`/games/ecopark-treasure/parties/${party.id}/sponsor-bonus/complete`}
-                    method="post"
-                    options={{ preserveScroll: true }}
-                    className="mt-4"
+                {claim?.status === 'completed' ? (
+                    <p className="mt-4 flex items-center gap-2 rounded-xl bg-emerald-100 p-3 text-sm font-bold text-emerald-900">
+                        <BadgeCheck className="size-5" />
+                        امتیاز اختیاری دریافت شد
+                    </p>
+                ) : claim?.status === 'started' ? (
+                    <button
+                        type="button"
+                        onClick={() => setIsOpen(true)}
+                        className="mt-4 w-full rounded-xl border border-amber-800 px-4 py-3 text-sm font-bold text-amber-900"
+                    >
+                        ادامه مشاهده پیشنهاد
+                    </button>
+                ) : (
+                    <Form
+                        action={`/games/ecopark-treasure/parties/${party.id}/sponsor-bonus/start`}
+                        method="post"
+                        options={{ preserveScroll: true }}
+                        className="mt-4"
+                    >
+                        {({ processing, errors }) => (
+                            <>
+                                <input
+                                    type="hidden"
+                                    name="ad_request_id"
+                                    value={offer.adRequestId ?? ''}
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={processing}
+                                    className="w-full rounded-xl border border-amber-800 px-4 py-3 text-sm font-bold text-amber-900 disabled:opacity-60"
+                                >
+                                    {processing
+                                        ? 'در حال بازکردن...'
+                                        : 'مشاهده اختیاری پیشنهاد'}
+                                </button>
+                                <FieldError message={errors.ad_request_id} />
+                            </>
+                        )}
+                    </Form>
+                )}
+                <p className="mt-3 text-[11px] leading-5 text-amber-900">
+                    رد کردن این بخش هیچ مرحله‌ای را قفل نمی‌کند و از امتیاز اصلی
+                    شما کم نمی‌شود.
+                </p>
+            </aside>
+
+            {isOpen && claim?.status === 'started' ? (
+                <div
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label={`پیشنهاد اختیاری ${offer.title}`}
+                    className="fixed inset-0 z-50 grid place-items-center bg-slate-950/75 p-4 backdrop-blur-sm"
                 >
-                    {({ processing, errors }) => (
-                        <>
-                            <input
-                                type="hidden"
-                                name="ad_request_id"
-                                value={offer.adRequestId ?? ''}
-                            />
-                            <SubmitButton
-                                processing={processing}
-                                disabled={remaining > 0}
-                                className="w-full"
-                            >
-                                {remaining > 0
-                                    ? `${faNumber(remaining)} ثانیه تا دریافت`
-                                    : 'دریافت ۳۰ امتیاز'}
-                            </SubmitButton>
-                            <FieldError message={errors.ad_request_id} />
-                        </>
-                    )}
-                </Form>
-            ) : (
-                <Form
-                    action={`/games/ecopark-treasure/parties/${party.id}/sponsor-bonus/start`}
-                    method="post"
-                    options={{ preserveScroll: true }}
-                    className="mt-4"
-                >
-                    {({ processing, errors }) => (
-                        <>
-                            <input
-                                type="hidden"
-                                name="ad_request_id"
-                                value={offer.adRequestId ?? ''}
-                            />
+                    <div className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-3xl bg-white shadow-2xl">
+                        <header className="flex items-start justify-between gap-4 border-b border-slate-100 p-5">
+                            <div>
+                                <p className="text-xs font-bold text-amber-700">
+                                    محتوای تبلیغاتی اختیاری
+                                </p>
+                                <h2 className="mt-1 text-xl font-black">
+                                    {offer.title}
+                                </h2>
+                                <p className="mt-1 text-xs text-slate-500">
+                                    ارائه‌شده توسط{' '}
+                                    {offer.partnerName ?? 'اسپانسر کمپین'}
+                                </p>
+                            </div>
                             <button
-                                type="submit"
-                                disabled={processing}
-                                className="w-full rounded-xl border border-amber-800 px-4 py-3 text-sm font-bold text-amber-900 disabled:opacity-60"
+                                type="button"
+                                onClick={() => setIsOpen(false)}
+                                aria-label="بستن پیشنهاد"
+                                className="grid size-10 shrink-0 place-items-center rounded-full bg-slate-100 hover:bg-slate-200"
                             >
-                                {processing
-                                    ? 'در حال آغاز...'
-                                    : 'مشاهده اختیاری پیشنهاد'}
+                                <X className="size-5" />
                             </button>
-                            <FieldError message={errors.ad_request_id} />
-                        </>
-                    )}
-                </Form>
-            )}
-            <p className="mt-3 text-[11px] leading-5 text-amber-900">
-                رد کردن این بخش هیچ مرحله‌ای را قفل نمی‌کند و از امتیاز اصلی شما
-                کم نمی‌شود.
-            </p>
-        </aside>
+                        </header>
+                        {offer.assetUrl ? (
+                            <img
+                                src={offer.assetUrl}
+                                alt=""
+                                className="aspect-video w-full bg-slate-100 object-cover"
+                            />
+                        ) : (
+                            <div className="grid aspect-video place-items-center bg-gradient-to-br from-amber-200 via-orange-100 to-emerald-100">
+                                <Gift className="size-16 text-amber-800" />
+                            </div>
+                        )}
+                        <div className="p-5">
+                            <p className="text-sm leading-8 text-slate-700">
+                                {offer.bodyCopy ??
+                                    'پیشنهاد کوتاه اسپانسر این کمپین را مشاهده می‌کنید.'}
+                            </p>
+                            <div className="mt-5 h-2 overflow-hidden rounded-full bg-slate-100">
+                                <div
+                                    className="h-full bg-emerald-600 transition-all"
+                                    style={{
+                                        width: `${Math.min(100, ((10 - remaining) / 10) * 100)}%`,
+                                    }}
+                                />
+                            </div>
+                            <p className="mt-2 text-center text-xs text-slate-500">
+                                {remaining > 0
+                                    ? `${faNumber(remaining)} ثانیه تا فعال شدن امتیاز`
+                                    : 'مشاهده کامل شد؛ می‌توانید امتیاز را دریافت کنید.'}
+                            </p>
+                            <Form
+                                action={`/games/ecopark-treasure/parties/${party.id}/sponsor-bonus/complete`}
+                                method="post"
+                                options={{ preserveScroll: true }}
+                                className="mt-4"
+                            >
+                                {({ processing, errors }) => (
+                                    <>
+                                        <input
+                                            type="hidden"
+                                            name="ad_request_id"
+                                            value={offer.adRequestId ?? ''}
+                                        />
+                                        <SubmitButton
+                                            processing={processing}
+                                            disabled={remaining > 0}
+                                            className="w-full"
+                                        >
+                                            {remaining > 0
+                                                ? 'در حال مشاهده'
+                                                : 'دریافت ۳۰ امتیاز'}
+                                        </SubmitButton>
+                                        <FieldError
+                                            message={errors.ad_request_id}
+                                        />
+                                    </>
+                                )}
+                            </Form>
+                            <button
+                                type="button"
+                                onClick={() => setIsOpen(false)}
+                                className="mt-3 w-full py-2 text-xs font-bold text-slate-500"
+                            >
+                                فعلاً رد می‌کنم؛ مسیر اصلی باز می‌ماند
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
+        </>
     );
 }
 
@@ -982,13 +1210,23 @@ function ActiveGame({ game, party }: { game: Props['game']; party: Party }) {
                 ) : null}
 
                 {sponsorOffer ? (
-                    <SponsorBonus party={party} offer={sponsorOffer} />
+                    <SponsorBonus
+                        key={`${sponsorOffer.id}-${
+                            party.bonusClaims.find(
+                                (claim) =>
+                                    claim.adRequestId ===
+                                    sponsorOffer.adRequestId,
+                            )?.status ?? 'idle'
+                        }`}
+                        party={party}
+                        offer={sponsorOffer}
+                    />
                 ) : null}
             </aside>
 
             <main className="min-w-0 space-y-5">
                 {party.entryPass ? (
-                    <EntryPass party={party} />
+                    <EntryPass game={game} party={party} />
                 ) : currentDefinition ? (
                     <section className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-xl shadow-slate-950/5 sm:p-8">
                         <header className="border-b border-slate-100 pb-5">
@@ -1040,7 +1278,7 @@ function ActiveGame({ game, party }: { game: Props['game']; party: Party }) {
                         </div>
                     </section>
                 ) : (
-                    <EntryPass party={party} />
+                    <EntryPass game={game} party={party} />
                 )}
 
                 <section className="rounded-3xl border border-slate-200 bg-white p-5">

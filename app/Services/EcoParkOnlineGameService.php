@@ -30,7 +30,25 @@ class EcoParkOnlineGameService
 
     private const ROUTE_KEYS = ['quick', 'family', 'explorer'];
 
-    private const HOTSPOT_KEYS = ['mina', 'nature', 'fire-water'];
+    private const HOTSPOT_KEYS = ['mina', 'nature', 'fire-water', 'book-garden', 'art-lake', 'taleghani'];
+
+    private const ROUTE_PUZZLES = [
+        'quick' => [
+            ['key' => 'mina', 'fragment' => '۳', 'hint' => 'نقطه‌ای با سقف نیم‌کره‌ای و روایت آسمان را روی نقشه پیدا کنید.'],
+            ['key' => 'nature', 'fragment' => '۱', 'hint' => 'سازه‌ای سه‌طبقه که دو بوستان را به هم پیوند می‌دهد، کدام است؟'],
+            ['key' => 'fire-water', 'fragment' => '۷', 'hint' => 'میدانی را پیدا کنید که دو عنصر متضاد در نامش کنار هم آمده‌اند.'],
+        ],
+        'family' => [
+            ['key' => 'nature', 'fragment' => '۲', 'hint' => 'نقطه‌ای را انتخاب کنید که خانواده می‌تواند از روی آن میان دو بوستان حرکت کند.'],
+            ['key' => 'fire-water', 'fragment' => '۴', 'hint' => 'کدام میدان، آب و شعله را در یک نام مشترک کنار هم می‌آورد؟'],
+            ['key' => 'mina', 'fragment' => '۵', 'hint' => 'حالا سراغ گنبدی بروید که داستان آسمان و ستاره‌ها را روایت می‌کند.'],
+        ],
+        'explorer' => [
+            ['key' => 'fire-water', 'fragment' => '۶', 'hint' => 'از میان نشانه‌ها، محل هم‌نشینی دو عنصر مخالف را پیدا کنید.'],
+            ['key' => 'mina', 'fragment' => '۸', 'hint' => 'نقطه‌ای علمی با گنبد آبی و نگاه رو به آسمان را انتخاب کنید.'],
+            ['key' => 'nature', 'fragment' => '۴', 'hint' => 'آخرین نشانه، پلی شهری است که دو سوی سبز مسیر را به هم متصل می‌کند.'],
+        ],
+    ];
 
     /** @return array<string, mixed> */
     public function definition(): array
@@ -47,41 +65,32 @@ class EcoParkOnlineGameService
                 ['key' => 'explorer', 'title' => 'مسیر کاوشگر', 'duration' => '۹۰ دقیقه', 'description' => 'سرنخ‌های عمیق‌تر برای گروه‌های ماجراجو.'],
             ],
             'hotspots' => [
-                ['key' => 'mina', 'title' => 'گنبد مینا', 'hint' => 'روی نقشه، درخشان‌ترین گنبد آبی را لمس کنید.', 'x' => 69, 'y' => 28],
-                ['key' => 'nature', 'title' => 'پل طبیعت', 'hint' => 'نقطه‌ای را پیدا کنید که دو سوی مسیر را به هم وصل می‌کند.', 'x' => 38, 'y' => 48],
-                ['key' => 'fire-water', 'title' => 'آب و آتش', 'hint' => 'نشانه روبه‌روی موج سبز و کنار میدان را پیدا کنید.', 'x' => 56, 'y' => 73],
+                ['key' => 'mina', 'title' => 'گنبد مینا', 'description' => 'مرکز علمی آسمان و ستاره‌ها', 'x' => 72, 'y' => 24],
+                ['key' => 'nature', 'title' => 'پل طبیعت', 'description' => 'پیونددهنده دو بوستان', 'x' => 35, 'y' => 42],
+                ['key' => 'fire-water', 'title' => 'میدان آب‌وآتش', 'description' => 'میدان رویدادهای شهری', 'x' => 60, 'y' => 68],
+                ['key' => 'book-garden', 'title' => 'باغ کتاب', 'description' => 'مجموعه فرهنگی و مطالعه', 'x' => 18, 'y' => 73],
+                ['key' => 'art-lake', 'title' => 'دریاچه هنر', 'description' => 'فضای آرام کنار آب', 'x' => 82, 'y' => 78],
+                ['key' => 'taleghani', 'title' => 'بوستان طالقانی', 'description' => 'بوستان جنگلی مسیر', 'x' => 20, 'y' => 20],
             ],
             'clues' => [
                 'quick' => [
-                    'question' => 'کدام نشانه در هر سه نقطه، مفهوم اتصال و حرکت را کامل می‌کند؟',
-                    'choices' => [
-                        ['key' => 'light', 'label' => 'خط نور'],
-                        ['key' => 'tree', 'label' => 'درخت تنها'],
-                        ['key' => 'clock', 'label' => 'ساعت'],
-                    ],
+                    'question' => 'رمز سه‌رقمی مسیر سریع چیست؟',
+                    'instruction' => 'سه تکه‌ای را که به ترتیب کشف کرده‌اید، بدون فاصله وارد کنید.',
                 ],
                 'family' => [
-                    'question' => 'اگر سه تکه سرنخ را کنار هم بگذاریم، بهترین شعار مسیر چیست؟',
-                    'choices' => [
-                        ['key' => 'together', 'label' => 'با هم کشف می‌کنیم'],
-                        ['key' => 'faster', 'label' => 'فقط سریع‌تر برو'],
-                        ['key' => 'silent', 'label' => 'بی‌صدا بمان'],
-                    ],
+                    'question' => 'رمز سه‌رقمی مسیر خانوادگی چیست؟',
+                    'instruction' => 'تکه‌های کشف‌شده را به همان ترتیب کنار هم بگذارید؛ تصمیم را با همراهان بررسی کنید.',
                 ],
                 'explorer' => [
-                    'question' => 'مسیر میان گنبد، پل و میدان چه چیزی می‌سازد؟',
-                    'choices' => [
-                        ['key' => 'story', 'label' => 'یک روایت پیوسته'],
-                        ['key' => 'wall', 'label' => 'یک دیوار بسته'],
-                        ['key' => 'exit', 'label' => 'خروج اضطراری'],
-                    ],
+                    'question' => 'رمز سه‌رقمی مسیر کاوشگر چیست؟',
+                    'instruction' => 'سه رقم به‌دست‌آمده از نقشه را با ترتیب کشف وارد کنید.',
                 ],
             ],
             'steps' => [
                 ['index' => 1, 'title' => 'ساخت گروه بازی', 'instruction' => 'حالت بازی را انتخاب کنید تا مسیر شما ساخته شود.', 'verification' => 'ورود معتبر و ساخت گروه برای همین دوره'],
                 ['index' => 2, 'title' => 'انتخاب مسیر', 'instruction' => 'یکی از سه مسیر را با توجه به زمان و همراهان انتخاب کنید.', 'verification' => 'ثبت یک انتخاب مشخص برای همه اعضا'],
-                ['index' => 3, 'title' => 'کشف سه نقطه روی نقشه', 'instruction' => 'با راهنمای هر نشانه، سه نقطه متفاوت را روی نقشه پیدا کنید.', 'verification' => 'ثبت سه نقطه یکتا؛ همکاری چند عضو پاداش اضافه دارد'],
-                ['index' => 4, 'title' => 'حل سرنخ نهایی', 'instruction' => 'از تکه‌های پیدا شده برای پاسخ به پرسش مسیر استفاده کنید.', 'verification' => 'پاسخ درست در سرور بررسی می‌شود'],
+                ['index' => 3, 'title' => 'کشف سه نقطه روی نقشه آنلاین', 'instruction' => 'این مرحله در همین صفحه انجام می‌شود؛ راهنمای جاری را بخوانید و از میان شش نقطه فقط پاسخ منطبق را انتخاب کنید.', 'verification' => 'ترتیب و پاسخ هر کشف در سرور بررسی می‌شود؛ کلیک شانسی مرحله را جلو نمی‌برد'],
+                ['index' => 4, 'title' => 'ساخت رمز از تکه‌های سرنخ', 'instruction' => 'سه رقم ثبت‌شده را به ترتیب کشف کنار هم بگذارید و رمز را وارد کنید.', 'verification' => 'رمز ساخته‌شده با مسیر انتخابی در سرور تطبیق داده می‌شود'],
                 ['index' => 5, 'title' => 'دریافت مجوز حضور', 'instruction' => 'مجوز یک‌بارمصرف را بسازید و در اکوپارک QR حضور را اسکن کنید.', 'verification' => 'مجوز زمان‌دار و قابل استفاده فقط یک‌بار'],
             ],
             'rules' => [
@@ -264,13 +273,23 @@ class EcoParkOnlineGameService
         return DB::transaction(function () use ($party, $hotspotKey, $contributor): GameParty {
             $progress = $party->progress()->where('step_index', 3)->lockForUpdate()->firstOrFail();
             $found = $this->hotspotFinds($progress);
+            $foundKeys = array_column($found, 'key');
+            $expected = collect($this->routePuzzle((string) $party->route_key))
+                ->first(fn (array $candidate): bool => ! in_array($candidate['key'], $foundKeys, true));
 
-            if (in_array($hotspotKey, array_column($found, 'key'), true)) {
+            if (in_array($hotspotKey, $foundKeys, true)) {
                 throw ValidationException::withMessages(['hotspot_key' => 'این نقطه قبلاً کشف شده است؛ یک نشانه دیگر را پیدا کنید.']);
+            }
+            if (! $expected || $expected['key'] !== $hotspotKey) {
+                $progress->increment('attempts');
+                throw ValidationException::withMessages([
+                    'hotspot_key' => 'این نقطه با راهنمای جاری تطبیق ندارد. متن راهنما را دوباره بخوانید و یک نقطه دیگر را امتحان کنید.',
+                ]);
             }
 
             $found[] = [
                 'key' => $hotspotKey,
+                'fragment' => $expected['fragment'],
                 'member_id' => $contributor->id,
                 'member_name' => $contributor->display_name,
                 'found_at' => now()->toIso8601String(),
@@ -301,12 +320,16 @@ class EcoParkOnlineGameService
     {
         $this->assertMember($user, $party);
         $this->assertCurrentStep($party, 4);
-        $answers = ['quick' => 'light', 'family' => 'together', 'explorer' => 'story'];
+        $answerKey = $this->normalizeDigits($answerKey);
+        $expectedAnswer = collect($this->routePuzzle((string) $party->route_key))
+            ->pluck('fragment')
+            ->map(fn (string $fragment): string => $this->normalizeDigits($fragment))
+            ->implode('');
         $progress = $party->progress()->where('step_index', 4)->firstOrFail();
         $progress->increment('attempts');
 
-        if (($answers[$party->route_key] ?? null) !== $answerKey) {
-            throw ValidationException::withMessages(['answer_key' => 'این پاسخ درست نیست؛ تکه‌های سه نشانه را دوباره مرور کنید.']);
+        if ($expectedAnswer !== $answerKey) {
+            throw ValidationException::withMessages(['answer_key' => 'این رمز درست نیست؛ رقم‌های سه نشانه را دقیقاً به ترتیب کشف کنار هم بگذارید.']);
         }
 
         return DB::transaction(function () use ($party, $answerKey): GameParty {
@@ -429,9 +452,19 @@ class EcoParkOnlineGameService
         $found = $hotspotProgress instanceof GameChallengeProgress
             ? $this->hotspotFinds($hotspotProgress)
             : [];
+        $puzzle = $this->routePuzzle((string) $party->route_key);
+        $foundKeys = array_column($found, 'key');
+        $foundFragments = collect($puzzle)
+            ->filter(fn (array $item): bool => in_array($item['key'], $foundKeys, true))
+            ->pluck('fragment')
+            ->values()
+            ->all();
+        $nextHotspot = collect($puzzle)
+            ->first(fn (array $item): bool => ! in_array($item['key'], $foundKeys, true));
 
         return [
             'id' => $party->id,
+            'campaignId' => $party->campaign_id,
             'mode' => $party->mode,
             'name' => $party->name,
             'inviteCode' => $party->invite_code,
@@ -455,6 +488,8 @@ class EcoParkOnlineGameService
                 'metadata' => $progress->metadata,
             ])->values()->all(),
             'foundHotspots' => array_column($found, 'key'),
+            'foundFragments' => $foundFragments,
+            'nextHotspotHint' => $nextHotspot['hint'] ?? null,
             'entryPass' => $party->entryPass ? [
                 'code' => $party->entryPass->code,
                 'status' => $party->entryPass->status,
@@ -473,6 +508,22 @@ class EcoParkOnlineGameService
     private function partyRelations(): array
     {
         return ['members', 'progress', 'entryPass', 'bonusClaims'];
+    }
+
+    /** @return list<array{key: string, fragment: string, hint: string}> */
+    private function routePuzzle(string $routeKey): array
+    {
+        return self::ROUTE_PUZZLES[$routeKey] ?? [];
+    }
+
+    private function normalizeDigits(string $value): string
+    {
+        return trim(strtr($value, [
+            '۰' => '0', '۱' => '1', '۲' => '2', '۳' => '3', '۴' => '4',
+            '۵' => '5', '۶' => '6', '۷' => '7', '۸' => '8', '۹' => '9',
+            '٠' => '0', '١' => '1', '٢' => '2', '٣' => '3', '٤' => '4',
+            '٥' => '5', '٦' => '6', '٧' => '7', '٨' => '8', '٩' => '9',
+        ]));
     }
 
     private function assertMember(User $user, GameParty $party): GamePartyMember

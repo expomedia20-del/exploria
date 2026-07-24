@@ -209,8 +209,14 @@ class PrepareStressDemoCommand extends Command
                 'type' => 'qr_stand',
                 'owner_type' => 'venue',
                 'status' => RecordStatus::Active,
-                'install_notes' => 'QR دوم فقط در محل نصب می‌شود و مجوز حضور بازی آنلاین را یک‌بار مصرف می‌کند.',
-                'metadata' => ['is_demo' => true, 'stress_demo' => true, 'online_game_role' => 'onsite_gate'],
+                'install_notes' => 'ورودی اصلی اکوپارک عباس‌آباد، کنار میز راهنمای بازدیدکنندگان؛ استند سبز اکسپلوریا.',
+                'metadata' => [
+                    'is_demo' => true,
+                    'stress_demo' => true,
+                    'online_game_role' => 'onsite_gate',
+                    'public_location' => 'ورودی اصلی اکوپارک عباس‌آباد، کنار میز راهنمای بازدیدکنندگان',
+                    'finding_instruction' => 'استند سبز اکسپلوریا با عنوان «دروازه حضور بازی» را پیدا و QR روی همان استند را اسکن کنید.',
+                ],
             ],
         );
     }
@@ -364,7 +370,13 @@ class PrepareStressDemoCommand extends Command
                 'valid_until' => now()->addMonths(6),
                 'max_scans_per_user_per_window' => 1,
                 'duplicate_window_seconds' => 300,
-                'metadata' => ['is_demo' => true, 'stress_demo' => true, 'online_game_role' => 'onsite_gate'],
+                'metadata' => [
+                    'is_demo' => true,
+                    'stress_demo' => true,
+                    'online_game_role' => 'onsite_gate',
+                    'public_location' => 'ورودی اصلی اکوپارک عباس‌آباد، کنار میز راهنمای بازدیدکنندگان',
+                    'finding_instruction' => 'استند سبز اکسپلوریا با عنوان «دروازه حضور بازی» را پیدا و QR روی همان استند را اسکن کنید.',
+                ],
             ],
         );
     }

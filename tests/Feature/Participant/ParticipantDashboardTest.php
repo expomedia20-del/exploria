@@ -190,6 +190,10 @@ class ParticipantDashboardTest extends TestCase
                 ->has('journey.activeCampaigns', 1)
                 ->where('journey.activeCampaigns.0.code', $stressCampaign->code)
                 ->where('journey.activeCampaigns.0.latestVisitId', $visit->id));
+
+        $this->actingAs($visitor)
+            ->get(route('visits.show', ['visit' => $visit]))
+            ->assertRedirect(route('games.ecopark-treasure', ['visit' => $visit->id]));
     }
 
     public function test_visitor_can_start_participation_without_admin_approval(): void

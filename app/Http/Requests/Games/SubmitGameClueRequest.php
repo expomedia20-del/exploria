@@ -3,7 +3,6 @@
 namespace App\Http\Requests\Games;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class SubmitGameClueRequest extends FormRequest
 {
@@ -15,6 +14,6 @@ class SubmitGameClueRequest extends FormRequest
     /** @return array<string, mixed> */
     public function rules(): array
     {
-        return ['answer_key' => ['required', Rule::in(['light', 'tree', 'clock', 'together', 'faster', 'silent', 'story', 'wall', 'exit'])]];
+        return ['answer_key' => ['required', 'string', 'size:3', 'regex:/^[۰-۹٠-٩0-9]{3}$/u']];
     }
 }
