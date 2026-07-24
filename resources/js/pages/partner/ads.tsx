@@ -143,7 +143,12 @@ export default function PartnerAds({
     const { flash } = usePage<SharedProps>().props;
     const [adType, setAdType] = useState('standalone');
     const [placementType, setPlacementType] = useState('fixed_display');
+    const [onlinePlacements, setOnlinePlacements] = useState<string[]>([]);
     const isRewardedPopup = adType === 'rewarded_content';
+    const requiresStaticImage =
+        isRewardedPopup ||
+        placementType === 'public_feed' ||
+        onlinePlacements.includes('public_feed');
 
     return (
         <>
@@ -261,6 +266,14 @@ export default function PartnerAds({
 
                                             if (value === 'rewarded_content') {
                                                 setPlacementType('map_route');
+                                                setOnlinePlacements(
+                                                    (placements) =>
+                                                        placements.filter(
+                                                            (placement) =>
+                                                                placement !==
+                                                                'public_feed',
+                                                        ),
+                                                );
                                             }
                                         }}
                                     >
@@ -337,8 +350,13 @@ export default function PartnerAds({
                                         </p>
                                     </div>
                                     <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-                                        {onlinePlacementOptions.map(
-                                            ([value, label]) => (
+                                        {onlinePlacementOptions
+                                            .filter(
+                                                ([value]) =>
+                                                    !isRewardedPopup ||
+                                                    value !== 'public_feed',
+                                            )
+                                            .map(([value, label]) => (
                                                 <label
                                                     key={value}
                                                     className="flex min-h-10 items-center gap-2 rounded-md border border-input px-3 text-sm"
@@ -347,12 +365,32 @@ export default function PartnerAds({
                                                         type="checkbox"
                                                         name="online_placements[]"
                                                         value={value}
+                                                        checked={onlinePlacements.includes(
+                                                            value,
+                                                        )}
+                                                        onChange={(event) =>
+                                                            setOnlinePlacements(
+                                                                (placements) =>
+                                                                    event.target
+                                                                        .checked
+                                                                        ? [
+                                                                              ...placements,
+                                                                              value,
+                                                                          ]
+                                                                        : placements.filter(
+                                                                              (
+                                                                                  placement,
+                                                                              ) =>
+                                                                                  placement !==
+                                                                                  value,
+                                                                          ),
+                                                            )
+                                                        }
                                                         className="size-4"
                                                     />
                                                     <span>{label}</span>
                                                 </label>
-                                            ),
-                                        )}
+                                            ))}
                                     </div>
                                     <InputError
                                         message={errors.online_placements}
@@ -362,7 +400,7 @@ export default function PartnerAds({
                                     <Label htmlFor="creative_type">
                                         نوع محتوا
                                     </Label>
-                                    {isRewardedPopup ? (
+                                    {requiresStaticImage ? (
                                         <>
                                             <input
                                                 type="hidden"
@@ -370,8 +408,11 @@ export default function PartnerAds({
                                                 value="image"
                                             />
                                             <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm leading-6 text-emerald-950">
-                                                تصویر ثابت ۱۶:۹ — ویدئو در
-                                                پاپ‌آپ بازی نمایش داده نمی‌شود.
+                                                تصویر ثابت ۱۶:۹ — ویدئو در{' '}
+                                                {isRewardedPopup
+                                                    ? 'پاپ‌آپ بازی'
+                                                    : 'ویترین عمومی'}{' '}
+                                                نمایش داده نمی‌شود.
                                             </div>
                                         </>
                                     ) : (
@@ -396,11 +437,27 @@ export default function PartnerAds({
                                         message={errors.creative_type}
                                     />
                                 </div>
-                                <div className="grid gap-2">
+                                <div className="grid gap-2 md:col-span-2">
+                                    <Label htmlFor="asset_file">
+                                        بارگذاری تصویر تبلیغ
+                                    </Label>
+                                    <Input
+                                        id="asset_file"
+                                        name="asset_file"
+                                        type="file"
+                                        accept="image/jpeg,image/webp"
+                                        className="cursor-pointer"
+                                    />
+                                    <p className="text-xs leading-6 text-muted-foreground">
+                                        JPEG یا WebP، نسبت ۱۶:۹، حداقل ۸۰۰×۴۵۰ و
+                                        حداکثر ۲۵۰ کیلوبایت؛ اندازه پیشنهادی
+                                        ۱۲۰۰×۶۷۵ پیکسل است.
+                                    </p>
+                                    <InputError message={errors.asset_file} />
+                                </div>
+                                <div className="grid gap-2 md:col-span-2">
                                     <Label htmlFor="asset_url">
-                                        {isRewardedPopup
-                                            ? 'لینک تصویر ثابت تبلیغ'
-                                            : 'لینک فایل/نمونه محتوا'}
+                                        یا لینک مستقیم فایل/تصویر
                                     </Label>
                                     <Input
                                         id="asset_url"
@@ -408,12 +465,12 @@ export default function PartnerAds({
                                         type="url"
                                         dir="ltr"
                                         placeholder="https://example.com/ad.jpg"
-                                        required={isRewardedPopup}
                                     />
-                                    {isRewardedPopup ? (
+                                    {requiresStaticImage ? (
                                         <p className="text-xs leading-6 text-muted-foreground">
-                                            پیشنهاد: ۱۲۰۰×۶۷۵ پیکسل، WebP یا
-                                            JPEG، حجم کمتر از ۲۵۰ کیلوبایت.
+                                            برای پاپ‌آپ یا ویترین، یکی از دو روش
+                                            «بارگذاری تصویر» یا «لینک مستقیم»
+                                            الزامی است.
                                         </p>
                                     ) : null}
                                     <InputError message={errors.asset_url} />

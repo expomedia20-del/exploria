@@ -13,6 +13,8 @@ use App\Models\User;
 use App\Models\UserAccessScope;
 use Database\Seeders\PilotLocationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -332,6 +334,7 @@ class StandaloneAdvertisingTest extends TestCase
             'public_feed',
             [
                 'body_copy' => 'پیشنهاد عمومی فروشگاه بدون امتیاز بازی.',
+                'asset_url' => 'https://example.com/public-storefront.webp',
             ],
         );
 
@@ -351,6 +354,100 @@ class StandaloneAdvertisingTest extends TestCase
         $this->get(route('games.ecopark-treasure'))
             ->assertOk()
             ->assertDontSee('Public storefront only ad');
+    }
+
+    public function test_independent_park_restaurant_can_upload_public_storefront_image(): void
+    {
+        Storage::fake('public');
+        $partnerUser = User::query()
+            ->where('email', 'independent.park.restaurant@example.test')
+            ->firstOrFail();
+
+        $this->withoutVite();
+        $this->actingAs($partnerUser)
+            ->get(route('partner.ads.page'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('partner/ads')
+                ->where('partner.code', 'independent-park-restaurant')
+                ->has('hubOptions', 0));
+
+        $this->actingAs($partnerUser)
+            ->post(route('partner.ads.api.store'), [
+                'title' => 'پیشنهاد تصویری رستوران مستقل پارک',
+                'body_copy' => 'ویترین عمومی رستوران مستقل خارج از رواق.',
+                'ad_type' => 'standalone',
+                'creative_type' => 'image',
+                'placement_type' => 'public_feed',
+                'asset_file' => $this->fakeJpeg('restaurant-storefront.jpg', 1200, 675, 200),
+            ], ['Accept' => 'application/json'])
+            ->assertCreated();
+
+        $adRequest = AdRequest::query()
+            ->where('title', 'پیشنهاد تصویری رستوران مستقل پارک')
+            ->with(['partnerAccount', 'creatives'])
+            ->firstOrFail();
+        $assetUrl = $adRequest->creatives->firstOrFail()->asset_url;
+
+        $this->assertSame('independent-park-restaurant', $adRequest->partnerAccount->code);
+        $this->assertNotNull($assetUrl);
+        $this->assertStringStartsWith('/storage/advertising/', $assetUrl);
+        Storage::disk('public')->assertExists(str($assetUrl)->after('/storage/')->toString());
+    }
+
+    public function test_public_storefront_requires_valid_static_image(): void
+    {
+        $partnerUser = User::query()->where('email', 'cafe.eco@example.test')->firstOrFail();
+
+        $this->actingAs($partnerUser)
+            ->postJson(route('partner.ads.api.store'), [
+                'title' => 'Invalid public storefront without image',
+                'body_copy' => 'Public storefront image is required.',
+                'ad_type' => 'standalone',
+                'creative_type' => 'video',
+                'placement_type' => 'public_feed',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['creative_type', 'asset_url', 'asset_file']);
+    }
+
+    public function test_public_storefront_upload_enforces_size_format_and_widescreen_ratio(): void
+    {
+        Storage::fake('public');
+        $partnerUser = User::query()->where('email', 'cafe.eco@example.test')->firstOrFail();
+
+        $this->actingAs($partnerUser)
+            ->post(route('partner.ads.api.store'), [
+                'title' => 'Invalid square storefront image',
+                'body_copy' => 'This image does not meet storefront requirements.',
+                'ad_type' => 'standalone',
+                'creative_type' => 'image',
+                'placement_type' => 'public_feed',
+                'asset_file' => $this->fakeJpeg('square-storefront.jpg', 1000, 1000, 300),
+            ], ['Accept' => 'application/json'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('asset_file');
+
+        $this->assertDatabaseMissing('ad_requests', [
+            'title' => 'Invalid square storefront image',
+        ]);
+    }
+
+    public function test_admin_cannot_approve_legacy_public_storefront_without_image(): void
+    {
+        $adRequest = $this->submitAdRequest(
+            'cafe.eco@example.test',
+            'Legacy storefront without image',
+        );
+        $adRequest->placements()->update(['placement_type' => 'public_feed']);
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.ads.api.approve', $adRequest))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('ad_request');
+
+        $this->assertSame('pending_review', $adRequest->fresh()->status);
     }
 
     public function test_display_device_can_record_ad_events(): void
@@ -423,7 +520,7 @@ class StandaloneAdvertisingTest extends TestCase
                 'title' => 'Rewarded video must be rejected',
                 'ad_type' => 'rewarded_content',
                 'creative_type' => 'video',
-                'placement_type' => 'fixed_display',
+                'placement_type' => 'public_feed',
             ])
             ->assertUnprocessable()
             ->assertJsonValidationErrors([
@@ -434,6 +531,7 @@ class StandaloneAdvertisingTest extends TestCase
                 'required_seconds',
                 'game_stage_index',
                 'placement_type',
+                'online_placements',
             ]);
 
         $this->assertDatabaseMissing('ad_requests', [
@@ -559,5 +657,17 @@ class StandaloneAdvertisingTest extends TestCase
         ]);
 
         return $user;
+    }
+
+    private function fakeJpeg(string $name, int $width, int $height, int $kilobytes): UploadedFile
+    {
+        $header = hex2bin(
+            'FFD8FFE000104A46494600010100000100010000FFC0001108'
+            .sprintf('%04X%04X', $height, $width)
+            .'03011100021100031100FFD9',
+        );
+        $content = $header.str_repeat("\0", max(0, ($kilobytes * 1024) - strlen($header)));
+
+        return UploadedFile::fake()->createWithContent($name, $content);
     }
 }

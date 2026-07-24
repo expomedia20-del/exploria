@@ -306,7 +306,13 @@ export default function SponsorDashboard({
     const [advertisingType, setAdvertisingType] = useState('standalone');
     const [advertisingPlacement, setAdvertisingPlacement] =
         useState('fixed_display');
+    const [advertisingOnlinePlacements, setAdvertisingOnlinePlacements] =
+        useState<string[]>([]);
     const isRewardedPopup = advertisingType === 'rewarded_content';
+    const requiresStaticImage =
+        isRewardedPopup ||
+        advertisingPlacement === 'public_feed' ||
+        advertisingOnlinePlacements.includes('public_feed');
 
     const addProposalItem = () => {
         setProposalItems((items) => [...items, newDefaultProposalItem()]);
@@ -1207,6 +1213,14 @@ export default function SponsorDashboard({
                                                 setAdvertisingPlacement(
                                                     'map_route',
                                                 );
+                                                setAdvertisingOnlinePlacements(
+                                                    (placements) =>
+                                                        placements.filter(
+                                                            (placement) =>
+                                                                placement !==
+                                                                'public_feed',
+                                                        ),
+                                                );
                                             }
                                         }}
                                     >
@@ -1285,8 +1299,13 @@ export default function SponsorDashboard({
                                         پایلوت رایگان معرفی شده‌اند.
                                     </p>
                                     <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-                                        {onlinePlacementOptions.map(
-                                            ([value, title]) => (
+                                        {onlinePlacementOptions
+                                            .filter(
+                                                ([value]) =>
+                                                    !isRewardedPopup ||
+                                                    value !== 'public_feed',
+                                            )
+                                            .map(([value, title]) => (
                                                 <label
                                                     key={value}
                                                     className="flex min-h-10 items-center gap-2 rounded-md border border-input px-3 text-sm"
@@ -1295,12 +1314,32 @@ export default function SponsorDashboard({
                                                         type="checkbox"
                                                         name="online_placements[]"
                                                         value={value}
+                                                        checked={advertisingOnlinePlacements.includes(
+                                                            value,
+                                                        )}
+                                                        onChange={(event) =>
+                                                            setAdvertisingOnlinePlacements(
+                                                                (placements) =>
+                                                                    event.target
+                                                                        .checked
+                                                                        ? [
+                                                                              ...placements,
+                                                                              value,
+                                                                          ]
+                                                                        : placements.filter(
+                                                                              (
+                                                                                  placement,
+                                                                              ) =>
+                                                                                  placement !==
+                                                                                  value,
+                                                                          ),
+                                                            )
+                                                        }
                                                         className="size-4"
                                                     />
                                                     <span>{title}</span>
                                                 </label>
-                                            ),
-                                        )}
+                                            ))}
                                     </div>
                                     <InputError
                                         message={errors.online_placements}
@@ -1313,7 +1352,7 @@ export default function SponsorDashboard({
                                     >
                                         نوع محتوا
                                     </label>
-                                    {isRewardedPopup ? (
+                                    {requiresStaticImage ? (
                                         <>
                                             <input
                                                 type="hidden"
@@ -1321,8 +1360,11 @@ export default function SponsorDashboard({
                                                 value="image"
                                             />
                                             <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm leading-6 text-emerald-950">
-                                                تصویر ثابت ۱۶:۹ — ویدئو فقط برای
-                                                نمایشگرهای محیطی قابل ثبت است.
+                                                تصویر ثابت ۱۶:۹ — ویدئو در{' '}
+                                                {isRewardedPopup
+                                                    ? 'پاپ‌آپ بازی'
+                                                    : 'ویترین عمومی'}{' '}
+                                                نمایش داده نمی‌شود.
                                             </div>
                                         </>
                                     ) : (
@@ -1347,14 +1389,33 @@ export default function SponsorDashboard({
                                         message={errors.creative_type}
                                     />
                                 </div>
-                                <div className="grid gap-1.5">
+                                <div className="grid gap-1.5 md:col-span-2">
+                                    <label
+                                        htmlFor="asset_file"
+                                        className="text-xs font-medium"
+                                    >
+                                        بارگذاری تصویر تبلیغ
+                                    </label>
+                                    <input
+                                        id="asset_file"
+                                        name="asset_file"
+                                        type="file"
+                                        accept="image/jpeg,image/webp"
+                                        className="min-h-9 cursor-pointer rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+                                    />
+                                    <p className="text-xs leading-6 text-muted-foreground">
+                                        JPEG یا WebP، نسبت ۱۶:۹، حداقل ۸۰۰×۴۵۰ و
+                                        حداکثر ۲۵۰ کیلوبایت؛ اندازه پیشنهادی
+                                        ۱۲۰۰×۶۷۵ پیکسل است.
+                                    </p>
+                                    <InputError message={errors.asset_file} />
+                                </div>
+                                <div className="grid gap-1.5 md:col-span-2">
                                     <label
                                         htmlFor="asset_url"
                                         className="text-xs font-medium"
                                     >
-                                        {isRewardedPopup
-                                            ? 'لینک تصویر ثابت تبلیغ'
-                                            : 'لینک فایل محتوا'}
+                                        یا لینک مستقیم فایل/تصویر
                                     </label>
                                     <input
                                         id="asset_url"
@@ -1363,12 +1424,12 @@ export default function SponsorDashboard({
                                         dir="ltr"
                                         className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                         placeholder="https://example.com/sponsor-ad.jpg"
-                                        required={isRewardedPopup}
                                     />
-                                    {isRewardedPopup ? (
+                                    {requiresStaticImage ? (
                                         <p className="text-xs leading-6 text-muted-foreground">
-                                            پیشنهاد: ۱۲۰۰×۶۷۵ پیکسل، WebP یا
-                                            JPEG، حجم کمتر از ۲۵۰ کیلوبایت.
+                                            برای پاپ‌آپ یا ویترین، یکی از دو روش
+                                            «بارگذاری تصویر» یا «لینک مستقیم»
+                                            الزامی است.
                                         </p>
                                     ) : null}
                                     <InputError message={errors.asset_url} />

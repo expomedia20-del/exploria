@@ -82,6 +82,19 @@ class PilotLocationSeeder extends Seeder
             ],
         );
 
+        $foodServicesZone = Zone::query()->updateOrCreate(
+            ['venue_id' => $ecoPark->id, 'code' => 'park-food-services-zone'],
+            [
+                'name' => 'محدوده جزیره غذایی و واحدهای مستقل پارک',
+                'status' => RecordStatus::Active,
+                'metadata' => [
+                    'is_demo' => true,
+                    'operational_scope' => 'park_wide_food_services',
+                    'scope_note' => 'Food island and independent cafes or restaurants outside the Ravaq commercial zone.',
+                ],
+            ],
+        );
+
         $hub = Hub::query()->updateOrCreate(
             ['zone_id' => $zone->id, 'code' => 'visitor-welcome-hub'],
             [
@@ -122,7 +135,7 @@ class PilotLocationSeeder extends Seeder
         $foodHub = Hub::query()->updateOrCreate(
             ['zone_id' => $ravaqZone->id, 'code' => 'foodcourt-family-hub'],
             [
-                'name' => 'هاب فودکورت و خانواده',
+                'name' => 'هاب خوراک و خانواده داخل رواق',
                 'hub_type' => 'food_family',
                 'status' => RecordStatus::Active,
                 'metadata' => [
@@ -130,6 +143,22 @@ class PilotLocationSeeder extends Seeder
                     'commercial_role' => 'reward_redemption',
                     'manager_scope' => 'ravaq_manager',
                     'scope_note' => 'Food court, restaurant, ice cream, and food-service units inside the ravaq commercial zone.',
+                ],
+            ],
+        );
+
+        $foodIslandHub = Hub::query()->updateOrCreate(
+            ['zone_id' => $foodServicesZone->id, 'code' => 'ecopark-food-island-hub'],
+            [
+                'name' => 'جزیره غذایی اکوپارک',
+                'hub_type' => 'food_cluster',
+                'status' => RecordStatus::Active,
+                'metadata' => [
+                    'is_demo' => true,
+                    'commercial_role' => 'food_tour_and_reward_redemption',
+                    'manager_scope' => 'venue_manager',
+                    'outside_ravaq' => true,
+                    'scope_note' => 'Food island merchants outside the Ravaq commercial zone.',
                 ],
             ],
         );
@@ -223,11 +252,39 @@ class PilotLocationSeeder extends Seeder
                 'user_role' => UserRole::Sponsor,
                 'location_role' => 'sponsored_story',
             ],
+            [
+                'code' => 'food-island-cafe',
+                'name' => 'کافه جزیره غذایی',
+                'partner_type' => 'member_shop',
+                'contact_name' => 'مسئول کافه جزیره غذایی',
+                'contact_mobile' => '09120000004',
+                'hub' => $foodIslandHub,
+                'user_email' => 'food.island.cafe@example.test',
+                'user_name' => 'مدیر کافه جزیره غذایی',
+                'user_role' => UserRole::ShopPartner,
+                'location_role' => 'food_island_partner',
+            ],
+            [
+                'code' => 'independent-park-restaurant',
+                'name' => 'رستوران مستقل مسیر پارک',
+                'partner_type' => 'member_shop',
+                'contact_name' => 'مسئول رستوران مستقل مسیر پارک',
+                'contact_mobile' => '09120000005',
+                'hub' => null,
+                'zone' => $foodServicesZone,
+                'user_email' => 'independent.park.restaurant@example.test',
+                'user_name' => 'مدیر رستوران مستقل مسیر پارک',
+                'user_role' => UserRole::ShopPartner,
+                'location_role' => 'independent_food_partner',
+            ],
         ];
 
         foreach ($partners as $partnerData) {
-            /** @var Hub $partnerHub */
+            /** @var Hub|null $partnerHub */
             $partnerHub = $partnerData['hub'];
+            /** @var Zone|null $partnerZone */
+            $partnerZone = $partnerData['zone'] ?? null;
+            $partnerZoneId = $partnerHub?->zone_id ?? $partnerZone?->id;
 
             $partner = PartnerAccount::query()->updateOrCreate(
                 ['venue_id' => $ecoPark->id, 'code' => $partnerData['code']],
@@ -242,10 +299,10 @@ class PilotLocationSeeder extends Seeder
             );
 
             PartnerLocation::query()->updateOrCreate(
-                ['partner_account_id' => $partner->id, 'hub_id' => $partnerHub->id],
+                ['partner_account_id' => $partner->id, 'hub_id' => $partnerHub?->id],
                 [
                     'venue_id' => $ecoPark->id,
-                    'zone_id' => $partnerHub->zone_id,
+                    'zone_id' => $partnerZoneId,
                     'touchpoint_id' => null,
                     'location_role' => $partnerData['location_role'],
                     'status' => RecordStatus::Active,
@@ -301,6 +358,8 @@ class PilotLocationSeeder extends Seeder
             'cafe-eco' => ['participation_role' => 'reward_redemption', 'onboarding_status' => 'ready', 'connections' => ['rewards' => 1, 'ads' => 0, 'qr_codes' => 0, 'missions' => 1]],
             'ravaq-store' => ['participation_role' => 'commercial_activation', 'onboarding_status' => 'ready', 'connections' => ['rewards' => 0, 'ads' => 1, 'qr_codes' => 0, 'missions' => 1]],
             'family-route-sponsor' => ['participation_role' => 'route_sponsor', 'onboarding_status' => 'invited', 'connections' => ['rewards' => 1, 'ads' => 1, 'qr_codes' => 0, 'missions' => 1]],
+            'food-island-cafe' => ['participation_role' => 'food_tour_activation', 'onboarding_status' => 'ready', 'connections' => ['rewards' => 1, 'ads' => 1, 'qr_codes' => 0, 'missions' => 1]],
+            'independent-park-restaurant' => ['participation_role' => 'independent_food_activation', 'onboarding_status' => 'ready', 'connections' => ['rewards' => 1, 'ads' => 1, 'qr_codes' => 0, 'missions' => 1]],
         ];
 
         foreach ($campaignParticipants as $partnerCode => $participantData) {

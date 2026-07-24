@@ -13,8 +13,10 @@ use App\Models\PartnerAccount;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class StandaloneAdvertisingService
 {
@@ -165,6 +167,13 @@ class StandaloneAdvertisingService
     {
         $hub = $this->hubForPartner($partner, $data['hub_id'] ?? null);
         $metadata = ['source' => $source];
+        $storedAssetPath = null;
+        $assetUrl = $data['asset_url'] ?? null;
+
+        if (isset($data['asset_file'])) {
+            $storedAssetPath = $data['asset_file']->store('advertising', 'public');
+            $assetUrl = Storage::disk('public')->url($storedAssetPath);
+        }
 
         if (($data['ad_type'] ?? null) === 'rewarded_content') {
             $metadata = [
@@ -176,61 +185,69 @@ class StandaloneAdvertisingService
             ];
         }
 
-        return DB::transaction(function () use ($data, $hub, $metadata, $partner, $source, $user): AdRequest {
-            $adRequest = AdRequest::query()->create([
-                'venue_id' => $partner->venue_id,
-                'partner_account_id' => $partner->id,
-                'hub_id' => $hub?->id,
-                'touchpoint_id' => null,
-                'submitted_by_user_id' => $user->id,
-                'code' => $this->uniqueAdCode($partner->code),
-                'title' => $data['title'],
-                'body_copy' => $data['body_copy'] ?? null,
-                'cta_text' => $data['cta_text'] ?? null,
-                'target_url' => $data['target_url'] ?? null,
-                'advertiser_type' => $partner->partner_type === 'sponsor' ? 'sponsor' : 'member_partner',
-                'ad_type' => $data['ad_type'],
-                'status' => 'pending_review',
-                'starts_at' => $data['starts_at'] ?? null,
-                'ends_at' => $data['ends_at'] ?? null,
-                'budget_amount' => $data['budget_amount'] ?? null,
-                'impression_cap' => $data['impression_cap'] ?? null,
-                'click_cap' => $data['click_cap'] ?? null,
-                'metadata' => $metadata,
-            ]);
-
-            $adRequest->creatives()->create([
-                'creative_type' => $data['creative_type'],
-                'asset_url' => $data['asset_url'] ?? null,
-                'headline' => $data['title'],
-                'body_copy' => $data['body_copy'] ?? null,
-                'cta_text' => $data['cta_text'] ?? null,
-                'status' => 'pending_review',
-                'metadata' => ['source' => $source],
-            ]);
-
-            $placementTypes = collect([$data['placement_type']])
-                ->merge($data['online_placements'] ?? [])
-                ->filter(fn (mixed $placementType): bool => is_string($placementType) && $placementType !== '')
-                ->unique()
-                ->values();
-
-            $placementTypes->each(function (string $placementType) use ($adRequest, $data, $hub): void {
-                $adRequest->placements()->create([
-                    'placement_type' => $placementType,
+        try {
+            return DB::transaction(function () use ($assetUrl, $data, $hub, $metadata, $partner, $source, $user): AdRequest {
+                $adRequest = AdRequest::query()->create([
+                    'venue_id' => $partner->venue_id,
+                    'partner_account_id' => $partner->id,
+                    'hub_id' => $hub?->id,
+                    'touchpoint_id' => null,
+                    'submitted_by_user_id' => $user->id,
+                    'code' => $this->uniqueAdCode($partner->code),
+                    'title' => $data['title'],
+                    'body_copy' => $data['body_copy'] ?? null,
+                    'cta_text' => $data['cta_text'] ?? null,
+                    'target_url' => $data['target_url'] ?? null,
+                    'advertiser_type' => $partner->partner_type === 'sponsor' ? 'sponsor' : 'member_partner',
+                    'ad_type' => $data['ad_type'],
                     'status' => 'pending_review',
                     'starts_at' => $data['starts_at'] ?? null,
                     'ends_at' => $data['ends_at'] ?? null,
-                    'priority' => $data['priority'] ?? ($this->isOnlinePlacement($placementType) ? 6 : 5),
-                    'metadata' => [
-                        'requested_hub_id' => $hub?->id,
-                        'channel' => $this->isOnlinePlacement($placementType) ? 'online' : 'display',
-                    ],
+                    'budget_amount' => $data['budget_amount'] ?? null,
+                    'impression_cap' => $data['impression_cap'] ?? null,
+                    'click_cap' => $data['click_cap'] ?? null,
+                    'metadata' => $metadata,
                 ]);
-            });
 
-            return $adRequest;
-        });
+                $adRequest->creatives()->create([
+                    'creative_type' => $data['creative_type'],
+                    'asset_url' => $assetUrl,
+                    'headline' => $data['title'],
+                    'body_copy' => $data['body_copy'] ?? null,
+                    'cta_text' => $data['cta_text'] ?? null,
+                    'status' => 'pending_review',
+                    'metadata' => ['source' => $source],
+                ]);
+
+                $placementTypes = collect([$data['placement_type']])
+                    ->merge($data['online_placements'] ?? [])
+                    ->filter(fn (mixed $placementType): bool => is_string($placementType) && $placementType !== '')
+                    ->unique()
+                    ->values();
+
+                $placementTypes->each(function (string $placementType) use ($adRequest, $data, $hub): void {
+                    $adRequest->placements()->create([
+                        'placement_type' => $placementType,
+                        'status' => 'pending_review',
+                        'starts_at' => $data['starts_at'] ?? null,
+                        'ends_at' => $data['ends_at'] ?? null,
+                        'priority' => $data['priority'] ?? ($this->isOnlinePlacement($placementType) ? 6 : 5),
+                        'metadata' => [
+                            'requested_hub_id' => $hub?->id,
+                            'channel' => $this->isOnlinePlacement($placementType) ? 'online' : 'display',
+                        ],
+                    ]);
+                });
+
+                return $adRequest;
+            });
+        } catch (Throwable $exception) {
+            if ($storedAssetPath) {
+                Storage::disk('public')->delete($storedAssetPath);
+            }
+
+            throw $exception;
+        }
     }
 
     /** @param array<string, mixed> $data */
@@ -250,6 +267,7 @@ class StandaloneAdvertisingService
     {
         if ($status === 'approved') {
             $this->assertRewardedPopupReady($adRequest);
+            $this->assertPublicStorefrontReady($adRequest);
         }
 
         return DB::transaction(function () use ($adRequest, $data, $reviewer, $status): AdRequest {
@@ -564,6 +582,30 @@ class StandaloneAdvertisingService
         ) {
             throw ValidationException::withMessages([
                 'ad_request' => 'پاپ‌آپ امتیازآور ناقص است: تصویر ثابت، متن، امتیاز، زمان ۸ تا ۱۵ ثانیه، مرحله ۲ تا ۵ و جایگاه داخل بازی را تکمیل کنید.',
+            ]);
+        }
+    }
+
+    private function assertPublicStorefrontReady(AdRequest $adRequest): void
+    {
+        $adRequest->loadMissing(['creatives', 'placements']);
+        $hasPublicFeedPlacement = $adRequest->placements
+            ->contains(fn (AdPlacement $placement): bool => $placement->placement_type === 'public_feed');
+
+        if (! $hasPublicFeedPlacement) {
+            return;
+        }
+
+        $creative = $adRequest->creatives->first();
+
+        if (
+            $adRequest->ad_type === 'rewarded_content'
+            || ! $creative
+            || $creative->creative_type !== 'image'
+            || blank($creative->asset_url)
+        ) {
+            throw ValidationException::withMessages([
+                'ad_request' => 'ویترین عمومی باید بدون امتیاز و دارای تصویر ثابت معتبر باشد؛ تصویر یا نوع جایگاه را اصلاح کنید.',
             ]);
         }
     }

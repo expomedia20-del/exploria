@@ -40,7 +40,7 @@ class StressDemoCommandTest extends TestCase
         $this->assertSame('ecopark-online-treasure-map-game', $campaign->metadata['blueprint_code']);
         $this->assertNotNull($campaign->metadata['route_reviewed_at']);
         $this->assertSame(5, $campaign->missionInstances()->count());
-        $this->assertSame(2, PartnerAccount::query()->where('venue_id', $venue->id)->where('partner_type', '!=', 'sponsor')->count());
+        $this->assertSame(4, PartnerAccount::query()->where('venue_id', $venue->id)->where('partner_type', '!=', 'sponsor')->count());
         $this->assertSame(3, $campaign->campaignParticipants()->where('onboarding_status', 'ready')->count());
         $this->assertSame(
             5,

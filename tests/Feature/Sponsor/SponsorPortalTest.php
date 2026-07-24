@@ -39,7 +39,7 @@ class SponsorPortalTest extends TestCase
                 ->where('stats.proposals', 0)
                 ->where('stats.adRequests', 0)
                 ->has('formOptions.campaigns', 1)
-                ->has('formOptions.partners', 2)
+                ->has('formOptions.partners', 4)
                 ->has('formOptions.adHubs', 1));
 
         $this->assertDatabaseHas('sponsor_accounts', [

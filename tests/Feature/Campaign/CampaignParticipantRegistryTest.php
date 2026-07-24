@@ -24,7 +24,7 @@ class CampaignParticipantRegistryTest extends TestCase
 
     public function test_pilot_seed_registers_campaign_participants(): void
     {
-        $this->assertDatabaseCount('campaign_participants', 3);
+        $this->assertDatabaseCount('campaign_participants', 5);
         $this->assertDatabaseHas('campaign_participants', [
             'participation_role' => 'commercial_activation',
             'onboarding_status' => 'ready',
@@ -38,8 +38,8 @@ class CampaignParticipantRegistryTest extends TestCase
         $this->actingAs($admin)
             ->getJson(route('admin.campaign-participants.index'))
             ->assertOk()
-            ->assertJsonPath('data.stats.participants', 3)
-            ->assertJsonPath('data.stats.hubs', 3)
+            ->assertJsonPath('data.stats.participants', 5)
+            ->assertJsonPath('data.stats.hubs', 4)
             ->assertJsonFragment(['name' => 'فروشگاه X']);
     }
 

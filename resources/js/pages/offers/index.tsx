@@ -267,14 +267,14 @@ export default function OffersIndex({ governance, stats, ads, offers }: Props) {
                             {ads.map((ad) => (
                                 <article
                                     key={ad.id}
-                                    className="grid gap-4 rounded-lg border border-zinc-200 bg-white p-4 shadow-sm sm:grid-cols-[9rem_1fr]"
+                                    className="grid gap-4 rounded-lg border border-zinc-200 bg-white p-4 shadow-sm sm:grid-cols-[14rem_1fr]"
                                 >
-                                    <div className="flex aspect-square items-center justify-center overflow-hidden rounded-md bg-cyan-50">
+                                    <div className="flex aspect-video items-center justify-center overflow-hidden rounded-md bg-cyan-50">
                                         {ad.assetUrl &&
                                         ad.creativeType === 'image' ? (
                                             <img
                                                 src={ad.assetUrl}
-                                                alt=""
+                                                alt={ad.title}
                                                 className="h-full w-full object-cover"
                                             />
                                         ) : (

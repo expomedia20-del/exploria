@@ -17,6 +17,9 @@ class StoreAdRequestRequest extends FormRequest
     public function rules(): array
     {
         $isRewardedPopup = $this->isRewardedPopup();
+        $requiresStaticImage = $isRewardedPopup || $this->hasPublicFeedPlacement();
+        $requiresAssetUrl = $requiresStaticImage && ! $this->hasFile('asset_file');
+        $requiresAssetFile = $requiresStaticImage && blank($this->input('asset_url'));
 
         return [
             'title' => ['required', 'string', 'max:160'],
@@ -25,11 +28,19 @@ class StoreAdRequestRequest extends FormRequest
             'target_url' => ['nullable', 'url', 'max:2048'],
             'hub_id' => ['nullable', 'uuid'],
             'ad_type' => ['required', 'string', Rule::in(['standalone', 'display_takeover', 'reward_moment', 'rewarded_content'])],
-            'creative_type' => ['required', 'string', Rule::in($isRewardedPopup ? ['image'] : ['image', 'video', 'text_card', 'display_banner'])],
+            'creative_type' => ['required', 'string', Rule::in($requiresStaticImage ? ['image'] : ['image', 'video', 'text_card', 'display_banner'])],
             'placement_type' => ['required', 'string', Rule::in(['fixed_display', 'mobile_display', 'public_feed', 'qr_landing', 'reward_page', 'map_route', 'post_mission'])],
             'online_placements' => ['nullable', 'array', 'max:5'],
             'online_placements.*' => ['string', 'distinct', Rule::in(['public_feed', 'qr_landing', 'reward_page', 'map_route', 'post_mission'])],
-            'asset_url' => [Rule::requiredIf($isRewardedPopup), 'nullable', 'url', 'max:2048'],
+            'asset_url' => [Rule::requiredIf($requiresAssetUrl), 'nullable', 'url', 'max:2048'],
+            'asset_file' => [
+                Rule::requiredIf($requiresAssetFile),
+                'nullable',
+                'image',
+                'mimes:jpg,jpeg,webp',
+                'max:250',
+                'dimensions:ratio=16/9,min_width=800,min_height=450',
+            ],
             'rewarded_points' => [Rule::requiredIf($isRewardedPopup), 'nullable', 'integer', 'min:1', 'max:100'],
             'required_seconds' => [Rule::requiredIf($isRewardedPopup), 'nullable', 'integer', 'min:8', 'max:15'],
             'game_stage_index' => [Rule::requiredIf($isRewardedPopup), 'nullable', 'integer', Rule::in([2, 3, 4, 5])],
@@ -54,6 +65,13 @@ class StoreAdRequestRequest extends FormRequest
                 $placementTypes = collect([$this->input('placement_type')])
                     ->merge((array) $this->input('online_placements', []));
 
+                if ($placementTypes->contains('public_feed')) {
+                    $validator->errors()->add(
+                        'online_placements',
+                        'ویترین عمومی بدون امتیاز است و نمی‌تواند هم‌زمان جایگاه پاپ‌آپ امتیازآور باشد.',
+                    );
+                }
+
                 if ($placementTypes->intersect(['map_route', 'post_mission', 'reward_page'])->isEmpty()) {
                     $validator->errors()->add(
                         'placement_type',
@@ -69,8 +87,13 @@ class StoreAdRequestRequest extends FormRequest
     {
         return [
             'body_copy.required' => 'متن کوتاه تبلیغ برای پاپ‌آپ امتیازآور الزامی است.',
-            'creative_type.in' => 'پاپ‌آپ امتیازآور فقط از تصویر ثابت پشتیبانی می‌کند؛ ویدیو مخصوص نمایشگرهای محیطی است.',
-            'asset_url.required' => 'نشانی تصویر ثابت تبلیغ برای پاپ‌آپ امتیازآور الزامی است.',
+            'creative_type.in' => 'پاپ‌آپ امتیازآور و ویترین عمومی فقط از تصویر ثابت پشتیبانی می‌کنند؛ ویدیو مخصوص نمایشگرهای محیطی است.',
+            'asset_url.required' => 'تصویر ثابت را بارگذاری کنید یا نشانی معتبر آن را وارد کنید.',
+            'asset_file.required' => 'تصویر ثابت را بارگذاری کنید یا نشانی معتبر آن را وارد کنید.',
+            'asset_file.image' => 'فایل انتخاب‌شده باید تصویر معتبر باشد.',
+            'asset_file.mimes' => 'فرمت تصویر فقط JPEG یا WebP مجاز است.',
+            'asset_file.max' => 'حجم تصویر نباید بیشتر از ۲۵۰ کیلوبایت باشد.',
+            'asset_file.dimensions' => 'تصویر باید نسبت ۱۶:۹ و حداقل اندازه ۸۰۰×۴۵۰ پیکسل داشته باشد.',
             'rewarded_points.required' => 'مقدار امتیاز تبلیغ را مشخص کنید.',
             'rewarded_points.between' => 'امتیاز تبلیغ باید بین ۱ تا ۱۰۰ باشد.',
             'required_seconds.required' => 'زمان لازم برای مشاهده تبلیغ را مشخص کنید.',
@@ -84,5 +107,12 @@ class StoreAdRequestRequest extends FormRequest
     private function isRewardedPopup(): bool
     {
         return $this->input('ad_type') === 'rewarded_content';
+    }
+
+    private function hasPublicFeedPlacement(): bool
+    {
+        return collect([$this->input('placement_type')])
+            ->merge((array) $this->input('online_placements', []))
+            ->contains('public_feed');
     }
 }

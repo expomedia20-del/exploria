@@ -54,8 +54,8 @@ class VenueManagerDashboardTest extends TestCase
                 ->where('stats.venues', 1)
                 ->where('venues.0.code', 'ecopark-abbasabad')
                 ->has('campaigns', 1)
-                ->has('hubs', 4)
-                ->has('partners', 3));
+                ->has('hubs', 5)
+                ->has('partners', 5));
 
         $this->actingAs($manager)
             ->getJson(route('venue.dashboard.index'))
