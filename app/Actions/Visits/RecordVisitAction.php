@@ -43,6 +43,8 @@ class RecordVisitAction
             ]);
         }
 
+        $this->onlineGame->assertPhysicalQrAvailable($user, $qr);
+
         $visit = DB::transaction(function () use ($user, $qr, $consentLog, $sessionId, $ipAddress, $userAgent): Visit {
             $windowSeconds = $qr->duplicate_window_seconds ?? 300;
             $scanLimit = $qr->max_scans_per_user_per_window ?? 1;

@@ -14,6 +14,8 @@ use App\Models\Visit;
 use App\Services\EcoParkOnlineGameService;
 use Database\Seeders\PilotLocationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Validation\ValidationException;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class EcoParkCollaborativeGameTest extends TestCase
@@ -196,6 +198,7 @@ class EcoParkCollaborativeGameTest extends TestCase
             'visit_id' => $visit->id,
             'owner_user_id' => $user->id,
             'mode' => 'individual',
+            'route_key' => 'quick',
             'cycle_key' => 'launch-1405',
             'status' => 'ready_for_visit',
             'score' => 250,
@@ -228,6 +231,20 @@ class EcoParkCollaborativeGameTest extends TestCase
             'valid_until' => now()->addDay(),
             'metadata' => ['online_game_role' => 'onsite_gate'],
         ]);
+
+        $this->withoutVite();
+        $this->actingAs($user)
+            ->get(route('scan.landing', ['code' => $onsiteQr->code]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('scan/landing')
+                ->where('gamePhysicalScan.role', 'onsite_gate')
+                ->where('gamePhysicalScan.isAuthenticated', true)
+                ->where(
+                    'gamePhysicalScan.confirmUrl',
+                    route('games.ecopark-treasure.physical-scans.confirm', ['code' => $onsiteQr->code]),
+                ));
+
         $onsiteVisit = Visit::query()->create([
             'user_id' => $user->id,
             'qr_code_id' => $onsiteQr->id,
@@ -248,8 +265,44 @@ class EcoParkCollaborativeGameTest extends TestCase
         ]);
         $this->assertDatabaseHas('game_parties', [
             'id' => $party->id,
-            'status' => 'completed',
+            'status' => 'onsite_active',
             'score' => 400,
+        ]);
+        $this->assertDatabaseHas('game_challenge_progress', [
+            'game_party_id' => $party->id,
+            'step_index' => 6,
+            'status' => 'completed',
+        ]);
+        $this->assertDatabaseHas('game_challenge_progress', [
+            'game_party_id' => $party->id,
+            'step_index' => 7,
+            'status' => 'available',
+        ]);
+
+        $service = app(EcoParkOnlineGameService::class);
+        $wrongVisit = $this->physicalVisit($user, $visit, 'mina');
+
+        try {
+            $service->redeemOnsiteVisit($user, $wrongVisit->load('qrCode'));
+            self::fail('A checkpoint outside the selected route order must not be accepted.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('qr_code', $exception->errors());
+        }
+
+        foreach (['fire-water', 'nature', 'ravaq-finish'] as $checkpoint) {
+            $physicalVisit = $this->physicalVisit($user, $visit, $checkpoint);
+            $service->redeemOnsiteVisit($user, $physicalVisit->load('qrCode'));
+        }
+
+        $this->assertDatabaseHas('game_parties', [
+            'id' => $party->id,
+            'status' => 'completed',
+            'score' => 760,
+        ]);
+        $this->assertDatabaseHas('game_challenge_progress', [
+            'game_party_id' => $party->id,
+            'step_index' => 9,
+            'status' => 'completed',
         ]);
     }
 
@@ -323,6 +376,35 @@ class EcoParkCollaborativeGameTest extends TestCase
             'status' => 'confirmed',
             'occurred_at' => now(),
             'metadata' => ['is_demo' => true],
+        ]);
+    }
+
+    private function physicalVisit(User $user, Visit $origin, string $checkpoint): Visit
+    {
+        $qr = QrCode::query()->create([
+            'code' => 'physical-'.$checkpoint.'-'.strtolower((string) str()->uuid()),
+            'venue_id' => $origin->venue_id,
+            'touchpoint_id' => $origin->touchpoint_id,
+            'campaign_id' => $origin->campaign_id,
+            'destination_url' => url('/scan/physical-'.$checkpoint),
+            'status' => 'active',
+            'valid_from' => now()->subDay(),
+            'valid_until' => now()->addDay(),
+            'metadata' => [
+                'online_game_role' => 'physical_checkpoint',
+                'checkpoint_key' => $checkpoint,
+            ],
+        ]);
+
+        return Visit::query()->create([
+            'user_id' => $user->id,
+            'qr_code_id' => $qr->id,
+            'venue_id' => $origin->venue_id,
+            'touchpoint_id' => $origin->touchpoint_id,
+            'campaign_id' => $origin->campaign_id,
+            'source' => 'qr_landing',
+            'status' => 'confirmed',
+            'occurred_at' => now(),
         ]);
     }
 }

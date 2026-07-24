@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers\Games;
 
+use App\Actions\Visits\RecordVisitAction;
+use App\Actions\Visits\ResolvePostVisitDestinationAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Games\ConfirmGamePhysicalScanRequest;
 use App\Http\Requests\Games\CreateGamePartyRequest;
 use App\Http\Requests\Games\DiscoverGameHotspotRequest;
 use App\Http\Requests\Games\IssueGamePassRequest;
@@ -12,6 +15,7 @@ use App\Http\Requests\Games\SelectGameRouteRequest;
 use App\Http\Requests\Games\SubmitGameClueRequest;
 use App\Models\Campaign;
 use App\Models\GameParty;
+use App\Models\User;
 use App\Models\Visit;
 use App\Services\EcoParkOnlineGameService;
 use Illuminate\Http\RedirectResponse;
@@ -75,6 +79,34 @@ class EcoParkOnlineGameActionController extends Controller
         $this->game->issuePass($request->user(), $party);
 
         return back()->with('success', 'مجوز حضور یک‌بارمصرف ساخته شد.');
+    }
+
+    public function confirmPhysicalScan(
+        ConfirmGamePhysicalScanRequest $request,
+        RecordVisitAction $recordVisit,
+        ResolvePostVisitDestinationAction $resolveDestination,
+    ): RedirectResponse {
+        $user = $request->user();
+        abort_unless($user instanceof User, 401);
+        $qrCode = $request->validated('qr_code');
+        $consent = $user->consentLogs()->latest('accepted_at')->first();
+
+        if (! $consent) {
+            return redirect()->route('visitor.consent', ['sourceQrCode' => $qrCode]);
+        }
+
+        $visit = $recordVisit->execute(
+            $user,
+            $qrCode,
+            $consent,
+            $request->session()->getId(),
+            $request->ip(),
+            $request->userAgent(),
+        );
+
+        return redirect()
+            ->to($resolveDestination->execute($visit))
+            ->with('success', 'اسکن فیزیکی ثبت شد؛ راهنمای گام بعدی حضوری آماده است.');
     }
 
     public function startSponsorBonus(RewardedGameAdRequest $request, GameParty $party): RedirectResponse

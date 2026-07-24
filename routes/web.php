@@ -86,6 +86,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/games/ecopark-treasure/parties/{party}/pass', [EcoParkOnlineGameActionController::class, 'issuePass'])
         ->middleware('role:visitor')
         ->name('games.ecopark-treasure.parties.pass');
+    Route::post('/games/ecopark-treasure/physical-scans/{code}', [EcoParkOnlineGameActionController::class, 'confirmPhysicalScan'])
+        ->where('code', '[A-Za-z0-9-]+')
+        ->middleware('role:visitor')
+        ->name('games.ecopark-treasure.physical-scans.confirm');
     Route::post('/games/ecopark-treasure/parties/{party}/sponsor-bonus/start', [EcoParkOnlineGameActionController::class, 'startSponsorBonus'])
         ->middleware('role:visitor')
         ->name('games.ecopark-treasure.parties.sponsor-bonus.start');

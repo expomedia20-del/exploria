@@ -18,6 +18,7 @@ import {
     ShieldCheck,
     Sparkles,
     TicketCheck,
+    Trophy,
     UserRound,
     UsersRound,
     X,
@@ -71,7 +72,7 @@ type Party = {
     name: string | null;
     inviteCode: string | null;
     routeKey: RouteOption['key'] | null;
-    status: 'active' | 'ready_for_visit' | 'completed';
+    status: 'active' | 'ready_for_visit' | 'onsite_active' | 'completed';
     score: number;
     isLeader: boolean;
     collaborationBonusAwarded: boolean;
@@ -91,6 +92,19 @@ type Party = {
         status: 'active' | 'redeemed' | 'expired';
         expiresAt: string;
     } | null;
+    physicalJourney: {
+        phase: 'awaiting_gate' | 'active' | 'completed';
+        steps: {
+            index: number;
+            key: string;
+            title: string;
+            instruction: string;
+            status: 'locked' | 'available' | 'completed';
+            points: number;
+            completedAt: string | null;
+        }[];
+        nextCheckpointKey: string | null;
+    };
     bonusClaims: {
         adRequestId: string;
         status: 'started' | 'completed';
@@ -124,7 +138,17 @@ type Props = {
             label: string;
             location: string | null;
             findingInstruction: string | null;
+            isDemo: boolean;
+            demoScanUrl: string | null;
         } | null;
+        physicalCheckpoints: {
+            key: string;
+            label: string;
+            location: string | null;
+            findingInstruction: string | null;
+            isDemo: boolean;
+            demoScanUrl: string | null;
+        }[];
         latestVisit: { id: string; occurredAt: string; showUrl: string } | null;
         visitorState: {
             isAuthenticated: boolean;
@@ -137,6 +161,7 @@ type Props = {
             hotspots: Hotspot[];
             clues: Record<RouteOption['key'], Clue>;
             steps: StepDefinition[];
+            physicalSteps: StepDefinition[];
             rules: string[];
         };
         party: Party | null;
@@ -816,6 +841,7 @@ function EntryPass({ game, party }: { game: Props['game']; party: Party }) {
             (routeOption) => routeOption.key === party.routeKey,
         )?.title ?? 'مسیر ثبت‌شده';
     const redeemed = pass?.status === 'redeemed';
+    const campaignCompleted = party.status === 'completed';
 
     if (!pass) {
         return null;
@@ -828,20 +854,26 @@ function EntryPass({ game, party }: { game: Props['game']; party: Party }) {
                     <span className="inline-flex items-center gap-2 rounded-full bg-emerald-400/15 px-3 py-1 text-xs font-bold text-emerald-300">
                         <BadgeCheck className="size-4" />
                         {redeemed
-                            ? 'حضور در اکوپارک تأیید شد'
+                            ? campaignCompleted
+                                ? 'کمپین آنلاین و حضوری تکمیل شد'
+                                : 'مرحله حضوری فعال است'
                             : 'بخش آنلاین تکمیل شد'}
                     </span>
                     <h2 className="mt-4 text-2xl font-black">
                         {redeemed
-                            ? 'تجربه این کمپین کامل شد'
+                            ? campaignCompleted
+                                ? 'گنج حضوری با موفقیت کشف شد'
+                                : 'حضور تأیید شد؛ مسیر را ادامه دهید'
                             : `مجوز ${modeTitle} حضور اکوپارک`}
                     </h2>
                     <p className="mt-2 text-sm leading-7 text-slate-300">
                         {redeemed
-                            ? 'اسکن دروازه ثبت شده و ۱۵۰ امتیاز حضور به امتیاز مشترک اضافه شده است. نتیجه و پاداش‌ها در «پنل من» باقی می‌مانند.'
+                            ? campaignCompleted
+                                ? 'همه ایستگاه‌های فیزیکی به ترتیب معتبر اسکن شده‌اند. نتیجه و پاداش‌ها در «پنل من» باقی می‌مانند.'
+                                : 'اسکن دروازه ثبت و ۱۵۰ امتیاز حضور اضافه شد. اکنون راهنمای ایستگاه جاری را در بخش «ادامه مسیر فیزیکی» دنبال کنید.'
                             : 'این کد، شماره پیگیری مجوز شماست و قرار نیست آن را اسکن کنید. برای تأیید حضور باید QR نصب‌شده روی استند اکسپلوریا را در محل اسکن کنید.'}
                     </p>
-                    {redeemed ? (
+                    {campaignCompleted ? (
                         <p className="mt-3 rounded-xl bg-white/10 p-3 text-xs leading-6 text-slate-200">
                             شرکت امتیازدار دوباره با همین حساب در همین دوره ممکن
                             نیست. امکان ساخت مسیر جدید با آغاز دوره بعدی فعال
@@ -926,10 +958,16 @@ function EntryPass({ game, party }: { game: Props['game']; party: Party }) {
                         <li>
                             <strong className="text-white">۴. نتیجه: </strong>
                             مجوز یک‌بار مصرف می‌شود، ۱۵۰ امتیاز حضور ثبت می‌شود
-                            و این کمپین پایان می‌یابد. در نسخه فعلی، مرحله حضوری
-                            دیگری پس از آن تعریف نشده است.
+                            و نخستین ایستگاه فیزیکی مسیر انتخابی باز می‌شود.
                         </li>
                     </ol>
+                    <a
+                        href="#physical-journey"
+                        className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-400 px-5 py-3 text-sm font-black text-emerald-950 transition hover:bg-emerald-300 sm:w-auto"
+                    >
+                        <QrCode className="size-5" />
+                        اتصال به ادامه مرحله فیزیکی
+                    </a>
                 </div>
             ) : null}
             <div className="border-t border-white/10 bg-white/5 px-6 py-4 text-xs text-slate-300 sm:px-8">
@@ -947,6 +985,155 @@ function EntryPass({ game, party }: { game: Props['game']; party: Party }) {
                       : 'فعال'}
             </div>
         </div>
+    );
+}
+
+function PhysicalJourney({
+    game,
+    party,
+}: {
+    game: Props['game'];
+    party: Party;
+}) {
+    const journey = party.physicalJourney;
+    const currentStep = journey.steps.find(
+        (step) => step.status === 'available',
+    );
+    const currentLocation =
+        currentStep?.key === 'onsite-gate'
+            ? game.onsiteGate
+            : game.physicalCheckpoints.find(
+                  (checkpoint) => checkpoint.key === currentStep?.key,
+              );
+
+    return (
+        <section
+            id="physical-journey"
+            className="scroll-mt-6 rounded-3xl border border-emerald-200 bg-white p-5 shadow-xl shadow-emerald-950/5 sm:p-8"
+        >
+            <header className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                    <span className="text-xs font-black text-emerald-700">
+                        بخش دوم کمپین
+                    </span>
+                    <h2 className="mt-2 text-2xl font-black">
+                        {journey.phase === 'completed'
+                            ? 'مسیر فیزیکی کامل شد'
+                            : 'ادامه مسیر فیزیکی در اکوپارک'}
+                    </h2>
+                    <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-600">
+                        هر ایستگاه فقط با QR فیزیکی درست و به ترتیب مسیر تأیید
+                        می‌شود. کلیک روی کارت‌ها مرحله‌ای را کامل نمی‌کند.
+                    </p>
+                </div>
+                <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800">
+                    {journey.steps
+                        .filter((step) => step.status === 'completed')
+                        .length.toLocaleString('fa-IR')}{' '}
+                    از {journey.steps.length.toLocaleString('fa-IR')} گام حضوری
+                </span>
+            </header>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                {journey.steps.map((step) => (
+                    <article
+                        key={step.index}
+                        className={`rounded-2xl border p-4 ${
+                            step.status === 'completed'
+                                ? 'border-emerald-200 bg-emerald-50'
+                                : step.status === 'available'
+                                  ? 'border-slate-950 bg-slate-950 text-white'
+                                  : 'border-slate-200 bg-slate-50 text-slate-400'
+                        }`}
+                    >
+                        <div className="flex items-start gap-3">
+                            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-white/90 font-black text-slate-950">
+                                {step.status === 'completed' ? (
+                                    <Check className="size-5 text-emerald-700" />
+                                ) : step.status === 'locked' ? (
+                                    <Lock className="size-4" />
+                                ) : (
+                                    faNumber(step.index)
+                                )}
+                            </span>
+                            <div>
+                                <h3 className="font-black">{step.title}</h3>
+                                <p className="mt-1 text-xs leading-6 opacity-80">
+                                    {step.status === 'locked'
+                                        ? 'پس از تأیید ایستگاه قبلی باز می‌شود.'
+                                        : step.instruction}
+                                </p>
+                            </div>
+                        </div>
+                    </article>
+                ))}
+            </div>
+
+            {currentStep && currentLocation ? (
+                <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-5">
+                    <span className="text-xs font-black text-amber-800">
+                        کار بعدی شما
+                    </span>
+                    <h3 className="mt-2 text-xl font-black">
+                        {currentStep.title}
+                    </h3>
+                    <dl className="mt-4 grid gap-3 text-sm leading-7">
+                        <div>
+                            <dt className="font-black">کجا برویم؟</dt>
+                            <dd className="text-slate-700">
+                                {currentLocation.location ??
+                                    'نشانی روی استند همین مرحله درج شده است.'}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt className="font-black">چه چیزی پیدا کنیم؟</dt>
+                            <dd className="text-slate-700">
+                                {currentLocation.findingInstruction ??
+                                    currentStep.instruction}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt className="font-black">چگونه تأیید می‌شود؟</dt>
+                            <dd className="text-slate-700">
+                                QR روی همان استند را با دوربین گوشی باز کنید و
+                                دکمه تأیید را بزنید. QR اشتباه یا خارج از ترتیب
+                                پذیرفته نمی‌شود.
+                            </dd>
+                        </div>
+                    </dl>
+                    {currentLocation.demoScanUrl ? (
+                        <Link
+                            href={currentLocation.demoScanUrl}
+                            className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-black text-white sm:w-auto"
+                        >
+                            <QrCode className="size-5" />
+                            اجرای اسکن QR دمو
+                        </Link>
+                    ) : (
+                        <p className="mt-5 rounded-xl bg-white p-4 text-xs leading-6 font-bold text-slate-700">
+                            این دکمه در اجرای واقعی عمداً وجود ندارد؛ QR نصب‌شده
+                            در محل را با دوربین گوشی اسکن کنید.
+                        </p>
+                    )}
+                </div>
+            ) : journey.phase === 'completed' ? (
+                <div className="mt-6 flex items-start gap-3 rounded-2xl bg-emerald-100 p-5 text-emerald-950">
+                    <Trophy className="size-6 shrink-0" />
+                    <div>
+                        <h3 className="font-black">کمپین با موفقیت تمام شد</h3>
+                        <p className="mt-1 text-sm leading-7">
+                            گنج پایانی ثبت شده است. نتیجه، امتیاز و پاداش‌های
+                            دریافت‌شده را می‌توانید در پنل خود ببینید.
+                        </p>
+                    </div>
+                </div>
+            ) : (
+                <p className="mt-6 rounded-xl bg-rose-50 p-4 text-sm text-rose-800">
+                    اطلاعات QR ایستگاه جاری هنوز ثبت نشده است؛ مدیر کمپین باید
+                    استند این مرحله را فعال کند.
+                </p>
+            )}
+        </section>
     );
 }
 
@@ -1226,7 +1413,10 @@ function ActiveGame({ game, party }: { game: Props['game']; party: Party }) {
 
             <main className="min-w-0 space-y-5">
                 {party.entryPass ? (
-                    <EntryPass game={game} party={party} />
+                    <>
+                        <EntryPass game={game} party={party} />
+                        <PhysicalJourney game={game} party={party} />
+                    </>
                 ) : currentDefinition ? (
                     <section className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-xl shadow-slate-950/5 sm:p-8">
                         <header className="border-b border-slate-100 pb-5">
@@ -1340,7 +1530,7 @@ export default function EcoParkTreasureGame({ game }: Props) {
                         <div className="flex items-center gap-2">
                             {game.party ? (
                                 <span className="hidden rounded-full bg-white/10 px-3 py-2 text-xs sm:inline-flex">
-                                    {faNumber(completedSteps)} از ۵ مرحله
+                                    {faNumber(completedSteps)} از ۹ مرحله
                                 </span>
                             ) : null}
                             {game.visitorState.participantDashboardUrl ? (
@@ -1369,19 +1559,19 @@ export default function EcoParkTreasureGame({ game }: Props) {
                                     : ''}
                             </span>
                             <h1 className="mt-5 max-w-3xl text-3xl leading-tight font-black sm:text-5xl">
-                                یک مسیر روشن؛ پنج چالش واقعی
+                                یک مسیر روشن؛ آنلاین تا گنج حضوری
                             </h1>
                             <p className="mt-4 max-w-2xl text-sm leading-8 text-emerald-100 sm:text-base">
-                                انفرادی، خانوادگی یا تیمی بازی کنید. در هر لحظه
-                                فقط یک کار اصلی دارید و مرحله بعد تنها پس از
-                                تأیید واقعی باز می‌شود.
+                                پنج گام آنلاین را کامل کنید، مجوز بگیرید و چهار
+                                گام حضوری را با اسکن QRهای واقعی و به ترتیب مسیر
+                                ادامه دهید.
                             </p>
                         </div>
                         <div className="grid grid-cols-3 gap-2 self-end">
                             {[
                                 [Map, '۳', 'نقطه نقشه'],
-                                [Clock3, '۵', 'مرحله روشن'],
-                                [ShieldCheck, '۱', 'مجوز حضور'],
+                                [Clock3, '۹', 'گام روشن'],
+                                [ShieldCheck, '۴', 'اسکن حضوری'],
                             ].map(([Icon, value, label]) => {
                                 const StatIcon = Icon as typeof Map;
 

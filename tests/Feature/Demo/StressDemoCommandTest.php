@@ -4,6 +4,7 @@ namespace Tests\Feature\Demo;
 
 use App\Models\Campaign;
 use App\Models\PartnerAccount;
+use App\Models\QrCode;
 use App\Models\RewardDefinition;
 use App\Models\RewardInventoryAllocation;
 use App\Models\RewardRedemption;
@@ -40,6 +41,20 @@ class StressDemoCommandTest extends TestCase
         $this->assertSame(5, $campaign->missionInstances()->count());
         $this->assertSame(2, PartnerAccount::query()->where('venue_id', $venue->id)->where('partner_type', '!=', 'sponsor')->count());
         $this->assertSame(3, $campaign->campaignParticipants()->where('onboarding_status', 'ready')->count());
+        $this->assertSame(
+            5,
+            QrCode::query()
+                ->where('campaign_id', $campaign->id)
+                ->where('metadata->online_game_role', 'physical_checkpoint')
+                ->count(),
+        );
+        $this->assertSame(
+            1,
+            QrCode::query()
+                ->where('campaign_id', $campaign->id)
+                ->where('metadata->online_game_role', 'onsite_gate')
+                ->count(),
+        );
 
         $discount = RewardDefinition::query()
             ->where('campaign_id', $campaign->id)
@@ -81,6 +96,13 @@ class StressDemoCommandTest extends TestCase
             ->firstOrFail();
 
         $this->assertSame(5, $campaign->missionInstances()->count());
+        $this->assertSame(
+            5,
+            QrCode::query()
+                ->where('campaign_id', $campaign->id)
+                ->where('metadata->online_game_role', 'physical_checkpoint')
+                ->count(),
+        );
         $this->assertSame(1, SponsorProposal::query()->where('code', 'stress-family-brand-proposal-0001')->count());
         $this->assertSame(2, RewardInventoryAllocation::query()->where('reward_definition_id', $discount->id)->count());
         $this->assertSame(1, RewardRedemption::query()->where('redemption_code', 'STRESS-DEMO-REDEEM-001')->count());

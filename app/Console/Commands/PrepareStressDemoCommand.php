@@ -65,6 +65,38 @@ class PrepareStressDemoCommand extends Command
             $scienceHub = $this->hub($zone, 'gonbad-mina-science-hub', 'هاب گنبد مینا و روایت علمی', 'science_story');
             $touchpoint = $this->touchpoint($entryHub);
             $onsiteTouchpoint = $this->onsiteTouchpoint($entryHub);
+            $physicalTouchpoints = collect([
+                $this->physicalCheckpointTouchpoint(
+                    $entryHub,
+                    'fire-water',
+                    'ایستگاه میدان آب‌وآتش',
+                    'میدان آب‌وآتش، کنار مسیر اصلی پیاده‌روی؛ استند نارنجی اکسپلوریا.',
+                ),
+                $this->physicalCheckpointTouchpoint(
+                    $entryHub,
+                    'nature',
+                    'ایستگاه پل طبیعت',
+                    'ورودی پل طبیعت از سمت بوستان آب‌وآتش؛ استند سبز اکسپلوریا.',
+                ),
+                $this->physicalCheckpointTouchpoint(
+                    $scienceHub,
+                    'book-garden',
+                    'ایستگاه باغ کتاب',
+                    'ورودی اصلی باغ کتاب؛ کنار نقشه راهنمای مجموعه.',
+                ),
+                $this->physicalCheckpointTouchpoint(
+                    $scienceHub,
+                    'mina',
+                    'ایستگاه گنبد مینا',
+                    'ورودی گنبد مینا؛ کنار تابلوی اطلاعات بازدید.',
+                ),
+                $this->physicalCheckpointTouchpoint(
+                    $ravaqHub,
+                    'ravaq-finish',
+                    'گنج پایانی رواق',
+                    'رواق تجاری اکوپارک؛ کنار نشان طلایی پایان مسیر اکسپلوریا.',
+                ),
+            ]);
 
             $this->completeVenueProfile($venue);
             $this->venueExecutiveScope($venue);
@@ -82,7 +114,7 @@ class PrepareStressDemoCommand extends Command
                 $this->participant($campaign, $partner);
             }
 
-            $this->qrCodes($venue, $campaign, $touchpoint, $onsiteTouchpoint);
+            $this->qrCodes($venue, $campaign, $touchpoint, $onsiteTouchpoint, $physicalTouchpoints);
             $this->partnerReward($campaign, $partners[0]);
             $this->rewardedGameAd($campaign, $partners[2]);
             $proposal = $this->sponsorProposal($sponsors, $actor, $campaign, $venue, $partners->take(2)->values());
@@ -221,6 +253,32 @@ class PrepareStressDemoCommand extends Command
         );
     }
 
+    private function physicalCheckpointTouchpoint(
+        Hub $hub,
+        string $key,
+        string $label,
+        string $location,
+    ): Touchpoint {
+        return Touchpoint::query()->updateOrCreate(
+            ['hub_id' => $hub->id, 'code' => 'online-game-checkpoint-'.$key],
+            [
+                'label' => $label,
+                'type' => 'qr_stand',
+                'owner_type' => 'venue',
+                'status' => RecordStatus::Active,
+                'install_notes' => $location,
+                'metadata' => [
+                    'is_demo' => true,
+                    'stress_demo' => true,
+                    'online_game_role' => 'physical_checkpoint',
+                    'checkpoint_key' => $key,
+                    'public_location' => $location,
+                    'finding_instruction' => 'استند اکسپلوریا با عنوان «'.$label.'» را پیدا و QR روی همان استند را اسکن کنید.',
+                ],
+            ],
+        );
+    }
+
     private function completeVenueProfile(Venue $venue): void
     {
         $metadata = $venue->metadata ?? [];
@@ -334,11 +392,13 @@ class PrepareStressDemoCommand extends Command
         );
     }
 
+    /** @param Collection<int, Touchpoint> $physicalTouchpoints */
     private function qrCodes(
         Venue $venue,
         Campaign $campaign,
         Touchpoint $touchpoint,
         Touchpoint $onsiteTouchpoint,
+        Collection $physicalTouchpoints,
     ): void {
         QrCode::query()->updateOrCreate(
             ['code' => 'stress-demo-entry-qr-1405'],
@@ -379,6 +439,35 @@ class PrepareStressDemoCommand extends Command
                 ],
             ],
         );
+
+        $physicalTouchpoints->each(function (Touchpoint $checkpoint) use ($campaign, $venue): void {
+            $key = (string) data_get($checkpoint->metadata, 'checkpoint_key');
+            $code = 'stress-demo-physical-'.$key.'-1405';
+
+            QrCode::query()->updateOrCreate(
+                ['code' => $code],
+                [
+                    'venue_id' => $venue->id,
+                    'touchpoint_id' => $checkpoint->id,
+                    'campaign_id' => $campaign->id,
+                    'destination_url' => url('/scan/'.$code),
+                    'label' => 'QR '.$checkpoint->label,
+                    'status' => RecordStatus::Active,
+                    'valid_from' => now()->subDay(),
+                    'valid_until' => now()->addMonths(6),
+                    'max_scans_per_user_per_window' => 1,
+                    'duplicate_window_seconds' => 300,
+                    'metadata' => [
+                        'is_demo' => true,
+                        'stress_demo' => true,
+                        'online_game_role' => 'physical_checkpoint',
+                        'checkpoint_key' => $key,
+                        'public_location' => data_get($checkpoint->metadata, 'public_location'),
+                        'finding_instruction' => data_get($checkpoint->metadata, 'finding_instruction'),
+                    ],
+                ],
+            );
+        });
     }
 
     private function partnerReward(Campaign $campaign, PartnerAccount $partner): void

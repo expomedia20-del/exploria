@@ -51,14 +51,20 @@ class ParticipantDashboardController extends Controller
             ? $missionFlow->visitMissionSummary($user, $latestVisit)
             : null;
         $participation = $this->participationProfile($latestVisit);
-        $journey = $this->journeySummary($user, $latestVisit, $flow, $onlineParty);
+        $journey = $this->journeySummary($user, $latestVisit, $flow, $onlineParty, $onlineGame);
 
         if ($onlineGame) {
+            $nextLabel = match ($onlineGame['status']) {
+                'ready_for_visit' => 'ورود به مرحله حضوری',
+                'onsite_active' => 'ادامه مسیر حضوری',
+                'completed' => 'مشاهده نتیجه کامل کمپین',
+                default => 'ادامه بخش آنلاین',
+            };
             $journey['nextAction'] = [
-                'label' => $onlineGame['status'] === 'completed'
-                    ? 'مشاهده نتیجه بازی آنلاین'
-                    : 'ادامه بازی آنلاین',
-                'description' => 'همه مرحله‌های این کمپین فقط در صفحه بازی آنلاین انجام و در سرور تأیید می‌شوند.',
+                'label' => $nextLabel,
+                'description' => $onlineGame['status'] === 'active'
+                    ? 'گام آنلاین جاری را در صفحه بازی و با اعتبارسنجی سرور کامل کنید.'
+                    : 'صفحه واحد کمپین، محل مجوز حضور، نشانی استند و راهنمای ایستگاه فیزیکی جاری است.',
                 'href' => route('games.ecopark-treasure', ['visit' => $latestVisit?->id]),
             ];
         }
@@ -79,7 +85,7 @@ class ParticipantDashboardController extends Controller
                 'status' => $latestVisit->status,
                 'occurredAt' => $latestVisit->occurred_at->toIso8601String(),
                 'qrCode' => $latestVisit->qrCode?->code,
-                'qrLandingUrl' => $latestVisit->qrCode?->isAvailableForLanding()
+                'qrLandingUrl' => ! $onlineGame && $latestVisit->qrCode?->isAvailableForLanding()
                     ? route('scan.landing', ['code' => $latestVisit->qrCode->code])
                     : null,
                 'venueName' => $latestVisit->venue?->name,
@@ -123,6 +129,7 @@ class ParticipantDashboardController extends Controller
 
     /**
      * @param  array<string, mixed>|null  $flow
+     * @param  array<string, mixed>|null  $onlineGame
      * @return array<string, mixed>
      */
     private function journeySummary(
@@ -130,6 +137,7 @@ class ParticipantDashboardController extends Controller
         ?Visit $latestVisit,
         ?array $flow,
         ?GameParty $onlineParty = null,
+        ?array $onlineGame = null,
     ): array {
         $earnedPoints = (int) UserMissionProgress::query()
             ->where('user_id', $user->id)
@@ -207,17 +215,20 @@ class ParticipantDashboardController extends Controller
             ->groupBy('mission_instances.campaign_id')
             ->pluck('completed', 'mission_instances.campaign_id');
         $onlineCampaignId = $onlineParty?->campaign_id;
+        $onlineStatus = is_string($onlineGame['status'] ?? null)
+            ? $onlineGame['status']
+            : $onlineParty?->status;
         $completedOnlineSteps = $onlineParty?->progress
             ->where('status', 'completed')
             ->count() ?? 0;
 
         $activeCampaigns = $activeCampaignModels
-            ->map(function (Campaign $campaign) use ($latestVisitsByCampaign, $missionTotalsByCampaign, $completedMissionsByCampaign, $onlineCampaignId, $completedOnlineSteps): array {
+            ->map(function (Campaign $campaign) use ($latestVisitsByCampaign, $missionTotalsByCampaign, $completedMissionsByCampaign, $onlineCampaignId, $onlineStatus, $completedOnlineSteps): array {
                 $qr = $campaign->qrCodes->first(fn ($qr): bool => $qr->isAvailableForLanding());
                 $visit = $latestVisitsByCampaign->get($campaign->id);
                 $isCurrentOnlineGame = $onlineCampaignId === $campaign->id;
                 $totalMissions = $isCurrentOnlineGame
-                    ? 5
+                    ? 9
                     : (int) ($missionTotalsByCampaign[$campaign->id] ?? 0);
                 $completedMissions = $isCurrentOnlineGame
                     ? $completedOnlineSteps
@@ -229,12 +240,23 @@ class ParticipantDashboardController extends Controller
                     'code' => $campaign->code,
                     'venueName' => $campaign->venue?->name,
                     'city' => $campaign->venue?->city,
-                    'scanUrl' => $qr ? route('scan.landing', ['code' => $qr->code]) : null,
+                    'scanUrl' => ! $isCurrentOnlineGame && $qr
+                        ? route('scan.landing', ['code' => $qr->code])
+                        : null,
+                    'isOnlineGame' => $isCurrentOnlineGame,
                     'hasVisit' => $visit !== null,
                     'latestVisitId' => $visit?->id,
                     'experienceUrl' => $isCurrentOnlineGame
                         ? route('games.ecopark-treasure', ['visit' => $visit?->id])
                         : ($visit ? route('visits.show', ['visit' => $visit->id]) : null),
+                    'experienceLabel' => $isCurrentOnlineGame
+                        ? match ($onlineStatus) {
+                            'ready_for_visit' => 'ورود به مرحله حضوری',
+                            'onsite_active' => 'ادامه مسیر حضوری',
+                            'completed' => 'مشاهده نتیجه',
+                            default => 'ادامه بخش آنلاین',
+                        }
+                        : 'ادامه مشارکت',
                     'lastVisitedAt' => $visit?->occurred_at?->toIso8601String(),
                     'completedMissions' => $completedMissions,
                     'totalMissions' => $totalMissions,

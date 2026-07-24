@@ -109,9 +109,11 @@ type Journey = {
         venueName: string | null;
         city: string | null;
         scanUrl: string | null;
+        isOnlineGame: boolean;
         hasVisit: boolean;
         latestVisitId: string | null;
         experienceUrl: string | null;
+        experienceLabel: string;
         lastVisitedAt: string | null;
         completedMissions: number;
         totalMissions: number;
@@ -190,7 +192,7 @@ type Props = {
     missionFlow: MissionFlow;
     onlineGame: {
         id: string;
-        status: 'active' | 'ready_for_visit' | 'completed';
+        status: 'active' | 'ready_for_visit' | 'onsite_active' | 'completed';
         mode: 'individual' | 'family' | 'team';
         name: string | null;
         score: number;
@@ -204,6 +206,14 @@ type Props = {
             code: string;
             status: 'active' | 'redeemed' | 'expired';
         } | null;
+        physicalJourney: {
+            phase: 'awaiting_gate' | 'active' | 'completed';
+            steps: {
+                index: number;
+                status: 'locked' | 'available' | 'completed';
+            }[];
+            nextCheckpointKey: string | null;
+        };
     } | null;
     journey: Journey;
     viewerMode: ViewerMode;
@@ -290,7 +300,7 @@ export default function ParticipantDashboard({
         ? Math.round(
               (onlineGame.steps.filter((step) => step.status === 'completed')
                   .length /
-                  5) *
+                  9) *
                   100,
           )
         : progressPercent(missionFlow);
@@ -360,7 +370,7 @@ export default function ParticipantDashboard({
                                 <Button asChild>
                                     <Link href={journey.nextAction.href}>
                                         <Play className="size-4" />
-                                        ادامه تجربه
+                                        {journey.nextAction.label}
                                     </Link>
                                 </Button>
                             ) : null}
@@ -564,7 +574,7 @@ export default function ParticipantDashboard({
                                     <Button asChild>
                                         <Link href={journey.nextAction.href}>
                                             <Play className="size-4" />
-                                            ادامه مسیر
+                                            {journey.nextAction.label}
                                         </Link>
                                     </Button>
                                 ) : null}
@@ -669,7 +679,7 @@ export default function ParticipantDashboard({
                                                     `/visits/${campaign.latestVisitId}`
                                                 }
                                             >
-                                                ادامه مشارکت
+                                                {campaign.experienceLabel}
                                             </Link>
                                         </Button>
                                     ) : null}
@@ -689,11 +699,11 @@ export default function ParticipantDashboard({
                                                     : 'شروع با راهنمای QR'}
                                             </Link>
                                         </Button>
-                                    ) : (
+                                    ) : !campaign.isOnlineGame ? (
                                         <p className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
                                             QR فعال برای شروع مستقیم ندارد.
                                         </p>
-                                    )}
+                                    ) : null}
                                 </div>
                             </article>
                         ))
@@ -843,7 +853,7 @@ export default function ParticipantDashboard({
                                         }
                                     >
                                         {onlineGame
-                                            ? 'ادامه بازی آنلاین'
+                                            ? journey.nextAction.label
                                             : 'ادامه ماموریت‌ها'}
                                     </Link>
                                 </Button>
@@ -875,11 +885,11 @@ export default function ParticipantDashboard({
                                             'مسیر بازی آنلاین اکوپارک'}
                                     </p>
                                     <p className="mt-2 leading-7">
-                                        این کمپین یک جریان واحد پنج‌مرحله‌ای
-                                        دارد. دکمه‌های عمومی «شروع/تکمیل
-                                        مأموریت» برای آن نمایش داده نمی‌شوند؛ هر
-                                        مرحله فقط داخل صفحه بازی و با اعتبارسنجی
-                                        خودش کامل می‌شود.
+                                        این کمپین پنج گام آنلاین و چهار گام
+                                        حضوری دارد. دکمه‌های عمومی «شروع/تکمیل
+                                        مأموریت» برای آن نمایش داده نمی‌شوند؛
+                                        مرحله حضوری فقط با QR درست و مطابق ترتیب
+                                        مسیر تأیید می‌شود.
                                     </p>
                                     <p className="mt-2 text-xs">
                                         اعضا:{' '}
@@ -896,8 +906,14 @@ export default function ParticipantDashboard({
                                             href={`/games/ecopark-treasure?visit=${latestVisit.id}`}
                                         >
                                             {onlineGame.status === 'completed'
-                                                ? 'مشاهده نتیجه و مجوز'
-                                                : 'بازگشت به مرحله جاری بازی'}
+                                                ? 'مشاهده نتیجه کامل کمپین'
+                                                : onlineGame.status ===
+                                                    'onsite_active'
+                                                  ? 'ادامه مسیر حضوری'
+                                                  : onlineGame.status ===
+                                                      'ready_for_visit'
+                                                    ? 'ورود به مرحله حضوری'
+                                                    : 'بازگشت به گام آنلاین جاری'}
                                         </Link>
                                     </Button>
                                 </div>

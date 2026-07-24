@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Form, Head, Link } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 
 type Props = {
@@ -33,6 +33,15 @@ type Props = {
         partnerName: string | null;
         description: string | null;
     }[];
+    gamePhysicalScan: {
+        role: 'onsite_gate' | 'physical_checkpoint';
+        checkpointKey: string | null;
+        title: string;
+        description: string;
+        isAuthenticated: boolean;
+        confirmUrl: string | null;
+        gameUrl: string | null;
+    } | null;
 };
 
 const rewardTierLabels: Record<string, string> = {
@@ -49,6 +58,7 @@ export default function ScanLanding({
     qr,
     missionPreview,
     rewardOptions,
+    gamePhysicalScan,
 }: Props) {
     return (
         <main
@@ -95,11 +105,14 @@ export default function ScanLanding({
                             به تجربه مکان خوش آمدید
                         </p>
                         <h2 className="mt-2 text-2xl font-bold">
-                            مسیر بازدید شما آماده است
+                            {gamePhysicalScan
+                                ? gamePhysicalScan.title
+                                : 'مسیر بازدید شما آماده است'}
                         </h2>
                         <p className="mt-2 text-sm leading-7 text-slate-600">
-                            پس از ورود سریع، ماموریت‌ها، گنج‌ها و گزینه‌های
-                            پاداش همین کمپین برای شما فعال می‌شود.
+                            {gamePhysicalScan
+                                ? gamePhysicalScan.description
+                                : 'پس از ورود سریع، ماموریت‌ها، گنج‌ها و گزینه‌های پاداش همین کمپین برای شما فعال می‌شود.'}
                         </p>
                     </div>
 
@@ -120,12 +133,23 @@ export default function ScanLanding({
                         </div>
                     </dl>
 
-                    <p className="mt-6 text-sm leading-7 text-slate-600">
-                        برای ثبت بازدید و ادامه تجربه پایلوت، ورود سریع و پذیرش
-                        رضایت‌نامه لازم است.
-                    </p>
+                    {gamePhysicalScan ? (
+                        <div className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm leading-7 text-emerald-950">
+                            <strong>نتیجه این دکمه چیست؟</strong>
+                            <p className="mt-1">
+                                {gamePhysicalScan.role === 'onsite_gate'
+                                    ? 'حضور شما تأیید می‌شود، مجوز یک‌بارمصرف مصرف می‌شود و نخستین ایستگاه فیزیکی مسیر برای گروه باز خواهد شد.'
+                                    : 'این ایستگاه با ترتیب مسیر شما تطبیق داده می‌شود؛ فقط QR درست، مرحله بعدی را باز می‌کند.'}
+                            </p>
+                        </div>
+                    ) : (
+                        <p className="mt-6 text-sm leading-7 text-slate-600">
+                            برای ثبت بازدید و ادامه تجربه پایلوت، ورود سریع و
+                            پذیرش رضایت‌نامه لازم است.
+                        </p>
+                    )}
 
-                    {missionPreview.length > 0 ? (
+                    {!gamePhysicalScan && missionPreview.length > 0 ? (
                         <section className="mt-6 rounded-lg border border-sky-100 bg-sky-50/70 p-4">
                             <div className="flex flex-wrap items-start justify-between gap-2">
                                 <div>
@@ -206,7 +230,7 @@ export default function ScanLanding({
                         </section>
                     ) : null}
 
-                    {rewardOptions.length > 0 ? (
+                    {!gamePhysicalScan && rewardOptions.length > 0 ? (
                         <section className="mt-6 rounded-lg border border-emerald-100 bg-emerald-50/70 p-4">
                             <h2 className="text-sm font-semibold">
                                 گزینه‌های پاداش این کمپین
@@ -247,16 +271,59 @@ export default function ScanLanding({
                         </section>
                     ) : null}
 
-                    <Button
-                        className="mt-6 h-11 w-full"
-                        onClick={() =>
-                            window.location.assign(
-                                `/access?sourceQrCode=${encodeURIComponent(qr.code)}`,
-                            )
-                        }
-                    >
-                        شروع تجربه
-                    </Button>
+                    {gamePhysicalScan?.confirmUrl ? (
+                        <Form
+                            action={gamePhysicalScan.confirmUrl}
+                            method="post"
+                            className="mt-6"
+                        >
+                            {({ processing, errors }) => (
+                                <>
+                                    <Button
+                                        type="submit"
+                                        disabled={processing}
+                                        className="h-12 w-full"
+                                    >
+                                        {processing
+                                            ? 'در حال ثبت اسکن...'
+                                            : gamePhysicalScan.role ===
+                                                'onsite_gate'
+                                              ? 'تأیید حضور و شروع مرحله فیزیکی'
+                                              : 'ثبت این ایستگاه و ادامه مسیر'}
+                                    </Button>
+                                    {errors.qr_code ? (
+                                        <p className="mt-3 rounded-md bg-rose-50 p-3 text-sm text-rose-800">
+                                            {errors.qr_code}
+                                        </p>
+                                    ) : null}
+                                </>
+                            )}
+                        </Form>
+                    ) : (
+                        <Button
+                            className="mt-6 h-11 w-full"
+                            onClick={() =>
+                                window.location.assign(
+                                    `/access?sourceQrCode=${encodeURIComponent(qr.code)}`,
+                                )
+                            }
+                        >
+                            {gamePhysicalScan
+                                ? 'ورود و اتصال به مجوز موجود'
+                                : 'شروع تجربه'}
+                        </Button>
+                    )}
+                    {gamePhysicalScan?.gameUrl ? (
+                        <Button
+                            asChild
+                            variant="outline"
+                            className="mt-3 h-11 w-full"
+                        >
+                            <Link href={gamePhysicalScan.gameUrl}>
+                                بازگشت به راهنمای مسیر
+                            </Link>
+                        </Button>
+                    ) : null}
                 </div>
             </section>
         </main>

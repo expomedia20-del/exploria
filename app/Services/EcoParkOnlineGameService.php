@@ -10,6 +10,7 @@ use App\Models\GameChallengeProgress;
 use App\Models\GameEntryPass;
 use App\Models\GameParty;
 use App\Models\GamePartyMember;
+use App\Models\QrCode;
 use App\Models\User;
 use App\Models\Visit;
 use Illuminate\Support\Facades\DB;
@@ -22,7 +23,7 @@ class EcoParkOnlineGameService
 
     public const BLUEPRINT_CODE = 'ecopark-online-treasure-map-game';
 
-    private const STEP_POINTS = [1 => 20, 2 => 30, 3 => 60, 4 => 80, 5 => 120];
+    private const STEP_POINTS = [1 => 20, 2 => 30, 3 => 60, 4 => 80, 5 => 120, 6 => 150, 7 => 80, 8 => 80, 9 => 200];
 
     private const COLLABORATION_BONUS = 30;
 
@@ -47,6 +48,24 @@ class EcoParkOnlineGameService
             ['key' => 'fire-water', 'fragment' => '۶', 'hint' => 'از میان نشانه‌ها، محل هم‌نشینی دو عنصر مخالف را پیدا کنید.'],
             ['key' => 'mina', 'fragment' => '۸', 'hint' => 'نقطه‌ای علمی با گنبد آبی و نگاه رو به آسمان را انتخاب کنید.'],
             ['key' => 'nature', 'fragment' => '۴', 'hint' => 'آخرین نشانه، پلی شهری است که دو سوی سبز مسیر را به هم متصل می‌کند.'],
+        ],
+    ];
+
+    private const PHYSICAL_ROUTE_CHECKPOINTS = [
+        'quick' => [
+            ['step' => 7, 'key' => 'fire-water', 'title' => 'ایستگاه میدان آب‌وآتش', 'instruction' => 'به میدان آب‌وآتش بروید و QR اکسپلوریا روی استند مرحله را اسکن کنید.'],
+            ['step' => 8, 'key' => 'nature', 'title' => 'ایستگاه پل طبیعت', 'instruction' => 'استند اکسپلوریا در ورودی پل طبیعت را پیدا و QR مرحله را اسکن کنید.'],
+            ['step' => 9, 'key' => 'ravaq-finish', 'title' => 'گنج پایانی رواق', 'instruction' => 'برای پایان مسیر به رواق تجاری بروید و QR گنج پایانی را اسکن کنید.'],
+        ],
+        'family' => [
+            ['step' => 7, 'key' => 'book-garden', 'title' => 'ایستگاه باغ کتاب', 'instruction' => 'همراه خانواده به استند اکسپلوریا در ورودی باغ کتاب بروید و QR را اسکن کنید.'],
+            ['step' => 8, 'key' => 'mina', 'title' => 'ایستگاه گنبد مینا', 'instruction' => 'استند مرحله خانوادگی کنار ورودی گنبد مینا را پیدا و QR را اسکن کنید.'],
+            ['step' => 9, 'key' => 'ravaq-finish', 'title' => 'گنج خانوادگی رواق', 'instruction' => 'با اعضای خانواده به رواق تجاری بروید و QR گنج پایانی را اسکن کنید.'],
+        ],
+        'explorer' => [
+            ['step' => 7, 'key' => 'mina', 'title' => 'ایستگاه گنبد مینا', 'instruction' => 'به ورودی گنبد مینا بروید و QR استند اکسپلوریا را اسکن کنید.'],
+            ['step' => 8, 'key' => 'nature', 'title' => 'ایستگاه پل طبیعت', 'instruction' => 'نشانه بعدی در ورودی پل طبیعت است؛ QR استند مرحله را اسکن کنید.'],
+            ['step' => 9, 'key' => 'ravaq-finish', 'title' => 'گنج نهایی کاوشگر', 'instruction' => 'در رواق تجاری، استند گنج پایانی اکسپلوریا را پیدا و QR آن را اسکن کنید.'],
         ],
     ];
 
@@ -92,6 +111,12 @@ class EcoParkOnlineGameService
                 ['index' => 3, 'title' => 'کشف سه نقطه روی نقشه آنلاین', 'instruction' => 'این مرحله در همین صفحه انجام می‌شود؛ راهنمای جاری را بخوانید و از میان شش نقطه فقط پاسخ منطبق را انتخاب کنید.', 'verification' => 'ترتیب و پاسخ هر کشف در سرور بررسی می‌شود؛ کلیک شانسی مرحله را جلو نمی‌برد'],
                 ['index' => 4, 'title' => 'ساخت رمز از تکه‌های سرنخ', 'instruction' => 'سه رقم ثبت‌شده را به ترتیب کشف کنار هم بگذارید و رمز را وارد کنید.', 'verification' => 'رمز ساخته‌شده با مسیر انتخابی در سرور تطبیق داده می‌شود'],
                 ['index' => 5, 'title' => 'دریافت مجوز حضور', 'instruction' => 'مجوز یک‌بارمصرف را بسازید و در اکوپارک QR حضور را اسکن کنید.', 'verification' => 'مجوز زمان‌دار و قابل استفاده فقط یک‌بار'],
+            ],
+            'physicalSteps' => [
+                ['index' => 6, 'title' => 'ورود به مرحله حضوری', 'instruction' => 'دروازه حضور بازی را در اکوپارک پیدا و QR آن را اسکن کنید.', 'verification' => 'اسکن QR فیزیکی دروازه با مجوز فعال'],
+                ['index' => 7, 'title' => 'ایستگاه حضوری اول', 'instruction' => 'طبق مسیر انتخابی به نخستین ایستگاه بروید و QR همان نقطه را اسکن کنید.', 'verification' => 'QR نقطه درست و مطابق ترتیب مسیر'],
+                ['index' => 8, 'title' => 'ایستگاه حضوری دوم', 'instruction' => 'راهنمای مرحله را دنبال و QR ایستگاه بعدی را اسکن کنید.', 'verification' => 'QR نقطه درست و مطابق ترتیب مسیر'],
+                ['index' => 9, 'title' => 'گنج پایانی حضوری', 'instruction' => 'به مقصد پایانی بروید و QR گنج را برای تکمیل کل کمپین اسکن کنید.', 'verification' => 'QR پایانی معتبر و تکمیل همه مراحل پیشین'],
             ],
             'rules' => [
                 'هر حساب در هر دوره فقط یک مشارکت امتیازدار دارد.',
@@ -364,9 +389,10 @@ class EcoParkOnlineGameService
             $party->update([
                 'status' => 'ready_for_visit',
                 'score' => $party->score + self::STEP_POINTS[5],
-                'completed_at' => now(),
+                'completed_at' => null,
             ]);
             $this->completeStep($party, 5, self::STEP_POINTS[5], ['verified_by' => 'signed_entry_pass']);
+            $this->ensurePhysicalProgress($party);
 
             return $party->load($this->partyRelations());
         });
@@ -416,27 +442,158 @@ class EcoParkOnlineGameService
         });
     }
 
-    public function redeemOnsiteVisit(User $user, Visit $visit): void
+    public function assertPhysicalQrAvailable(User $user, QrCode $qr): void
     {
-        if (data_get($visit->qrCode?->metadata, 'online_game_role') !== 'onsite_gate') {
+        $role = data_get($qr->metadata, 'online_game_role');
+
+        if (! in_array($role, ['onsite_gate', 'physical_checkpoint'], true)) {
             return;
         }
 
         $party = GameParty::query()
-            ->where('campaign_id', $visit->campaign_id)
-            ->where('status', 'ready_for_visit')
+            ->where('campaign_id', $qr->campaign_id)
+            ->whereIn('status', ['ready_for_visit', 'onsite_active', 'completed'])
             ->whereHas('members', fn ($query) => $query->where('user_id', $user->id))
-            ->with('entryPass')
+            ->with($this->partyRelations())
             ->first();
-        $pass = $party?->entryPass;
 
-        if (! $party || ! $pass || $pass->status !== 'active' || $pass->expires_at->isPast()) {
+        if (! $party) {
+            throw ValidationException::withMessages([
+                'qr_code' => 'برای استفاده از این QR باید ابتدا بخش آنلاین همین کمپین را تکمیل و مجوز حضور دریافت کنید.',
+            ]);
+        }
+
+        $this->ensurePhysicalProgress($party);
+        $party->refresh()->load($this->partyRelations());
+
+        if ($role === 'onsite_gate') {
+            $pass = $party->entryPass;
+
+            if (
+                $party->status !== 'ready_for_visit'
+                || ! $pass
+                || $pass->status !== 'active'
+                || $pass->expires_at->isPast()
+            ) {
+                throw ValidationException::withMessages([
+                    'qr_code' => $party->status === 'onsite_active'
+                        ? 'ورود حضوری قبلاً تأیید شده است؛ راهنمای ایستگاه بعدی را در صفحه بازی دنبال کنید.'
+                        : 'مجوز حضور فعال و معتبری برای این گروه وجود ندارد.',
+                ]);
+            }
+
             return;
         }
 
-        DB::transaction(function () use ($party, $pass, $visit): void {
-            $pass->update(['status' => 'redeemed', 'redeemed_at' => now(), 'metadata' => array_merge($pass->metadata ?? [], ['redeemed_visit_id' => $visit->id])]);
-            $party->update(['status' => 'completed', 'score' => $party->score + 150, 'metadata' => array_merge($party->metadata ?? [], ['onsite_visit_id' => $visit->id, 'onsite_bonus_points' => 150])]);
+        if ($party->status !== 'onsite_active') {
+            throw ValidationException::withMessages([
+                'qr_code' => $party->status === 'completed'
+                    ? 'این مسیر حضوری قبلاً به‌طور کامل انجام شده است.'
+                    : 'ابتدا QR دروازه حضور بازی را اسکن کنید تا مرحله حضوری فعال شود.',
+            ]);
+        }
+
+        $checkpointKey = (string) data_get($qr->metadata, 'checkpoint_key');
+        $expected = $this->nextPhysicalCheckpoint($party);
+
+        if (! $expected || $expected['key'] !== $checkpointKey) {
+            throw ValidationException::withMessages([
+                'qr_code' => 'این QR مربوط به ایستگاه جاری شما نیست. راهنمای مرحله حضوری را ببینید و به نقطه درست بروید.',
+            ]);
+        }
+    }
+
+    public function redeemOnsiteVisit(User $user, Visit $visit): void
+    {
+        $qr = $visit->qrCode;
+        $role = data_get($qr?->metadata, 'online_game_role');
+
+        if (! $qr || ! in_array($role, ['onsite_gate', 'physical_checkpoint'], true)) {
+            return;
+        }
+
+        $this->assertPhysicalQrAvailable($user, $qr);
+
+        DB::transaction(function () use ($user, $qr, $role, $visit): void {
+            $party = GameParty::query()
+                ->where('campaign_id', $visit->campaign_id)
+                ->whereHas('members', fn ($query) => $query->where('user_id', $user->id))
+                ->lockForUpdate()
+                ->firstOrFail();
+            $this->ensurePhysicalProgress($party);
+            $party->refresh()->load($this->partyRelations());
+
+            if ($role === 'onsite_gate') {
+                $pass = $party->entryPass;
+
+                if (
+                    $party->status !== 'ready_for_visit'
+                    || ! $pass
+                    || $pass->status !== 'active'
+                    || $pass->expires_at->isPast()
+                ) {
+                    throw ValidationException::withMessages(['qr_code' => 'مجوز حضور فعال و قابل‌مصرفی برای این گروه وجود ندارد.']);
+                }
+
+                $pass->update([
+                    'status' => 'redeemed',
+                    'redeemed_at' => now(),
+                    'metadata' => array_merge($pass->metadata ?? [], ['redeemed_visit_id' => $visit->id]),
+                ]);
+                $this->completeStep($party, 6, self::STEP_POINTS[6], [
+                    'verified_by' => 'onsite_gate_qr',
+                    'visit_id' => $visit->id,
+                    'qr_code' => $qr->code,
+                ]);
+                $this->unlockStep($party, 7);
+                $party->update([
+                    'status' => 'onsite_active',
+                    'score' => $party->score + self::STEP_POINTS[6],
+                    'completed_at' => null,
+                    'metadata' => array_merge($party->metadata ?? [], [
+                        'onsite_visit_id' => $visit->id,
+                        'onsite_bonus_points' => self::STEP_POINTS[6],
+                        'physical_started_at' => now()->toIso8601String(),
+                    ]),
+                ]);
+
+                return;
+            }
+
+            $checkpoint = $this->nextPhysicalCheckpoint($party);
+            $checkpointKey = (string) data_get($qr->metadata, 'checkpoint_key');
+
+            if (
+                $party->status !== 'onsite_active'
+                || ! $checkpoint
+                || $checkpoint['key'] !== $checkpointKey
+            ) {
+                throw ValidationException::withMessages(['qr_code' => 'این QR ایستگاه جاری مسیر شما نیست یا قبلاً ثبت شده است.']);
+            }
+
+            $points = self::STEP_POINTS[$checkpoint['step']];
+            $this->completeStep($party, $checkpoint['step'], $points, [
+                'verified_by' => 'physical_checkpoint_qr',
+                'checkpoint_key' => $checkpoint['key'],
+                'visit_id' => $visit->id,
+                'qr_code' => $qr->code,
+            ]);
+            $party->increment('score', $points);
+
+            if ($checkpoint['step'] === 9) {
+                $party->update([
+                    'status' => 'completed',
+                    'completed_at' => now(),
+                    'metadata' => array_merge($party->metadata ?? [], [
+                        'physical_completed_at' => now()->toIso8601String(),
+                        'final_visit_id' => $visit->id,
+                    ]),
+                ]);
+
+                return;
+            }
+
+            $this->unlockStep($party, $checkpoint['step'] + 1);
         });
     }
 
@@ -461,6 +618,14 @@ class EcoParkOnlineGameService
             ->all();
         $nextHotspot = collect($puzzle)
             ->first(fn (array $item): bool => ! in_array($item['key'], $foundKeys, true));
+        $physicalJourney = $this->physicalJourneySnapshot($party);
+        $physicalFinalStep = collect($physicalJourney['steps'])->firstWhere('index', 9);
+        $physicalFinalCompleted = ($physicalFinalStep['status'] ?? null) === 'completed';
+        $effectiveStatus = $party->status === 'completed'
+            && $party->entryPass?->status === 'redeemed'
+            && ! $physicalFinalCompleted
+                ? 'onsite_active'
+                : $party->status;
 
         return [
             'id' => $party->id,
@@ -469,7 +634,7 @@ class EcoParkOnlineGameService
             'name' => $party->name,
             'inviteCode' => $party->invite_code,
             'routeKey' => $party->route_key,
-            'status' => $party->status,
+            'status' => $effectiveStatus,
             'score' => $party->score,
             'isLeader' => $viewer?->id === $party->owner_user_id,
             'collaborationBonusAwarded' => $party->collaboration_bonus_awarded,
@@ -490,6 +655,7 @@ class EcoParkOnlineGameService
             'foundHotspots' => array_column($found, 'key'),
             'foundFragments' => $foundFragments,
             'nextHotspotHint' => $nextHotspot['hint'] ?? null,
+            'physicalJourney' => $physicalJourney,
             'entryPass' => $party->entryPass ? [
                 'code' => $party->entryPass->code,
                 'status' => $party->entryPass->status,
@@ -514,6 +680,158 @@ class EcoParkOnlineGameService
     private function routePuzzle(string $routeKey): array
     {
         return self::ROUTE_PUZZLES[$routeKey] ?? [];
+    }
+
+    /** @return list<array{step: int, key: string, title: string, instruction: string}> */
+    private function physicalRoute(string $routeKey): array
+    {
+        return self::PHYSICAL_ROUTE_CHECKPOINTS[$routeKey] ?? self::PHYSICAL_ROUTE_CHECKPOINTS['quick'];
+    }
+
+    private function ensurePhysicalProgress(GameParty $party): void
+    {
+        $party->loadMissing(['progress', 'entryPass']);
+        $hasCompletedFinalStep = $party->progress->firstWhere('step_index', 9)?->status === 'completed';
+        $legacyOnsiteCompletion = $party->status === 'completed'
+            && $party->entryPass?->status === 'redeemed'
+            && ! $hasCompletedFinalStep;
+
+        if ($legacyOnsiteCompletion) {
+            $party->update(['status' => 'onsite_active', 'completed_at' => null]);
+        }
+
+        $definitions = [
+            ['step' => 6, 'key' => 'onsite-gate', 'title' => 'ورود به مرحله حضوری'],
+            ...$this->physicalRoute((string) $party->route_key),
+        ];
+
+        foreach ($definitions as $index => $definition) {
+            $existing = $party->progress()->where('step_index', $definition['step'])->first();
+
+            if ($existing) {
+                continue;
+            }
+
+            $previousCompleted = $index === 0
+                ? false
+                : $party->progress()
+                    ->where('step_index', $definitions[$index - 1]['step'])
+                    ->where('status', 'completed')
+                    ->exists();
+            $status = 'locked';
+            $points = 0;
+            $completedAt = null;
+
+            if ($definition['step'] === 6 && $party->status === 'ready_for_visit') {
+                $status = 'available';
+            } elseif ($definition['step'] === 6 && $legacyOnsiteCompletion) {
+                $status = 'completed';
+                $points = self::STEP_POINTS[6];
+                $completedAt = $party->entryPass->redeemed_at ?? now();
+            } elseif ($previousCompleted) {
+                $status = 'available';
+            }
+
+            GameChallengeProgress::query()->create([
+                'game_party_id' => $party->id,
+                'step_index' => $definition['step'],
+                'status' => $status,
+                'points_awarded' => $points,
+                'completed_at' => $completedAt,
+                'metadata' => [
+                    'phase' => 'physical',
+                    'checkpoint_key' => $definition['key'],
+                    'title' => $definition['title'],
+                ],
+            ]);
+        }
+
+        $party->unsetRelation('progress');
+        $party->load('progress');
+    }
+
+    /** @return array{phase: string, steps: list<array<string, mixed>>, nextCheckpointKey: string|null} */
+    private function physicalJourneySnapshot(GameParty $party): array
+    {
+        $finalProgress = $party->progress->firstWhere('step_index', 9);
+        $legacyOnsiteCompletion = $party->status === 'completed'
+            && $party->entryPass?->status === 'redeemed'
+            && (! $finalProgress instanceof GameChallengeProgress || $finalProgress->status !== 'completed');
+        $definitions = [
+            [
+                'step' => 6,
+                'key' => 'onsite-gate',
+                'title' => 'ورود به مرحله حضوری',
+                'instruction' => 'QR دروازه حضور بازی را در ورودی اصلی اکوپارک اسکن کنید.',
+            ],
+            ...$this->physicalRoute((string) $party->route_key),
+        ];
+        $steps = [];
+        $nextCheckpointKey = null;
+        $gateCompleted = false;
+        $finalCompleted = false;
+
+        foreach ($definitions as $index => $definition) {
+            $progress = $party->progress->firstWhere('step_index', $definition['step']);
+            $status = $progress instanceof GameChallengeProgress ? $progress->status : 'locked';
+
+            if (! $progress instanceof GameChallengeProgress && $party->entryPass) {
+                if ($definition['step'] === 6 && $party->status === 'ready_for_visit') {
+                    $status = 'available';
+                } elseif ($definition['step'] === 6 && $legacyOnsiteCompletion) {
+                    $status = 'completed';
+                } elseif ($index === 1 && $legacyOnsiteCompletion) {
+                    $status = 'available';
+                }
+            }
+
+            if ($status === 'available' && $nextCheckpointKey === null) {
+                $nextCheckpointKey = $definition['key'];
+            }
+            if ($definition['step'] === 6) {
+                $gateCompleted = $status === 'completed';
+            }
+            if ($definition['step'] === 9) {
+                $finalCompleted = $status === 'completed';
+            }
+
+            $steps[] = [
+                'index' => $definition['step'],
+                'key' => $definition['key'],
+                'title' => $definition['title'],
+                'instruction' => $definition['instruction'],
+                'status' => $status,
+                'points' => self::STEP_POINTS[$definition['step']],
+                'completedAt' => $progress instanceof GameChallengeProgress
+                    ? $progress->completed_at?->toIso8601String()
+                    : null,
+            ];
+        }
+
+        return [
+            'phase' => $finalCompleted
+                ? 'completed'
+                : ($gateCompleted ? 'active' : 'awaiting_gate'),
+            'steps' => $steps,
+            'nextCheckpointKey' => $nextCheckpointKey,
+        ];
+    }
+
+    /** @return array{step: int, key: string, title: string, instruction: string}|null */
+    private function nextPhysicalCheckpoint(GameParty $party): ?array
+    {
+        $availableStep = $party->progress()
+            ->whereBetween('step_index', [7, 9])
+            ->where('status', 'available')
+            ->orderBy('step_index')
+            ->value('step_index');
+
+        if (! is_numeric($availableStep)) {
+            return null;
+        }
+
+        return collect($this->physicalRoute((string) $party->route_key))
+            ->firstWhere('step', (int) $availableStep);
     }
 
     private function normalizeDigits(string $value): string

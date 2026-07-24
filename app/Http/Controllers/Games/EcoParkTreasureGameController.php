@@ -40,6 +40,7 @@ class EcoParkTreasureGameController extends Controller
                 'campaign' => $campaign ? $this->serializeCampaign($campaign) : null,
                 'entryQr' => $campaign ? $this->entryQr($campaign) : null,
                 'onsiteGate' => $campaign ? $this->onsiteGate($campaign) : null,
+                'physicalCheckpoints' => $campaign ? $this->physicalCheckpoints($campaign) : [],
                 'missionNodes' => $campaign ? $this->missionNodes($campaign) : [],
                 'gameOffers' => $offers->gameOffersForCampaign($campaign)->all(),
                 'definition' => $onlineGame->definition(),
@@ -101,7 +102,7 @@ class EcoParkTreasureGameController extends Controller
     private function entryQr(Campaign $campaign): ?array
     {
         $qr = $campaign->qrCodes->first(fn ($qr): bool => $qr->isAvailableForLanding()
-            && data_get($qr->metadata, 'online_game_role', 'start') !== 'onsite_gate');
+            && data_get($qr->metadata, 'online_game_role', 'start') === 'start');
 
         if (! $qr) {
             return null;
@@ -114,7 +115,7 @@ class EcoParkTreasureGameController extends Controller
         ];
     }
 
-    /** @return array<string, string|null>|null */
+    /** @return array<string, mixed>|null */
     private function onsiteGate(Campaign $campaign): ?array
     {
         $qr = $campaign->qrCodes->first(fn ($qr): bool => $qr->isAvailableForLanding()
@@ -136,7 +137,31 @@ class EcoParkTreasureGameController extends Controller
                 'finding_instruction',
                 'استند سبز اکسپلوریا با عنوان «دروازه حضور بازی» را پیدا کنید.',
             ),
+            'isDemo' => (bool) data_get($qr->metadata, 'is_demo', false),
+            'demoScanUrl' => data_get($qr->metadata, 'is_demo', false)
+                ? route('scan.landing', ['code' => $qr->code])
+                : null,
         ];
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function physicalCheckpoints(Campaign $campaign): array
+    {
+        return array_values($campaign->qrCodes
+            ->filter(fn ($qr): bool => $qr->isAvailableForLanding()
+                && data_get($qr->metadata, 'online_game_role') === 'physical_checkpoint')
+            ->map(fn ($qr): array => [
+                'key' => (string) data_get($qr->metadata, 'checkpoint_key'),
+                'label' => $qr->touchpoint->label ?? $qr->label,
+                'location' => data_get($qr->metadata, 'public_location'),
+                'findingInstruction' => data_get($qr->metadata, 'finding_instruction'),
+                'isDemo' => (bool) data_get($qr->metadata, 'is_demo', false),
+                'demoScanUrl' => data_get($qr->metadata, 'is_demo', false)
+                    ? route('scan.landing', ['code' => $qr->code])
+                    : null,
+            ])
+            ->values()
+            ->all());
     }
 
     /** @return array<int, array<string, mixed>> */

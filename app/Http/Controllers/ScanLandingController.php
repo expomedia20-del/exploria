@@ -45,6 +45,8 @@ class ScanLandingController extends Controller
         $hub = $touchpoint?->hub;
         $zone = $hub?->zone;
         $campaign = $qr->campaign;
+        $gameQrRole = data_get($qr->metadata, 'online_game_role');
+        $isPhysicalGameQr = in_array($gameQrRole, ['onsite_gate', 'physical_checkpoint'], true);
 
         abort_unless($venue && $touchpoint && $hub && $zone && $campaign, 404);
 
@@ -106,6 +108,23 @@ class ScanLandingController extends Controller
             ],
             'missionPreview' => $missionPreview,
             'rewardOptions' => $rewardOptions,
+            'gamePhysicalScan' => $isPhysicalGameQr ? [
+                'role' => $gameQrRole,
+                'checkpointKey' => data_get($qr->metadata, 'checkpoint_key'),
+                'title' => $gameQrRole === 'onsite_gate'
+                    ? 'دروازه ورود به مرحله حضوری'
+                    : ($qr->label ?? 'ایستگاه حضوری اکسپلوریا'),
+                'description' => $gameQrRole === 'onsite_gate'
+                    ? 'این اسکن، مجوز صادرشده شما را به بخش حضوری متصل می‌کند و بازی تازه‌ای نمی‌سازد.'
+                    : 'این اسکن فقط ایستگاه جاری مسیر حضوری شما را تأیید می‌کند.',
+                'isAuthenticated' => $request->user() !== null,
+                'confirmUrl' => $request->user()
+                    ? route('games.ecopark-treasure.physical-scans.confirm', ['code' => $qr->code])
+                    : null,
+                'gameUrl' => $request->user()
+                    ? route('games.ecopark-treasure')
+                    : null,
+            ] : null,
         ]);
     }
 
