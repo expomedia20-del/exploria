@@ -165,6 +165,19 @@ type GameOffer = {
     commercialModel: string | null;
 };
 
+type CommercialDiscovery = {
+    id: string;
+    sourceKind: 'rewarded_ad' | 'high_value_reward';
+    title: string;
+    partnerName: string;
+    question: string;
+    answer: string;
+    introduction: string | null;
+    badge: string;
+    bonusPoints: number | null;
+    stageIndex: number;
+};
+
 type Props = {
     game: {
         campaign: {
@@ -215,6 +228,7 @@ type Props = {
         }[];
         invitePrefill: string;
         gameOffers: GameOffer[];
+        commercialDiscovery: CommercialDiscovery | null;
     };
 };
 
@@ -257,6 +271,63 @@ function FieldError({ message }: { message?: string }) {
     return message ? (
         <p className="mt-2 text-xs font-medium text-rose-700">{message}</p>
     ) : null;
+}
+
+function CommercialDiscoveryCard({
+    discovery,
+}: {
+    discovery: CommercialDiscovery | null;
+}) {
+    if (!discovery) {
+        return null;
+    }
+
+    return (
+        <aside className="rounded-2xl border border-fuchsia-200 bg-gradient-to-br from-fuchsia-50 to-amber-50 p-4 text-slate-950">
+            <div className="flex items-start gap-3">
+                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-fuchsia-100 text-fuchsia-800">
+                    <Store className="size-5" />
+                </span>
+                <div className="min-w-0">
+                    <div className="flex flex-wrap gap-2">
+                        <span className="rounded-full bg-fuchsia-100 px-2.5 py-1 text-[10px] font-bold text-fuchsia-800">
+                            سرنخ تجاری مکمل
+                        </span>
+                        <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-bold text-amber-800">
+                            {discovery.badge}
+                        </span>
+                    </div>
+                    <p className="mt-3 text-sm leading-7 font-black">
+                        {discovery.question}
+                    </p>
+                </div>
+            </div>
+            <details className="mt-3 rounded-xl border border-fuchsia-100 bg-white/80 px-3 py-2">
+                <summary className="cursor-pointer text-xs font-bold text-fuchsia-900">
+                    نمایش پاسخ و معرفی مجموعه
+                </summary>
+                <div className="mt-3 border-t border-fuchsia-100 pt-3">
+                    <strong className="text-sm text-fuchsia-950">
+                        پاسخ: {discovery.answer}
+                    </strong>
+                    <p className="mt-1 text-xs leading-6 text-slate-600">
+                        {discovery.introduction ??
+                            `این مجموعه ارائه‌کننده «${discovery.title}» در شبکه تجاری اکسپلوریا است.`}
+                    </p>
+                    {discovery.bonusPoints ? (
+                        <p className="mt-2 text-xs font-bold text-emerald-800">
+                            مشاهده کامل پیشنهاد اختیاری می‌تواند{' '}
+                            {faNumber(discovery.bonusPoints)} امتیاز داشته باشد.
+                        </p>
+                    ) : null}
+                </div>
+            </details>
+            <p className="mt-2 text-[10px] leading-5 text-slate-500">
+                این پرسش برای آشنایی با فروشگاه‌ها و حامیان مسیر است و پاسخ آن
+                شرط عبور از مرحله نیست.
+            </p>
+        </aside>
+    );
 }
 
 function JourneyProgress({
@@ -1096,6 +1167,7 @@ function MapChallenge({ game, party }: { game: Props['game']; party: Party }) {
                     </p>
                     <FieldError message={pageErrors.hotspot_key} />
                 </div>
+                <CommercialDiscoveryCard discovery={game.commercialDiscovery} />
                 {party.mode === 'family' ? (
                     <label className="block rounded-2xl border border-violet-200 bg-violet-50 p-4 text-sm font-bold">
                         چه کسی این نشانه را پیدا کرد؟
@@ -1165,6 +1237,7 @@ function ClueChallenge({ game, party }: { game: Props['game']; party: Party }) {
                 </p>
             </div>
             <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-5">
+                <CommercialDiscoveryCard discovery={game.commercialDiscovery} />
                 <div className="flex justify-center gap-2" dir="ltr">
                     {party.foundFragments.map((fragment, index) => (
                         <span

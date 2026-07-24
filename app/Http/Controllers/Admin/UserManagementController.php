@@ -19,10 +19,12 @@ use Inertia\Response;
 
 class UserManagementController extends Controller
 {
-    public function page(): Response
+    public function page(Request $request): Response
     {
+        $includeMobile = $request->user()?->role === UserRole::Admin;
+
         return Inertia::render('admin/users/index', [
-            'users' => $this->users(),
+            'users' => $this->users($includeMobile),
             'stats' => $this->stats(),
             'roleOptions' => $this->roleOptions(),
             'filters' => $this->filters(),
@@ -95,7 +97,7 @@ class UserManagementController extends Controller
     }
 
     /** @return array<int, array<string, mixed>> */
-    private function users(): array
+    private function users(bool $includeMobile): array
     {
         return User::query()
             ->with([
@@ -118,13 +120,13 @@ class UserManagementController extends Controller
             ->orderBy('role')
             ->orderBy('name')
             ->get()
-            ->map(function (User $user): array {
+            ->map(function (User $user) use ($includeMobile): array {
                 $activeScopes = $user->accessScopes
                     ->where('status', RecordStatus::Active);
                 $kind = $this->userKind($user, $activeScopes->pluck('role_key')->all());
                 $blockers = $this->safeDeleteBlockers($user);
 
-                return [
+                $serialized = [
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
@@ -163,6 +165,12 @@ class UserManagementController extends Controller
                         ->values()
                         ->all(),
                 ];
+
+                if ($includeMobile) {
+                    $serialized['mobile'] = $user->mobile;
+                }
+
+                return $serialized;
             })
             ->values()
             ->all();

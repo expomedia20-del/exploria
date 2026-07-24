@@ -77,6 +77,18 @@ use Illuminate\Validation\ValidationException;
  *     checkpointKey: string|null,
  *     commercialModel: string|null
  * }
+ * @phpstan-type CommercialDiscovery array{
+ *     id: string,
+ *     sourceKind: string,
+ *     title: string,
+ *     partnerName: string,
+ *     question: string,
+ *     answer: string,
+ *     introduction: string|null,
+ *     badge: string,
+ *     bonusPoints: int|null,
+ *     stageIndex: int
+ * }
  */
 class SmartOffersService
 {
@@ -212,6 +224,74 @@ class SmartOffersService
                 return $matchesStage && $matchesCheckpoint;
             })
             ->values();
+    }
+
+    /**
+     * @param  Collection<int, covariant GameOffer>  $offers
+     * @return CommercialDiscovery|null
+     */
+    public function commercialDiscoveryForParty(?GameParty $party, Collection $offers): ?array
+    {
+        if (! $party) {
+            return null;
+        }
+
+        $party->loadMissing('progress');
+        $current = $party->progress
+            ->where('status', 'available')
+            ->sortBy('step_index')
+            ->first();
+
+        if (! $current instanceof GameChallengeProgress || ! in_array($current->step_index, [3, 4], true)) {
+            return null;
+        }
+
+        $eligible = $offers
+            ->filter(fn (array $offer): bool => filled($offer['title'])
+                && filled($offer['partnerName']))
+            ->sortByDesc(function (array $offer) use ($current): int {
+                $stagePriority = $offer['stageIndex'] === $current->step_index ? 10000 : 0;
+                $rewardedAdPriority = $offer['kind'] === 'ad' ? 5000 : 0;
+                $valuePriority = $offer['kind'] === 'ad'
+                    ? (int) ($offer['bonusPoints'] ?? 0)
+                    : (int) ($offer['points'] ?? 0);
+
+                return $stagePriority + $rewardedAdPriority + min($valuePriority, 1000);
+            })
+            ->values();
+
+        if ($eligible->isEmpty()) {
+            return null;
+        }
+
+        $offer = $eligible->get(0);
+
+        if (! is_array($offer)) {
+            return null;
+        }
+
+        $partnerName = (string) $offer['partnerName'];
+        $title = (string) $offer['title'];
+        $isRewardedAd = $offer['kind'] === 'ad';
+
+        return [
+            'id' => (string) $offer['id'],
+            'sourceKind' => $isRewardedAd ? 'rewarded_ad' : 'high_value_reward',
+            'title' => $title,
+            'partnerName' => $partnerName,
+            'question' => $isRewardedAd
+                ? 'پیشنهاد «'.$title.'» را کدام فروشگاه یا اسپانسر اکوپارک ارائه کرده است؟'
+                : 'پاداش ویژه «'.$title.'» را کدام مجموعه عضو اکسپلوریا ارائه می‌کند؟',
+            'answer' => $partnerName,
+            'introduction' => is_string($offer['bodyCopy']) && $offer['bodyCopy'] !== ''
+                ? $offer['bodyCopy']
+                : null,
+            'badge' => $isRewardedAd ? 'تبلیغ امتیازدار تأییدشده' : 'پاداش سطح بالا',
+            'bonusPoints' => $isRewardedAd && is_int($offer['bonusPoints'])
+                ? $offer['bonusPoints']
+                : null,
+            'stageIndex' => $current->step_index,
+        ];
     }
 
     /** @param array<string, mixed> $data */

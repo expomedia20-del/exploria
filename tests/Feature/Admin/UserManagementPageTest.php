@@ -10,6 +10,7 @@ use App\Models\UserAccessScope;
 use App\Models\Venue;
 use Database\Seeders\PilotLocationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Collection;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -67,6 +68,36 @@ class UserManagementPageTest extends TestCase
                 ->where('stats.publicParticipants', fn (int $count): bool => $count >= 1)
                 ->has('users.0.publicStatus')
                 ->has('users.0.publicStatusLabel'));
+    }
+
+    public function test_only_central_admin_receives_participant_mobile_in_user_management(): void
+    {
+        $this->withoutVite();
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $viewer = User::factory()->create(['role' => UserRole::Viewer]);
+        $participant = User::factory()->create([
+            'role' => UserRole::Visitor,
+            'mobile' => '09121234567',
+            'mobile_hash' => hash('sha256', '09121234567'),
+            'public_participation_status' => 'participant',
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.users.page'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('users', fn (Collection $users): bool => $users->contains(
+                    fn (array $user): bool => $user['id'] === $participant->id
+                        && ($user['mobile'] ?? null) === '09121234567',
+                )));
+
+        $this->actingAs($viewer)
+            ->get(route('admin.users.page'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('users', fn (Collection $users): bool => $users->every(
+                    fn (array $user): bool => ! array_key_exists('mobile', $user),
+                )));
     }
 
     public function test_admin_can_open_user_management_guide_page(): void

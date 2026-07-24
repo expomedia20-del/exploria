@@ -37,6 +37,7 @@ class EcoParkTreasureGameController extends Controller
         $party = $user instanceof User && $campaign
             ? $onlineGame->partyFor($user, $campaign)
             : null;
+        $gameOffers = $offers->gameOffersForParty($campaign, $party);
 
         return Inertia::render('games/ecopark-treasure', [
             'game' => [
@@ -45,7 +46,8 @@ class EcoParkTreasureGameController extends Controller
                 'onsiteGate' => $campaign ? $this->onsiteGate($campaign) : null,
                 'physicalCheckpoints' => $campaign ? $this->physicalCheckpoints($campaign) : [],
                 'missionNodes' => $campaign ? $this->missionNodes($campaign) : [],
-                'gameOffers' => $offers->gameOffersForParty($campaign, $party)->all(),
+                'gameOffers' => $gameOffers->all(),
+                'commercialDiscovery' => $offers->commercialDiscoveryForParty($party, $gameOffers),
                 'definition' => $onlineGame->definition(),
                 'party' => $onlineGame->serializeParty($party, $user instanceof User ? $user : null),
                 'pendingInvitations' => $user instanceof User

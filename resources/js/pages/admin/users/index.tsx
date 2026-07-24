@@ -34,6 +34,7 @@ type ManagedUser = {
     id: number;
     name: string;
     email: string;
+    mobile?: string | null;
     role: string | null;
     roleLabel: string;
     kind: string;
@@ -155,6 +156,7 @@ export default function AdminUsersIndex({
                 normalizedQuery.length === 0 ||
                 user.name.toLowerCase().includes(normalizedQuery) ||
                 user.email.toLowerCase().includes(normalizedQuery) ||
+                user.mobile?.includes(normalizedQuery) ||
                 user.roleLabel.toLowerCase().includes(normalizedQuery) ||
                 user.kindLabel.toLowerCase().includes(normalizedQuery) ||
                 user.publicStatusLabel.toLowerCase().includes(normalizedQuery);
@@ -309,6 +311,14 @@ export default function AdminUsersIndex({
                                     <p className="mt-1 text-sm text-muted-foreground">
                                         {user.email}
                                     </p>
+                                    {user.mobile ? (
+                                        <p
+                                            className="mt-1 text-sm font-medium text-slate-700 dark:text-slate-200"
+                                            dir="ltr"
+                                        >
+                                            {user.mobile}
+                                        </p>
+                                    ) : null}
                                     <p className="mt-2 text-sm">
                                         نقش پایه:{' '}
                                         <strong>{user.roleLabel}</strong>

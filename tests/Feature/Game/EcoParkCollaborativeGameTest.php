@@ -623,6 +623,94 @@ class EcoParkCollaborativeGameTest extends TestCase
         ]);
     }
 
+    public function test_map_and_cipher_steps_receive_an_approved_commercial_discovery_clue(): void
+    {
+        $this->withoutVite();
+        $user = User::factory()->create(['role' => UserRole::Visitor]);
+        $visit = $this->visitFor($user);
+
+        $this->actingAs($user)->post(route('games.ecopark-treasure.parties.create'), [
+            'visit_id' => $visit->id,
+            'mode' => 'individual',
+        ])->assertRedirect();
+
+        $party = GameParty::query()->firstOrFail();
+        $this->actingAs($user)->post(route('games.ecopark-treasure.parties.route', $party), [
+            'route_key' => 'quick',
+        ])->assertRedirect();
+
+        $campaign = Campaign::query()->findOrFail($visit->campaign_id);
+        $partner = PartnerAccount::query()->where('venue_id', $campaign->venue_id)->firstOrFail();
+        $ad = AdRequest::query()->create([
+            'venue_id' => $campaign->venue_id,
+            'partner_account_id' => $partner->id,
+            'code' => 'map-commercial-discovery',
+            'title' => 'سبد ویژه رواق',
+            'body_copy' => 'معرفی فروشگاه و پاداش ویژه مسیر اکوپارک.',
+            'advertiser_type' => 'sponsor',
+            'ad_type' => 'rewarded_content',
+            'status' => 'approved',
+            'starts_at' => now()->subHour(),
+            'ends_at' => now()->addDay(),
+            'metadata' => [
+                'rewarded_points' => 55,
+                'required_seconds' => 10,
+                'game_stage_index' => 3,
+            ],
+        ]);
+        $ad->creatives()->create([
+            'creative_type' => 'text_card',
+            'headline' => 'سبد ویژه رواق',
+            'body_copy' => 'معرفی فروشگاه و پاداش ویژه مسیر اکوپارک.',
+            'cta_text' => 'مشاهده معرفی',
+            'status' => 'approved',
+        ]);
+        $ad->placements()->create([
+            'placement_type' => 'map_route',
+            'status' => 'approved',
+            'starts_at' => now()->subHour(),
+            'ends_at' => now()->addDay(),
+            'priority' => 1,
+        ]);
+        RewardDefinition::query()->create([
+            'campaign_id' => $campaign->id,
+            'venue_id' => $campaign->venue_id,
+            'partner_account_id' => $partner->id,
+            'code' => 'premium-commercial-discovery',
+            'name' => 'جایزه ممتاز رواق',
+            'reward_type' => 'sponsor_discount',
+            'point_cost' => 900,
+            'stock_quantity' => 20,
+            'status' => 'active',
+            'metadata' => [
+                'description' => 'پاداش سطح بالا برای معرفی واحد تجاری عضو.',
+                'reward_tier' => 'premium',
+            ],
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('games.ecopark-treasure'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('game.commercialDiscovery.sourceKind', 'rewarded_ad')
+                ->where('game.commercialDiscovery.partnerName', $partner->name)
+                ->where('game.commercialDiscovery.stageIndex', 3)
+                ->where('game.commercialDiscovery.bonusPoints', 55));
+
+        foreach (['mina', 'nature', 'fire-water'] as $hotspot) {
+            $this->actingAs($user)->post(route('games.ecopark-treasure.parties.hotspots', $party), [
+                'hotspot_key' => $hotspot,
+            ])->assertRedirect();
+        }
+
+        $this->actingAs($user)
+            ->get(route('games.ecopark-treasure'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('game.commercialDiscovery.sourceKind', 'high_value_reward')
+                ->where('game.commercialDiscovery.stageIndex', 4));
+    }
+
     private function visitFor(User $user): Visit
     {
         $qr = QrCode::query()->where('code', PilotLocationSeeder::DEMO_QR_CODE)->firstOrFail();
