@@ -5,6 +5,7 @@ import {
     Megaphone,
     Percent,
     ReceiptText,
+    ShoppingCart,
     Store,
     TicketCheck,
 } from 'lucide-react';
@@ -85,6 +86,10 @@ type Redemption = {
     rewardType: string | null;
     campaignName: string | null;
     campaignCode: string | null;
+    conversionType: 'reward_only' | 'verified_purchase';
+    purchaseConfirmed: boolean;
+    purchaseAmountIrr: number | null;
+    receiptReference: string | null;
 };
 
 type PartnerAdRequest = {
@@ -111,6 +116,9 @@ type Props = {
         issuedRewards: number;
         pendingRedemptions: number;
         confirmedRedemptions: number;
+        attributedVisits: number;
+        confirmedPurchases: number;
+        attributedSalesIrr: number;
         allocatedInventory: number;
         reservedInventory: number;
         redeemedInventory: number;
@@ -298,6 +306,7 @@ export default function PartnerDashboard({
     );
     const [selectedRewardOption, setSelectedRewardOption] =
         useState<string>('');
+    const [purchaseStatus, setPurchaseStatus] = useState<string>('reward_only');
     const selectedRewardOptionLabel =
         selectedRewardOption || selectedTier?.options[0] || '';
     const offerTitlePlaceholder = selectedRewardOptionLabel
@@ -380,7 +389,7 @@ export default function PartnerDashboard({
                             {partner.venueName}
                         </p>
                     </div>
-                    <div className="grid w-full grid-cols-2 gap-2 text-sm sm:grid-cols-3 md:w-auto xl:grid-cols-6">
+                    <div className="grid w-full grid-cols-2 gap-2 text-sm sm:grid-cols-4 md:w-auto xl:grid-cols-8">
                         <Stat
                             icon={Gift}
                             label="پاداش‌ها"
@@ -400,6 +409,16 @@ export default function PartnerDashboard({
                             icon={CheckCircle2}
                             label="تایید شده"
                             value={stats.confirmedRedemptions}
+                        />
+                        <Stat
+                            icon={ShoppingCart}
+                            label="خرید منتسب"
+                            value={stats.confirmedPurchases}
+                        />
+                        <Stat
+                            icon={ReceiptText}
+                            label="فروش منتسب (ریال)"
+                            value={stats.attributedSalesIrr}
                         />
                         <Stat
                             icon={ReceiptText}
@@ -1018,7 +1037,7 @@ export default function PartnerDashboard({
                             action="/partner/redemptions/confirm"
                             method="post"
                             options={{ preserveScroll: true }}
-                            className="grid gap-4 md:grid-cols-[1fr_auto]"
+                            className="grid gap-4 md:grid-cols-2"
                         >
                             {({ processing, errors }) => (
                                 <>
@@ -1037,10 +1056,81 @@ export default function PartnerDashboard({
                                             message={errors.redemption_code}
                                         />
                                     </div>
-                                    <div className="flex items-end">
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="purchase_status">
+                                            نتیجه مراجعه
+                                        </Label>
+                                        <select
+                                            id="purchase_status"
+                                            name="purchase_status"
+                                            value={purchaseStatus}
+                                            onChange={(event) =>
+                                                setPurchaseStatus(
+                                                    event.target.value,
+                                                )
+                                            }
+                                            className="h-9 rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                        >
+                                            <option value="reward_only">
+                                                فقط تحویل پاداش
+                                            </option>
+                                            <option value="purchase_confirmed">
+                                                تحویل پاداش همراه خرید
+                                            </option>
+                                        </select>
+                                        <InputError
+                                            message={errors.purchase_status}
+                                        />
+                                    </div>
+                                    {purchaseStatus === 'purchase_confirmed' ? (
+                                        <>
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="purchase_amount">
+                                                    مبلغ خرید (ریال)
+                                                </Label>
+                                                <Input
+                                                    id="purchase_amount"
+                                                    name="purchase_amount"
+                                                    type="number"
+                                                    min="1"
+                                                    required
+                                                    inputMode="numeric"
+                                                    placeholder="مثلا ۵۰۰۰۰۰۰"
+                                                />
+                                                <InputError
+                                                    message={
+                                                        errors.purchase_amount
+                                                    }
+                                                />
+                                            </div>
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="receipt_reference">
+                                                    مرجع رسید (اختیاری)
+                                                </Label>
+                                                <Input
+                                                    id="receipt_reference"
+                                                    name="receipt_reference"
+                                                    maxLength={100}
+                                                    placeholder="شماره رسید یا فاکتور"
+                                                />
+                                                <InputError
+                                                    message={
+                                                        errors.receipt_reference
+                                                    }
+                                                />
+                                            </div>
+                                        </>
+                                    ) : null}
+                                    <p className="text-xs text-muted-foreground md:col-span-2">
+                                        خرید اجباری نیست. فقط اگر خرید واقعی
+                                        انجام شده است، مبلغ و مرجع رسید را ثبت
+                                        کنید تا گزارش فروش منتسب قابل اتکا
+                                        بماند.
+                                    </p>
+                                    <div className="flex items-end md:col-span-2">
                                         <Button disabled={processing}>
                                             <CheckCircle2 className="size-4" />
-                                            تایید مصرف
+                                            ثبت تحویل و نتیجه مراجعه
                                         </Button>
                                     </div>
                                 </>
@@ -1395,6 +1485,11 @@ export default function PartnerDashboard({
                                                                 redemption.redemptionCode
                                                             }
                                                         />
+                                                        <input
+                                                            type="hidden"
+                                                            name="purchase_status"
+                                                            value="reward_only"
+                                                        />
                                                         <Button
                                                             size="sm"
                                                             disabled={
@@ -1402,7 +1497,8 @@ export default function PartnerDashboard({
                                                             }
                                                         >
                                                             <CheckCircle2 className="size-4" />
-                                                            تایید همین کد
+                                                            تحویل پاداش بدون ثبت
+                                                            خرید
                                                         </Button>
                                                     </>
                                                 )}
@@ -1421,6 +1517,17 @@ export default function PartnerDashboard({
                                                     redemption.createdAt,
                                             )}
                                         </p>
+                                        {redemption.status !== 'pending' ? (
+                                            <p className="text-xs text-muted-foreground">
+                                                نتیجه:{' '}
+                                                {redemption.purchaseConfirmed
+                                                    ? `خرید تاییدشده${redemption.purchaseAmountIrr ? ` · ${redemption.purchaseAmountIrr.toLocaleString('fa-IR')} ریال` : ''}`
+                                                    : 'فقط تحویل پاداش'}
+                                                {redemption.receiptReference
+                                                    ? ` · رسید ${redemption.receiptReference}`
+                                                    : ''}
+                                            </p>
+                                        ) : null}
                                     </article>
                                 ))
                             )}

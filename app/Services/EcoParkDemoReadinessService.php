@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\RecordStatus;
+use App\Models\AdRequest;
 use App\Models\Campaign;
 use App\Models\CampaignParticipant;
 use App\Models\DisplayDevice;
@@ -26,6 +27,7 @@ use Illuminate\Support\Facades\Route;
  * @phpstan-type ReadinessReport array{
  *     summary: array{venueCode: string, campaigns: list<array{code: string, name: string}>, ready: bool, passCount: int, warningCount: int, failCount: int},
  *     checks: list<ReadinessCheck>,
+ *     fieldQrManifest: list<array{code: string, label: string, role: string, checkpointKey: string|null, publicLocation: string|null, findingInstruction: string|null, scanPath: string}>,
  *     nextActions: list<string>
  * }
  */
@@ -159,6 +161,7 @@ class EcoParkDemoReadinessService
                 'حداقل یک نمایشگر برای لایه رسانه و تبلیغات آماده است.',
                 'نمایشگر ورودی یا تبلیغاتی فعال را برای مکان ثبت کنید.',
             ),
+            $this->commercialAdvertisingCheck($campaigns, $venueId),
             $this->minimumCountCheck(
                 'ravaq_hub',
                 'هاب/رواق تجاری',
@@ -214,6 +217,7 @@ class EcoParkDemoReadinessService
         return [
             'summary' => $summary,
             'checks' => array_values($checks->all()),
+            'fieldQrManifest' => $this->fieldQrManifest($campaigns, $venueId),
             'nextActions' => array_values($checks
                 ->whereIn('status', ['warning', 'fail'])
                 ->pluck('nextAction')
@@ -337,10 +341,121 @@ class EcoParkDemoReadinessService
         ) + ['minimum' => 6];
     }
 
+    /**
+     * @param  Collection<int, Campaign>  $campaigns
+     * @return list<array{code: string, label: string, role: string, checkpointKey: string|null, publicLocation: string|null, findingInstruction: string|null, scanPath: string}>
+     */
+    private function fieldQrManifest(Collection $campaigns, ?string $venueId): array
+    {
+        $campaign = $campaigns->first(fn (Campaign $item): bool => $item->code === EcoParkOnlineGameService::CAMPAIGN_CODE
+            || data_get($item->metadata, 'blueprint_code') === EcoParkOnlineGameService::BLUEPRINT_CODE);
+
+        if (! $campaign instanceof Campaign || ! $venueId) {
+            return [];
+        }
+
+        $codes = QrCode::query()
+            ->where('campaign_id', $campaign->id)
+            ->where('venue_id', $venueId)
+            ->where('status', RecordStatus::Active)
+            ->get()
+            ->filter(fn (QrCode $qr): bool => $qr->isAvailableForLanding()
+                && in_array(data_get($qr->metadata, 'online_game_role'), ['onsite_gate', 'physical_checkpoint'], true))
+            ->sortBy(function (QrCode $qr): string {
+                $role = (string) data_get($qr->metadata, 'online_game_role');
+                $checkpoint = (string) data_get($qr->metadata, 'checkpoint_key', '');
+
+                return ($role === 'onsite_gate' ? '0' : '1').'-'.$checkpoint;
+            });
+
+        $manifest = [];
+
+        foreach ($codes as $qr) {
+            $manifest[] = [
+                'code' => $qr->code,
+                'label' => $qr->label,
+                'role' => $this->nullableString(data_get($qr->metadata, 'online_game_role')) ?? '',
+                'checkpointKey' => $this->nullableString(data_get($qr->metadata, 'checkpoint_key')),
+                'publicLocation' => $this->nullableString(data_get($qr->metadata, 'public_location')),
+                'findingInstruction' => $this->nullableString(data_get($qr->metadata, 'finding_instruction')),
+                'scanPath' => route('scan.landing', ['code' => $qr->code], absolute: false),
+            ];
+        }
+
+        return $manifest;
+    }
+
+    private function nullableString(mixed $value): ?string
+    {
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $value = trim($value);
+
+        return $value === '' ? null : $value;
+    }
+
+    /**
+     * @param  Collection<int, Campaign>  $campaigns
+     * @return ReadinessCheck
+     */
+    private function commercialAdvertisingCheck(Collection $campaigns, ?string $venueId): array
+    {
+        $onlineCampaign = $campaigns->first(fn (Campaign $campaign): bool => $campaign->code === EcoParkOnlineGameService::CAMPAIGN_CODE
+            || data_get($campaign->metadata, 'blueprint_code') === EcoParkOnlineGameService::BLUEPRINT_CODE);
+
+        if (! $onlineCampaign instanceof Campaign || ! $venueId) {
+            return $this->check(
+                'commercial_ad_delivery',
+                'چرخه تحویل تبلیغ تجاری',
+                true,
+                0,
+                'کمپین دوبخشی تجاری در این بسته فعال نیست؛ کنترل تحویل تبلیغ هنگام فعال‌سازی آن الزامی می‌شود.',
+                'کمپین بازی آنلاین را فعال و حداقل یک تبلیغ تصویری تاییدشده را به جایگاه اجرایی وصل کنید.',
+            );
+        }
+
+        $readyAds = AdRequest::query()
+            ->where('venue_id', $venueId)
+            ->where('status', 'approved')
+            ->whereHas('creatives', fn ($query) => $query
+                ->where('creative_type', 'image')
+                ->where('status', 'approved')
+                ->whereNotNull('asset_url'))
+            ->whereHas('placements', fn ($query) => $query
+                ->whereIn('status', ['approved', 'scheduled']))
+            ->count();
+
+        return $this->minimumCountCheck(
+            'commercial_ad_delivery',
+            'چرخه تحویل تبلیغ تجاری',
+            $readyAds,
+            1,
+            'حداقل یک تبلیغ تصویری تاییدشده با جایگاه اجرایی برای کمپین تجاری آماده تحویل است.',
+            'تبلیغ تصویری کامل را تایید و به جایگاه بازی، ویترین عمومی یا نمایشگر زمان‌بندی‌شده وصل کنید.',
+        );
+    }
+
     /** @return ReadinessCheck */
     private function routeCheck(): array
     {
-        $missingRoutes = collect(['venue.dashboard', 'ravaq.dashboard', 'hub.dashboard', 'sponsor.dashboard', 'dashboard'])
+        $requiredRoutes = collect([
+            'participant.dashboard',
+            'partner.dashboard',
+            'partner.ads.page',
+            'venue.dashboard',
+            'ravaq.dashboard',
+            'hub.dashboard',
+            'sponsor.dashboard',
+            'admin.ads.page',
+            'admin.display-operations.page',
+            'admin.finance-wallets.page',
+            'admin.commercialization.page',
+            'admin.support.page',
+            'dashboard',
+        ]);
+        $missingRoutes = $requiredRoutes
             ->reject(fn (string $route): bool => Route::has($route))
             ->values();
 
@@ -348,8 +463,8 @@ class EcoParkDemoReadinessService
             'panel_routes',
             'مسیر پنل‌های مدیریتی',
             $missingRoutes->isEmpty(),
-            5 - $missingRoutes->count(),
-            'مسیر پنل‌های مکان، رواق، هاب، اسپانسر و داشبورد اصلی ثبت شده‌اند.',
+            $requiredRoutes->count() - $missingRoutes->count(),
+            'مسیر پنل مشارکت‌کننده، فروشگاه، مکان، هاب، اسپانسر، تبلیغات، مالی، پشتیبانی و گزارش تجاری ثبت شده‌اند.',
             'Routeهای ناقص را برای پنل‌های مدیریتی تکمیل کنید: '.$missingRoutes->implode('، '),
         );
     }

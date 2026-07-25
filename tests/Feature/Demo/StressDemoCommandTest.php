@@ -142,10 +142,17 @@ class StressDemoCommandTest extends TestCase
         $this->assertSame(11, $plan['summary']['completeCount']);
         $this->assertNull($plan['nextAction']);
 
-        $readinessChecks = collect(app(EcoParkDemoReadinessService::class)->report()['checks'])
+        $readiness = app(EcoParkDemoReadinessService::class)->report();
+        $readinessChecks = collect($readiness['checks'])
             ->keyBy('key');
         $this->assertSame('pass', $readinessChecks['physical_game_qr_chain']['status']);
         $this->assertSame(6, $readinessChecks['physical_game_qr_chain']['count']);
+        $this->assertSame('pass', $readinessChecks['commercial_ad_delivery']['status']);
+        $this->assertGreaterThanOrEqual(1, $readinessChecks['commercial_ad_delivery']['count']);
+        $this->assertCount(6, $readiness['fieldQrManifest']);
+        $this->assertSame('onsite_gate', $readiness['fieldQrManifest'][0]['role']);
+        $this->assertCount(6, collect($readiness['fieldQrManifest'])->pluck('code')->unique());
+        $this->assertNotEmpty($readiness['fieldQrManifest'][0]['findingInstruction']);
     }
 
     public function test_stress_demo_command_is_idempotent(): void

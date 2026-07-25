@@ -103,6 +103,13 @@ class PartnerDashboardService
                 ),
             ),
         ];
+        $conversionEvidence = $partner->rewardRedemptions()
+            ->whereIn('status', ['confirmed', 'redeemed'])
+            ->get(['id', 'metadata']);
+        $confirmedPurchases = $conversionEvidence
+            ->filter(fn (RewardRedemption $redemption): bool => (bool) data_get($redemption->metadata, 'purchase_confirmed', false));
+        $attributedSalesIrr = (int) $confirmedPurchases
+            ->sum(fn (RewardRedemption $redemption): int => (int) data_get($redemption->metadata, 'purchase_amount_irr', 0));
         $redemptions = $partner->rewardRedemptions()
             ->with(['user:id,name,email', 'userReward.rewardDefinition.campaign:id,code,name'])
             ->latest('created_at')
@@ -123,6 +130,12 @@ class PartnerDashboardService
                     'rewardType' => $reward?->reward_type,
                     'campaignName' => $reward?->campaign?->name,
                     'campaignCode' => $reward?->campaign?->code,
+                    'conversionType' => $redemption->metadata['conversion_type'] ?? 'reward_only',
+                    'purchaseConfirmed' => (bool) ($redemption->metadata['purchase_confirmed'] ?? false),
+                    'purchaseAmountIrr' => isset($redemption->metadata['purchase_amount_irr'])
+                        ? (int) $redemption->metadata['purchase_amount_irr']
+                        : null,
+                    'receiptReference' => $redemption->metadata['receipt_reference'] ?? null,
                 ];
             });
         $adRequests = $partner->adRequests()
@@ -174,6 +187,9 @@ class PartnerDashboardService
                 'issuedRewards' => $rewardDefinitions->sum('userRewardsCount'),
                 'pendingRedemptions' => (int) ($redemptionStatusCounts->get('pending') ?? 0),
                 'confirmedRedemptions' => (int) ($redemptionStatusCounts->get('confirmed') ?? 0),
+                'attributedVisits' => $conversionEvidence->count(),
+                'confirmedPurchases' => $confirmedPurchases->count(),
+                'attributedSalesIrr' => $attributedSalesIrr,
                 'allocatedInventory' => $inventorySummary['allocated'],
                 'reservedInventory' => $inventorySummary['reserved'],
                 'redeemedInventory' => $inventorySummary['redeemed'],
@@ -382,13 +398,19 @@ class PartnerDashboardService
         });
     }
 
-    public function confirmRedemption(User $partnerUser, string $redemptionCode): RewardRedemption
+    /** @param array<string, mixed> $conversionEvidence */
+    public function confirmRedemption(User $partnerUser, string $redemptionCode, array $conversionEvidence = []): RewardRedemption
     {
         $partner = $this->partnerForUser($partnerUser);
 
         $normalizedCode = Str::upper(trim($redemptionCode));
+        $purchaseConfirmed = ($conversionEvidence['purchase_status'] ?? 'reward_only') === 'purchase_confirmed';
+        $purchaseAmount = $purchaseConfirmed ? (int) ($conversionEvidence['purchase_amount'] ?? 0) : null;
+        $receiptReference = $purchaseConfirmed && is_string($conversionEvidence['receipt_reference'] ?? null)
+            ? trim($conversionEvidence['receipt_reference'])
+            : null;
 
-        return DB::transaction(function () use ($partner, $normalizedCode): RewardRedemption {
+        return DB::transaction(function () use ($partner, $partnerUser, $normalizedCode, $purchaseConfirmed, $purchaseAmount, $receiptReference): RewardRedemption {
             $redemption = RewardRedemption::query()
                 ->with('userReward.rewardDefinition')
                 ->where('redemption_code', $normalizedCode)
@@ -428,6 +450,12 @@ class PartnerDashboardService
                 'metadata' => [
                     ...($redemption->metadata ?? []),
                     'confirmed_by_partner_id' => $partner->id,
+                    'confirmed_by_user_id' => $partnerUser->id,
+                    'confirmed_at' => now()->toIso8601String(),
+                    'conversion_type' => $purchaseConfirmed ? 'verified_purchase' : 'reward_only',
+                    'purchase_confirmed' => $purchaseConfirmed,
+                    'purchase_amount_irr' => $purchaseAmount,
+                    'receipt_reference' => $receiptReference,
                     'reward_inventory_allocation_id' => $allocation->id ?? ($redemption->metadata['reward_inventory_allocation_id'] ?? null),
                 ],
             ]);

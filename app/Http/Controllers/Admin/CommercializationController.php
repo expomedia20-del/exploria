@@ -68,8 +68,21 @@ class CommercializationController extends Controller
     {
         $venueId = $venue?->id;
         $campaignId = $campaign?->id;
+        $conversionRedemptions = RewardRedemption::query()
+            ->when($venueId, fn ($query) => $query->whereHas(
+                'userReward.rewardDefinition',
+                fn ($rewardQuery) => $rewardQuery->where('venue_id', $venueId),
+            ))
+            ->when($campaignId, fn ($query) => $query->whereHas(
+                'userReward',
+                fn ($rewardQuery) => $rewardQuery->where('campaign_id', $campaignId),
+            ))
+            ->whereIn('status', ['confirmed', 'redeemed'])
+            ->get(['id', 'metadata']);
+        $confirmedPurchases = $conversionRedemptions
+            ->filter(fn (RewardRedemption $redemption): bool => (bool) data_get($redemption->metadata, 'purchase_confirmed', false));
 
-        return [
+        $metrics = [
             ['label' => 'کمپین قابل فروش', 'value' => Campaign::query()->where('status', RecordStatus::Active)->count()],
             ['label' => 'شریک/واحد آماده', 'value' => $venueId ? PartnerAccount::query()->where('venue_id', $venueId)->where('status', RecordStatus::Active)->count() : 0],
             ['label' => 'عضویت در کمپین', 'value' => $campaignId ? CampaignParticipant::query()->where('campaign_id', $campaignId)->count() : 0],
@@ -80,6 +93,15 @@ class CommercializationController extends Controller
             ['label' => 'نمایشگر فعال', 'value' => DisplayDevice::query()->where('status', RecordStatus::Active)->count()],
             ['label' => 'پیشنهاد اسپانسر', 'value' => SponsorProposal::query()->count()],
         ];
+        $metrics[] = ['label' => 'خرید تاییدشده منتسب', 'value' => $confirmedPurchases->count()];
+        $metrics[] = [
+            'label' => 'ارزش خرید منتسب (ریال)',
+            'value' => (int) $confirmedPurchases->sum(
+                fn (RewardRedemption $redemption): int => (int) data_get($redemption->metadata, 'purchase_amount_irr', 0),
+            ),
+        ];
+
+        return $metrics;
     }
 
     /**
@@ -308,10 +330,16 @@ class CommercializationController extends Controller
             ->where('status', 'completed')
             ->count();
         $issuedRewards = $userRewardIds->count();
-        $confirmedRedemptions = RewardRedemption::query()
+        $confirmedRedemptionRecords = RewardRedemption::query()
             ->whereIn('user_reward_id', $userRewardIds)
             ->whereIn('status', ['confirmed', 'redeemed'])
-            ->count();
+            ->get(['id', 'metadata']);
+        $confirmedRedemptions = $confirmedRedemptionRecords->count();
+        $confirmedPurchases = $confirmedRedemptionRecords
+            ->filter(fn (RewardRedemption $redemption): bool => (bool) data_get($redemption->metadata, 'purchase_confirmed', false));
+        $attributedPurchaseValue = (int) $confirmedPurchases->sum(
+            fn (RewardRedemption $redemption): int => (int) data_get($redemption->metadata, 'purchase_amount_irr', 0),
+        );
         $participants = CampaignParticipant::query()
             ->where('campaign_id', $campaignId)
             ->count();
@@ -335,6 +363,8 @@ class CommercializationController extends Controller
                 ['label' => 'ماموریت تکمیل‌شده', 'value' => $completedMissions],
                 ['label' => 'پاداش صادرشده', 'value' => $issuedRewards],
                 ['label' => 'مصرف تاییدشده', 'value' => $confirmedRedemptions],
+                ['label' => 'خرید تاییدشده منتسب', 'value' => $confirmedPurchases->count()],
+                ['label' => 'ارزش خرید منتسب (ریال)', 'value' => $attributedPurchaseValue],
                 ['label' => 'واحد/اسپانسر عضو', 'value' => $participants],
                 ['label' => 'سهم موجودی فعال', 'value' => $activeInventory],
             ],
@@ -349,6 +379,8 @@ class CommercializationController extends Controller
                 'completedMissions' => $completedMissions,
                 'issuedRewards' => $issuedRewards,
                 'confirmedRedemptions' => $confirmedRedemptions,
+                'confirmedPurchases' => $confirmedPurchases->count(),
+                'attributedPurchaseValue' => $attributedPurchaseValue,
                 'participants' => $participants,
                 'roiPercent' => $roiPercent,
                 'redemptionRate' => $redemptionRate,
@@ -383,7 +415,7 @@ class CommercializationController extends Controller
     }
 
     /**
-     * @param  array{visits: int, completedMissions: int, issuedRewards: int, confirmedRedemptions: int, participants: int, roiPercent: int, redemptionRate: int}  $stats
+     * @param  array{visits: int, completedMissions: int, issuedRewards: int, confirmedRedemptions: int, confirmedPurchases: int, attributedPurchaseValue: int, participants: int, roiPercent: int, redemptionRate: int}  $stats
      * @return list<AudienceReport>
      */
     private function audienceReports(Campaign $campaign, array $stats): array
@@ -432,6 +464,7 @@ class CommercializationController extends Controller
                 'proofPoints' => [
                     $stats['issuedRewards'].' پاداش صادرشده',
                     $stats['confirmedRedemptions'].' مصرف تاییدشده',
+                    $stats['confirmedPurchases'].' خرید تاییدشده با ارزش منتسب '.$stats['attributedPurchaseValue'].' ریال',
                     'نمونه واحد: '.($partnerReward->partnerAccount->name ?? 'واحد عضو دمو'),
                 ],
                 'offer' => 'عضویت واحد با پاداش قابل مصرف و گزارش مراجعه',

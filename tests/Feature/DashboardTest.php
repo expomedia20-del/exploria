@@ -325,7 +325,7 @@ class DashboardTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('admin/commercialization/index')
                 ->where('summary.status', 'آماده تبدیل دمو به بسته فروش')
-                ->has('salesMetrics', 9)
+                ->has('salesMetrics', 11)
                 ->has('packages', 3)
                 ->has('roiCards', 3)
                 ->has('salesPipeline', 5)

@@ -136,6 +136,76 @@ class PartnerRewardRedemptionTest extends TestCase
             ->assertJsonValidationErrors('redemption_code')
             ->assertJsonPath('errors.redemption_code.0', 'این کد قبلا مصرف شده است.');
         $this->assertSame(1, EventLog::query()->where('event_type', 'reward_redeemed')->where('object_id', $redemption->id)->count());
+        $this->assertSame(1, EventLog::query()->where('event_type', 'merchant_visited')->where('payload_json->reward_redemption_id', $redemption->id)->count());
+    }
+
+    public function test_partner_can_record_verified_purchase_attribution_with_reward_redemption(): void
+    {
+        $this->completeMission('scan-entry-qr');
+        $this->completeMission('discover-route-guide');
+
+        $partnerUser = User::query()->where('email', 'cafe.eco@example.test')->firstOrFail();
+        $redemption = RewardRedemption::query()->firstOrFail();
+
+        $this->actingAs($partnerUser)
+            ->postJson(route('partner.redemptions.api.confirm'), [
+                'redemption_code' => $redemption->redemption_code,
+                'purchase_status' => 'purchase_confirmed',
+                'purchase_amount' => 5_500_000,
+                'receipt_reference' => 'POS-1405-001',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.purchaseConfirmed', true)
+            ->assertJsonPath('data.purchaseAmountIrr', 5_500_000);
+
+        $redemption->refresh();
+
+        $this->assertTrue((bool) $redemption->metadata['purchase_confirmed']);
+        $this->assertSame('verified_purchase', $redemption->metadata['conversion_type']);
+        $this->assertSame(5_500_000, $redemption->metadata['purchase_amount_irr']);
+        $this->assertSame('POS-1405-001', $redemption->metadata['receipt_reference']);
+        $this->assertDatabaseHas('event_log', [
+            'event_type' => 'merchant_visited',
+            'object_type' => 'partner_account',
+            'object_id' => $redemption->partner_account_id,
+            'campaign_id' => $this->visit->campaign_id,
+        ]);
+
+        $merchantVisit = EventLog::query()
+            ->where('event_type', 'merchant_visited')
+            ->where('payload_json->reward_redemption_id', $redemption->id)
+            ->firstOrFail();
+
+        $this->assertTrue((bool) $merchantVisit->payload_json['purchase_confirmed']);
+        $this->assertSame(5_500_000, $merchantVisit->payload_json['purchase_amount_irr']);
+
+        $this->actingAs($partnerUser)
+            ->getJson(route('partner.dashboard.index'))
+            ->assertOk()
+            ->assertJsonPath('data.stats.attributedVisits', 1)
+            ->assertJsonPath('data.stats.confirmedPurchases', 1)
+            ->assertJsonPath('data.stats.attributedSalesIrr', 5_500_000)
+            ->assertJsonPath('data.redemptions.0.purchaseConfirmed', true)
+            ->assertJsonPath('data.redemptions.0.receiptReference', 'POS-1405-001');
+    }
+
+    public function test_verified_purchase_requires_a_positive_purchase_amount(): void
+    {
+        $this->completeMission('scan-entry-qr');
+        $this->completeMission('discover-route-guide');
+
+        $partnerUser = User::query()->where('email', 'cafe.eco@example.test')->firstOrFail();
+        $redemption = RewardRedemption::query()->firstOrFail();
+
+        $this->actingAs($partnerUser)
+            ->postJson(route('partner.redemptions.api.confirm'), [
+                'redemption_code' => $redemption->redemption_code,
+                'purchase_status' => 'purchase_confirmed',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('purchase_amount');
+
+        $this->assertSame('pending', $redemption->fresh()->status);
     }
 
     public function test_sponsor_inventory_is_reserved_and_redeemed_through_partner_code(): void

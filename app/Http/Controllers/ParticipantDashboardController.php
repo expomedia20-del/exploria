@@ -230,6 +230,8 @@ class ParticipantDashboardController extends Controller
                 'pointCost' => $redemption->userReward?->rewardDefinition?->point_cost,
                 'status' => $redemption->status,
                 'redeemedAt' => $redemption->redeemed_at?->toIso8601String(),
+                'purchaseConfirmed' => (bool) data_get($redemption->metadata, 'purchase_confirmed', false),
+                'purchaseAmountIrr' => data_get($redemption->metadata, 'purchase_amount_irr'),
             ])
             ->values();
 
@@ -368,6 +370,8 @@ class ParticipantDashboardController extends Controller
                     'redemptionCode' => $redemption?->redemption_code,
                     'redemptionStatus' => $redemption?->status,
                     'redeemedAt' => $redemption?->redeemed_at?->toIso8601String(),
+                    'purchaseConfirmed' => (bool) data_get($redemption?->metadata, 'purchase_confirmed', false),
+                    'purchaseAmountIrr' => data_get($redemption?->metadata, 'purchase_amount_irr'),
                 ];
             })
             ->values();

@@ -40,6 +40,21 @@ class CheckEcoParkDemoReadinessCommand extends Command
             ])->all(),
         );
 
+        if (! empty($report['fieldQrManifest'])) {
+            $this->newLine();
+            $this->info('Physical QR field manifest');
+            $this->table(
+                ['Code', 'Role', 'Checkpoint', 'Location', 'Scan path'],
+                collect($report['fieldQrManifest'])->map(fn (array $item): array => [
+                    $item['code'],
+                    $item['role'],
+                    $item['checkpointKey'] ?? '-',
+                    $item['publicLocation'] ?? $item['label'],
+                    $item['scanPath'],
+                ])->all(),
+            );
+        }
+
         if (! empty($report['nextActions'])) {
             $this->warn('Next actions:');
             foreach ($report['nextActions'] as $action) {

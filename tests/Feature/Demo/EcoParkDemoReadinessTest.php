@@ -34,7 +34,9 @@ class EcoParkDemoReadinessTest extends TestCase
         $this->assertSame('pass', $checks['treasure_connected']['status']);
         $this->assertSame('pass', $checks['sponsor_rewards']['status']);
         $this->assertSame('pass', $checks['inventory_allocations']['status']);
+        $this->assertSame('pass', $checks['commercial_ad_delivery']['status']);
         $this->assertSame('pass', $checks['panel_routes']['status']);
+        $this->assertSame(13, $checks['panel_routes']['count']);
         $this->assertSame('pass', $checks['venue_manager_scope']['status']);
     }
 

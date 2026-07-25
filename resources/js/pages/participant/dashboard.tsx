@@ -166,6 +166,8 @@ type Journey = {
         redemptionCode: string | null;
         redemptionStatus: string | null;
         redeemedAt: string | null;
+        purchaseConfirmed: boolean;
+        purchaseAmountIrr: number | null;
     }[];
     history: {
         id: string;
@@ -183,6 +185,8 @@ type Journey = {
         campaignName: string | null;
         status: string;
         redeemedAt: string | null;
+        purchaseConfirmed: boolean;
+        purchaseAmountIrr: number | null;
     }[];
     nextAction: {
         label: string;
@@ -884,6 +888,14 @@ function RewardWallet({ rewards }: { rewards: Journey['rewardWallet'] }) {
                                     اعتبار تا {formatDate(reward.expiresAt)}
                                 </p>
                             ) : null}
+                            {reward.redeemedAt ? (
+                                <p className="mt-2 text-[11px] text-muted-foreground">
+                                    نتیجه مراجعه:{' '}
+                                    {reward.purchaseConfirmed
+                                        ? `خرید تاییدشده${reward.purchaseAmountIrr ? ` · ${faNumber(reward.purchaseAmountIrr)} ریال` : ''}`
+                                        : 'تحویل پاداش بدون ثبت خرید'}
+                                </p>
+                            ) : null}
                         </article>
                     ))
                 )}
@@ -1095,6 +1107,14 @@ function ProfileAndGuide({
                                         partner.rewardTypeLabel}{' '}
                                     · وضعیت: {partner.status}
                                 </p>
+                                {partner.redeemedAt ? (
+                                    <p className="mt-1 text-muted-foreground">
+                                        نتیجه مراجعه:{' '}
+                                        {partner.purchaseConfirmed
+                                            ? `خرید تاییدشده${partner.purchaseAmountIrr ? ` · ${faNumber(partner.purchaseAmountIrr)} ریال` : ''}`
+                                            : 'تحویل پاداش بدون ثبت خرید'}
+                                    </p>
+                                ) : null}
                             </div>
                         ))}
                     </div>
