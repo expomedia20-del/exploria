@@ -72,16 +72,27 @@ class EnvironmentBaselineTest extends TestCase
     {
         $backupScript = file_get_contents(base_path('scripts/backup-postgresql.ps1'));
         $restoreScript = file_get_contents(base_path('scripts/test-postgresql-restore.ps1'));
+        $linuxBackupScript = file_get_contents(base_path('scripts/backup-postgresql.sh'));
+        $linuxRestoreScript = file_get_contents(base_path('scripts/test-postgresql-restore.sh'));
         $launchAssuranceScript = file_get_contents(base_path('scripts/run-launch-assurance.ps1'));
 
         $this->assertIsString($backupScript);
         $this->assertIsString($restoreScript);
+        $this->assertIsString($linuxBackupScript);
+        $this->assertIsString($linuxRestoreScript);
         $this->assertIsString($launchAssuranceScript);
         $this->assertStringContainsString('$pgRestore --list', $backupScript);
         $this->assertStringContainsString('EXPLORIA_PG_BIN', $backupScript);
         $this->assertStringContainsString('EXPLORIA_PG_BIN', $restoreScript);
         $this->assertStringContainsString('must end with _restore_test or -restore-test', $restoreScript);
         $this->assertStringContainsString('--clean --if-exists --exit-on-error', $restoreScript);
+        $this->assertStringContainsString('set -Eeuo pipefail', $linuxBackupScript);
+        $this->assertStringContainsString('umask 077', $linuxBackupScript);
+        $this->assertStringContainsString('pg_restore --list', $linuxBackupScript);
+        $this->assertStringContainsString('must end with _restore_test or -restore-test', $linuxRestoreScript);
+        $this->assertStringContainsString('--clean', $linuxRestoreScript);
+        $this->assertStringContainsString('--if-exists', $linuxRestoreScript);
+        $this->assertStringContainsString('--exit-on-error', $linuxRestoreScript);
         $this->assertStringContainsString('exploria:campaign-assurance', $launchAssuranceScript);
         $this->assertStringContainsString('exploria:production-readiness', $launchAssuranceScript);
         $this->assertStringContainsString('scripts\test-postgresql.ps1', $launchAssuranceScript);
@@ -91,5 +102,52 @@ class EnvironmentBaselineTest extends TestCase
         $this->assertStringNotContainsString('PGPASSWORD = \'', $backupScript);
         $this->assertStringNotContainsString('PGPASSWORD = \'', $restoreScript);
         $this->assertStringNotContainsString('PGPASSWORD = \'', $launchAssuranceScript);
+        $this->assertStringContainsString('export PGPASSWORD="$password"', $linuxBackupScript);
+        $this->assertStringContainsString('export PGPASSWORD="$password"', $linuxRestoreScript);
+        $this->assertStringNotContainsString("PGPASSWORD='", $linuxBackupScript);
+        $this->assertStringNotContainsString("PGPASSWORD='", $linuxRestoreScript);
+    }
+
+    public function test_linux_staging_deployment_is_atomic_and_fail_closed(): void
+    {
+        $deployScript = file_get_contents(base_path('scripts/deploy-staging.sh'));
+        $nginx = file_get_contents(base_path('deploy/nginx/exploria-staging.conf.example'));
+        $queue = file_get_contents(base_path('deploy/systemd/exploria-staging-queue.service.example'));
+        $scheduler = file_get_contents(base_path('deploy/systemd/exploria-staging-scheduler.service.example'));
+        $timer = file_get_contents(base_path('deploy/systemd/exploria-staging-scheduler.timer.example'));
+
+        $this->assertIsString($deployScript);
+        $this->assertIsString($nginx);
+        $this->assertIsString($queue);
+        $this->assertIsString($scheduler);
+        $this->assertIsString($timer);
+        $this->assertStringContainsString('EXPLORIA_DEPLOY_ROOT', $deployScript);
+        $this->assertStringContainsString('must end with /exploria-staging', $deployScript);
+        $this->assertStringContainsString('EXPLORIA_DEPLOY_REF', $deployScript);
+        $this->assertStringContainsString('EXPLORIA_HEALTH_URL', $deployScript);
+        $this->assertStringContainsString('EXPLORIA_VERIFIED_BACKUP_PATH', $deployScript);
+        $this->assertStringContainsString("app_environment\" == 'staging'", $deployScript);
+        $this->assertStringContainsString("app_debug\" == 'false'", $deployScript);
+        $this->assertStringContainsString("database_connection\" == 'pgsql'", $deployScript);
+        $this->assertStringContainsString('EXPLORIA_HEALTH_URL must match APP_URL plus /up', $deployScript);
+        $this->assertStringContainsString('git status --porcelain', $deployScript);
+        $this->assertStringContainsString('git archive', $deployScript);
+        $this->assertStringContainsString('storage.scaffold', $deployScript);
+        $this->assertStringContainsString('php artisan migrate --force --no-interaction', $deployScript);
+        $this->assertStringContainsString('exploria:production-readiness --json', $deployScript);
+        $this->assertStringContainsString('exploria:demo-readiness --json', $deployScript);
+        $this->assertStringContainsString('recover_previous_release', $deployScript);
+        $this->assertStringContainsString('curl', $deployScript);
+        $this->assertStringContainsString('https://', $deployScript);
+        $this->assertStringNotContainsString('APP_KEY=', $deployScript);
+        $this->assertStringNotContainsString('DB_PASSWORD=', $deployScript);
+        $this->assertStringNotContainsString('rm -rf', $deployScript);
+        $this->assertStringContainsString('root /var/www/exploria-staging/current/public;', $nginx);
+        $this->assertStringContainsString('X-Robots-Tag "noindex, nofollow, noarchive"', $nginx);
+        $this->assertStringContainsString('php8.4-fpm.sock', $nginx);
+        $this->assertStringContainsString('User=exploria', $queue);
+        $this->assertStringContainsString('queue:work database', $queue);
+        $this->assertStringContainsString('schedule:run --no-interaction', $scheduler);
+        $this->assertStringContainsString('OnCalendar=*-*-* *:*:00', $timer);
     }
 }

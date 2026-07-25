@@ -1,0 +1,20 @@
+[Unit]
+Description=EXPLORIA staging queue worker
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=exploria
+Group=www-data
+WorkingDirectory=/var/www/exploria-staging/current
+ExecStart=/usr/bin/php artisan queue:work database --sleep=3 --tries=3 --timeout=90 --max-time=3600
+ExecReload=/usr/bin/php artisan queue:restart
+Restart=always
+RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=95
+PrivateTmp=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

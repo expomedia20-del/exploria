@@ -1,0 +1,11 @@
+[Unit]
+Description=Run EXPLORIA staging scheduler every minute
+
+[Timer]
+OnCalendar=*-*-* *:*:00
+Persistent=true
+AccuracySec=1s
+Unit=exploria-staging-scheduler.service
+
+[Install]
+WantedBy=timers.target
