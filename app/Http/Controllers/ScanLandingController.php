@@ -4,17 +4,24 @@ namespace App\Http\Controllers;
 
 use App\Actions\Events\RecordQrScanEventAction;
 use App\Enums\RecordStatus;
+use App\Enums\UserRole;
 use App\Models\MissionInstance;
 use App\Models\QrCode;
 use App\Models\RewardDefinition;
+use App\Models\User;
+use App\Services\EcoParkOnlineGameService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ScanLandingController extends Controller
 {
-    public function __invoke(Request $request, string $code, RecordQrScanEventAction $recordQrScan): Response
-    {
+    public function __invoke(
+        Request $request,
+        string $code,
+        RecordQrScanEventAction $recordQrScan,
+        EcoParkOnlineGameService $onlineGame,
+    ): Response {
         $qr = QrCode::query()
             ->with(['venue', 'touchpoint.hub.zone', 'campaign'])
             ->where('code', $code)
@@ -47,6 +54,22 @@ class ScanLandingController extends Controller
         $campaign = $qr->campaign;
         $gameQrRole = data_get($qr->metadata, 'online_game_role');
         $isPhysicalGameQr = in_array($gameQrRole, ['onsite_gate', 'physical_checkpoint'], true);
+        $user = $request->user();
+        $isVisitor = $user instanceof User && $user->role === UserRole::Visitor;
+        $physicalScanState = $isPhysicalGameQr
+            ? ($isVisitor
+                ? $onlineGame->physicalScanState($user, $qr)
+                : [
+                    'status' => $user ? 'blocked' : 'auth_required',
+                    'canConfirm' => false,
+                    'message' => $user
+                        ? 'تأیید QR حضوری فقط با حساب مشارکت‌کننده همان کمپین انجام می‌شود.'
+                        : 'برای اتصال این QR به مجوز حضور، ابتدا با همان شماره‌ای که بازی آنلاین را انجام داده‌اید وارد شوید.',
+                    'partyStatus' => null,
+                    'expectedCheckpointKey' => null,
+                    'expectedCheckpointTitle' => null,
+                ])
+            : null;
 
         abort_unless($venue && $touchpoint && $hub && $zone && $campaign, 404);
 
@@ -117,11 +140,12 @@ class ScanLandingController extends Controller
                 'description' => $gameQrRole === 'onsite_gate'
                     ? 'این اسکن، مجوز صادرشده شما را به بخش حضوری متصل می‌کند و بازی تازه‌ای نمی‌سازد.'
                     : 'این اسکن فقط ایستگاه جاری مسیر حضوری شما را تأیید می‌کند.',
-                'isAuthenticated' => $request->user() !== null,
-                'confirmUrl' => $request->user()
+                'isAuthenticated' => $user !== null,
+                'scanState' => $physicalScanState,
+                'confirmUrl' => ($physicalScanState['canConfirm'] ?? false)
                     ? route('games.ecopark-treasure.physical-scans.confirm', ['code' => $qr->code])
                     : null,
-                'gameUrl' => $request->user()
+                'gameUrl' => $isVisitor
                     ? route('games.ecopark-treasure')
                     : null,
             ] : null,

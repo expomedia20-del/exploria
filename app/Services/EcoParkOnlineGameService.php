@@ -634,7 +634,7 @@ class EcoParkOnlineGameService
 
         return DB::transaction(function () use ($user, $party): GameParty {
             $plainToken = Str::random(48);
-            $code = 'ECO-'.Str::upper(Str::random(8));
+            $code = $this->uniquePassCode();
 
             GameEntryPass::query()->create([
                 'game_party_id' => $party->id,
@@ -655,6 +655,66 @@ class EcoParkOnlineGameService
             $this->ensurePhysicalProgress($party);
 
             return $party->load($this->partyRelations());
+        });
+    }
+
+    public function renewPass(User $user, GameParty $party): GameParty
+    {
+        $this->assertMember($user, $party);
+        $this->assertOwner($user, $party);
+
+        return DB::transaction(function () use ($party): GameParty {
+            $lockedParty = GameParty::query()
+                ->with('campaign')
+                ->lockForUpdate()
+                ->findOrFail($party->id);
+            $pass = $lockedParty->entryPass()->lockForUpdate()->first();
+            $campaign = $lockedParty->campaign;
+
+            if ($lockedParty->cycle_key !== $this->cycleKey($campaign)) {
+                throw ValidationException::withMessages([
+                    'pass' => 'مجوز مربوط به دوره جاری کمپین نیست و قابل تمدید نیست.',
+                ]);
+            }
+
+            if ($lockedParty->status !== 'ready_for_visit' || ! $pass) {
+                throw ValidationException::withMessages([
+                    'pass' => 'این مجوز در وضعیت قابل تمدید نیست.',
+                ]);
+            }
+
+            if ($pass->status === 'redeemed') {
+                throw ValidationException::withMessages([
+                    'pass' => 'مجوز حضور قبلاً مصرف شده است و قابل تمدید نیست.',
+                ]);
+            }
+
+            if ($pass->status === 'active' && $pass->expires_at->isFuture()) {
+                throw ValidationException::withMessages([
+                    'pass' => 'مجوز حضور هنوز معتبر است و نیازی به تمدید ندارد.',
+                ]);
+            }
+
+            if ($this->effectivePassStatus($pass) !== 'expired') {
+                throw ValidationException::withMessages([
+                    'pass' => 'این مجوز منقضی نشده یا وضعیت آن برای تمدید معتبر نیست.',
+                ]);
+            }
+
+            $plainToken = Str::random(48);
+            $pass->update([
+                'code' => $this->uniquePassCode(),
+                'token_hash' => hash('sha256', $plainToken),
+                'status' => 'active',
+                'expires_at' => now()->addDays(7),
+                'redeemed_at' => null,
+                'metadata' => array_merge($pass->metadata ?? [], [
+                    'renewal_count' => ((int) data_get($pass->metadata, 'renewal_count', 0)) + 1,
+                    'renewed_at' => now()->toIso8601String(),
+                ]),
+            ]);
+
+            return $lockedParty->load($this->partyRelations());
         });
     }
 
@@ -719,25 +779,63 @@ class EcoParkOnlineGameService
         });
     }
 
-    public function assertPhysicalQrAvailable(User $user, QrCode $qr): void
+    /** @return array{status: string, canConfirm: bool, message: string, partyStatus: string|null, expectedCheckpointKey: string|null, expectedCheckpointTitle: string|null} */
+    public function physicalScanState(User $user, QrCode $qr): array
     {
         $role = data_get($qr->metadata, 'online_game_role');
 
         if (! in_array($role, ['onsite_gate', 'physical_checkpoint'], true)) {
-            return;
+            return [
+                'status' => 'not_physical',
+                'canConfirm' => false,
+                'message' => 'این QR متعلق به مسیر حضوری بازی نیست.',
+                'partyStatus' => null,
+                'expectedCheckpointKey' => null,
+                'expectedCheckpointTitle' => null,
+            ];
+        }
+
+        $qr->loadMissing('campaign');
+        $campaign = $qr->campaign;
+        $checkpointKey = (string) data_get($qr->metadata, 'checkpoint_key');
+        $knownCheckpoint = collect(self::PHYSICAL_ROUTE_CHECKPOINTS)
+            ->flatten(1)
+            ->contains(fn (array $checkpoint): bool => $checkpoint['key'] === $checkpointKey);
+
+        if (
+            ! $campaign
+            || $qr->venue_id !== $campaign->venue_id
+            || ($role === 'physical_checkpoint' && ($checkpointKey === '' || ! $knownCheckpoint))
+        ) {
+            return [
+                'status' => 'invalid',
+                'canConfirm' => false,
+                'message' => 'تنظیمات این QR حضوری کامل یا با کمپین و مکان آن سازگار نیست؛ لطفاً به میز راهنما اطلاع دهید.',
+                'partyStatus' => null,
+                'expectedCheckpointKey' => null,
+                'expectedCheckpointTitle' => null,
+            ];
         }
 
         $party = GameParty::query()
             ->where('campaign_id', $qr->campaign_id)
+            ->where('cycle_key', $this->cycleKey($campaign))
             ->whereIn('status', ['ready_for_visit', 'onsite_active', 'completed'])
-            ->whereHas('members', fn ($query) => $query->where('user_id', $user->id))
+            ->whereHas('members', fn ($query) => $query
+                ->where('user_id', $user->id)
+                ->where('status', 'active'))
             ->with($this->partyRelations())
             ->first();
 
         if (! $party) {
-            throw ValidationException::withMessages([
-                'qr_code' => 'برای استفاده از این QR باید ابتدا بخش آنلاین همین کمپین را تکمیل و مجوز حضور دریافت کنید.',
-            ]);
+            return [
+                'status' => 'blocked',
+                'canConfirm' => false,
+                'message' => 'برای استفاده از این QR باید ابتدا بخش آنلاین همین دوره از کمپین را تکمیل و مجوز حضور دریافت کنید.',
+                'partyStatus' => null,
+                'expectedCheckpointKey' => null,
+                'expectedCheckpointTitle' => null,
+            ];
         }
 
         $this->ensurePhysicalProgress($party);
@@ -746,37 +844,103 @@ class EcoParkOnlineGameService
         if ($role === 'onsite_gate') {
             $pass = $party->entryPass;
 
-            if (
-                $party->status !== 'ready_for_visit'
-                || ! $pass
-                || $pass->status !== 'active'
-                || $pass->expires_at->isPast()
-            ) {
-                throw ValidationException::withMessages([
-                    'qr_code' => $party->status === 'onsite_active'
-                        ? 'ورود حضوری قبلاً تأیید شده است؛ راهنمای ایستگاه بعدی را در صفحه بازی دنبال کنید.'
-                        : 'مجوز حضور فعال و معتبری برای این گروه وجود ندارد.',
-                ]);
+            if ($party->status === 'onsite_active') {
+                $expected = $this->nextPhysicalCheckpoint($party);
+
+                return [
+                    'status' => 'completed_step',
+                    'canConfirm' => false,
+                    'message' => 'ورود حضوری قبلاً تأیید شده است؛ اکنون به ایستگاه جاری مسیر بروید.',
+                    'partyStatus' => $party->status,
+                    'expectedCheckpointKey' => $expected['key'] ?? null,
+                    'expectedCheckpointTitle' => $expected['title'] ?? null,
+                ];
             }
 
-            return;
+            if ($party->status === 'completed') {
+                return [
+                    'status' => 'completed',
+                    'canConfirm' => false,
+                    'message' => 'این کمپین قبلاً با موفقیت تکمیل شده است؛ نتیجه و پاداش‌ها در پنل شما باقی می‌ماند.',
+                    'partyStatus' => $party->status,
+                    'expectedCheckpointKey' => null,
+                    'expectedCheckpointTitle' => null,
+                ];
+            }
+
+            if (! $pass || $this->effectivePassStatus($pass) !== 'active') {
+                return [
+                    'status' => $pass && $this->effectivePassStatus($pass) === 'expired' ? 'expired' : 'blocked',
+                    'canConfirm' => false,
+                    'message' => $pass && $this->effectivePassStatus($pass) === 'expired'
+                        ? 'اعتبار مجوز حضور پایان یافته است؛ راهبر گروه باید ابتدا آن را در صفحه بازی تمدید کند.'
+                        : 'مجوز حضور فعال و معتبری برای این گروه وجود ندارد.',
+                    'partyStatus' => $party->status,
+                    'expectedCheckpointKey' => 'onsite-gate',
+                    'expectedCheckpointTitle' => 'دروازه ورود به مرحله حضوری',
+                ];
+            }
+
+            return [
+                'status' => 'ready',
+                'canConfirm' => true,
+                'message' => 'مجوز معتبر است؛ با تأیید این اسکن، حضور ثبت و نخستین ایستگاه مسیر باز می‌شود.',
+                'partyStatus' => $party->status,
+                'expectedCheckpointKey' => 'onsite-gate',
+                'expectedCheckpointTitle' => 'دروازه ورود به مرحله حضوری',
+            ];
         }
 
         if ($party->status !== 'onsite_active') {
-            throw ValidationException::withMessages([
-                'qr_code' => $party->status === 'completed'
+            return [
+                'status' => $party->status === 'completed' ? 'completed' : 'blocked',
+                'canConfirm' => false,
+                'message' => $party->status === 'completed'
                     ? 'این مسیر حضوری قبلاً به‌طور کامل انجام شده است.'
                     : 'ابتدا QR دروازه حضور بازی را اسکن کنید تا مرحله حضوری فعال شود.',
-            ]);
+                'partyStatus' => $party->status,
+                'expectedCheckpointKey' => $party->status === 'ready_for_visit' ? 'onsite-gate' : null,
+                'expectedCheckpointTitle' => $party->status === 'ready_for_visit' ? 'دروازه ورود به مرحله حضوری' : null,
+            ];
         }
 
-        $checkpointKey = (string) data_get($qr->metadata, 'checkpoint_key');
         $expected = $this->nextPhysicalCheckpoint($party);
 
         if (! $expected || $expected['key'] !== $checkpointKey) {
-            throw ValidationException::withMessages([
-                'qr_code' => 'این QR مربوط به ایستگاه جاری شما نیست. راهنمای مرحله حضوری را ببینید و به نقطه درست بروید.',
-            ]);
+            return [
+                'status' => 'wrong_checkpoint',
+                'canConfirm' => false,
+                'message' => $expected
+                    ? 'این QR مربوط به ایستگاه جاری شما نیست؛ مقصد درست «'.$expected['title'].'» است.'
+                    : 'برای این گروه ایستگاه حضوری فعالی پیدا نشد؛ وضعیت مسیر را در صفحه بازی بررسی کنید.',
+                'partyStatus' => $party->status,
+                'expectedCheckpointKey' => $expected['key'] ?? null,
+                'expectedCheckpointTitle' => $expected['title'] ?? null,
+            ];
+        }
+
+        return [
+            'status' => 'ready',
+            'canConfirm' => true,
+            'message' => 'این QR با ایستگاه جاری و ترتیب مسیر شما تطبیق دارد و آماده تأیید است.',
+            'partyStatus' => $party->status,
+            'expectedCheckpointKey' => $expected['key'],
+            'expectedCheckpointTitle' => $expected['title'],
+        ];
+    }
+
+    public function assertPhysicalQrAvailable(User $user, QrCode $qr): void
+    {
+        $role = data_get($qr->metadata, 'online_game_role');
+
+        if (! in_array($role, ['onsite_gate', 'physical_checkpoint'], true)) {
+            return;
+        }
+
+        $state = $this->physicalScanState($user, $qr);
+
+        if (! $state['canConfirm']) {
+            throw ValidationException::withMessages(['qr_code' => $state['message']]);
         }
     }
 
@@ -790,11 +954,18 @@ class EcoParkOnlineGameService
         }
 
         $this->assertPhysicalQrAvailable($user, $qr);
+        $qr->loadMissing('campaign');
+        $campaign = $qr->campaign;
+        abort_unless($campaign instanceof Campaign, 404);
+        $cycleKey = $this->cycleKey($campaign);
 
-        DB::transaction(function () use ($user, $qr, $role, $visit): void {
+        DB::transaction(function () use ($user, $qr, $role, $visit, $cycleKey): void {
             $party = GameParty::query()
                 ->where('campaign_id', $visit->campaign_id)
-                ->whereHas('members', fn ($query) => $query->where('user_id', $user->id))
+                ->where('cycle_key', $cycleKey)
+                ->whereHas('members', fn ($query) => $query
+                    ->where('user_id', $user->id)
+                    ->where('status', 'active'))
                 ->lockForUpdate()
                 ->firstOrFail();
             $this->ensurePhysicalProgress($party);
@@ -907,6 +1078,14 @@ class EcoParkOnlineGameService
                 : $party->status;
         $journeyTimeline = $this->journeyTimelineSnapshot($party, $physicalJourney);
         $currentStage = $this->currentStageSnapshot($effectiveStatus, $journeyTimeline);
+        $entryPassStatus = $party->entryPass
+            ? $this->effectivePassStatus($party->entryPass)
+            : null;
+
+        if ($effectiveStatus === 'ready_for_visit' && $entryPassStatus === 'expired') {
+            $currentStage['title'] = 'تمدید مجوز حضور';
+            $currentStage['instruction'] = 'اعتبار هفت‌روزه مجوز پایان یافته است؛ راهبر گروه آن را بدون دریافت امتیاز تکراری تمدید کند.';
+        }
 
         return [
             'id' => $party->id,
@@ -947,8 +1126,11 @@ class EcoParkOnlineGameService
             'commerce' => $this->commerceSnapshot($party),
             'entryPass' => $party->entryPass ? [
                 'code' => $party->entryPass->code,
-                'status' => $party->entryPass->status,
+                'status' => $entryPassStatus,
                 'expiresAt' => $party->entryPass->expires_at->toIso8601String(),
+                'isRenewable' => $entryPassStatus === 'expired'
+                    && $party->status === 'ready_for_visit'
+                    && $viewer?->id === $party->owner_user_id,
             ] : null,
             'bonusClaims' => $party->bonusClaims->map(fn (GameBonusClaim $claim): array => [
                 'adRequestId' => $claim->ad_request_id,
@@ -1492,6 +1674,24 @@ class EcoParkOnlineGameService
     private function unlockStep(GameParty $party, int $step): void
     {
         $party->progress()->where('step_index', $step)->where('status', 'locked')->update(['status' => 'available']);
+    }
+
+    private function effectivePassStatus(GameEntryPass $pass): string
+    {
+        if ($pass->status === 'active' && $pass->expires_at->isPast()) {
+            return 'expired';
+        }
+
+        return $pass->status;
+    }
+
+    private function uniquePassCode(): string
+    {
+        do {
+            $code = 'ECO-'.Str::upper(Str::random(8));
+        } while (GameEntryPass::query()->where('code', $code)->exists());
+
+        return $code;
     }
 
     private function uniqueInviteCode(): string

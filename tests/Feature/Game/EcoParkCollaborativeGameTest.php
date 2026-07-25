@@ -5,6 +5,7 @@ namespace Tests\Feature\Game;
 use App\Enums\UserRole;
 use App\Models\AdRequest;
 use App\Models\Campaign;
+use App\Models\ConsentVersion;
 use App\Models\GameEntryPass;
 use App\Models\GameParty;
 use App\Models\PartnerAccount;
@@ -15,6 +16,7 @@ use App\Models\User;
 use App\Models\UserReward;
 use App\Models\Visit;
 use App\Services\EcoParkOnlineGameService;
+use Database\Seeders\ConsentVersionSeeder;
 use Database\Seeders\PilotLocationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
@@ -536,6 +538,261 @@ class EcoParkCollaborativeGameTest extends TestCase
         $this->assertSame(3, $serialized['commerce']['issuedStageRewards']);
     }
 
+    public function test_expired_pass_can_be_renewed_without_duplicate_points(): void
+    {
+        $this->withoutVite();
+        $user = User::factory()->create(['role' => UserRole::Visitor]);
+        $visit = $this->visitFor($user);
+        $party = $this->readyForVisitParty($user, $visit);
+        $pass = GameEntryPass::query()->create([
+            'game_party_id' => $party->id,
+            'issued_to_user_id' => $user->id,
+            'code' => 'ECO-EXPIRED1',
+            'token_hash' => hash('sha256', 'expired-token'),
+            'status' => 'active',
+            'expires_at' => now()->subMinute(),
+        ]);
+
+        $serialized = app(EcoParkOnlineGameService::class)
+            ->serializeParty($party->refresh(), $user);
+
+        $this->assertSame('expired', $serialized['entryPass']['status']);
+        $this->assertTrue($serialized['entryPass']['isRenewable']);
+        $this->assertSame('تمدید مجوز حضور', $serialized['currentStage']['title']);
+
+        $scoreBeforeRenewal = $party->score;
+        $this->actingAs($user)
+            ->post(route('games.ecopark-treasure.parties.pass.renew', $party))
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $pass->refresh();
+        $this->assertSame('active', $pass->status);
+        $this->assertNotSame('ECO-EXPIRED1', $pass->code);
+        $this->assertTrue($pass->expires_at->isAfter(now()->addDays(6)));
+        $this->assertSame(1, $pass->metadata['renewal_count']);
+        $this->assertSame($scoreBeforeRenewal, $party->refresh()->score);
+        $this->assertDatabaseHas('game_challenge_progress', [
+            'game_party_id' => $party->id,
+            'step_index' => 5,
+            'status' => 'completed',
+            'points_awarded' => 120,
+        ]);
+
+        $this->actingAs($user)
+            ->from(route('games.ecopark-treasure'))
+            ->post(route('games.ecopark-treasure.parties.pass.renew', $party))
+            ->assertSessionHasErrors('pass');
+
+        $pass->update(['expires_at' => now()->subMinute()]);
+        $party->update(['cycle_key' => 'previous-cycle']);
+
+        $this->actingAs($user)
+            ->from(route('games.ecopark-treasure'))
+            ->post(route('games.ecopark-treasure.parties.pass.renew', $party))
+            ->assertSessionHasErrors('pass');
+    }
+
+    public function test_scan_landing_preflight_hides_confirmation_for_expired_and_wrong_qr(): void
+    {
+        $this->withoutVite();
+        $user = User::factory()->create(['role' => UserRole::Visitor]);
+        $visit = $this->visitFor($user);
+        $party = $this->readyForVisitParty($user, $visit);
+        $campaign = Campaign::query()->findOrFail($visit->campaign_id);
+        $pass = GameEntryPass::query()->create([
+            'game_party_id' => $party->id,
+            'issued_to_user_id' => $user->id,
+            'code' => 'ECO-PREFLIGHT',
+            'token_hash' => hash('sha256', 'preflight-token'),
+            'status' => 'active',
+            'expires_at' => now()->addDay(),
+        ]);
+        $gate = $this->physicalQr($visit, 'preflight-gate', 'onsite_gate');
+
+        $this->actingAs($user)
+            ->get(route('scan.landing', ['code' => $gate->code]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('gamePhysicalScan.scanState.status', 'ready')
+                ->where('gamePhysicalScan.scanState.canConfirm', true)
+                ->where(
+                    'gamePhysicalScan.confirmUrl',
+                    route('games.ecopark-treasure.physical-scans.confirm', ['code' => $gate->code]),
+                ));
+
+        $pass->update(['expires_at' => now()->subSecond()]);
+
+        $this->actingAs($user)
+            ->get(route('scan.landing', ['code' => $gate->code]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('gamePhysicalScan.scanState.status', 'expired')
+                ->where('gamePhysicalScan.scanState.canConfirm', false)
+                ->where('gamePhysicalScan.confirmUrl', null));
+
+        $this->seed(ConsentVersionSeeder::class);
+        $consentVersion = ConsentVersion::query()->where('is_active', true)->firstOrFail();
+        $this->actingAs($user)
+            ->postJson(route('consents.accept'), [
+                'consentVersionId' => $consentVersion->id,
+                'source' => 'pwa',
+            ])
+            ->assertCreated();
+        $this->actingAs($user)
+            ->from(route('scan.landing', ['code' => $gate->code]))
+            ->post(route('games.ecopark-treasure.physical-scans.confirm', ['code' => $gate->code]))
+            ->assertRedirect(route('scan.landing', ['code' => $gate->code]))
+            ->assertSessionHasErrors('qr_code');
+        $this->assertDatabaseMissing('visits', [
+            'user_id' => $user->id,
+            'qr_code_id' => $gate->id,
+        ]);
+        $this->assertDatabaseMissing('scan_events', [
+            'user_id' => $user->id,
+            'qr_code_id' => $gate->id,
+        ]);
+
+        $pass->update(['expires_at' => now()->addDay()]);
+        $gateVisit = Visit::query()->create([
+            'user_id' => $user->id,
+            'qr_code_id' => $gate->id,
+            'venue_id' => $visit->venue_id,
+            'touchpoint_id' => $visit->touchpoint_id,
+            'campaign_id' => $campaign->id,
+            'source' => 'qr_landing',
+            'status' => 'confirmed',
+            'occurred_at' => now(),
+        ]);
+        app(EcoParkOnlineGameService::class)
+            ->redeemOnsiteVisit($user, $gateVisit->load('qrCode'));
+        $wrongCheckpoint = $this->physicalQr(
+            $visit,
+            'preflight-wrong-checkpoint',
+            'physical_checkpoint',
+            'mina',
+        );
+
+        $this->actingAs($user)
+            ->get(route('scan.landing', ['code' => $wrongCheckpoint->code]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('gamePhysicalScan.scanState.status', 'wrong_checkpoint')
+                ->where('gamePhysicalScan.scanState.expectedCheckpointKey', 'fire-water')
+                ->where('gamePhysicalScan.scanState.canConfirm', false)
+                ->where('gamePhysicalScan.confirmUrl', null));
+
+        $this->actingAs($user)
+            ->from(route('scan.landing', ['code' => $wrongCheckpoint->code]))
+            ->post(route('games.ecopark-treasure.physical-scans.confirm', ['code' => $wrongCheckpoint->code]))
+            ->assertRedirect(route('scan.landing', ['code' => $wrongCheckpoint->code]))
+            ->assertSessionHasErrors('qr_code');
+        $this->assertDatabaseMissing('visits', [
+            'user_id' => $user->id,
+            'qr_code_id' => $wrongCheckpoint->id,
+        ]);
+        $this->assertDatabaseMissing('scan_events', [
+            'user_id' => $user->id,
+            'qr_code_id' => $wrongCheckpoint->id,
+        ]);
+    }
+
+    public function test_confirming_a_ready_gate_through_http_redeems_the_pass_and_opens_the_first_checkpoint(): void
+    {
+        $this->seed(ConsentVersionSeeder::class);
+        $user = User::factory()->create(['role' => UserRole::Visitor]);
+        $visit = $this->visitFor($user);
+        $party = $this->readyForVisitParty($user, $visit);
+        GameEntryPass::query()->create([
+            'game_party_id' => $party->id,
+            'issued_to_user_id' => $user->id,
+            'code' => 'ECO-HTTP-GATE',
+            'token_hash' => hash('sha256', 'http-gate-token'),
+            'status' => 'active',
+            'expires_at' => now()->addDay(),
+        ]);
+        $gate = $this->physicalQr($visit, 'http-onsite-gate', 'onsite_gate');
+        $consentVersion = ConsentVersion::query()->where('is_active', true)->firstOrFail();
+
+        $this->actingAs($user)
+            ->postJson(route('consents.accept'), [
+                'consentVersionId' => $consentVersion->id,
+                'source' => 'pwa',
+            ])
+            ->assertCreated();
+
+        $response = $this->actingAs($user)
+            ->post(route('games.ecopark-treasure.physical-scans.confirm', ['code' => $gate->code]));
+        $physicalVisit = Visit::query()
+            ->where('user_id', $user->id)
+            ->where('qr_code_id', $gate->id)
+            ->firstOrFail();
+
+        $response
+            ->assertRedirect(route('games.ecopark-treasure', ['visit' => $physicalVisit->id]))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('game_entry_passes', [
+            'game_party_id' => $party->id,
+            'status' => 'redeemed',
+        ]);
+        $this->assertDatabaseHas('game_parties', [
+            'id' => $party->id,
+            'status' => 'onsite_active',
+            'score' => 400,
+        ]);
+        $this->assertDatabaseHas('game_challenge_progress', [
+            'game_party_id' => $party->id,
+            'step_index' => 6,
+            'status' => 'completed',
+        ]);
+        $this->assertDatabaseHas('game_challenge_progress', [
+            'game_party_id' => $party->id,
+            'step_index' => 7,
+            'status' => 'available',
+        ]);
+        $this->assertDatabaseHas('scan_events', [
+            'qr_code_id' => $gate->id,
+            'user_id' => $user->id,
+            'result' => 'accepted',
+        ]);
+    }
+
+    public function test_physical_qr_rejects_previous_cycle_removed_member_and_unknown_checkpoint(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::Visitor]);
+        $visit = $this->visitFor($user);
+        $campaign = Campaign::query()->findOrFail($visit->campaign_id);
+        $party = $this->readyForVisitParty($user, $visit, 'previous-cycle');
+        GameEntryPass::query()->create([
+            'game_party_id' => $party->id,
+            'issued_to_user_id' => $user->id,
+            'code' => 'ECO-OLD-CYCLE',
+            'token_hash' => hash('sha256', 'old-cycle-token'),
+            'status' => 'active',
+            'expires_at' => now()->addDay(),
+        ]);
+        $gate = $this->physicalQr($visit, 'old-cycle-gate', 'onsite_gate');
+        $service = app(EcoParkOnlineGameService::class);
+
+        $this->assertSame('blocked', $service->physicalScanState($user, $gate)['status']);
+
+        $party->update(['cycle_key' => $service->cycleKey($campaign)]);
+        $this->assertSame('ready', $service->physicalScanState($user, $gate)['status']);
+
+        $party->members()->where('user_id', $user->id)->update(['status' => 'removed']);
+        $this->assertSame('blocked', $service->physicalScanState($user, $gate)['status']);
+
+        $party->members()->where('user_id', $user->id)->update(['status' => 'active']);
+        $unknown = $this->physicalQr(
+            $visit,
+            'unknown-checkpoint',
+            'physical_checkpoint',
+            'unknown-place',
+        );
+        $this->assertSame('invalid', $service->physicalScanState($user, $unknown)['status']);
+    }
+
     public function test_rewarded_sponsor_content_is_optional_delayed_and_once_per_party(): void
     {
         $user = User::factory()->create(['role' => UserRole::Visitor]);
@@ -754,6 +1011,67 @@ class EcoParkCollaborativeGameTest extends TestCase
             'source' => 'qr_landing',
             'status' => 'confirmed',
             'occurred_at' => now(),
+        ]);
+    }
+
+    private function readyForVisitParty(
+        User $user,
+        Visit $visit,
+        ?string $cycleKey = null,
+    ): GameParty {
+        $campaign = Campaign::query()->findOrFail($visit->campaign_id);
+        $cycleKey ??= app(EcoParkOnlineGameService::class)->cycleKey($campaign);
+
+        $party = GameParty::query()->create([
+            'campaign_id' => $visit->campaign_id,
+            'visit_id' => $visit->id,
+            'owner_user_id' => $user->id,
+            'mode' => 'individual',
+            'route_key' => 'quick',
+            'cycle_key' => $cycleKey,
+            'status' => 'ready_for_visit',
+            'score' => 250,
+        ]);
+        $party->members()->create([
+            'user_id' => $user->id,
+            'display_name' => $user->name,
+            'member_type' => 'registered',
+            'role' => 'leader',
+            'status' => 'active',
+            'joined_at' => now(),
+        ]);
+
+        foreach (range(1, 5) as $step) {
+            $party->progress()->create([
+                'step_index' => $step,
+                'status' => 'completed',
+                'points_awarded' => [1 => 20, 2 => 30, 3 => 60, 4 => 80, 5 => 120][$step],
+                'completed_at' => now(),
+            ]);
+        }
+
+        return $party;
+    }
+
+    private function physicalQr(
+        Visit $origin,
+        string $code,
+        string $role,
+        ?string $checkpoint = null,
+    ): QrCode {
+        return QrCode::query()->create([
+            'code' => $code,
+            'venue_id' => $origin->venue_id,
+            'touchpoint_id' => $origin->touchpoint_id,
+            'campaign_id' => $origin->campaign_id,
+            'destination_url' => url('/scan/'.$code),
+            'status' => 'active',
+            'valid_from' => now()->subDay(),
+            'valid_until' => now()->addDay(),
+            'metadata' => array_filter([
+                'online_game_role' => $role,
+                'checkpoint_key' => $checkpoint,
+            ]),
         ]);
     }
 }

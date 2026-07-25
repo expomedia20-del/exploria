@@ -103,6 +103,7 @@ type Party = {
         code: string;
         status: 'active' | 'redeemed' | 'expired';
         expiresAt: string;
+        isRenewable: boolean;
     } | null;
     physicalJourney: {
         phase: 'awaiting_gate' | 'active' | 'completed';
@@ -1334,6 +1335,7 @@ function EntryPass({ game, party }: { game: Props['game']; party: Party }) {
             (routeOption) => routeOption.key === party.routeKey,
         )?.title ?? 'مسیر ثبت‌شده';
     const redeemed = pass?.status === 'redeemed';
+    const expired = pass?.status === 'expired';
     const campaignCompleted = party.status === 'completed';
 
     if (!pass) {
@@ -1341,30 +1343,39 @@ function EntryPass({ game, party }: { game: Props['game']; party: Party }) {
     }
 
     return (
-        <div className="overflow-hidden rounded-3xl bg-slate-950 text-white shadow-2xl">
+        <div
+            id="entry-pass"
+            className="scroll-mt-6 overflow-hidden rounded-3xl bg-slate-950 text-white shadow-2xl"
+        >
             <div className="grid gap-6 p-6 sm:grid-cols-[1fr_auto] sm:p-8">
                 <div>
                     <span className="inline-flex items-center gap-2 rounded-full bg-emerald-400/15 px-3 py-1 text-xs font-bold text-emerald-300">
                         <BadgeCheck className="size-4" />
-                        {redeemed
-                            ? campaignCompleted
-                                ? 'کمپین آنلاین و حضوری تکمیل شد'
-                                : 'مرحله حضوری فعال است'
-                            : 'بخش آنلاین تکمیل شد'}
+                        {expired
+                            ? 'اعتبار مجوز حضور پایان یافته است'
+                            : redeemed
+                              ? campaignCompleted
+                                  ? 'کمپین آنلاین و حضوری تکمیل شد'
+                                  : 'مرحله حضوری فعال است'
+                              : 'بخش آنلاین تکمیل شد'}
                     </span>
                     <h2 className="mt-4 text-2xl font-black">
-                        {redeemed
-                            ? campaignCompleted
-                                ? 'گنج حضوری با موفقیت کشف شد'
-                                : 'حضور تأیید شد؛ مسیر را ادامه دهید'
-                            : `مجوز ${modeTitle} حضور اکوپارک`}
+                        {expired
+                            ? 'مجوز را پیش از مراجعه تمدید کنید'
+                            : redeemed
+                              ? campaignCompleted
+                                  ? 'گنج حضوری با موفقیت کشف شد'
+                                  : 'حضور تأیید شد؛ مسیر را ادامه دهید'
+                              : `مجوز ${modeTitle} حضور اکوپارک`}
                     </h2>
                     <p className="mt-2 text-sm leading-7 text-slate-300">
-                        {redeemed
-                            ? campaignCompleted
-                                ? 'همه ایستگاه‌های فیزیکی به ترتیب معتبر اسکن شده‌اند. نتیجه و پاداش‌ها در «پنل من» باقی می‌مانند.'
-                                : 'اسکن دروازه ثبت و ۱۵۰ امتیاز حضور اضافه شد. اکنون راهنمای ایستگاه جاری را در بخش «ادامه مسیر فیزیکی» دنبال کنید.'
-                            : 'این کد، شماره پیگیری مجوز شماست و قرار نیست آن را اسکن کنید. برای تأیید حضور باید QR نصب‌شده روی استند اکسپلوریا را در محل اسکن کنید.'}
+                        {expired
+                            ? 'بخش آنلاین و امتیازهای آن محفوظ است. راهبر گروه می‌تواند همین مجوز را بدون دریافت امتیاز تکراری برای هفت روز دیگر تمدید کند.'
+                            : redeemed
+                              ? campaignCompleted
+                                  ? 'همه ایستگاه‌های فیزیکی به ترتیب معتبر اسکن شده‌اند. نتیجه و پاداش‌ها در «پنل من» باقی می‌مانند.'
+                                  : 'اسکن دروازه ثبت و ۱۵۰ امتیاز حضور اضافه شد. اکنون راهنمای ایستگاه جاری را در بخش «ادامه مسیر فیزیکی» دنبال کنید.'
+                              : 'این کد، شماره پیگیری مجوز شماست و قرار نیست آن را اسکن کنید. برای تأیید حضور باید QR نصب‌شده روی استند اکسپلوریا را در محل اسکن کنید.'}
                     </p>
                     {campaignCompleted ? (
                         <p className="mt-3 rounded-xl bg-white/10 p-3 text-xs leading-6 text-slate-200">
@@ -1422,7 +1433,7 @@ function EntryPass({ game, party }: { game: Props['game']; party: Party }) {
                     </button>
                 </div>
             </div>
-            {!redeemed ? (
+            {!redeemed && !expired ? (
                 <div className="border-t border-white/10 bg-white/5 p-6 sm:p-8">
                     <h3 className="font-black">حالا دقیقاً چه کار کنید؟</h3>
                     <ol className="mt-4 grid gap-3 text-sm leading-7 text-slate-200">
@@ -1463,6 +1474,49 @@ function EntryPass({ game, party }: { game: Props['game']; party: Party }) {
                     </a>
                 </div>
             ) : null}
+            {expired ? (
+                <div className="border-t border-amber-300/20 bg-amber-400/10 p-6 sm:p-8">
+                    <h3 className="font-black text-amber-200">
+                        برای ادامه حضوری چه کار کنیم؟
+                    </h3>
+                    <p className="mt-2 text-sm leading-7 text-slate-200">
+                        پس از تمدید، فقط QR فیزیکی «دروازه حضور بازی» را در
+                        اکوپارک اسکن کنید. کد پیگیری مجوز، QR نیست و نیازی به
+                        ساخت دوباره گروه یا تکرار مراحل آنلاین ندارید.
+                    </p>
+                    {pass.isRenewable ? (
+                        <Form
+                            action={`/games/ecopark-treasure/parties/${party.id}/pass/renew`}
+                            method="post"
+                            className="mt-5"
+                        >
+                            {({ processing, errors }) => (
+                                <>
+                                    <button
+                                        type="submit"
+                                        disabled={processing}
+                                        className="min-h-12 w-full rounded-2xl bg-amber-300 px-5 py-3 font-black text-slate-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                                    >
+                                        {processing
+                                            ? 'در حال تمدید مجوز...'
+                                            : 'تمدید مجوز برای ۷ روز'}
+                                    </button>
+                                    {errors.pass ? (
+                                        <p className="mt-3 rounded-xl bg-rose-100 p-3 text-sm text-rose-900">
+                                            {errors.pass}
+                                        </p>
+                                    ) : null}
+                                </>
+                            )}
+                        </Form>
+                    ) : (
+                        <p className="mt-4 rounded-xl bg-white/10 p-3 text-xs leading-6 text-slate-200">
+                            تمدید مجوز فقط توسط راهبر گروه انجام می‌شود؛ از
+                            راهبر بخواهید این صفحه را باز و مجوز را تمدید کند.
+                        </p>
+                    )}
+                </div>
+            ) : null}
             <div className="border-t border-white/10 bg-white/5 px-6 py-4 text-xs text-slate-300 sm:px-8">
                 اعتبار تا{' '}
                 {new Intl.DateTimeFormat('fa-IR', {
@@ -1498,6 +1552,7 @@ function PhysicalJourney({
             : game.physicalCheckpoints.find(
                   (checkpoint) => checkpoint.key === currentStep?.key,
               );
+    const passExpired = party.entryPass?.status === 'expired';
 
     return (
         <section
@@ -1562,7 +1617,28 @@ function PhysicalJourney({
                 ))}
             </div>
 
-            {currentStep && currentLocation ? (
+            {passExpired ? (
+                <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-5">
+                    <span className="text-xs font-black text-amber-800">
+                        اقدام لازم پیش از مراجعه
+                    </span>
+                    <h3 className="mt-2 text-xl font-black">
+                        ابتدا مجوز حضور را تمدید کنید
+                    </h3>
+                    <p className="mt-3 text-sm leading-7 text-slate-700">
+                        تا زمان تمدید، لینک اسکن دمو و راهنمای حرکت به ایستگاه
+                        نمایش داده نمی‌شود؛ پس از تمدید، مقصد و QR درست دوباره
+                        در همین بخش فعال خواهد شد.
+                    </p>
+                    <a
+                        href="#entry-pass"
+                        className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-amber-300 px-5 py-3 text-sm font-black text-slate-950 transition hover:bg-amber-200 sm:w-auto"
+                    >
+                        <TicketCheck className="size-5" />
+                        رفتن به تمدید مجوز
+                    </a>
+                </div>
+            ) : currentStep && currentLocation ? (
                 <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-5">
                     <span className="text-xs font-black text-amber-800">
                         کار بعدی شما

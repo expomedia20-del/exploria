@@ -121,6 +121,13 @@ class EcoParkOnlineGameActionController extends Controller
         return back()->with('success', 'مجوز حضور یک‌بارمصرف ساخته شد.');
     }
 
+    public function renewPass(IssueGamePassRequest $request, GameParty $party): RedirectResponse
+    {
+        $this->game->renewPass($request->user(), $party);
+
+        return back()->with('success', 'مجوز حضور برای هفت روز دیگر تمدید شد؛ امتیاز مرحله دوباره محاسبه نشد.');
+    }
+
     public function confirmPhysicalScan(
         ConfirmGamePhysicalScanRequest $request,
         RecordVisitAction $recordVisit,

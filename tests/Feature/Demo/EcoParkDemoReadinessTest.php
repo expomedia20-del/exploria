@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Demo;
 
+use App\Models\QrCode;
 use App\Services\EcoParkDemoReadinessService;
 use Database\Seeders\PilotLocationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -42,5 +43,23 @@ class EcoParkDemoReadinessTest extends TestCase
         $this->artisan('exploria:demo-readiness', ['--json' => true])
             ->assertSuccessful()
             ->expectsOutputToContain('ready');
+    }
+
+    public function test_readiness_fails_when_an_active_game_checkpoint_is_missing(): void
+    {
+        $this->artisan('exploria:prepare-stress-demo')->assertSuccessful();
+
+        QrCode::query()
+            ->where('metadata->online_game_role', 'physical_checkpoint')
+            ->where('metadata->checkpoint_key', 'mina')
+            ->update(['status' => 'inactive']);
+
+        $report = app(EcoParkDemoReadinessService::class)->report();
+        $check = collect($report['checks'])->firstWhere('key', 'physical_game_qr_chain');
+
+        $this->assertFalse($report['summary']['ready']);
+        $this->assertSame('fail', $check['status']);
+        $this->assertSame(5, $check['count']);
+        $this->assertStringContainsString('گنبد مینا', $check['message']);
     }
 }

@@ -41,7 +41,7 @@ class EcoParkDemoReadinessService
             ? Campaign::query()
                 ->where('venue_id', $venueId)
                 ->where('status', RecordStatus::Active)
-                ->get(['id', 'code', 'name'])
+                ->get(['id', 'code', 'name', 'metadata'])
             : collect();
 
         $campaignIds = $campaigns->pluck('id');
@@ -74,6 +74,7 @@ class EcoParkDemoReadinessService
                 'QR ورودی یا عملیاتی برای دمو آماده است.',
                 'برای کمپین فعال، حداقل یک QR فعال بسازید.',
             ),
+            $this->physicalGameQrChainCheck($campaigns, $venueId),
             $this->minimumCountCheck(
                 'mission_chain',
                 'زنجیره ماموریت‌ها',
@@ -274,6 +275,66 @@ class EcoParkDemoReadinessService
             ->whereIn('partner_account_id', $partnerIds)
             ->whereHas('partnerAccount', fn ($partnerQuery) => $partnerQuery->where('partner_type', '!=', 'sponsor'))
             ->count();
+    }
+
+    /**
+     * @param  Collection<int, Campaign>  $campaigns
+     * @return ReadinessCheck
+     */
+    private function physicalGameQrChainCheck(Collection $campaigns, ?string $venueId): array
+    {
+        $campaign = $campaigns->first(fn (Campaign $item): bool => $item->code === EcoParkOnlineGameService::CAMPAIGN_CODE
+            || data_get($item->metadata, 'blueprint_code') === EcoParkOnlineGameService::BLUEPRINT_CODE);
+        $requiredCheckpoints = [
+            'fire-water' => 'میدان آب‌وآتش',
+            'nature' => 'پل طبیعت',
+            'book-garden' => 'باغ کتاب',
+            'mina' => 'گنبد مینا',
+            'ravaq-finish' => 'گنج پایانی رواق',
+        ];
+
+        if (! $campaign instanceof Campaign || ! $venueId) {
+            return $this->check(
+                'physical_game_qr_chain',
+                'زنجیره QR مرحله حضوری بازی',
+                true,
+                0,
+                'کمپین دو‌بخشی بازی در این بسته فعال نیست؛ کنترل زنجیره QR هنگام فعال‌سازی آن الزامی می‌شود.',
+                'کمپین بازی آنلاین اکوپارک را فعال و به مکان صحیح متصل کنید.',
+            );
+        }
+
+        $qrCodes = QrCode::query()
+            ->where('campaign_id', $campaign->id)
+            ->where('venue_id', $venueId)
+            ->where('status', RecordStatus::Active)
+            ->get()
+            ->filter(fn (QrCode $qr): bool => $qr->isAvailableForLanding());
+        $hasGate = $qrCodes->contains(fn (QrCode $qr): bool => data_get($qr->metadata, 'online_game_role') === 'onsite_gate');
+        $checkpointKeys = $qrCodes
+            ->filter(fn (QrCode $qr): bool => data_get($qr->metadata, 'online_game_role') === 'physical_checkpoint')
+            ->pluck('metadata')
+            ->map(fn (mixed $metadata): mixed => data_get($metadata, 'checkpoint_key'))
+            ->filter(fn (mixed $key): bool => is_string($key))
+            ->unique()
+            ->values();
+        $missing = collect($requiredCheckpoints)
+            ->reject(fn (string $label, string $key): bool => $checkpointKeys->contains($key));
+        $count = ($hasGate ? 1 : 0) + (count($requiredCheckpoints) - $missing->count());
+        $passes = $hasGate && $missing->isEmpty();
+        $missingLabels = collect([
+            ...($hasGate ? [] : ['دروازه حضور بازی']),
+            ...$missing->values()->all(),
+        ])->implode('، ');
+
+        return $this->check(
+            'physical_game_qr_chain',
+            'زنجیره QR مرحله حضوری بازی',
+            $passes,
+            $count,
+            'دروازه حضور و همه ایستگاه‌های لازم برای مسیر سریع، خانوادگی و کاوشگر فعال و قابل اسکن‌اند.',
+            'QRهای حضوری ناقص‌اند؛ این نقاط را فعال یا اصلاح کنید: '.$missingLabels,
+        ) + ['minimum' => 6];
     }
 
     /** @return ReadinessCheck */

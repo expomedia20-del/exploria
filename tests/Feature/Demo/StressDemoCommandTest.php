@@ -13,6 +13,7 @@ use App\Models\SponsorProposal;
 use App\Models\UserMissionProgress;
 use App\Models\UserReward;
 use App\Models\Venue;
+use App\Services\EcoParkDemoReadinessService;
 use App\Services\VenueRegistryService;
 use Database\Seeders\PilotLocationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -140,6 +141,11 @@ class StressDemoCommandTest extends TestCase
         $this->assertSame(100, $plan['summary']['progress']);
         $this->assertSame(11, $plan['summary']['completeCount']);
         $this->assertNull($plan['nextAction']);
+
+        $readinessChecks = collect(app(EcoParkDemoReadinessService::class)->report()['checks'])
+            ->keyBy('key');
+        $this->assertSame('pass', $readinessChecks['physical_game_qr_chain']['status']);
+        $this->assertSame(6, $readinessChecks['physical_game_qr_chain']['count']);
     }
 
     public function test_stress_demo_command_is_idempotent(): void

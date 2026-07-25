@@ -95,6 +95,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/games/ecopark-treasure/parties/{party}/pass', [EcoParkOnlineGameActionController::class, 'issuePass'])
         ->middleware('role:visitor')
         ->name('games.ecopark-treasure.parties.pass');
+    Route::post('/games/ecopark-treasure/parties/{party}/pass/renew', [EcoParkOnlineGameActionController::class, 'renewPass'])
+        ->middleware('role:visitor')
+        ->name('games.ecopark-treasure.parties.pass.renew');
     Route::post('/games/ecopark-treasure/physical-scans/{code}', [EcoParkOnlineGameActionController::class, 'confirmPhysicalScan'])
         ->where('code', '[A-Za-z0-9-]+')
         ->middleware('role:visitor')

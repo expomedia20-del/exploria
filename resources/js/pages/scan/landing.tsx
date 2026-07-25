@@ -39,6 +39,23 @@ type Props = {
         title: string;
         description: string;
         isAuthenticated: boolean;
+        scanState: {
+            status:
+                | 'ready'
+                | 'blocked'
+                | 'expired'
+                | 'completed'
+                | 'completed_step'
+                | 'wrong_checkpoint'
+                | 'invalid'
+                | 'auth_required'
+                | 'not_physical';
+            canConfirm: boolean;
+            message: string;
+            partyStatus: string | null;
+            expectedCheckpointKey: string | null;
+            expectedCheckpointTitle: string | null;
+        };
         confirmUrl: string | null;
         gameUrl: string | null;
     } | null;
@@ -60,6 +77,15 @@ export default function ScanLanding({
     rewardOptions,
     gamePhysicalScan,
 }: Props) {
+    const physicalStateTone =
+        gamePhysicalScan?.scanState.status === 'ready'
+            ? 'border-emerald-200 bg-emerald-50 text-emerald-950'
+            : gamePhysicalScan?.scanState.status === 'expired' ||
+                gamePhysicalScan?.scanState.status === 'wrong_checkpoint' ||
+                gamePhysicalScan?.scanState.status === 'completed_step'
+              ? 'border-amber-200 bg-amber-50 text-amber-950'
+              : 'border-rose-200 bg-rose-50 text-rose-950';
+
     return (
         <main
             dir="rtl"
@@ -134,12 +160,37 @@ export default function ScanLanding({
                     </dl>
 
                     {gamePhysicalScan ? (
-                        <div className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm leading-7 text-emerald-950">
-                            <strong>نتیجه این دکمه چیست؟</strong>
+                        <div
+                            className={`mt-6 rounded-lg border p-4 text-sm leading-7 ${physicalStateTone}`}
+                        >
+                            <strong>
+                                {gamePhysicalScan.scanState.canConfirm
+                                    ? 'این QR آماده تأیید است'
+                                    : 'وضعیت این QR برای شما'}
+                            </strong>
+                            <p className="mt-1 font-medium">
+                                {gamePhysicalScan.scanState.message}
+                            </p>
+                            {gamePhysicalScan.scanState
+                                .expectedCheckpointTitle &&
+                            gamePhysicalScan.scanState.status !== 'ready' ? (
+                                <p className="mt-2 rounded-md bg-white/70 px-3 py-2 text-xs">
+                                    مقصد مورد انتظار:{' '}
+                                    <strong>
+                                        {
+                                            gamePhysicalScan.scanState
+                                                .expectedCheckpointTitle
+                                        }
+                                    </strong>
+                                </p>
+                            ) : null}
                             <p className="mt-1">
-                                {gamePhysicalScan.role === 'onsite_gate'
+                                {gamePhysicalScan.scanState.canConfirm &&
+                                gamePhysicalScan.role === 'onsite_gate'
                                     ? 'حضور شما تأیید می‌شود، مجوز یک‌بارمصرف مصرف می‌شود و نخستین ایستگاه فیزیکی مسیر برای گروه باز خواهد شد.'
-                                    : 'این ایستگاه با ترتیب مسیر شما تطبیق داده می‌شود؛ فقط QR درست، مرحله بعدی را باز می‌کند.'}
+                                    : gamePhysicalScan.scanState.canConfirm
+                                      ? 'این ایستگاه با ترتیب مسیر شما تطبیق داده می‌شود؛ فقط QR درست، مرحله بعدی را باز می‌کند.'
+                                      : null}
                             </p>
                         </div>
                     ) : (
@@ -299,7 +350,8 @@ export default function ScanLanding({
                                 </>
                             )}
                         </Form>
-                    ) : (
+                    ) : gamePhysicalScan &&
+                      !gamePhysicalScan.isAuthenticated ? (
                         <Button
                             className="mt-6 h-11 w-full"
                             onClick={() =>
@@ -308,11 +360,20 @@ export default function ScanLanding({
                                 )
                             }
                         >
-                            {gamePhysicalScan
-                                ? 'ورود و اتصال به مجوز موجود'
-                                : 'شروع تجربه'}
+                            ورود با حساب بازی و اتصال به مجوز موجود
                         </Button>
-                    )}
+                    ) : !gamePhysicalScan ? (
+                        <Button
+                            className="mt-6 h-11 w-full"
+                            onClick={() =>
+                                window.location.assign(
+                                    `/access?sourceQrCode=${encodeURIComponent(qr.code)}`,
+                                )
+                            }
+                        >
+                            شروع تجربه
+                        </Button>
+                    ) : null}
                     {gamePhysicalScan?.gameUrl ? (
                         <Button
                             asChild
@@ -320,7 +381,12 @@ export default function ScanLanding({
                             className="mt-3 h-11 w-full"
                         >
                             <Link href={gamePhysicalScan.gameUrl}>
-                                بازگشت به راهنمای مسیر
+                                {gamePhysicalScan.scanState.status === 'expired'
+                                    ? 'بازگشت و تمدید مجوز حضور'
+                                    : gamePhysicalScan.scanState.status ===
+                                        'completed'
+                                      ? 'مشاهده نتیجه و پاداش‌ها'
+                                      : 'بازگشت به راهنمای مسیر'}
                             </Link>
                         </Button>
                     ) : null}
