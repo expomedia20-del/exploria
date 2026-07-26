@@ -1,4 +1,5 @@
 import { Form, Head, Link, usePage } from '@inertiajs/react';
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 import {
     BadgeCheck,
@@ -6,6 +7,7 @@ import {
     Compass,
     Gift,
     History,
+    LayoutDashboard,
     LockKeyhole,
     LogOut,
     Megaphone,
@@ -17,6 +19,7 @@ import {
     UsersRound,
     WalletCards,
 } from 'lucide-react';
+import { RoleDashboardNavigation } from '@/components/dashboard/role-dashboard-navigation';
 import { Button } from '@/components/ui/button';
 import { logout } from '@/routes';
 
@@ -230,6 +233,12 @@ type Props = {
 type SharedProps = {
     flash?: { success?: string };
 };
+type ParticipantDashboardSection =
+    | 'overview'
+    | 'rewards'
+    | 'marketplace'
+    | 'campaigns'
+    | 'guide';
 
 const heroImage = '/images/ecopark/proposal/participant-route-card-3-2.jpg';
 
@@ -263,9 +272,21 @@ export default function ParticipantDashboard({
     viewerMode,
 }: Props) {
     const { flash } = usePage<SharedProps>().props;
+    const [activeSection, setActiveSection] =
+        useState<ParticipantDashboardSection>('overview');
     const otherCampaigns = journey.activeCampaigns.filter(
         (campaign) => !campaign.isOnlineGame,
     );
+    const navigateTo = (section: ParticipantDashboardSection) => {
+        setActiveSection(section);
+
+        if (typeof window !== 'undefined') {
+            window.history.replaceState(null, '', `#${section}`);
+            window.requestAnimationFrame(() =>
+                window.scrollTo({ top: 0, behavior: 'smooth' }),
+            );
+        }
+    };
 
     return (
         <main
@@ -308,81 +329,141 @@ export default function ParticipantDashboard({
                 </div>
             ) : null}
 
-            <TeamInvitationInbox invitations={pendingTeamInvitations} />
+            <RoleDashboardNavigation
+                activeSection={activeSection}
+                onSelect={navigateTo}
+                items={[
+                    {
+                        key: 'overview',
+                        label: 'ادامه مسیر',
+                        description: 'قدم بعدی و وضعیت جاری',
+                        icon: LayoutDashboard,
+                        badge: pendingTeamInvitations.length,
+                    },
+                    {
+                        key: 'rewards',
+                        label: 'کیف پاداش',
+                        description: 'کدها و پاداش قوی‌تر',
+                        icon: Gift,
+                        badge: journey.rewardWallet.length,
+                    },
+                    {
+                        key: 'marketplace',
+                        label: 'ویترین فروشگاه‌ها',
+                        description: 'تبلیغات و پیشنهادهای عمومی',
+                        icon: Store,
+                    },
+                    {
+                        key: 'campaigns',
+                        label: 'کمپین‌ها و سوابق',
+                        description: 'مسیرهای دیگر و تاریخچه',
+                        icon: History,
+                    },
+                    {
+                        key: 'guide',
+                        label: 'راهنما و پروفایل',
+                        description: 'عضویت، گروه و تعامل تجاری',
+                        icon: Compass,
+                    },
+                ]}
+            />
 
-            {viewerMode.canPreviewVisitors ? (
-                <AdminPreview viewerMode={viewerMode} />
+            {activeSection === 'overview' ? (
+                <>
+                    <TeamInvitationInbox invitations={pendingTeamInvitations} />
+
+                    {viewerMode.canPreviewVisitors ? (
+                        <AdminPreview viewerMode={viewerMode} />
+                    ) : null}
+
+                    {participant.publicStatus !== 'participant' ? (
+                        <ParticipationSetup />
+                    ) : null}
+
+                    {onlineGame ? (
+                        <CurrentJourney
+                            game={onlineGame}
+                            visit={latestVisit}
+                            participant={participant}
+                            action={journey.nextAction}
+                            offer={journey.currentOffer}
+                        />
+                    ) : (
+                        <NoCurrentJourney
+                            latestVisit={latestVisit}
+                            action={journey.nextAction}
+                        />
+                    )}
+
+                    <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                        <StatCard
+                            icon={
+                                <Sparkles className="size-5 text-amber-600" />
+                            }
+                            label="امتیاز کسب‌شده"
+                            value={journey.points.earned}
+                            hint="امتیاز مراحل و پیشنهادهای اختیاری"
+                        />
+                        <StatCard
+                            icon={
+                                <WalletCards className="size-5 text-emerald-700" />
+                            }
+                            label="اعتبار فعلی"
+                            value={journey.points.stored}
+                            hint="پس از کسر پاداش‌های مصرف‌شده"
+                        />
+                        <StatCard
+                            icon={<Gift className="size-5 text-rose-600" />}
+                            label="پاداش صادرشده"
+                            value={journey.rewardWallet.length}
+                            hint="کدها و مشوق‌های داخل کیف"
+                        />
+                        <StatCard
+                            icon={
+                                <TicketCheck className="size-5 text-sky-700" />
+                            }
+                            label="مصرف تأییدشده"
+                            value={journey.points.redeemedRewards}
+                            hint="تبدیل واقعی در واحد عضو"
+                        />
+                    </section>
+                </>
             ) : null}
 
-            {participant.publicStatus !== 'participant' ? (
-                <ParticipationSetup />
+            {activeSection === 'marketplace' ? (
+                <GeneralMarketplace marketplace={generalMarketplace} />
             ) : null}
 
-            {onlineGame ? (
-                <CurrentJourney
-                    game={onlineGame}
-                    visit={latestVisit}
-                    participant={participant}
-                    action={journey.nextAction}
-                    offer={journey.currentOffer}
-                />
-            ) : (
-                <NoCurrentJourney
-                    latestVisit={latestVisit}
-                    action={journey.nextAction}
-                />
-            )}
+            {activeSection === 'rewards' ? (
+                <section className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
+                    <RewardWallet rewards={journey.rewardWallet} />
+                    <RewardEconomy
+                        game={onlineGame}
+                        catalog={journey.rewardCatalog}
+                    />
+                </section>
+            ) : null}
 
-            <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                <StatCard
-                    icon={<Sparkles className="size-5 text-amber-600" />}
-                    label="امتیاز کسب‌شده"
-                    value={journey.points.earned}
-                    hint="امتیاز مراحل و پیشنهادهای اختیاری"
-                />
-                <StatCard
-                    icon={<WalletCards className="size-5 text-emerald-700" />}
-                    label="اعتبار فعلی"
-                    value={journey.points.stored}
-                    hint="پس از کسر پاداش‌های مصرف‌شده"
-                />
-                <StatCard
-                    icon={<Gift className="size-5 text-rose-600" />}
-                    label="پاداش صادرشده"
-                    value={journey.rewardWallet.length}
-                    hint="کدها و مشوق‌های داخل کیف"
-                />
-                <StatCard
-                    icon={<TicketCheck className="size-5 text-sky-700" />}
-                    label="مصرف تأییدشده"
-                    value={journey.points.redeemedRewards}
-                    hint="تبدیل واقعی در واحد عضو"
-                />
-            </section>
+            {activeSection === 'campaigns' ? (
+                <>
+                    <Campaigns campaigns={otherCampaigns} />
 
-            <GeneralMarketplace marketplace={generalMarketplace} />
+                    <HistoryPanel
+                        history={journey.history}
+                        latestVisitId={latestVisit?.id ?? null}
+                    />
+                </>
+            ) : null}
 
-            <section className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
-                <RewardWallet rewards={journey.rewardWallet} />
-                <RewardEconomy
-                    game={onlineGame}
-                    catalog={journey.rewardCatalog}
-                />
-            </section>
-
-            <Campaigns campaigns={otherCampaigns} />
-
-            <section className="grid gap-5 xl:grid-cols-2">
-                <HistoryPanel
-                    history={journey.history}
-                    latestVisitId={latestVisit?.id ?? null}
-                />
-                <ProfileAndGuide
-                    participant={participant}
-                    partners={journey.partners}
-                    missionFlow={missionFlow}
-                />
-            </section>
+            {activeSection === 'guide' ? (
+                <section className="grid gap-5">
+                    <ProfileAndGuide
+                        participant={participant}
+                        partners={journey.partners}
+                        missionFlow={missionFlow}
+                    />
+                </section>
+            ) : null}
         </main>
     );
 }

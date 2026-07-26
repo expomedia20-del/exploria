@@ -1,9 +1,11 @@
 import { Form, Head, Link, usePage } from '@inertiajs/react';
 import {
+    ArrowLeft,
     BadgeDollarSign,
     CalendarClock,
     FileCheck2,
     Gift,
+    LayoutDashboard,
     Megaphone,
     MonitorPlay,
     Pencil,
@@ -14,6 +16,7 @@ import {
     Trash2,
 } from 'lucide-react';
 import { useState } from 'react';
+import { RoleDashboardNavigation } from '@/components/dashboard/role-dashboard-navigation';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 
@@ -123,6 +126,11 @@ type Props = {
 
 type SharedProps = { flash?: { success?: string } };
 type FormErrorBag = Record<string, string | undefined>;
+type SponsorDashboardSection =
+    | 'overview'
+    | 'proposal'
+    | 'advertising'
+    | 'status';
 
 const statusLabels: Record<string, string> = {
     active: 'فعال',
@@ -317,6 +325,8 @@ export default function SponsorDashboard({
     formOptions,
 }: Props) {
     const { flash } = usePage<SharedProps>().props;
+    const [activeSection, setActiveSection] =
+        useState<SponsorDashboardSection>('overview');
     const [proposalItems, setProposalItems] = useState([
         newDefaultProposalItem(),
     ]);
@@ -332,6 +342,37 @@ export default function SponsorDashboard({
         isRewardedPopup ||
         advertisingPlacement === 'public_feed' ||
         advertisingOnlinePlacements.includes('public_feed');
+    const followUpCount =
+        stats.pendingProposals + stats.revisionRequested + stats.pendingAds;
+    const nextSection: SponsorDashboardSection =
+        stats.revisionRequested > 0 || stats.pendingProposals > 0
+            ? 'status'
+            : stats.proposals === 0
+              ? 'proposal'
+              : stats.adRequests === 0
+                ? 'advertising'
+                : 'status';
+    const nextAction =
+        stats.revisionRequested > 0
+            ? `${fa(stats.revisionRequested)} پیشنهاد برای اصلاح برگشته است.`
+            : stats.pendingProposals > 0 || stats.pendingAds > 0
+              ? `${fa(stats.pendingProposals + stats.pendingAds)} درخواست منتظر نتیجه بررسی است.`
+              : stats.proposals === 0
+                ? 'اولین بسته حمایت یا پاداش اسپانسری را ثبت کنید.'
+                : stats.adRequests === 0
+                  ? 'برای دیده‌شدن برند، درخواست تبلیغ اسپانسری ثبت کنید.'
+                  : 'وضعیت پیشنهادها و تبلیغات ثبت‌شده را مرور کنید.';
+
+    const navigateTo = (section: SponsorDashboardSection) => {
+        setActiveSection(section);
+
+        if (typeof window !== 'undefined') {
+            window.history.replaceState(null, '', `#${section}`);
+            window.requestAnimationFrame(() =>
+                window.scrollTo({ top: 0, behavior: 'smooth' }),
+            );
+        }
+    };
 
     const addProposalItem = () => {
         setProposalItems((items) => [...items, newDefaultProposalItem()]);
@@ -344,6 +385,7 @@ export default function SponsorDashboard({
     };
 
     const startEditProposal = (proposal: SponsorProposal) => {
+        navigateTo('proposal');
         setEditingProposal(proposal);
         setProposalItems(
             proposal.items.length > 0
@@ -417,21 +459,80 @@ export default function SponsorDashboard({
                     </div>
                 </header>
 
+                <RoleDashboardNavigation
+                    activeSection={activeSection}
+                    onSelect={navigateTo}
+                    items={[
+                        {
+                            key: 'overview',
+                            label: 'نمای کلی',
+                            description: 'اولویت امروز و حساب برند',
+                            icon: LayoutDashboard,
+                        },
+                        {
+                            key: 'proposal',
+                            label: 'بسته پیشنهادی',
+                            description: 'حمایت، جایزه و تخفیف',
+                            icon: Gift,
+                        },
+                        {
+                            key: 'advertising',
+                            label: 'تبلیغات برند',
+                            description: 'محتوا و جایگاه نمایش',
+                            icon: MonitorPlay,
+                        },
+                        {
+                            key: 'status',
+                            label: 'پیگیری نتایج',
+                            description: 'بررسی، اصلاح و تأیید',
+                            icon: FileCheck2,
+                            badge: followUpCount,
+                        },
+                    ]}
+                />
+
                 {flash?.success ? (
                     <section className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-100">
                         {flash.success}
                     </section>
                 ) : null}
 
-                <section className="rounded-lg border border-primary/25 bg-primary/5 px-4 py-3 text-sm text-muted-foreground">
-                    پنل اسپانسر برای ثبت و اصلاح پیشنهاد حمایت، بسته پاداش،
-                    تبلیغ برند و تخصیص پیشنهادی به واحدهای اجراست. تایید نهایی
-                    کمپین، قیمت‌گذاری عملیاتی، زمان‌بندی نمایش و تحویل پاداش در
-                    پنل‌های ادمین، هاب و فروشگاه انجام می‌شود.
-                </section>
+                {activeSection === 'overview' ? (
+                    <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
+                        <section className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900 dark:bg-emerald-950/30">
+                            <p className="text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                                کار بعدی شما
+                            </p>
+                            <h2 className="mt-1 text-lg font-semibold">
+                                {nextAction}
+                            </h2>
+                            <p className="mt-2 text-sm leading-7 text-muted-foreground">
+                                هر درخواست ابتدا بررسی می‌شود؛ نتیجه یا نیاز به
+                                اصلاح در بخش «پیگیری نتایج» نمایش داده خواهد شد.
+                            </p>
+                            <Button
+                                className="mt-3 gap-2"
+                                onClick={() => navigateTo(nextSection)}
+                            >
+                                ادامه کار
+                                <ArrowLeft className="size-4" />
+                            </Button>
+                        </section>
+                        <section className="rounded-lg border border-primary/25 bg-primary/5 px-4 py-3 text-sm leading-7 text-muted-foreground">
+                            پنل اسپانسر برای ثبت و اصلاح پیشنهاد حمایت، بسته
+                            پاداش، تبلیغ برند و تخصیص پیشنهادی به واحدهای
+                            اجراست. تایید نهایی کمپین، قیمت‌گذاری عملیاتی،
+                            زمان‌بندی نمایش و تحویل پاداش در پنل‌های ادمین، هاب
+                            و فروشگاه انجام می‌شود.
+                        </section>
+                    </div>
+                ) : null}
 
-                <section className="grid min-w-0 gap-4 xl:grid-cols-[minmax(17rem,0.8fr)_minmax(0,1.2fr)]">
-                    <div className="exploria-panel">
+                <section className="grid min-w-0 gap-4">
+                    <div
+                        className="exploria-panel"
+                        hidden={activeSection !== 'overview'}
+                    >
                         <div className="border-b border-border/70 px-4 py-3 dark:border-sidebar-border">
                             <div className="flex items-center gap-2">
                                 <BadgeDollarSign className="size-4 text-muted-foreground" />
@@ -470,7 +571,11 @@ export default function SponsorDashboard({
                         </div>
                     </div>
 
-                    <div id="sponsor-proposal-form" className="exploria-panel">
+                    <div
+                        id="sponsor-proposal-form"
+                        className="exploria-panel"
+                        hidden={activeSection !== 'proposal'}
+                    >
                         <div className="border-b border-border/70 px-4 py-3 dark:border-sidebar-border">
                             <div className="flex flex-wrap items-center justify-between gap-3">
                                 <div className="flex items-center gap-2">
@@ -1122,7 +1227,10 @@ export default function SponsorDashboard({
                     </div>
                 </section>
 
-                <section className="exploria-panel overflow-hidden">
+                <section
+                    className="exploria-panel overflow-hidden"
+                    hidden={activeSection !== 'advertising'}
+                >
                     <div className="border-b border-border/70 px-4 py-3 dark:border-sidebar-border">
                         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                             <div className="flex items-center gap-2">
@@ -1663,7 +1771,10 @@ export default function SponsorDashboard({
                     </Form>
                 </section>
 
-                <section className="exploria-panel overflow-hidden">
+                <section
+                    className="exploria-panel overflow-hidden"
+                    hidden={activeSection !== 'status'}
+                >
                     <div className="border-b border-border/70 px-4 py-3 dark:border-sidebar-border">
                         <div className="flex items-center gap-2">
                             <CalendarClock className="size-4 text-muted-foreground" />
@@ -1941,7 +2052,10 @@ export default function SponsorDashboard({
                     </div>
                 </section>
 
-                <section className="exploria-panel overflow-hidden">
+                <section
+                    className="exploria-panel overflow-hidden"
+                    hidden={activeSection !== 'status'}
+                >
                     <div className="border-b border-border/70 px-4 py-3 dark:border-sidebar-border">
                         <h2 className="font-semibold">پیشنهادهای ارسال‌شده</h2>
                     </div>

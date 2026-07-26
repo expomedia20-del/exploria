@@ -45,4 +45,32 @@ class RoleDashboardUxTest extends TestCase
         $this->assertStringContainsString("activeSection === 'overview'", $dashboard);
         $this->assertStringContainsString("activeSection === 'media'", $dashboard);
     }
+
+    public function test_sponsor_dashboard_separates_creation_from_follow_up(): void
+    {
+        $dashboard = file_get_contents(resource_path('js/pages/sponsor/dashboard.tsx'));
+
+        $this->assertIsString($dashboard);
+        $this->assertStringContainsString('کار بعدی شما', $dashboard);
+        $this->assertStringContainsString("key: 'proposal'", $dashboard);
+        $this->assertStringContainsString("key: 'advertising'", $dashboard);
+        $this->assertStringContainsString("key: 'status'", $dashboard);
+        $this->assertStringContainsString("activeSection !== 'proposal'", $dashboard);
+        $this->assertStringContainsString("activeSection !== 'status'", $dashboard);
+        $this->assertStringContainsString("navigateTo('proposal')", $dashboard);
+    }
+
+    public function test_participant_dashboard_keeps_the_current_journey_separate_from_supporting_content(): void
+    {
+        $dashboard = file_get_contents(resource_path('js/pages/participant/dashboard.tsx'));
+
+        $this->assertIsString($dashboard);
+        $this->assertStringContainsString("key: 'overview'", $dashboard);
+        $this->assertStringContainsString("key: 'rewards'", $dashboard);
+        $this->assertStringContainsString("key: 'marketplace'", $dashboard);
+        $this->assertStringContainsString("key: 'campaigns'", $dashboard);
+        $this->assertStringContainsString("key: 'guide'", $dashboard);
+        $this->assertStringContainsString("activeSection === 'overview'", $dashboard);
+        $this->assertStringContainsString("activeSection === 'rewards'", $dashboard);
+    }
 }
