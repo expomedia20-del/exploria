@@ -1,15 +1,20 @@
 import { Form, Head } from '@inertiajs/react';
 import {
     AlertTriangle,
+    ArrowLeft,
     Building2,
     ClipboardCheck,
     Gift,
+    LayoutDashboard,
     Megaphone,
     MonitorPlay,
     Store,
+    UsersRound,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { useState } from 'react';
 import type { ReactNode } from 'react';
+import { RoleDashboardNavigation } from '@/components/dashboard/role-dashboard-navigation';
 import { Button } from '@/components/ui/button';
 
 type HubItem = {
@@ -114,6 +119,27 @@ type Props = {
     displayDevices: DisplayDeviceItem[];
     displayScheduleItems: DisplayScheduleItem[];
 };
+
+type HubDashboardSection = 'overview' | 'scope' | 'displays' | 'reviews';
+
+const hubDashboardSections: HubDashboardSection[] = [
+    'overview',
+    'scope',
+    'displays',
+    'reviews',
+];
+
+function initialHubSection(): HubDashboardSection {
+    if (typeof window === 'undefined') {
+        return 'overview';
+    }
+
+    const hash = window.location.hash.replace('#', '');
+
+    return hubDashboardSections.includes(hash as HubDashboardSection)
+        ? (hash as HubDashboardSection)
+        : 'overview';
+}
 
 const statusLabels: Record<string, string> = {
     active: 'فعال',
@@ -332,6 +358,33 @@ export default function HubDashboard({
     displayDevices,
     displayScheduleItems,
 }: Props) {
+    const [activeSection, setActiveSection] =
+        useState<HubDashboardSection>(initialHubSection);
+    const reviewCount = stats.pendingAds + stats.pendingRewards;
+    const nextSection: HubDashboardSection =
+        reviewCount > 0
+            ? 'reviews'
+            : displayScheduleItems.length > 0
+              ? 'displays'
+              : 'scope';
+    const nextAction =
+        reviewCount > 0
+            ? `${formatNumber(reviewCount)} مورد نیازمند پایش اجرایی است.`
+            : displayScheduleItems.length > 0
+              ? 'برنامه فعال نمایشگرها را کنترل کنید.'
+              : 'آمادگی محدوده‌ها و واحدهای زیرمجموعه را مرور کنید.';
+
+    const navigateTo = (section: HubDashboardSection) => {
+        setActiveSection(section);
+
+        if (typeof window !== 'undefined') {
+            window.history.replaceState(null, '', `#${section}`);
+            window.requestAnimationFrame(() =>
+                window.scrollTo({ top: 0, behavior: 'smooth' }),
+            );
+        }
+    };
+
     return (
         <>
             <Head title={panelContext.title} />
@@ -377,280 +430,363 @@ export default function HubDashboard({
                     </div>
                 </header>
 
-                <OperationalBoundaryNote title="تعریف نقش این پنل">
-                    این پنل برای نظم، آمادگی، هماهنگی و اعلام مغایرت‌های اجرایی
-                    {` ${panelContext.areaLabel} `}است. تصمیم تجاری هر فروشگاه،
-                    قیمت‌گذاری، درآمد، نوع پاداش، قرارداد اسپانسر و تایید نهایی
-                    تبلیغ از این پنل انجام نمی‌شود.
-                </OperationalBoundaryNote>
+                <RoleDashboardNavigation
+                    activeSection={activeSection}
+                    onSelect={navigateTo}
+                    items={[
+                        {
+                            key: 'overview',
+                            label: 'نمای کلی',
+                            description: 'وضعیت امروز و کار بعدی',
+                            icon: LayoutDashboard,
+                        },
+                        {
+                            key: 'scope',
+                            label: 'محدوده و واحدها',
+                            description: 'آمادگی زیرمجموعه‌ها',
+                            icon: UsersRound,
+                        },
+                        {
+                            key: 'displays',
+                            label: 'نمایشگرها',
+                            description: 'سلامت و برنامه پخش',
+                            icon: MonitorPlay,
+                            badge: displayScheduleItems.length,
+                        },
+                        {
+                            key: 'reviews',
+                            label: 'پایش پیشنهادها',
+                            description: 'تبلیغ و پاداش',
+                            icon: ClipboardCheck,
+                            badge: reviewCount,
+                        },
+                    ]}
+                />
 
-                <Panel
-                    title="محدوده‌های تحت مدیریت"
-                    description={panelContext.scopeNote}
-                    isEmpty={hubs.length === 0}
-                >
-                    {hubs.map((hub) => (
-                        <article
-                            key={hub.id}
-                            className="grid gap-1 px-4 py-3 text-sm"
-                        >
-                            <p className="font-medium">{hub.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                                {hub.venueName ?? '-'}
+                {activeSection === 'overview' ? (
+                    <div className="grid gap-4 lg:grid-cols-[1.35fr_1fr]">
+                        <section className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900 dark:bg-emerald-950/30">
+                            <p className="text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                                کار بعدی شما
                             </p>
-                        </article>
-                    ))}
-                </Panel>
+                            <h2 className="mt-1 text-lg font-semibold">
+                                {nextAction}
+                            </h2>
+                            <p className="mt-2 text-sm leading-7 text-muted-foreground">
+                                ابتدا این مورد را بررسی کنید؛ سایر اطلاعات در
+                                بخش‌های بالای پنل تفکیک شده‌اند.
+                            </p>
+                            <Button
+                                className="mt-3 gap-2"
+                                onClick={() => navigateTo(nextSection)}
+                            >
+                                ادامه کار
+                                <ArrowLeft className="size-4" />
+                            </Button>
+                        </section>
+                        <OperationalBoundaryNote title="تعریف نقش این پنل">
+                            این پنل برای نظم، آمادگی، هماهنگی و اعلام مغایرت‌های
+                            اجرایی
+                            {` ${panelContext.areaLabel} `}است. تصمیم تجاری هر
+                            فروشگاه، قیمت‌گذاری، درآمد، نوع پاداش، قرارداد
+                            اسپانسر و تایید نهایی تبلیغ از این پنل انجام
+                            نمی‌شود.
+                        </OperationalBoundaryNote>
+                    </div>
+                ) : null}
+
+                {activeSection === 'scope' ? (
+                    <Panel
+                        title="محدوده‌های تحت مدیریت"
+                        description={panelContext.scopeNote}
+                        isEmpty={hubs.length === 0}
+                    >
+                        {hubs.map((hub) => (
+                            <article
+                                key={hub.id}
+                                className="grid gap-1 px-4 py-3 text-sm"
+                            >
+                                <p className="font-medium">{hub.name}</p>
+                                <p className="text-xs text-muted-foreground">
+                                    {hub.venueName ?? '-'}
+                                </p>
+                            </article>
+                        ))}
+                    </Panel>
+                ) : null}
 
                 <section className="grid gap-4 lg:grid-cols-2">
-                    <Panel
-                        title="واحدهای تجاری و حامیان محدوده"
-                        description="برای هماهنگی اجرایی و آمادگی روز اجرا؛ نه بررسی درآمد یا تصمیم تجاری واحد."
-                        isEmpty={partners.length === 0}
-                    >
-                        {partners.map((partner) => (
-                            <article
-                                key={partner.id ?? partner.code}
-                                className="grid gap-1 px-4 py-3 text-sm"
-                            >
-                                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                                    <p className="truncate font-medium">
-                                        {partner.name ?? '-'}
+                    {activeSection === 'scope' ? (
+                        <Panel
+                            title="واحدهای تجاری و حامیان محدوده"
+                            description="برای هماهنگی اجرایی و آمادگی روز اجرا؛ نه بررسی درآمد یا تصمیم تجاری واحد."
+                            isEmpty={partners.length === 0}
+                        >
+                            {partners.map((partner) => (
+                                <article
+                                    key={partner.id ?? partner.code}
+                                    className="grid gap-1 px-4 py-3 text-sm"
+                                >
+                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                        <p className="truncate font-medium">
+                                            {partner.name ?? '-'}
+                                        </p>
+                                        <span className="w-fit shrink-0 text-xs text-muted-foreground">
+                                            {labelForStatus(partner.status)}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                        محدوده: {partner.hubName ?? '-'}
                                     </p>
-                                    <span className="w-fit shrink-0 text-xs text-muted-foreground">
-                                        {labelForStatus(partner.status)}
-                                    </span>
-                                </div>
-                                <p className="text-xs text-muted-foreground">
-                                    محدوده: {partner.hubName ?? '-'}
-                                </p>
-                            </article>
-                        ))}
-                    </Panel>
+                                </article>
+                            ))}
+                        </Panel>
+                    ) : null}
 
-                    <Panel
-                        title="نمایشگرهای محدوده"
-                        description="پایش سلامت، فرمت قابل پخش و انتخاب نمایشگر برای تبلیغ تاییدشده."
-                        isEmpty={displayDevices.length === 0}
-                    >
-                        {displayDevices.map((device) => (
-                            <article
-                                key={device.id}
-                                className="grid gap-1 px-4 py-3 text-sm"
-                            >
-                                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                                    <p className="truncate font-medium">
-                                        {device.name}
+                    {activeSection === 'displays' ? (
+                        <Panel
+                            title="نمایشگرهای محدوده"
+                            description="پایش سلامت، فرمت قابل پخش و انتخاب نمایشگر برای تبلیغ تاییدشده."
+                            isEmpty={displayDevices.length === 0}
+                        >
+                            {displayDevices.map((device) => (
+                                <article
+                                    key={device.id}
+                                    className="grid gap-1 px-4 py-3 text-sm"
+                                >
+                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                        <p className="truncate font-medium">
+                                            {device.name}
+                                        </p>
+                                        <span className="w-fit shrink-0 text-xs text-muted-foreground">
+                                            {labelForStatus(device.status)}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                        {device.hubName ?? '-'} · نوع:{' '}
+                                        {placementLabels[device.deviceType] ??
+                                            device.deviceType}{' '}
+                                        · فرمت:{' '}
+                                        {device.formats
+                                            .map(
+                                                (format) =>
+                                                    creativeLabels[format] ??
+                                                    format,
+                                            )
+                                            .join('، ')}
                                     </p>
-                                    <span className="w-fit shrink-0 text-xs text-muted-foreground">
-                                        {labelForStatus(device.status)}
-                                    </span>
-                                </div>
-                                <p className="text-xs text-muted-foreground">
-                                    {device.hubName ?? '-'} · نوع:{' '}
-                                    {placementLabels[device.deviceType] ??
-                                        device.deviceType}{' '}
-                                    · فرمت:{' '}
-                                    {device.formats
-                                        .map(
-                                            (format) =>
-                                                creativeLabels[format] ??
-                                                format,
-                                        )
-                                        .join('، ')}
-                                </p>
-                            </article>
-                        ))}
-                    </Panel>
+                                </article>
+                            ))}
+                        </Panel>
+                    ) : null}
                 </section>
 
-                <DisplayScheduleQueue items={displayScheduleItems} />
+                {activeSection === 'displays' ? (
+                    <DisplayScheduleQueue items={displayScheduleItems} />
+                ) : null}
 
-                <section className="grid gap-4 lg:grid-cols-2">
-                    <Panel
-                        title={`تبلیغات محدوده ${panelContext.areaLabel} - پایش اجرایی`}
-                        description={`مدیر ${panelContext.areaLabel} مغایرت با قوانین مجموعه و مشکلات اجرایی را اعلام می‌کند؛ تایید نهایی تبلیغ با اکسپلوریا است.`}
-                        isEmpty={adRequests.length === 0}
-                    >
-                        {adRequests.map((adRequest) => (
-                            <article
-                                key={adRequest.id}
-                                className="grid gap-2 px-4 py-3 text-sm"
-                            >
-                                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                                    <div className="min-w-0">
-                                        <p className="truncate font-medium">
-                                            {adRequest.title}
-                                        </p>
+                {activeSection === 'reviews' ? (
+                    <section className="grid gap-4 lg:grid-cols-2">
+                        <Panel
+                            title={`تبلیغات محدوده ${panelContext.areaLabel} - پایش اجرایی`}
+                            description={`مدیر ${panelContext.areaLabel} مغایرت با قوانین مجموعه و مشکلات اجرایی را اعلام می‌کند؛ تایید نهایی تبلیغ با اکسپلوریا است.`}
+                            isEmpty={adRequests.length === 0}
+                        >
+                            {adRequests.map((adRequest) => (
+                                <article
+                                    key={adRequest.id}
+                                    className="grid gap-2 px-4 py-3 text-sm"
+                                >
+                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                        <div className="min-w-0">
+                                            <p className="truncate font-medium">
+                                                {adRequest.title}
+                                            </p>
+                                        </div>
+                                        <span className="w-fit shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
+                                            {labelForStatus(adRequest.status)}
+                                        </span>
                                     </div>
-                                    <span className="w-fit shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
-                                        {labelForStatus(adRequest.status)}
-                                    </span>
-                                </div>
-                                <p className="text-xs text-muted-foreground">
-                                    واحد/حامی مرتبط:{' '}
-                                    {adRequest.partnerName ?? '-'} · محدوده:{' '}
-                                    {adRequest.hubName ?? '-'} · جایگاه:{' '}
-                                    {placementLabels[
-                                        adRequest.placementType ?? ''
-                                    ] ??
-                                        adRequest.placementType ??
-                                        '-'}
-                                </p>
-                                {adRequest.displayDeviceName ? (
                                     <p className="text-xs text-muted-foreground">
-                                        نمایشگر زمان‌بندی‌شده:{' '}
-                                        {adRequest.displayDeviceName} · اولویت:{' '}
-                                        {formatNumber(adRequest.priority)}
+                                        واحد/حامی مرتبط:{' '}
+                                        {adRequest.partnerName ?? '-'} · محدوده:{' '}
+                                        {adRequest.hubName ?? '-'} · جایگاه:{' '}
+                                        {placementLabels[
+                                            adRequest.placementType ?? ''
+                                        ] ??
+                                            adRequest.placementType ??
+                                            '-'}
                                     </p>
-                                ) : null}
-                                {adRequest.status === 'approved' &&
-                                adRequest.placementId &&
-                                adRequest.placementType &&
-                                ['fixed_display', 'mobile_display'].includes(
-                                    adRequest.placementType,
-                                ) &&
-                                !adRequest.displayDeviceId ? (
-                                    <Form
-                                        action={`/hub/ads/${adRequest.id}/schedule`}
-                                        method="post"
-                                        className="grid gap-2 rounded-md border bg-muted/30 p-3 sm:grid-cols-[1fr_auto]"
-                                        options={{ preserveScroll: true }}
-                                    >
-                                        {({ processing, errors }) => (
-                                            <>
-                                                <select
-                                                    name="display_device_id"
-                                                    required
-                                                    defaultValue=""
-                                                    className="h-9 rounded-md border bg-background px-3 text-xs"
-                                                >
-                                                    <option value="" disabled>
-                                                        انتخاب نمایشگر سازگار
-                                                    </option>
-                                                    {displayDevices
-                                                        .filter(
-                                                            (device) =>
-                                                                device.status ===
-                                                                    'active' &&
-                                                                device.deviceType ===
-                                                                    adRequest.placementType &&
-                                                                (adRequest.creativeType ===
-                                                                    null ||
-                                                                    device.formats.includes(
-                                                                        adRequest.creativeType,
-                                                                    )),
-                                                        )
-                                                        .map((device) => (
-                                                            <option
-                                                                key={device.id}
-                                                                value={
-                                                                    device.id
-                                                                }
-                                                            >
-                                                                {device.name}
-                                                            </option>
-                                                        ))}
-                                                </select>
+                                    {adRequest.displayDeviceName ? (
+                                        <p className="text-xs text-muted-foreground">
+                                            نمایشگر زمان‌بندی‌شده:{' '}
+                                            {adRequest.displayDeviceName} ·
+                                            اولویت:{' '}
+                                            {formatNumber(adRequest.priority)}
+                                        </p>
+                                    ) : null}
+                                    {adRequest.status === 'approved' &&
+                                    adRequest.placementId &&
+                                    adRequest.placementType &&
+                                    [
+                                        'fixed_display',
+                                        'mobile_display',
+                                    ].includes(adRequest.placementType) &&
+                                    !adRequest.displayDeviceId ? (
+                                        <Form
+                                            action={`/hub/ads/${adRequest.id}/schedule`}
+                                            method="post"
+                                            className="grid gap-2 rounded-md border bg-muted/30 p-3 sm:grid-cols-[1fr_auto]"
+                                            options={{ preserveScroll: true }}
+                                        >
+                                            {({ processing, errors }) => (
+                                                <>
+                                                    <select
+                                                        name="display_device_id"
+                                                        required
+                                                        defaultValue=""
+                                                        className="h-9 rounded-md border bg-background px-3 text-xs"
+                                                    >
+                                                        <option
+                                                            value=""
+                                                            disabled
+                                                        >
+                                                            انتخاب نمایشگر
+                                                            سازگار
+                                                        </option>
+                                                        {displayDevices
+                                                            .filter(
+                                                                (device) =>
+                                                                    device.status ===
+                                                                        'active' &&
+                                                                    device.deviceType ===
+                                                                        adRequest.placementType &&
+                                                                    (adRequest.creativeType ===
+                                                                        null ||
+                                                                        device.formats.includes(
+                                                                            adRequest.creativeType,
+                                                                        )),
+                                                            )
+                                                            .map((device) => (
+                                                                <option
+                                                                    key={
+                                                                        device.id
+                                                                    }
+                                                                    value={
+                                                                        device.id
+                                                                    }
+                                                                >
+                                                                    {
+                                                                        device.name
+                                                                    }
+                                                                </option>
+                                                            ))}
+                                                    </select>
+                                                    <Button
+                                                        size="sm"
+                                                        disabled={processing}
+                                                    >
+                                                        زمان‌بندی محلی
+                                                    </Button>
+                                                    {errors.display_device_id ? (
+                                                        <p className="text-xs text-destructive sm:col-span-2">
+                                                            {
+                                                                errors.display_device_id
+                                                            }
+                                                        </p>
+                                                    ) : null}
+                                                </>
+                                            )}
+                                        </Form>
+                                    ) : null}
+                                    {adRequest.displayDeviceId &&
+                                    adRequest.placementId ? (
+                                        <Form
+                                            action={`/hub/ad-placements/${adRequest.placementId}/cancel`}
+                                            method="post"
+                                            options={{ preserveScroll: true }}
+                                        >
+                                            {({ processing }) => (
                                                 <Button
                                                     size="sm"
+                                                    variant="outline"
                                                     disabled={processing}
                                                 >
-                                                    زمان‌بندی محلی
+                                                    لغو زمان‌بندی این نمایشگر
                                                 </Button>
-                                                {errors.display_device_id ? (
-                                                    <p className="text-xs text-destructive sm:col-span-2">
-                                                        {
-                                                            errors.display_device_id
-                                                        }
-                                                    </p>
-                                                ) : null}
-                                            </>
-                                        )}
-                                    </Form>
-                                ) : null}
-                                {adRequest.displayDeviceId &&
-                                adRequest.placementId ? (
-                                    <Form
-                                        action={`/hub/ad-placements/${adRequest.placementId}/cancel`}
-                                        method="post"
-                                        options={{ preserveScroll: true }}
-                                    >
-                                        {({ processing }) => (
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                disabled={processing}
-                                            >
-                                                لغو زمان‌بندی این نمایشگر
-                                            </Button>
-                                        )}
-                                    </Form>
-                                ) : null}
-                                {adRequest.status === 'pending_review' ? (
-                                    <OperationalBoundaryNote
-                                        tone="warning"
-                                        title="نیازمند بررسی اکسپلوریا"
-                                    >
-                                        مدیر {panelContext.areaLabel} فقط
-                                        محدودیت‌های اجرایی، تعارض با قوانین
-                                        مجموعه، ازدحام یا مشکل محل نمایش را
-                                        گزارش می‌کند. تایید یا رد تبلیغ تصمیم
-                                        تجاری این پنل نیست.
-                                    </OperationalBoundaryNote>
-                                ) : null}
-                                <ReviewTrail
-                                    notes={adRequest.reviewNotes}
-                                    reviewedAt={adRequest.reviewedAt}
-                                />
-                            </article>
-                        ))}
-                    </Panel>
+                                            )}
+                                        </Form>
+                                    ) : null}
+                                    {adRequest.status === 'pending_review' ? (
+                                        <OperationalBoundaryNote
+                                            tone="warning"
+                                            title="نیازمند بررسی اکسپلوریا"
+                                        >
+                                            مدیر {panelContext.areaLabel} فقط
+                                            محدودیت‌های اجرایی، تعارض با قوانین
+                                            مجموعه، ازدحام یا مشکل محل نمایش را
+                                            گزارش می‌کند. تایید یا رد تبلیغ
+                                            تصمیم تجاری این پنل نیست.
+                                        </OperationalBoundaryNote>
+                                    ) : null}
+                                    <ReviewTrail
+                                        notes={adRequest.reviewNotes}
+                                        reviewedAt={adRequest.reviewedAt}
+                                    />
+                                </article>
+                            ))}
+                        </Panel>
 
-                    <Panel
-                        title={`پیشنهادها و پاداش‌های واحدها - پایش مقررات ${panelContext.areaLabel}`}
-                        description={`مدیر ${panelContext.areaLabel} مالک نوع پاداش یا ارزش اقتصادی پیشنهاد نیست؛ فقط آمادگی و مغایرت اجرایی را پایش می‌کند.`}
-                        isEmpty={rewards.length === 0}
-                    >
-                        {rewards.map((reward) => (
-                            <article
-                                key={reward.id}
-                                className="grid gap-2 px-4 py-3 text-sm"
-                            >
-                                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                                    <div className="min-w-0">
-                                        <p className="truncate font-medium">
-                                            {reward.name}
-                                        </p>
+                        <Panel
+                            title={`پیشنهادها و پاداش‌های واحدها - پایش مقررات ${panelContext.areaLabel}`}
+                            description={`مدیر ${panelContext.areaLabel} مالک نوع پاداش یا ارزش اقتصادی پیشنهاد نیست؛ فقط آمادگی و مغایرت اجرایی را پایش می‌کند.`}
+                            isEmpty={rewards.length === 0}
+                        >
+                            {rewards.map((reward) => (
+                                <article
+                                    key={reward.id}
+                                    className="grid gap-2 px-4 py-3 text-sm"
+                                >
+                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                        <div className="min-w-0">
+                                            <p className="truncate font-medium">
+                                                {reward.name}
+                                            </p>
+                                        </div>
+                                        <span className="w-fit shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
+                                            {labelForStatus(
+                                                reward.approvalStatus,
+                                            )}
+                                        </span>
                                     </div>
-                                    <span className="w-fit shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
-                                        {labelForStatus(reward.approvalStatus)}
-                                    </span>
-                                </div>
-                                <p className="text-xs text-muted-foreground">
-                                    واحد تحویل/حامی: {reward.partnerName ?? '-'}{' '}
-                                    · کمپین: {reward.campaignName ?? '-'}
-                                </p>
-                                {reward.approvalStatus === 'pending_review' ? (
-                                    <OperationalBoundaryNote
-                                        tone="warning"
-                                        title="نظر رواق، نه تصمیم تجاری"
-                                    >
-                                        نوع پاداش، ارزش اقتصادی و شرایط فروشگاهی
-                                        در اختیار واحد تجاری و اکسپلوریا است.
-                                        مدیر {panelContext.areaLabel} فقط مغایرت
-                                        با مقررات مجموعه یا مانع اجرایی را اعلام
-                                        می‌کند.
-                                    </OperationalBoundaryNote>
-                                ) : null}
-                                <ReviewTrail
-                                    notes={reward.reviewNotes}
-                                    reviewedAt={reward.reviewedAt}
-                                />
-                            </article>
-                        ))}
-                    </Panel>
-                </section>
+                                    <p className="text-xs text-muted-foreground">
+                                        واحد تحویل/حامی:{' '}
+                                        {reward.partnerName ?? '-'} · کمپین:{' '}
+                                        {reward.campaignName ?? '-'}
+                                    </p>
+                                    {reward.approvalStatus ===
+                                    'pending_review' ? (
+                                        <OperationalBoundaryNote
+                                            tone="warning"
+                                            title="نظر رواق، نه تصمیم تجاری"
+                                        >
+                                            نوع پاداش، ارزش اقتصادی و شرایط
+                                            فروشگاهی در اختیار واحد تجاری و
+                                            اکسپلوریا است. مدیر{' '}
+                                            {panelContext.areaLabel} فقط مغایرت
+                                            با مقررات مجموعه یا مانع اجرایی را
+                                            اعلام می‌کند.
+                                        </OperationalBoundaryNote>
+                                    ) : null}
+                                    <ReviewTrail
+                                        notes={reward.reviewNotes}
+                                        reviewedAt={reward.reviewedAt}
+                                    />
+                                </article>
+                            ))}
+                        </Panel>
+                    </section>
+                ) : null}
             </div>
         </>
     );
