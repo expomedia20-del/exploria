@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { DateTimePickerField } from '@/components/date-time-picker-field';
+import { InternalTeamNavigation } from '@/components/dashboard/internal-team-navigation';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 
@@ -239,6 +240,8 @@ export default function AdminDisplayOperationsIndex({
                         />
                     </div>
                 </header>
+
+                <InternalTeamNavigation activeHref="/admin/display-operations" />
 
                 <section className="grid gap-3 md:grid-cols-3">
                     <Link

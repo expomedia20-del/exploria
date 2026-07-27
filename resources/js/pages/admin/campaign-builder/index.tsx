@@ -15,6 +15,7 @@ import {
     UsersRound,
 } from 'lucide-react';
 import { CampaignContextNav } from '@/components/campaign-context-nav';
+import { InternalTeamNavigation } from '@/components/dashboard/internal-team-navigation';
 import { Button } from '@/components/ui/button';
 
 type CampaignSummary = {
@@ -268,6 +269,8 @@ export default function CampaignBuilderIndex({
                         ) : null}
                     </div>
                 </header>
+
+                <InternalTeamNavigation activeHref="/admin/campaign-builder" />
 
                 <section className="rounded-lg border border-border/80 bg-card/80 p-4 shadow-sm">
                     <div className="grid gap-4 lg:grid-cols-[1fr_0.9fr]">

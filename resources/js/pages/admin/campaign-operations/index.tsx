@@ -15,6 +15,7 @@ import {
     Trophy,
 } from 'lucide-react';
 import { CampaignContextNav } from '@/components/campaign-context-nav';
+import { InternalTeamNavigation } from '@/components/dashboard/internal-team-navigation';
 import { Button } from '@/components/ui/button';
 import {
     Sheet,
@@ -881,6 +882,8 @@ export default function CampaignOperationsIndex({
                         ))}
                     </div>
                 </header>
+
+                <InternalTeamNavigation activeHref="/admin/campaign-operations" />
 
                 {selectedCampaign ? (
                     <section className="rounded-lg border border-primary/25 bg-primary/5 p-4 text-sm shadow-sm">

@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { Fragment, useMemo, useState } from 'react';
 import {
     BookOpenCheck,
+    ChevronDown,
     ClipboardCheck,
     Compass,
     Gem,
@@ -17,6 +18,7 @@ import {
     Trophy,
     UsersRound,
 } from 'lucide-react';
+import { InternalTeamNavigation } from '@/components/dashboard/internal-team-navigation';
 import { Button } from '@/components/ui/button';
 
 type Principle = { title: string; body: string };
@@ -653,6 +655,8 @@ export default function MissionBlueprintIndex({
                     </div>
                 </header>
 
+                <InternalTeamNavigation activeHref="/admin/mission-blueprints" />
+
                 <section className="grid grid-cols-2 gap-3 text-sm lg:grid-cols-4">
                     <Stat
                         icon={Lightbulb}
@@ -719,11 +723,11 @@ export default function MissionBlueprintIndex({
                                     </div>
                                     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                                         {phaseTemplates.map((template) => (
-                                            <article
+                                            <details
                                                 key={template.code}
-                                                className="rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm"
+                                                className="group rounded-lg border border-border/80 bg-card/75 p-3 shadow-sm"
                                             >
-                                                <div className="flex items-start justify-between gap-3">
+                                                <summary className="flex cursor-pointer list-none items-start justify-between gap-3 [&::-webkit-details-marker]:hidden">
                                                     <div>
                                                         <p className="text-xs text-muted-foreground">
                                                             اولویت{' '}
@@ -735,8 +739,11 @@ export default function MissionBlueprintIndex({
                                                             {template.title}
                                                         </h4>
                                                     </div>
-                                                    <Trophy className="size-4 text-muted-foreground" />
-                                                </div>
+                                                    <span className="flex items-center gap-1">
+                                                        <Trophy className="size-4 text-muted-foreground" />
+                                                        <ChevronDown className="size-4 text-muted-foreground transition-transform group-open:rotate-180" />
+                                                    </span>
+                                                </summary>
                                                 <p className="mt-2 text-xs leading-6 text-muted-foreground">
                                                     {template.priorityReason}
                                                 </p>
@@ -935,7 +942,7 @@ export default function MissionBlueprintIndex({
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </article>
+                                            </details>
                                         ))}
                                     </div>
                                 </Fragment>
@@ -1028,11 +1035,11 @@ export default function MissionBlueprintIndex({
 
                     <div className="grid gap-4 p-4 lg:grid-cols-2">
                         {visibleTemplates.map((template) => (
-                            <article
+                            <details
                                 key={template.code}
-                                className="rounded-lg border border-border/80 bg-card/75 p-4 shadow-sm"
+                                className="group rounded-lg border border-border/80 bg-card/75 p-4 shadow-sm"
                             >
-                                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                <summary className="flex cursor-pointer list-none flex-col gap-3 sm:flex-row sm:items-start sm:justify-between [&::-webkit-details-marker]:hidden">
                                     <div>
                                         <div className="flex items-center gap-2">
                                             <Sparkles className="size-4 text-muted-foreground" />
@@ -1047,7 +1054,7 @@ export default function MissionBlueprintIndex({
                                             {template.code}
                                         </p>
                                     </div>
-                                    <div className="flex flex-wrap gap-2">
+                                    <div className="flex flex-wrap items-center gap-2">
                                         <Chip>{template.launchPhase}</Chip>
                                         {template.mvpPriority < 99 && (
                                             <Chip>
@@ -1057,8 +1064,9 @@ export default function MissionBlueprintIndex({
                                         )}
                                         <Chip>{template.family}</Chip>
                                         <Chip>{template.rewardModel}</Chip>
+                                        <ChevronDown className="size-4 text-muted-foreground transition-transform group-open:rotate-180" />
                                     </div>
-                                </div>
+                                </summary>
 
                                 <div className="mt-4 grid gap-3 text-sm md:grid-cols-2">
                                     <div>
@@ -1171,7 +1179,7 @@ export default function MissionBlueprintIndex({
                                         </p>
                                     </div>
                                 </div>
-                            </article>
+                            </details>
                         ))}
                     </div>
                 </section>

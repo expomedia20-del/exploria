@@ -11,6 +11,7 @@ import {
     Target,
     TrendingUp,
 } from 'lucide-react';
+import { InternalTeamNavigation } from '@/components/dashboard/internal-team-navigation';
 
 type Metric = {
     label: string;
@@ -229,6 +230,8 @@ export default function CommercializationIndex({
                         </div>
                     </div>
                 </section>
+
+                <InternalTeamNavigation activeHref="/admin/commercialization" />
 
                 <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
                     <article className="rounded-lg border border-cyan-200 bg-cyan-50/70 p-4 dark:border-cyan-900/60 dark:bg-cyan-950/20">

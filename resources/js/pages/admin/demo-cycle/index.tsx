@@ -3,6 +3,7 @@ import {
     AlertTriangle,
     ArrowLeft,
     CheckCircle2,
+    ChevronDown,
     ClipboardCheck,
     Flag,
     ListChecks,
@@ -10,6 +11,7 @@ import {
     Route,
     Save,
 } from 'lucide-react';
+import { InternalTeamNavigation } from '@/components/dashboard/internal-team-navigation';
 import { Button } from '@/components/ui/button';
 
 type DemoLink = {
@@ -511,6 +513,8 @@ export default function DemoCycleIndex({
                     </div>
                 </section>
 
+                <InternalTeamNavigation activeHref="/admin/demo-cycle" />
+
                 <section className="grid gap-3 md:grid-cols-5">
                     {stages.map((stage, index) => {
                         const stageNumber = index + 1;
@@ -589,20 +593,23 @@ export default function DemoCycleIndex({
 
                     <div className="mt-4 grid gap-4 xl:grid-cols-3">
                         {operationalChecklist.map((group, groupIndex) => (
-                            <div
+                            <details
                                 key={group.title}
-                                className={`space-y-3 rounded-lg border p-3 ${operationalGroupSurfaceClassName[groupIndex % operationalGroupSurfaceClassName.length]}`}
+                                className={`group rounded-lg border p-3 ${operationalGroupSurfaceClassName[groupIndex % operationalGroupSurfaceClassName.length]}`}
                             >
-                                <div>
-                                    <h3 className="font-semibold">
-                                        {group.title}
-                                    </h3>
-                                    <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                                        {group.subtitle}
-                                    </p>
-                                </div>
+                                <summary className="flex cursor-pointer list-none items-start justify-between gap-3 [&::-webkit-details-marker]:hidden">
+                                    <span>
+                                        <span className="block font-semibold">
+                                            {group.title}
+                                        </span>
+                                        <span className="mt-1 block text-sm leading-6 text-muted-foreground">
+                                            {group.subtitle}
+                                        </span>
+                                    </span>
+                                    <ChevronDown className="size-5 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
+                                </summary>
 
-                                <div className="space-y-2">
+                                <div className="mt-3 space-y-2">
                                     {group.items.map((item) => {
                                         const entry =
                                             operationalEntriesByKey.get(
@@ -779,7 +786,7 @@ export default function DemoCycleIndex({
                                         );
                                     })}
                                 </div>
-                            </div>
+                            </details>
                         ))}
                     </div>
                 </section>

@@ -3,6 +3,7 @@ import {
     ArrowLeft,
     Building2,
     CheckCircle2,
+    ChevronDown,
     CircleAlert,
     CircleDot,
     Download,
@@ -13,6 +14,7 @@ import {
     UsersRound,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { InternalTeamNavigation } from '@/components/dashboard/internal-team-navigation';
 
 type HubItem = {
     id: string;
@@ -257,6 +259,8 @@ export default function VenueRegistryIndex({ venues }: Props) {
                     </div>
                 </header>
 
+                <InternalTeamNavigation activeHref="/admin/venues" />
+
                 <section className="grid gap-4">
                     {venues.length === 0 ? (
                         <div className="rounded-lg border border-sidebar-border/70 p-8 text-center text-sm text-muted-foreground dark:border-sidebar-border">
@@ -264,11 +268,11 @@ export default function VenueRegistryIndex({ venues }: Props) {
                         </div>
                     ) : (
                         venues.map((venue) => (
-                            <article
+                            <details
                                 key={venue.id}
-                                className="rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border"
+                                className="group rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border"
                             >
-                                <div className="grid gap-4 border-b border-sidebar-border/70 p-4 md:grid-cols-[1.1fr_1.4fr] dark:border-sidebar-border">
+                                <summary className="grid cursor-pointer list-none gap-4 p-4 md:grid-cols-[1.1fr_1.4fr] [&::-webkit-details-marker]:hidden">
                                     <div className="min-w-0">
                                         <div className="flex flex-wrap items-center gap-2">
                                             <MapPinned className="size-5 text-muted-foreground" />
@@ -294,6 +298,11 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                         <p className="mt-1 text-sm text-muted-foreground">
                                             {venue.city ?? 'بدون شهر'} · پروفایل{' '}
                                             {statusLabel(venue.profileStatus)}
+                                        </p>
+                                        <p className="mt-2 flex items-center gap-1 text-xs font-medium text-primary">
+                                            مشاهده ارزیابی، آمادگی دمو و ساختار
+                                            مکان
+                                            <ChevronDown className="size-4 transition-transform group-open:rotate-180" />
                                         </p>
                                     </div>
 
@@ -329,7 +338,7 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                             </div>
                                         ))}
                                     </div>
-                                </div>
+                                </summary>
 
                                 <div className="grid gap-4 border-b border-sidebar-border/70 p-4 lg:grid-cols-[0.9fr_1.1fr] dark:border-sidebar-border">
                                     <div className="rounded-lg bg-muted/35 p-3 text-sm">
@@ -1265,7 +1274,7 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                               ],
                                     )}
                                 </div>
-                            </article>
+                            </details>
                         ))
                     )}
                 </section>

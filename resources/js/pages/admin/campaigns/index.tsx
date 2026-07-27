@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { DateTimePickerField } from '@/components/date-time-picker-field';
 import { CampaignContextNav } from '@/components/campaign-context-nav';
+import { InternalTeamNavigation } from '@/components/dashboard/internal-team-navigation';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -247,6 +248,8 @@ export default function CampaignRegistryIndex({
                         </div>
                     </div>
                 </header>
+
+                <InternalTeamNavigation activeHref="/admin/campaigns" />
 
                 {selectedBlueprint ? (
                     <section className="rounded-lg border border-primary/25 bg-primary/5 p-4 text-sm shadow-sm">

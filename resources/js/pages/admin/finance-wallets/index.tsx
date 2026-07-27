@@ -8,6 +8,7 @@ import {
     ShieldAlert,
     WalletCards,
 } from 'lucide-react';
+import { InternalTeamNavigation } from '@/components/dashboard/internal-team-navigation';
 import { Button } from '@/components/ui/button';
 
 type Summary = {
@@ -175,6 +176,8 @@ export default function FinanceWalletIndex({
                         ))}
                     </div>
                 </section>
+
+                <InternalTeamNavigation activeHref="/admin/finance-wallets" />
 
                 <section className="grid gap-3 xl:grid-cols-[1.2fr_0.8fr]">
                     <div className="rounded-lg border border-sky-200 bg-gradient-to-br from-sky-50/80 via-white to-indigo-50/60 p-4 shadow-sm">

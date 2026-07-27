@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { DateTimePickerField } from '@/components/date-time-picker-field';
 import { CampaignContextNav } from '@/components/campaign-context-nav';
+import { InternalTeamNavigation } from '@/components/dashboard/internal-team-navigation';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -184,6 +185,8 @@ export default function QrRegistryIndex({
                         </div>
                     </div>
                 </header>
+
+                <InternalTeamNavigation activeHref="/admin/qr-codes" />
 
                 {flash?.success ? (
                     <Alert>

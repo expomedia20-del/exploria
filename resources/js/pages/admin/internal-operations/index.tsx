@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { InternalTeamNavigation } from '@/components/dashboard/internal-team-navigation';
 
 type Workstream = {
     title: string;
@@ -339,6 +340,8 @@ export default function InternalOperationsIndex({
                         />
                     </div>
                 </header>
+
+                <InternalTeamNavigation activeHref="/admin/internal-operations" />
 
                 <Panel
                     title="قاعده ورود، نقش و نظارت"

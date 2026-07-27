@@ -1,5 +1,7 @@
 import { Form, Head, Link } from '@inertiajs/react';
 import { Activity, ShieldAlert } from 'lucide-react';
+import { useState } from 'react';
+import { InternalTeamNavigation } from '@/components/dashboard/internal-team-navigation';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 
@@ -67,6 +69,9 @@ const objectTypeLabels: Record<string, string> = {
 };
 
 export default function ScanEventIndex({ items, summary, filters }: Props) {
+    const [visibleCount, setVisibleCount] = useState(25);
+    const visibleItems = items.slice(0, visibleCount);
+
     return (
         <div
             className="flex h-full flex-1 flex-col gap-6 overflow-x-auto p-4"
@@ -84,6 +89,8 @@ export default function ScanEventIndex({ items, summary, filters }: Props) {
                     نمایش ۱۰۰ رویداد آخر بدون موبایل، IP یا شناسه نشست خام.
                 </p>
             </header>
+
+            <InternalTeamNavigation activeHref="/admin/events/scan-log" />
 
             <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
                 {Object.entries(summary).map(([key, value]) => (
@@ -302,7 +309,7 @@ export default function ScanEventIndex({ items, summary, filters }: Props) {
                     </div>
                 ) : (
                     <div className="divide-y">
-                        {items.map((event) => (
+                        {visibleItems.map((event) => (
                             <article
                                 key={event.id}
                                 className="grid gap-3 p-4 md:grid-cols-[1fr_1fr_1fr_auto] md:items-center"
@@ -350,6 +357,20 @@ export default function ScanEventIndex({ items, summary, filters }: Props) {
                     </div>
                 )}
             </section>
+            {visibleCount < items.length ? (
+                <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() =>
+                        setVisibleCount((current) =>
+                            Math.min(current + 25, items.length),
+                        )
+                    }
+                    className="self-center"
+                >
+                    نمایش ۲۵ رویداد بعدی
+                </Button>
+            ) : null}
         </div>
     );
 }
