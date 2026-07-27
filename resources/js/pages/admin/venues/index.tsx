@@ -10,6 +10,7 @@ import {
     Layers3,
     LoaderCircle,
     MapPinned,
+    Plus,
     RadioTower,
     Store,
     UsersRound,
@@ -481,6 +482,163 @@ function FacilitySuggestionPanel({ venue }: { venue: VenueRegistryItem }) {
     );
 }
 
+function CreateVenueForm() {
+    return (
+        <Form
+            action="/admin/venues"
+            method="post"
+            options={{ preserveScroll: true }}
+            resetOnSuccess
+            className="grid gap-4 rounded-lg border border-sidebar-border/70 bg-background p-4 text-sm dark:border-sidebar-border"
+        >
+            {({ processing, errors, wasSuccessful }) => (
+                <>
+                    <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                        <div>
+                            <div className="flex items-center gap-2 font-semibold">
+                                <Plus className="size-4 text-primary" />
+                                ساخت مکان جدید
+                            </div>
+                            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                                ابتدا مکان مادر را بسازید؛ سپس همین کارت برای
+                                ارزیابی، استخراج امکانات، تعریف زون، هاب، نقطه
+                                تماس، QR و اتصال کمپین استفاده می‌شود.
+                            </p>
+                        </div>
+                        <button
+                            type="submit"
+                            disabled={processing}
+                            className="inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                        >
+                            {processing ? (
+                                <LoaderCircle className="size-3.5 animate-spin" />
+                            ) : (
+                                <Plus className="size-3.5" />
+                            )}
+                            ثبت مکان
+                        </button>
+                    </div>
+
+                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                        <label className="grid gap-1">
+                            <span className="text-xs font-medium">
+                                نام مکان
+                            </span>
+                            <input
+                                name="name"
+                                required
+                                placeholder="مثلاً باغ ملی گیاه‌شناسی"
+                                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                            />
+                            {errors.name ? (
+                                <span className="text-xs text-destructive">
+                                    {errors.name}
+                                </span>
+                            ) : null}
+                        </label>
+
+                        <label className="grid gap-1">
+                            <span className="text-xs font-medium">
+                                شناسه سیستمی
+                            </span>
+                            <input
+                                name="code"
+                                dir="ltr"
+                                placeholder="اختیاری، مثل eram-park"
+                                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                            />
+                            {errors.code ? (
+                                <span className="text-xs text-destructive">
+                                    {errors.code}
+                                </span>
+                            ) : null}
+                        </label>
+
+                        <label className="grid gap-1">
+                            <span className="text-xs font-medium">شهر</span>
+                            <input
+                                name="city"
+                                placeholder="مثلاً تهران"
+                                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                            />
+                            {errors.city ? (
+                                <span className="text-xs text-destructive">
+                                    {errors.city}
+                                </span>
+                            ) : null}
+                        </label>
+
+                        <label className="grid gap-1">
+                            <span className="text-xs font-medium">
+                                نوع مکان
+                            </span>
+                            <select
+                                name="venue_type"
+                                defaultValue="mixed"
+                                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                            >
+                                {Object.entries(venueTypeLabels).map(
+                                    ([value, label]) => (
+                                        <option key={value} value={value}>
+                                            {label}
+                                        </option>
+                                    ),
+                                )}
+                            </select>
+                            {errors.venue_type ? (
+                                <span className="text-xs text-destructive">
+                                    {errors.venue_type}
+                                </span>
+                            ) : null}
+                        </label>
+                    </div>
+
+                    <div className="grid gap-3 md:grid-cols-2">
+                        <label className="grid gap-1">
+                            <span className="text-xs font-medium">
+                                مخاطب غالب
+                            </span>
+                            <input
+                                name="primary_audience"
+                                placeholder="مثلاً خانواده، کودک، گردشگر، نوجوان"
+                                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                            />
+                            {errors.primary_audience ? (
+                                <span className="text-xs text-destructive">
+                                    {errors.primary_audience}
+                                </span>
+                            ) : null}
+                        </label>
+
+                        <label className="grid gap-1">
+                            <span className="text-xs font-medium">
+                                لینک سایت رسمی یا منبع اولیه
+                            </span>
+                            <input
+                                name="official_website_url"
+                                dir="ltr"
+                                placeholder="https://example.com/"
+                                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                            />
+                            {errors.official_website_url ? (
+                                <span className="text-xs text-destructive">
+                                    {errors.official_website_url}
+                                </span>
+                            ) : null}
+                        </label>
+                    </div>
+
+                    {wasSuccessful ? (
+                        <p className="rounded-md bg-emerald-50 px-3 py-2 text-xs text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-100">
+                            مکان جدید ساخته شد و در فهرست آماده تکمیل است.
+                        </p>
+                    ) : null}
+                </>
+            )}
+        </Form>
+    );
+}
+
 export default function VenueRegistryIndex({ venues }: Props) {
     const totals = venues.reduce(
         (current, venue) => ({
@@ -529,6 +687,8 @@ export default function VenueRegistryIndex({ venues }: Props) {
                 </header>
 
                 <InternalTeamNavigation activeHref="/admin/venues" />
+
+                <CreateVenueForm />
 
                 <section className="grid gap-4">
                     {venues.length === 0 ? (

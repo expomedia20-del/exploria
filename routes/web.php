@@ -427,6 +427,9 @@ Route::get('/admin/venues', [VenueRegistryController::class, 'page'])
 Route::get('/admin/venues/facilities-template', [VenueRegistryController::class, 'facilitiesTemplate'])
     ->middleware(['auth', 'role:admin,regional_admin,operator'])
     ->name('admin.venues.facilities-template');
+Route::post('/admin/venues', [VenueRegistryController::class, 'store'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.venues.store');
 Route::patch('/admin/venues/{venue}/profile', [VenueRegistryController::class, 'updateProfile'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.venues.profile.update');
@@ -559,6 +562,9 @@ Route::post('/api/v1/admin/display-operations/placements/{adPlacement}/cancel', 
 Route::get('/api/v1/admin/venues', [VenueRegistryController::class, 'index'])
     ->middleware(['auth', 'role:admin,regional_admin,operator,viewer,hub_manager'])
     ->name('admin.venues.index');
+Route::post('/api/v1/admin/venues', [VenueRegistryController::class, 'store'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.venues.api.store');
 Route::post('/api/v1/admin/venues/{venue}/facility-suggestions', [VenueRegistryController::class, 'suggestFacilities'])
     ->middleware(['auth', 'role:admin,regional_admin,operator,viewer,hub_manager'])
     ->name('admin.venues.facility-suggestions');

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Actions\Events\RecordAdminAuditAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StoreVenueRequest;
 use App\Http\Requests\Admin\SuggestVenueFacilitiesRequest;
 use App\Http\Requests\Admin\UpdateVenueProfileRequest;
 use App\Models\Venue;
@@ -30,6 +31,22 @@ class VenueRegistryController extends Controller
     public function index(Request $request, VenueRegistryService $service): JsonResponse
     {
         return response()->json(['status' => 'success', 'data' => $service->list($request->user())]);
+    }
+
+    public function store(StoreVenueRequest $request, VenueRegistryService $service, RecordAdminAuditAction $audit): JsonResponse|RedirectResponse
+    {
+        $venue = $service->createVenue($request->validated());
+        $audit->execute($request->user(), 'venue_created', 'venue', $venue->id, $request->session()->getId(), [
+            'code' => $venue->code,
+            'name' => $venue->name,
+            'status' => $venue->status->value,
+        ]);
+
+        if ($request->expectsJson()) {
+            return response()->json(['status' => 'success', 'data' => ['id' => $venue->id, 'code' => $venue->code]], 201);
+        }
+
+        return back()->with('success', 'مکان جدید ساخته شد و برای ارزیابی آماده است.');
     }
 
     public function suggestFacilities(SuggestVenueFacilitiesRequest $request, Venue $venue, VenueFacilitySuggestionService $service): JsonResponse

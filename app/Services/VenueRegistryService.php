@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\RecordStatus;
 use App\Models\AdRequest;
 use App\Models\Campaign;
 use App\Models\CampaignParticipant;
@@ -24,6 +25,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use ZipArchive;
 
 class VenueRegistryService
@@ -92,6 +94,33 @@ class VenueRegistryService
     ];
 
     public function __construct(private readonly UserAccessScopeService $accessScopes) {}
+
+    /** @param array<string, mixed> $data */
+    public function createVenue(array $data): Venue
+    {
+        $venueType = (string) ($data['venue_type'] ?? 'mixed');
+
+        return Venue::query()->create([
+            'code' => $this->newVenueCode($data['code'] ?? null, (string) $data['name']),
+            'name' => trim((string) $data['name']),
+            'city' => blank($data['city'] ?? null) ? null : trim((string) $data['city']),
+            'status' => RecordStatus::Draft,
+            'profile_status' => RecordStatus::Draft,
+            'metadata' => [
+                'created_from' => 'admin_venue_registry',
+                'rollout_order' => Venue::query()->count() + 1,
+                'location_profile' => [
+                    'venue_type' => $venueType,
+                    'primary_audience' => blank($data['primary_audience'] ?? null) ? null : trim((string) $data['primary_audience']),
+                    'official_website_url' => blank($data['official_website_url'] ?? null) ? null : trim((string) $data['official_website_url']),
+                    'manual_research_notes' => null,
+                    'facilities' => [],
+                    'constraints' => [],
+                    'updated_at' => now()->toIso8601String(),
+                ],
+            ],
+        ]);
+    }
 
     /** @return Collection<int, covariant array<string, mixed>> */
     public function list(?User $user = null): Collection
@@ -745,6 +774,22 @@ class VenueRegistryService
             'milad-tower' => self::MILAD_TOWER_OFFICIAL_SOURCE_SUGGESTIONS,
             default => [],
         };
+    }
+
+    private function newVenueCode(?string $requestedCode, string $name): string
+    {
+        $base = filled($requestedCode) ? trim((string) $requestedCode) : Str::slug($name);
+        $base = $base !== '' ? $base : 'venue';
+        $base = Str::limit($base, 56, '');
+        $code = $base;
+        $counter = 2;
+
+        while (Venue::query()->where('code', $code)->exists()) {
+            $suffix = '-'.$counter++;
+            $code = Str::limit($base, 64 - strlen($suffix), '').$suffix;
+        }
+
+        return $code;
     }
 
     /** @return list<array<string, mixed>> */

@@ -110,6 +110,55 @@ class VenueRegistryTest extends TestCase
             ->assertJsonPath('data.0.demoStressPlan.items.0.complete', true);
     }
 
+    public function test_admin_can_create_new_venue_for_later_evaluation(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.venues.api.store'), [
+                'name' => 'باغ ملی گیاه‌شناسی',
+                'code' => 'botanical-garden',
+                'city' => 'تهران',
+                'venue_type' => 'ecopark',
+                'primary_audience' => 'خانواده، گردشگر، دانش‌آموز',
+                'official_website_url' => 'https://example.com/botanical-garden',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('status', 'success')
+            ->assertJsonPath('data.code', 'botanical-garden');
+
+        $venue = Venue::query()->where('code', 'botanical-garden')->firstOrFail();
+
+        $this->assertSame('باغ ملی گیاه‌شناسی', $venue->name);
+        $this->assertSame('draft', $venue->status->value);
+        $this->assertSame('draft', $venue->profile_status->value);
+        $this->assertSame('ecopark', $venue->metadata['location_profile']['venue_type']);
+        $this->assertSame([], $venue->metadata['location_profile']['facilities']);
+        $this->assertDatabaseHas('event_log', [
+            'event_type' => 'audit.venue_created',
+            'actor_user_id' => $admin->id,
+            'object_type' => 'venue',
+            'object_id' => $venue->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->getJson(route('admin.venues.index'))
+            ->assertOk()
+            ->assertJsonPath('data.3.code', 'botanical-garden')
+            ->assertJsonPath('data.3.locationProfile.venueType', 'ecopark')
+            ->assertJsonPath('data.3.locationProfile.facilities', []);
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.venues.facility-suggestions', $venue), [
+                'source_text' => "باغ ژاپنی\nکافه باغ\nمسیر آموزشی",
+                'official_website_url' => 'https://example.com/botanical-garden',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.summary.count', 3)
+            ->assertJsonPath('data.summary.newCount', 3)
+            ->assertJsonPath('data.suggestions.1.function', 'retail');
+    }
+
     public function test_admin_can_generate_facility_suggestions_from_source_text(): void
     {
         $admin = User::factory()->create(['role' => UserRole::Admin]);
