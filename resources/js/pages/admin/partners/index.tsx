@@ -6,6 +6,7 @@ import {
     Store,
     UserRound,
 } from 'lucide-react';
+import { WorkflowPageNavigation } from '@/components/dashboard/workflow-page-navigation';
 
 type RegistryEntity = {
     id: string;
@@ -132,6 +133,11 @@ export default function PartnerRegistryIndex({ partners }: Props) {
                         </div>
                     </div>
                 </header>
+
+                <WorkflowPageNavigation
+                    workflow="commercial"
+                    activeHref="/admin/partners"
+                />
 
                 <section className="grid gap-3 md:grid-cols-3">
                     <Link

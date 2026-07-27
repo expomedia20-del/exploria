@@ -10,6 +10,7 @@ import {
     Store,
     TicketCheck,
 } from 'lucide-react';
+import { WorkflowPageNavigation } from '@/components/dashboard/workflow-page-navigation';
 
 type SmartAd = {
     id: string;
@@ -135,6 +136,13 @@ export default function OffersIndex({ governance, stats, ads, offers }: Props) {
                         </div>
                     </div>
                 </section>
+
+                <div className="mx-auto max-w-7xl px-4 pt-7 sm:px-6 lg:px-8">
+                    <WorkflowPageNavigation
+                        workflow="participant"
+                        activeHref="/offers"
+                    />
+                </div>
 
                 <section className="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-8">
                     <div className="grid gap-3 md:grid-cols-3">

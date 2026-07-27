@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { CampaignContextNav } from '@/components/campaign-context-nav';
+import { WorkflowPageNavigation } from '@/components/dashboard/workflow-page-navigation';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 
@@ -309,6 +310,11 @@ export default function SponsorActivationIndex({
                         ))}
                     </div>
                 </header>
+
+                <WorkflowPageNavigation
+                    workflow="commercial"
+                    activeHref="/admin/sponsors"
+                />
 
                 {selectedCampaign ? (
                     <CampaignContextNav campaign={selectedCampaign} />

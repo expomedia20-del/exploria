@@ -2,6 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import {
     Building2,
     CalendarCheck2,
+    ChevronDown,
     ClipboardList,
     Layers3,
     ShieldCheck,
@@ -10,6 +11,7 @@ import {
     UsersRound,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { WorkflowPageNavigation } from '@/components/dashboard/workflow-page-navigation';
 
 type RoleGroup =
     | 'exploria_team'
@@ -381,8 +383,8 @@ function AuthorityColumn({ title, items }: { title: string; items: string[] }) {
 
 function RoleCard({ role }: { role: RoleItem }) {
     return (
-        <article className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
-            <div className="flex flex-col gap-3 border-b border-sidebar-border/70 pb-4 sm:flex-row sm:items-start sm:justify-between dark:border-sidebar-border">
+        <details className="group rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border">
+            <summary className="flex cursor-pointer list-none flex-col gap-3 p-4 sm:flex-row sm:items-start sm:justify-between [&::-webkit-details-marker]:hidden">
                 <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                         <UserCog className="size-5 text-muted-foreground" />
@@ -394,85 +396,94 @@ function RoleCard({ role }: { role: RoleItem }) {
                         {role.label}
                     </p>
                 </div>
-                <div className="flex flex-wrap gap-2 text-xs">
-                    <span className="rounded-full bg-violet-100 px-2.5 py-1 font-medium text-violet-800 dark:bg-violet-950 dark:text-violet-200">
-                        {role.accountRoleLabel}
-                    </span>
-                    <span className="rounded-full bg-emerald-100 px-2.5 py-1 font-medium text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">
-                        {labelForScope(role.scope)}
-                    </span>
-                    <span className="rounded-full bg-sky-100 px-2.5 py-1 font-medium text-sky-800 dark:bg-sky-950 dark:text-sky-200">
-                        گزارش به:{' '}
-                        {role.reportsTo
-                            ? labelForRole(role.reportsTo)
-                            : 'مستقل'}
-                    </span>
+                <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap gap-2 text-xs">
+                        <span className="rounded-full bg-violet-100 px-2.5 py-1 font-medium text-violet-800 dark:bg-violet-950 dark:text-violet-200">
+                            {role.accountRoleLabel}
+                        </span>
+                        <span className="rounded-full bg-emerald-100 px-2.5 py-1 font-medium text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">
+                            {labelForScope(role.scope)}
+                        </span>
+                        <span className="rounded-full bg-sky-100 px-2.5 py-1 font-medium text-sky-800 dark:bg-sky-950 dark:text-sky-200">
+                            گزارش به:{' '}
+                            {role.reportsTo
+                                ? labelForRole(role.reportsTo)
+                                : 'مستقل'}
+                        </span>
+                    </div>
+                    <ChevronDown className="size-5 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
                 </div>
-            </div>
+            </summary>
 
-            <div className="mt-4 grid gap-3 rounded-md border border-sidebar-border/70 bg-muted/30 p-3 text-sm md:grid-cols-3 dark:border-sidebar-border">
-                <div>
-                    <p className="text-xs text-muted-foreground">
-                        نوع اکانت ورود
-                    </p>
-                    <p className="mt-1 font-medium">{role.accountRoleLabel}</p>
-                </div>
-                <div>
-                    <p className="text-xs text-muted-foreground">نوع پنل</p>
-                    <p className="mt-1 font-medium">
-                        {panelModeLabels[role.panelMode] ?? role.panelMode}
-                    </p>
-                </div>
-                <div className="flex flex-col items-start gap-2">
+            <div className="border-t border-sidebar-border/70 p-4 dark:border-sidebar-border">
+                <div className="grid gap-3 rounded-md border border-sidebar-border/70 bg-muted/30 p-3 text-sm md:grid-cols-3 dark:border-sidebar-border">
                     <div>
                         <p className="text-xs text-muted-foreground">
-                            مسیر شروع
+                            نوع اکانت ورود
                         </p>
-                        <p className="mt-1 font-medium">{role.entryLabel}</p>
+                        <p className="mt-1 font-medium">
+                            {role.accountRoleLabel}
+                        </p>
                     </div>
-                    <Link
-                        href={role.entryHref}
-                        className="rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium"
-                    >
-                        مشاهده پنل
-                    </Link>
+                    <div>
+                        <p className="text-xs text-muted-foreground">نوع پنل</p>
+                        <p className="mt-1 font-medium">
+                            {panelModeLabels[role.panelMode] ?? role.panelMode}
+                        </p>
+                    </div>
+                    <div className="flex flex-col items-start gap-2">
+                        <div>
+                            <p className="text-xs text-muted-foreground">
+                                مسیر شروع
+                            </p>
+                            <p className="mt-1 font-medium">
+                                {role.entryLabel}
+                            </p>
+                        </div>
+                        <Link
+                            href={role.entryHref}
+                            className="rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium"
+                        >
+                            مشاهده پنل
+                        </Link>
+                    </div>
                 </div>
-            </div>
 
-            <div className="mt-4 grid gap-4 lg:grid-cols-2">
-                <section>
-                    <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
-                        <ClipboardList className="size-4 text-muted-foreground" />
-                        وظایف اصلی
-                    </div>
-                    <ul className="space-y-2 text-sm text-muted-foreground">
-                        {role.responsibilities.map((item) => (
-                            <li key={item} className="leading-7">
-                                {item}
-                            </li>
-                        ))}
-                    </ul>
-                </section>
+                <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                    <section>
+                        <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
+                            <ClipboardList className="size-4 text-muted-foreground" />
+                            وظایف اصلی
+                        </div>
+                        <ul className="space-y-2 text-sm text-muted-foreground">
+                            {role.responsibilities.map((item) => (
+                                <li key={item} className="leading-7">
+                                    {item}
+                                </li>
+                            ))}
+                        </ul>
+                    </section>
 
-                <section>
-                    <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
-                        <CalendarCheck2 className="size-4 text-muted-foreground" />
-                        عملیات روزانه
-                    </div>
-                    <ol className="space-y-2 text-sm text-muted-foreground">
-                        {role.dailyOperations.map((item, index) => (
-                            <li key={item} className="flex gap-2 leading-7">
-                                <span className="mt-1 flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">
-                                    {(index + 1).toLocaleString('fa-IR')}
-                                </span>
-                                <span>{item}</span>
-                            </li>
-                        ))}
-                    </ol>
-                </section>
+                    <section>
+                        <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
+                            <CalendarCheck2 className="size-4 text-muted-foreground" />
+                            عملیات روزانه
+                        </div>
+                        <ol className="space-y-2 text-sm text-muted-foreground">
+                            {role.dailyOperations.map((item, index) => (
+                                <li key={item} className="flex gap-2 leading-7">
+                                    <span className="mt-1 flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">
+                                        {(index + 1).toLocaleString('fa-IR')}
+                                    </span>
+                                    <span>{item}</span>
+                                </li>
+                            ))}
+                        </ol>
+                    </section>
+                </div>
+                <AuthorityGuideBox roleKey={role.key} />
             </div>
-            <AuthorityGuideBox roleKey={role.key} />
-        </article>
+        </details>
     );
 }
 
@@ -549,6 +560,11 @@ export default function RoleOperationsIndex({
                         />
                     </div>
                 </header>
+
+                <WorkflowPageNavigation
+                    workflow="access"
+                    activeHref="/admin/role-operations"
+                />
 
                 <section className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
                     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">

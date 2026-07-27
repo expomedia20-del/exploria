@@ -4,6 +4,7 @@ import {
     Archive,
     CalendarClock,
     CheckCircle2,
+    ChevronDown,
     Megaphone,
     MonitorPlay,
     PauseCircle,
@@ -13,6 +14,7 @@ import {
     XCircle,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { WorkflowPageNavigation } from '@/components/dashboard/workflow-page-navigation';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 
@@ -217,6 +219,11 @@ export default function AdminAdsIndex({
                     </div>
                 </header>
 
+                <WorkflowPageNavigation
+                    workflow="commercial"
+                    activeHref="/admin/ads"
+                />
+
                 <section className="grid gap-3 md:grid-cols-3">
                     <Link
                         href={governance.executionUrl}
@@ -282,11 +289,11 @@ export default function AdminAdsIndex({
                             </p>
                         ) : (
                             adRequests.map((adRequest) => (
-                                <article
+                                <details
                                     key={adRequest.id}
-                                    className="grid gap-2 px-4 py-3 text-sm"
+                                    className="group text-sm"
                                 >
-                                    <div className="flex items-center justify-between gap-3">
+                                    <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
                                         <div className="min-w-0">
                                             <p className="truncate font-medium">
                                                 {adRequest.title}
@@ -303,141 +310,212 @@ export default function AdminAdsIndex({
                                                     'بدون محتوای ثبت‌شده'}
                                             </p>
                                         </div>
-                                        <span className="shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
-                                            {statusLabels[adRequest.status] ??
-                                                adRequest.status}
-                                        </span>
-                                    </div>
-                                    {adRequest.bodyCopy ? (
-                                        <p className="line-clamp-2 text-xs text-muted-foreground">
-                                            {adRequest.bodyCopy}
-                                        </p>
-                                    ) : null}
-                                    {adRequest.isRewardedPopup ? (
-                                        <div className="grid gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 md:grid-cols-[minmax(0,18rem)_1fr]">
-                                            {adRequest.creativeType ===
-                                                'image' &&
-                                            adRequest.assetUrl ? (
-                                                <img
-                                                    src={adRequest.assetUrl}
-                                                    alt={adRequest.title}
-                                                    className="aspect-video w-full rounded-md bg-white object-cover"
-                                                />
-                                            ) : (
-                                                <div className="grid aspect-video place-items-center rounded-md bg-white text-xs text-red-700">
-                                                    تصویر ثابت معتبر ثبت نشده
-                                                </div>
-                                            )}
-                                            <div className="grid content-center gap-2 text-xs text-amber-950">
-                                                <p className="font-semibold">
-                                                    پیش‌نمایش پاپ‌آپ امتیازآور
-                                                    بازی
-                                                </p>
-                                                <p>
-                                                    مرحله:{' '}
-                                                    {adRequest.gameStageIndex?.toLocaleString(
-                                                        'fa-IR',
-                                                    ) ?? '—'}{' '}
-                                                    · زمان:{' '}
-                                                    {adRequest.requiredSeconds?.toLocaleString(
-                                                        'fa-IR',
-                                                    ) ?? '—'}{' '}
-                                                    ثانیه · امتیاز:{' '}
-                                                    {adRequest.rewardedPoints?.toLocaleString(
-                                                        'fa-IR',
-                                                    ) ?? '—'}
-                                                </p>
-                                                <p>
-                                                    نوع مجاز: تصویر ثابت ۱۶:۹
-                                                    به‌همراه متن؛ ویدئو در این
-                                                    جایگاه پخش نمی‌شود.
-                                                </p>
-                                            </div>
-                                        </div>
-                                    ) : null}
-                                    <p className="text-xs text-muted-foreground">
-                                        واحد/حامی مرتبط:{' '}
-                                        {adRequest.partnerName ?? '-'} · مکان:{' '}
-                                        {adRequest.venueName ?? '-'} · هاب:{' '}
-                                        {adRequest.hubName ?? '-'} · جایگاه:{' '}
-                                        {placementLabels[
-                                            adRequest.placementType ?? ''
-                                        ] ??
-                                            adRequest.placementType ??
-                                            '-'}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground">
-                                        بازه: {formatDate(adRequest.startsAt)}{' '}
-                                        تا {formatDate(adRequest.endsAt)} ·
-                                        بودجه:{' '}
-                                        {adRequest.budgetAmount?.toLocaleString(
-                                            'fa-IR',
-                                        ) ?? 'ثبت نشده'}{' '}
-                                        · سقف نمایش:{' '}
-                                        {adRequest.impressionCap?.toLocaleString(
-                                            'fa-IR',
-                                        ) ?? 'نامحدود'}
-                                    </p>
-                                    {adRequest.latestReview ? (
-                                        <div className="rounded-md bg-muted/70 px-3 py-2 text-xs leading-6">
-                                            <span className="font-medium">
-                                                آخرین تصمیم:{' '}
+                                        <div className="flex items-center gap-2">
+                                            <span className="shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
                                                 {statusLabels[
-                                                    adRequest.latestReview
-                                                        .action
-                                                ] ??
-                                                    adRequest.latestReview
-                                                        .action}
+                                                    adRequest.status
+                                                ] ?? adRequest.status}
                                             </span>
-                                            {adRequest.latestReview.notes ? (
-                                                <span>
-                                                    {' '}
-                                                    —{' '}
-                                                    {
-                                                        adRequest.latestReview
-                                                            .notes
-                                                    }
-                                                </span>
-                                            ) : null}
+                                            <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
                                         </div>
-                                    ) : null}
-                                    {adRequest.status === 'pending_review' &&
-                                    canReviewAds ? (
-                                        <div className="grid gap-2 pt-1 md:grid-cols-3">
-                                            <Form
-                                                action={`/admin/ads/${adRequest.id}/approve`}
-                                                method="post"
-                                                options={{
-                                                    preserveScroll: true,
-                                                }}
-                                            >
-                                                {({ processing }) => (
-                                                    <Button
-                                                        size="sm"
-                                                        disabled={processing}
-                                                    >
-                                                        <CheckCircle2 className="size-4" />
-                                                        تایید
-                                                    </Button>
+                                    </summary>
+                                    <div className="grid gap-2 border-t border-sidebar-border/70 px-4 py-3 dark:border-sidebar-border">
+                                        {adRequest.bodyCopy ? (
+                                            <p className="line-clamp-2 text-xs text-muted-foreground">
+                                                {adRequest.bodyCopy}
+                                            </p>
+                                        ) : null}
+                                        {adRequest.isRewardedPopup ? (
+                                            <div className="grid gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 md:grid-cols-[minmax(0,18rem)_1fr]">
+                                                {adRequest.creativeType ===
+                                                    'image' &&
+                                                adRequest.assetUrl ? (
+                                                    <img
+                                                        src={adRequest.assetUrl}
+                                                        alt={adRequest.title}
+                                                        className="aspect-video w-full rounded-md bg-white object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="grid aspect-video place-items-center rounded-md bg-white text-xs text-red-700">
+                                                        تصویر ثابت معتبر ثبت
+                                                        نشده
+                                                    </div>
                                                 )}
-                                            </Form>
-                                            <Form
-                                                action={`/admin/ads/${adRequest.id}/request-revision`}
-                                                method="post"
-                                                className="grid gap-2"
-                                                options={{
-                                                    preserveScroll: true,
-                                                }}
-                                            >
-                                                {({ processing }) => (
-                                                    <>
-                                                        <textarea
-                                                            name="notes"
-                                                            required
-                                                            minLength={5}
-                                                            className="min-h-16 rounded-md border bg-background px-3 py-2 text-xs"
-                                                            placeholder="موارد دقیق لازم برای اصلاح"
-                                                        />
+                                                <div className="grid content-center gap-2 text-xs text-amber-950">
+                                                    <p className="font-semibold">
+                                                        پیش‌نمایش پاپ‌آپ
+                                                        امتیازآور بازی
+                                                    </p>
+                                                    <p>
+                                                        مرحله:{' '}
+                                                        {adRequest.gameStageIndex?.toLocaleString(
+                                                            'fa-IR',
+                                                        ) ?? '—'}{' '}
+                                                        · زمان:{' '}
+                                                        {adRequest.requiredSeconds?.toLocaleString(
+                                                            'fa-IR',
+                                                        ) ?? '—'}{' '}
+                                                        ثانیه · امتیاز:{' '}
+                                                        {adRequest.rewardedPoints?.toLocaleString(
+                                                            'fa-IR',
+                                                        ) ?? '—'}
+                                                    </p>
+                                                    <p>
+                                                        نوع مجاز: تصویر ثابت
+                                                        ۱۶:۹ به‌همراه متن؛ ویدئو
+                                                        در این جایگاه پخش
+                                                        نمی‌شود.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ) : null}
+                                        <p className="text-xs text-muted-foreground">
+                                            واحد/حامی مرتبط:{' '}
+                                            {adRequest.partnerName ?? '-'} ·
+                                            مکان: {adRequest.venueName ?? '-'} ·
+                                            هاب: {adRequest.hubName ?? '-'} ·
+                                            جایگاه:{' '}
+                                            {placementLabels[
+                                                adRequest.placementType ?? ''
+                                            ] ??
+                                                adRequest.placementType ??
+                                                '-'}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                            بازه:{' '}
+                                            {formatDate(adRequest.startsAt)} تا{' '}
+                                            {formatDate(adRequest.endsAt)} ·
+                                            بودجه:{' '}
+                                            {adRequest.budgetAmount?.toLocaleString(
+                                                'fa-IR',
+                                            ) ?? 'ثبت نشده'}{' '}
+                                            · سقف نمایش:{' '}
+                                            {adRequest.impressionCap?.toLocaleString(
+                                                'fa-IR',
+                                            ) ?? 'نامحدود'}
+                                        </p>
+                                        {adRequest.latestReview ? (
+                                            <div className="rounded-md bg-muted/70 px-3 py-2 text-xs leading-6">
+                                                <span className="font-medium">
+                                                    آخرین تصمیم:{' '}
+                                                    {statusLabels[
+                                                        adRequest.latestReview
+                                                            .action
+                                                    ] ??
+                                                        adRequest.latestReview
+                                                            .action}
+                                                </span>
+                                                {adRequest.latestReview
+                                                    .notes ? (
+                                                    <span>
+                                                        {' '}
+                                                        —{' '}
+                                                        {
+                                                            adRequest
+                                                                .latestReview
+                                                                .notes
+                                                        }
+                                                    </span>
+                                                ) : null}
+                                            </div>
+                                        ) : null}
+                                        {adRequest.status ===
+                                            'pending_review' && canReviewAds ? (
+                                            <div className="grid gap-2 pt-1 md:grid-cols-3">
+                                                <Form
+                                                    action={`/admin/ads/${adRequest.id}/approve`}
+                                                    method="post"
+                                                    options={{
+                                                        preserveScroll: true,
+                                                    }}
+                                                >
+                                                    {({ processing }) => (
+                                                        <Button
+                                                            size="sm"
+                                                            disabled={
+                                                                processing
+                                                            }
+                                                        >
+                                                            <CheckCircle2 className="size-4" />
+                                                            تایید
+                                                        </Button>
+                                                    )}
+                                                </Form>
+                                                <Form
+                                                    action={`/admin/ads/${adRequest.id}/request-revision`}
+                                                    method="post"
+                                                    className="grid gap-2"
+                                                    options={{
+                                                        preserveScroll: true,
+                                                    }}
+                                                >
+                                                    {({ processing }) => (
+                                                        <>
+                                                            <textarea
+                                                                name="notes"
+                                                                required
+                                                                minLength={5}
+                                                                className="min-h-16 rounded-md border bg-background px-3 py-2 text-xs"
+                                                                placeholder="موارد دقیق لازم برای اصلاح"
+                                                            />
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                disabled={
+                                                                    processing
+                                                                }
+                                                            >
+                                                                <RotateCcw className="size-4" />
+                                                                درخواست اصلاح
+                                                            </Button>
+                                                        </>
+                                                    )}
+                                                </Form>
+                                                <Form
+                                                    action={`/admin/ads/${adRequest.id}/reject`}
+                                                    method="post"
+                                                    className="grid gap-2"
+                                                    options={{
+                                                        preserveScroll: true,
+                                                    }}
+                                                >
+                                                    {({ processing }) => (
+                                                        <>
+                                                            <textarea
+                                                                name="notes"
+                                                                required
+                                                                minLength={5}
+                                                                className="min-h-16 rounded-md border bg-background px-3 py-2 text-xs"
+                                                                placeholder="دلیل روشن رد درخواست"
+                                                            />
+                                                            <Button
+                                                                size="sm"
+                                                                variant="destructive"
+                                                                disabled={
+                                                                    processing
+                                                                }
+                                                            >
+                                                                <XCircle className="size-4" />
+                                                                رد نهایی
+                                                            </Button>
+                                                        </>
+                                                    )}
+                                                </Form>
+                                            </div>
+                                        ) : null}
+                                        {canReviewAds &&
+                                        ['approved', 'paused'].includes(
+                                            adRequest.status,
+                                        ) ? (
+                                            <div className="flex flex-wrap gap-2 pt-1">
+                                                <Form
+                                                    action={`/admin/ads/${adRequest.id}/${adRequest.status === 'approved' ? 'pause' : 'resume'}`}
+                                                    method="post"
+                                                    options={{
+                                                        preserveScroll: true,
+                                                    }}
+                                                >
+                                                    {({ processing }) => (
                                                         <Button
                                                             size="sm"
                                                             variant="outline"
@@ -445,105 +523,54 @@ export default function AdminAdsIndex({
                                                                 processing
                                                             }
                                                         >
-                                                            <RotateCcw className="size-4" />
-                                                            درخواست اصلاح
+                                                            {adRequest.status ===
+                                                            'approved' ? (
+                                                                <PauseCircle className="size-4" />
+                                                            ) : (
+                                                                <PlayCircle className="size-4" />
+                                                            )}
+                                                            {adRequest.status ===
+                                                            'approved'
+                                                                ? 'توقف انتشار'
+                                                                : 'فعال‌سازی دوباره'}
                                                         </Button>
-                                                    </>
-                                                )}
-                                            </Form>
-                                            <Form
-                                                action={`/admin/ads/${adRequest.id}/reject`}
-                                                method="post"
-                                                className="grid gap-2"
-                                                options={{
-                                                    preserveScroll: true,
-                                                }}
-                                            >
-                                                {({ processing }) => (
-                                                    <>
-                                                        <textarea
-                                                            name="notes"
-                                                            required
-                                                            minLength={5}
-                                                            className="min-h-16 rounded-md border bg-background px-3 py-2 text-xs"
-                                                            placeholder="دلیل روشن رد درخواست"
-                                                        />
+                                                    )}
+                                                </Form>
+                                                <Form
+                                                    action={`/admin/ads/${adRequest.id}/archive`}
+                                                    method="post"
+                                                    options={{
+                                                        preserveScroll: true,
+                                                    }}
+                                                >
+                                                    {({ processing }) => (
                                                         <Button
                                                             size="sm"
-                                                            variant="destructive"
+                                                            variant="ghost"
                                                             disabled={
                                                                 processing
                                                             }
                                                         >
-                                                            <XCircle className="size-4" />
-                                                            رد نهایی
+                                                            <Archive className="size-4" />
+                                                            بایگانی
                                                         </Button>
-                                                    </>
-                                                )}
-                                            </Form>
-                                        </div>
-                                    ) : null}
-                                    {canReviewAds &&
-                                    ['approved', 'paused'].includes(
-                                        adRequest.status,
-                                    ) ? (
-                                        <div className="flex flex-wrap gap-2 pt-1">
-                                            <Form
-                                                action={`/admin/ads/${adRequest.id}/${adRequest.status === 'approved' ? 'pause' : 'resume'}`}
-                                                method="post"
-                                                options={{
-                                                    preserveScroll: true,
-                                                }}
-                                            >
-                                                {({ processing }) => (
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        disabled={processing}
-                                                    >
-                                                        {adRequest.status ===
-                                                        'approved' ? (
-                                                            <PauseCircle className="size-4" />
-                                                        ) : (
-                                                            <PlayCircle className="size-4" />
-                                                        )}
-                                                        {adRequest.status ===
-                                                        'approved'
-                                                            ? 'توقف انتشار'
-                                                            : 'فعال‌سازی دوباره'}
-                                                    </Button>
-                                                )}
-                                            </Form>
-                                            <Form
-                                                action={`/admin/ads/${adRequest.id}/archive`}
-                                                method="post"
-                                                options={{
-                                                    preserveScroll: true,
-                                                }}
-                                            >
-                                                {({ processing }) => (
-                                                    <Button
-                                                        size="sm"
-                                                        variant="ghost"
-                                                        disabled={processing}
-                                                    >
-                                                        <Archive className="size-4" />
-                                                        بایگانی
-                                                    </Button>
-                                                )}
-                                            </Form>
-                                        </div>
-                                    ) : null}
-                                    {adRequest.status === 'pending_review' &&
-                                    !canReviewAds ? (
-                                        <p className="rounded-md bg-muted px-3 py-2 text-xs leading-6 text-muted-foreground">
-                                            شما می‌توانید وضعیت این تبلیغ را
-                                            مشاهده و پس از تایید تیم اکسپلوریا
-                                            اجرای محلی آن را پیگیری کنید؛ رد یا
-                                            تایید نهایی در اختیار این نقش نیست.
-                                        </p>
-                                    ) : null}
-                                </article>
+                                                    )}
+                                                </Form>
+                                            </div>
+                                        ) : null}
+                                        {adRequest.status ===
+                                            'pending_review' &&
+                                        !canReviewAds ? (
+                                            <p className="rounded-md bg-muted px-3 py-2 text-xs leading-6 text-muted-foreground">
+                                                شما می‌توانید وضعیت این تبلیغ را
+                                                مشاهده و پس از تایید تیم
+                                                اکسپلوریا اجرای محلی آن را
+                                                پیگیری کنید؛ رد یا تایید نهایی
+                                                در اختیار این نقش نیست.
+                                            </p>
+                                        ) : null}
+                                    </div>
+                                </details>
                             ))
                         )}
                     </div>

@@ -10,6 +10,7 @@ import {
     Trash2,
 } from 'lucide-react';
 import { CampaignContextNav } from '@/components/campaign-context-nav';
+import { WorkflowPageNavigation } from '@/components/dashboard/workflow-page-navigation';
 import { Button } from '@/components/ui/button';
 import InputError from '@/components/input-error';
 
@@ -244,6 +245,11 @@ export default function CampaignParticipantsIndex({
                         ))}
                     </div>
                 </header>
+
+                <WorkflowPageNavigation
+                    workflow="commercial"
+                    activeHref="/admin/campaign-participants"
+                />
 
                 {selectedCampaign ? (
                     <section className="rounded-lg border border-primary/25 bg-primary/5 p-4 text-sm shadow-sm">

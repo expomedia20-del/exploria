@@ -2,6 +2,7 @@ import { Form, Head, usePage } from '@inertiajs/react';
 import {
     BadgeCheck,
     CalendarClock,
+    ChevronDown,
     Megaphone,
     MonitorPlay,
     RadioTower,
@@ -9,6 +10,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { useState } from 'react';
 import { DateTimePickerField } from '@/components/date-time-picker-field';
+import { WorkflowPageNavigation } from '@/components/dashboard/workflow-page-navigation';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -226,6 +228,11 @@ export default function PartnerAds({
                         />
                     </div>
                 </header>
+
+                <WorkflowPageNavigation
+                    workflow="partner"
+                    activeHref="/partner/ads"
+                />
 
                 {flash?.success ? (
                     <Alert>
@@ -679,11 +686,11 @@ export default function PartnerAds({
                             </p>
                         ) : (
                             adRequests.map((adRequest) => (
-                                <article
+                                <details
                                     key={adRequest.id}
-                                    className="grid gap-2 px-4 py-3 text-sm"
+                                    className="group text-sm"
                                 >
-                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                    <summary className="flex cursor-pointer list-none flex-col gap-2 px-4 py-3 sm:flex-row sm:items-start sm:justify-between [&::-webkit-details-marker]:hidden">
                                         <div className="min-w-0">
                                             <p className="truncate font-medium">
                                                 {adRequest.title}
@@ -700,264 +707,284 @@ export default function PartnerAds({
                                                     'بدون محتوا'}
                                             </p>
                                         </div>
-                                        <span className="w-fit shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
-                                            {statusLabels[adRequest.status] ??
-                                                adRequest.status}
-                                        </span>
-                                    </div>
-                                    {adRequest.bodyCopy ? (
-                                        <p className="line-clamp-2 text-xs text-muted-foreground">
-                                            {adRequest.bodyCopy}
+                                        <div className="flex items-center gap-2">
+                                            <span className="w-fit shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs">
+                                                {statusLabels[
+                                                    adRequest.status
+                                                ] ?? adRequest.status}
+                                            </span>
+                                            <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
+                                        </div>
+                                    </summary>
+                                    <div className="grid gap-2 border-t border-sidebar-border/70 px-4 py-3 dark:border-sidebar-border">
+                                        {adRequest.bodyCopy ? (
+                                            <p className="line-clamp-2 text-xs text-muted-foreground">
+                                                {adRequest.bodyCopy}
+                                            </p>
+                                        ) : null}
+                                        <p className="text-xs text-muted-foreground">
+                                            جایگاه:{' '}
+                                            {placementText(
+                                                adRequest.placementTypes,
+                                                adRequest.placementType,
+                                            ) || '-'}{' '}
+                                            · هاب: {adRequest.hubName ?? '-'} ·
+                                            بازه:{' '}
+                                            {formatDate(adRequest.startsAt)} تا{' '}
+                                            {formatDate(adRequest.endsAt)}
                                         </p>
-                                    ) : null}
-                                    <p className="text-xs text-muted-foreground">
-                                        جایگاه:{' '}
-                                        {placementText(
-                                            adRequest.placementTypes,
-                                            adRequest.placementType,
-                                        ) || '-'}{' '}
-                                        · هاب: {adRequest.hubName ?? '-'} ·
-                                        بازه: {formatDate(adRequest.startsAt)}{' '}
-                                        تا {formatDate(adRequest.endsAt)}
-                                    </p>
-                                    {adRequest.assetUrl ? (
-                                        <img
-                                            src={adRequest.assetUrl}
-                                            alt={adRequest.title}
-                                            className="aspect-video w-full max-w-md rounded-md border object-cover"
-                                        />
-                                    ) : null}
-                                    {adRequest.latestReview?.notes ? (
-                                        <Alert
-                                            variant={
-                                                [
-                                                    'rejected',
-                                                    'revision_requested',
-                                                ].includes(adRequest.status)
-                                                    ? 'destructive'
-                                                    : 'default'
-                                            }
-                                        >
-                                            <AlertDescription>
-                                                توضیح آخرین بررسی:{' '}
-                                                {adRequest.latestReview.notes}
-                                            </AlertDescription>
-                                        </Alert>
-                                    ) : null}
-                                    {[
-                                        'rejected',
-                                        'revision_requested',
-                                    ].includes(adRequest.status) ? (
-                                        <Form
-                                            action={`/partner/ads/${adRequest.id}`}
-                                            method="patch"
-                                            encType="multipart/form-data"
-                                            className="grid gap-3 rounded-lg border border-amber-200 bg-amber-50/60 p-3 md:grid-cols-2"
-                                            options={{ preserveScroll: true }}
-                                        >
-                                            {({ processing, errors }) => (
-                                                <>
-                                                    <input
-                                                        type="hidden"
-                                                        name="ad_type"
-                                                        value={adRequest.adType}
-                                                    />
-                                                    <input
-                                                        type="hidden"
-                                                        name="creative_type"
-                                                        value={
-                                                            adRequest.creativeType ??
-                                                            'image'
-                                                        }
-                                                    />
-                                                    <input
-                                                        type="hidden"
-                                                        name="placement_type"
-                                                        value={
-                                                            adRequest
-                                                                .placementTypes[0] ??
-                                                            adRequest.placementType ??
-                                                            'public_feed'
-                                                        }
-                                                    />
-                                                    {adRequest.placementTypes
-                                                        .slice(1)
-                                                        .map((placement) => (
+                                        {adRequest.assetUrl ? (
+                                            <img
+                                                src={adRequest.assetUrl}
+                                                alt={adRequest.title}
+                                                className="aspect-video w-full max-w-md rounded-md border object-cover"
+                                            />
+                                        ) : null}
+                                        {adRequest.latestReview?.notes ? (
+                                            <Alert
+                                                variant={
+                                                    [
+                                                        'rejected',
+                                                        'revision_requested',
+                                                    ].includes(adRequest.status)
+                                                        ? 'destructive'
+                                                        : 'default'
+                                                }
+                                            >
+                                                <AlertDescription>
+                                                    توضیح آخرین بررسی:{' '}
+                                                    {
+                                                        adRequest.latestReview
+                                                            .notes
+                                                    }
+                                                </AlertDescription>
+                                            </Alert>
+                                        ) : null}
+                                        {[
+                                            'rejected',
+                                            'revision_requested',
+                                        ].includes(adRequest.status) ? (
+                                            <Form
+                                                action={`/partner/ads/${adRequest.id}`}
+                                                method="patch"
+                                                encType="multipart/form-data"
+                                                className="grid gap-3 rounded-lg border border-amber-200 bg-amber-50/60 p-3 md:grid-cols-2"
+                                                options={{
+                                                    preserveScroll: true,
+                                                }}
+                                            >
+                                                {({ processing, errors }) => (
+                                                    <>
+                                                        <input
+                                                            type="hidden"
+                                                            name="ad_type"
+                                                            value={
+                                                                adRequest.adType
+                                                            }
+                                                        />
+                                                        <input
+                                                            type="hidden"
+                                                            name="creative_type"
+                                                            value={
+                                                                adRequest.creativeType ??
+                                                                'image'
+                                                            }
+                                                        />
+                                                        <input
+                                                            type="hidden"
+                                                            name="placement_type"
+                                                            value={
+                                                                adRequest
+                                                                    .placementTypes[0] ??
+                                                                adRequest.placementType ??
+                                                                'public_feed'
+                                                            }
+                                                        />
+                                                        {adRequest.placementTypes
+                                                            .slice(1)
+                                                            .map(
+                                                                (placement) => (
+                                                                    <input
+                                                                        key={
+                                                                            placement
+                                                                        }
+                                                                        type="hidden"
+                                                                        name="online_placements[]"
+                                                                        value={
+                                                                            placement
+                                                                        }
+                                                                    />
+                                                                ),
+                                                            )}
+                                                        {adRequest.rewardedPoints ? (
                                                             <input
-                                                                key={placement}
                                                                 type="hidden"
-                                                                name="online_placements[]"
+                                                                name="rewarded_points"
                                                                 value={
-                                                                    placement
+                                                                    adRequest.rewardedPoints
                                                                 }
                                                             />
-                                                        ))}
-                                                    {adRequest.rewardedPoints ? (
+                                                        ) : null}
+                                                        {adRequest.requiredSeconds ? (
+                                                            <input
+                                                                type="hidden"
+                                                                name="required_seconds"
+                                                                value={
+                                                                    adRequest.requiredSeconds
+                                                                }
+                                                            />
+                                                        ) : null}
+                                                        {adRequest.gameStageIndex ? (
+                                                            <input
+                                                                type="hidden"
+                                                                name="game_stage_index"
+                                                                value={
+                                                                    adRequest.gameStageIndex
+                                                                }
+                                                            />
+                                                        ) : null}
+                                                        {adRequest.startsAt ? (
+                                                            <input
+                                                                type="hidden"
+                                                                name="starts_at"
+                                                                value={
+                                                                    adRequest.startsAt
+                                                                }
+                                                            />
+                                                        ) : null}
+                                                        {adRequest.endsAt ? (
+                                                            <input
+                                                                type="hidden"
+                                                                name="ends_at"
+                                                                value={
+                                                                    adRequest.endsAt
+                                                                }
+                                                            />
+                                                        ) : null}
+                                                        {adRequest.budgetAmount !==
+                                                        null ? (
+                                                            <input
+                                                                type="hidden"
+                                                                name="budget_amount"
+                                                                value={
+                                                                    adRequest.budgetAmount
+                                                                }
+                                                            />
+                                                        ) : null}
+                                                        {adRequest.impressionCap !==
+                                                        null ? (
+                                                            <input
+                                                                type="hidden"
+                                                                name="impression_cap"
+                                                                value={
+                                                                    adRequest.impressionCap
+                                                                }
+                                                            />
+                                                        ) : null}
+                                                        {adRequest.clickCap !==
+                                                        null ? (
+                                                            <input
+                                                                type="hidden"
+                                                                name="click_cap"
+                                                                value={
+                                                                    adRequest.clickCap
+                                                                }
+                                                            />
+                                                        ) : null}
+                                                        <div className="grid gap-2">
+                                                            <Label
+                                                                htmlFor={`revision-title-${adRequest.id}`}
+                                                            >
+                                                                عنوان اصلاح‌شده
+                                                            </Label>
+                                                            <Input
+                                                                id={`revision-title-${adRequest.id}`}
+                                                                name="title"
+                                                                defaultValue={
+                                                                    adRequest.title
+                                                                }
+                                                                required
+                                                            />
+                                                            <InputError
+                                                                message={
+                                                                    errors.title
+                                                                }
+                                                            />
+                                                        </div>
+                                                        <div className="grid gap-2">
+                                                            <Label
+                                                                htmlFor={`revision-asset-${adRequest.id}`}
+                                                            >
+                                                                تصویر جایگزین
+                                                                (اختیاری)
+                                                            </Label>
+                                                            <Input
+                                                                id={`revision-asset-${adRequest.id}`}
+                                                                name="asset_file"
+                                                                type="file"
+                                                                accept=".jpg,.jpeg,.webp,image/jpeg,image/webp"
+                                                            />
+                                                            <InputError
+                                                                message={
+                                                                    errors.asset_file
+                                                                }
+                                                            />
+                                                        </div>
+                                                        <div className="grid gap-2 md:col-span-2">
+                                                            <Label
+                                                                htmlFor={`revision-body-${adRequest.id}`}
+                                                            >
+                                                                متن اصلاح‌شده
+                                                            </Label>
+                                                            <textarea
+                                                                id={`revision-body-${adRequest.id}`}
+                                                                name="body_copy"
+                                                                defaultValue={
+                                                                    adRequest.bodyCopy ??
+                                                                    ''
+                                                                }
+                                                                required={
+                                                                    adRequest.adType ===
+                                                                    'rewarded_content'
+                                                                }
+                                                                className="min-h-24 rounded-md border bg-background px-3 py-2 text-sm"
+                                                            />
+                                                            <InputError
+                                                                message={
+                                                                    errors.body_copy
+                                                                }
+                                                            />
+                                                        </div>
                                                         <input
                                                             type="hidden"
-                                                            name="rewarded_points"
+                                                            name="cta_text"
                                                             value={
-                                                                adRequest.rewardedPoints
-                                                            }
-                                                        />
-                                                    ) : null}
-                                                    {adRequest.requiredSeconds ? (
-                                                        <input
-                                                            type="hidden"
-                                                            name="required_seconds"
-                                                            value={
-                                                                adRequest.requiredSeconds
-                                                            }
-                                                        />
-                                                    ) : null}
-                                                    {adRequest.gameStageIndex ? (
-                                                        <input
-                                                            type="hidden"
-                                                            name="game_stage_index"
-                                                            value={
-                                                                adRequest.gameStageIndex
-                                                            }
-                                                        />
-                                                    ) : null}
-                                                    {adRequest.startsAt ? (
-                                                        <input
-                                                            type="hidden"
-                                                            name="starts_at"
-                                                            value={
-                                                                adRequest.startsAt
-                                                            }
-                                                        />
-                                                    ) : null}
-                                                    {adRequest.endsAt ? (
-                                                        <input
-                                                            type="hidden"
-                                                            name="ends_at"
-                                                            value={
-                                                                adRequest.endsAt
-                                                            }
-                                                        />
-                                                    ) : null}
-                                                    {adRequest.budgetAmount !==
-                                                    null ? (
-                                                        <input
-                                                            type="hidden"
-                                                            name="budget_amount"
-                                                            value={
-                                                                adRequest.budgetAmount
-                                                            }
-                                                        />
-                                                    ) : null}
-                                                    {adRequest.impressionCap !==
-                                                    null ? (
-                                                        <input
-                                                            type="hidden"
-                                                            name="impression_cap"
-                                                            value={
-                                                                adRequest.impressionCap
-                                                            }
-                                                        />
-                                                    ) : null}
-                                                    {adRequest.clickCap !==
-                                                    null ? (
-                                                        <input
-                                                            type="hidden"
-                                                            name="click_cap"
-                                                            value={
-                                                                adRequest.clickCap
-                                                            }
-                                                        />
-                                                    ) : null}
-                                                    <div className="grid gap-2">
-                                                        <Label
-                                                            htmlFor={`revision-title-${adRequest.id}`}
-                                                        >
-                                                            عنوان اصلاح‌شده
-                                                        </Label>
-                                                        <Input
-                                                            id={`revision-title-${adRequest.id}`}
-                                                            name="title"
-                                                            defaultValue={
-                                                                adRequest.title
-                                                            }
-                                                            required
-                                                        />
-                                                        <InputError
-                                                            message={
-                                                                errors.title
-                                                            }
-                                                        />
-                                                    </div>
-                                                    <div className="grid gap-2">
-                                                        <Label
-                                                            htmlFor={`revision-asset-${adRequest.id}`}
-                                                        >
-                                                            تصویر جایگزین
-                                                            (اختیاری)
-                                                        </Label>
-                                                        <Input
-                                                            id={`revision-asset-${adRequest.id}`}
-                                                            name="asset_file"
-                                                            type="file"
-                                                            accept=".jpg,.jpeg,.webp,image/jpeg,image/webp"
-                                                        />
-                                                        <InputError
-                                                            message={
-                                                                errors.asset_file
-                                                            }
-                                                        />
-                                                    </div>
-                                                    <div className="grid gap-2 md:col-span-2">
-                                                        <Label
-                                                            htmlFor={`revision-body-${adRequest.id}`}
-                                                        >
-                                                            متن اصلاح‌شده
-                                                        </Label>
-                                                        <textarea
-                                                            id={`revision-body-${adRequest.id}`}
-                                                            name="body_copy"
-                                                            defaultValue={
-                                                                adRequest.bodyCopy ??
+                                                                adRequest.ctaText ??
                                                                 ''
                                                             }
-                                                            required={
-                                                                adRequest.adType ===
-                                                                'rewarded_content'
-                                                            }
-                                                            className="min-h-24 rounded-md border bg-background px-3 py-2 text-sm"
                                                         />
-                                                        <InputError
-                                                            message={
-                                                                errors.body_copy
+                                                        <input
+                                                            type="hidden"
+                                                            name="target_url"
+                                                            value={
+                                                                adRequest.targetUrl ??
+                                                                ''
                                                             }
                                                         />
-                                                    </div>
-                                                    <input
-                                                        type="hidden"
-                                                        name="cta_text"
-                                                        value={
-                                                            adRequest.ctaText ??
-                                                            ''
-                                                        }
-                                                    />
-                                                    <input
-                                                        type="hidden"
-                                                        name="target_url"
-                                                        value={
-                                                            adRequest.targetUrl ??
-                                                            ''
-                                                        }
-                                                    />
-                                                    <Button
-                                                        disabled={processing}
-                                                        className="md:col-span-2 md:w-fit"
-                                                    >
-                                                        ارسال نسخه اصلاح‌شده
-                                                    </Button>
-                                                </>
-                                            )}
-                                        </Form>
-                                    ) : null}
-                                </article>
+                                                        <Button
+                                                            disabled={
+                                                                processing
+                                                            }
+                                                            className="md:col-span-2 md:w-fit"
+                                                        >
+                                                            ارسال نسخه اصلاح‌شده
+                                                        </Button>
+                                                    </>
+                                                )}
+                                            </Form>
+                                        ) : null}
+                                    </div>
+                                </details>
                             ))
                         )}
                     </div>

@@ -2,6 +2,7 @@ import { Form, Head, usePage } from '@inertiajs/react';
 import {
     AlertTriangle,
     CheckCircle2,
+    ChevronDown,
     ClipboardCheck,
     Layers3,
     Plus,
@@ -12,6 +13,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { WorkflowPageNavigation } from '@/components/dashboard/workflow-page-navigation';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -339,6 +341,11 @@ export default function AccessScopesIndex({
                     </div>
                 </header>
 
+                <WorkflowPageNavigation
+                    workflow="access"
+                    activeHref="/admin/access-scopes"
+                />
+
                 {flash?.success ? (
                     <Alert>
                         <AlertDescription>{flash.success}</AlertDescription>
@@ -437,569 +444,639 @@ export default function AccessScopesIndex({
                 </section>
 
                 {writable && assignmentTemplates.length > 0 ? (
-                    <section className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
-                        <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                            <div>
-                                <div className="flex items-center gap-2">
-                                    <ClipboardCheck className="size-4 text-muted-foreground" />
-                                    <h2 className="font-semibold">
-                                        قالب‌های آماده تخصیص دسترسی
-                                    </h2>
+                    <details className="group rounded-lg border border-primary/30 bg-background dark:border-sidebar-border">
+                        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 [&::-webkit-details-marker]:hidden">
+                            <span>
+                                <span className="flex items-center gap-2 font-semibold">
+                                    <ClipboardCheck className="size-4 text-primary" />
+                                    قالب‌های آماده تخصیص دسترسی
+                                </span>
+                                <span className="mt-1 block text-xs leading-5 text-muted-foreground">
+                                    مسیر پیشنهادی و کم‌خطا؛ برای انتخاب قالب و
+                                    کاربر، این بخش را باز کنید.
+                                </span>
+                            </span>
+                            <ChevronDown className="size-5 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
+                        </summary>
+                        <div className="border-t border-sidebar-border/70 p-4 dark:border-sidebar-border">
+                            <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <ClipboardCheck className="size-4 text-muted-foreground" />
+                                        <h2 className="font-semibold">
+                                            قالب‌های آماده تخصیص دسترسی
+                                        </h2>
+                                    </div>
+                                    <p className="mt-1 text-sm text-muted-foreground">
+                                        برای نقش‌های پرتکرار اکوپارک، فقط کاربر
+                                        را انتخاب کنید و دسترسی محدود به همان
+                                        مکان، رواق، هاب یا واحد ثبت می‌شود.
+                                    </p>
                                 </div>
-                                <p className="mt-1 text-sm text-muted-foreground">
-                                    برای نقش‌های پرتکرار اکوپارک، فقط کاربر را
-                                    انتخاب کنید و دسترسی محدود به همان مکان،
-                                    رواق، هاب یا واحد ثبت می‌شود.
-                                </p>
                             </div>
-                        </div>
-                        <div className="mb-4 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm leading-7 text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-100">
-                            برای سناریوهای رایج اکوپارک، از همین قالب‌های آماده
-                            استفاده کنید؛ نقش، دامنه و محدوده از قبل تنظیم
-                            شده‌اند و فقط باید کاربر مناسب را انتخاب کنید. بخش
-                            «ثبت دسترسی جدید» برای موارد خاص، موقت یا
-                            محدوده‌هایی است که هنوز قالب آماده ندارند.
-                        </div>
-                        <div className="grid gap-3 xl:grid-cols-3">
-                            {assignmentTemplates.map((template) => {
-                                const templateRole = roleOptions.find(
-                                    (role) => role.key === template.roleKey,
-                                );
-                                const eligibleTemplateUsers =
-                                    compatibleUsersForRole(
-                                        userOptions,
-                                        templateRole,
+                            <div className="mb-4 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm leading-7 text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-100">
+                                برای سناریوهای رایج اکوپارک، از همین قالب‌های
+                                آماده استفاده کنید؛ نقش، دامنه و محدوده از قبل
+                                تنظیم شده‌اند و فقط باید کاربر مناسب را انتخاب
+                                کنید. بخش «ثبت دسترسی جدید» برای موارد خاص، موقت
+                                یا محدوده‌هایی است که هنوز قالب آماده ندارند.
+                            </div>
+                            <div className="grid gap-3 xl:grid-cols-3">
+                                {assignmentTemplates.map((template) => {
+                                    const templateRole = roleOptions.find(
+                                        (role) => role.key === template.roleKey,
                                     );
-                                const hasEligibleTemplateUsers =
-                                    eligibleTemplateUsers.length > 0;
+                                    const eligibleTemplateUsers =
+                                        compatibleUsersForRole(
+                                            userOptions,
+                                            templateRole,
+                                        );
+                                    const hasEligibleTemplateUsers =
+                                        eligibleTemplateUsers.length > 0;
 
-                                return (
-                                    <Form
-                                        key={template.key}
-                                        action="/admin/access-scopes"
-                                        method="post"
-                                        options={{ preserveScroll: true }}
-                                        className="rounded-lg border border-sidebar-border/70 p-3 dark:border-sidebar-border"
-                                    >
-                                        {({ processing, errors }) => (
-                                            <div className="flex h-full flex-col gap-3">
-                                                <div className="min-w-0">
-                                                    <div className="flex flex-wrap items-center gap-2">
-                                                        <span className="rounded-full bg-cyan-100 px-2.5 py-1 text-xs font-medium text-cyan-800 dark:bg-cyan-950 dark:text-cyan-200">
+                                    return (
+                                        <Form
+                                            key={template.key}
+                                            action="/admin/access-scopes"
+                                            method="post"
+                                            options={{ preserveScroll: true }}
+                                            className="rounded-lg border border-sidebar-border/70 p-3 dark:border-sidebar-border"
+                                        >
+                                            {({ processing, errors }) => (
+                                                <div className="flex h-full flex-col gap-3">
+                                                    <div className="min-w-0">
+                                                        <div className="flex flex-wrap items-center gap-2">
+                                                            <span className="rounded-full bg-cyan-100 px-2.5 py-1 text-xs font-medium text-cyan-800 dark:bg-cyan-950 dark:text-cyan-200">
+                                                                {
+                                                                    template.scopeTypeLabel
+                                                                }
+                                                            </span>
+                                                            <span
+                                                                className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                                                                    template.available
+                                                                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200'
+                                                                        : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200'
+                                                                }`}
+                                                            >
+                                                                {template.available
+                                                                    ? 'آماده ثبت'
+                                                                    : 'محدوده پیدا نشد'}
+                                                            </span>
+                                                        </div>
+                                                        <h3 className="mt-3 font-semibold">
+                                                            {template.title}
+                                                        </h3>
+                                                        <p className="mt-1 text-sm text-muted-foreground">
                                                             {
-                                                                template.scopeTypeLabel
+                                                                template.description
                                                             }
-                                                        </span>
-                                                        <span
-                                                            className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                                                                template.available
-                                                                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200'
-                                                                    : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200'
-                                                            }`}
-                                                        >
-                                                            {template.available
-                                                                ? 'آماده ثبت'
-                                                                : 'محدوده پیدا نشد'}
-                                                        </span>
+                                                        </p>
                                                     </div>
-                                                    <h3 className="mt-3 font-semibold">
-                                                        {template.title}
-                                                    </h3>
-                                                    <p className="mt-1 text-sm text-muted-foreground">
-                                                        {template.description}
-                                                    </p>
-                                                </div>
 
-                                                <div className="rounded-md bg-muted/40 p-2 text-sm">
-                                                    <p>
-                                                        <span className="text-muted-foreground">
-                                                            نقش:
-                                                        </span>{' '}
-                                                        {template.roleLabel}
-                                                    </p>
-                                                    <p className="mt-1">
-                                                        <span className="text-muted-foreground">
-                                                            محدوده:
-                                                        </span>{' '}
-                                                        {template.scopeLabel}
-                                                    </p>
-                                                    <p
-                                                        className="mt-1 text-xs text-muted-foreground"
-                                                        dir="ltr"
-                                                    >
-                                                        {template.scopeCode ??
-                                                            'global'}
-                                                    </p>
-                                                </div>
+                                                    <div className="rounded-md bg-muted/40 p-2 text-sm">
+                                                        <p>
+                                                            <span className="text-muted-foreground">
+                                                                نقش:
+                                                            </span>{' '}
+                                                            {template.roleLabel}
+                                                        </p>
+                                                        <p className="mt-1">
+                                                            <span className="text-muted-foreground">
+                                                                محدوده:
+                                                            </span>{' '}
+                                                            {
+                                                                template.scopeLabel
+                                                            }
+                                                        </p>
+                                                        <p
+                                                            className="mt-1 text-xs text-muted-foreground"
+                                                            dir="ltr"
+                                                        >
+                                                            {template.scopeCode ??
+                                                                'global'}
+                                                        </p>
+                                                    </div>
 
-                                                {templateRole ? (
-                                                    <div className="rounded-md bg-muted/25 p-2">
-                                                        <GovernancePill
-                                                            governance={
-                                                                templateRole.governance
+                                                    {templateRole ? (
+                                                        <div className="rounded-md bg-muted/25 p-2">
+                                                            <GovernancePill
+                                                                governance={
+                                                                    templateRole.governance
+                                                                }
+                                                            />
+                                                            <p className="mt-2 text-xs leading-6 text-muted-foreground">
+                                                                {
+                                                                    templateRole
+                                                                        .governance
+                                                                        .policy
+                                                                }
+                                                            </p>
+                                                        </div>
+                                                    ) : null}
+
+                                                    <input
+                                                        type="hidden"
+                                                        name="role_key"
+                                                        value={template.roleKey}
+                                                    />
+                                                    <input
+                                                        type="hidden"
+                                                        name="scope_type"
+                                                        value={
+                                                            template.scopeType
+                                                        }
+                                                    />
+                                                    <input
+                                                        type="hidden"
+                                                        name="scope_id"
+                                                        value={
+                                                            template.scopeId ??
+                                                            ''
+                                                        }
+                                                    />
+
+                                                    <div className="mt-auto grid gap-2">
+                                                        <Label
+                                                            htmlFor={`template-user-${template.key}`}
+                                                        >
+                                                            کاربر دریافت‌کننده
+                                                            دسترسی
+                                                        </Label>
+                                                        <select
+                                                            id={`template-user-${template.key}`}
+                                                            name="user_id"
+                                                            required
+                                                            defaultValue={
+                                                                eligibleTemplateUsers[0]
+                                                                    ?.id ?? ''
+                                                            }
+                                                            disabled={
+                                                                !hasEligibleTemplateUsers
+                                                            }
+                                                            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                                        >
+                                                            {hasEligibleTemplateUsers ? null : (
+                                                                <option value="">
+                                                                    کاربر مناسب
+                                                                    برای این نقش
+                                                                    موجود نیست
+                                                                </option>
+                                                            )}
+                                                            {eligibleTemplateUsers.map(
+                                                                (user) => (
+                                                                    <option
+                                                                        key={
+                                                                            user.id
+                                                                        }
+                                                                        value={
+                                                                            user.id
+                                                                        }
+                                                                    >
+                                                                        {userOptionLabel(
+                                                                            user,
+                                                                        )}
+                                                                    </option>
+                                                                ),
+                                                            )}
+                                                        </select>
+                                                        <p className="text-xs leading-6 text-muted-foreground">
+                                                            فقط کاربران سازگار
+                                                            با نوع اکانت نقش
+                                                            نمایش داده می‌شوند؛
+                                                            اکانت‌های دموی فشار
+                                                            در انتخاب عادی پنهان
+                                                            شده‌اند.
+                                                        </p>
+                                                        <InputError
+                                                            message={
+                                                                errors.user_id
                                                             }
                                                         />
+                                                        <InputError
+                                                            message={
+                                                                errors.scope_id
+                                                            }
+                                                        />
+                                                        <Button
+                                                            type="submit"
+                                                            disabled={
+                                                                processing ||
+                                                                !template.available ||
+                                                                !hasEligibleTemplateUsers
+                                                            }
+                                                            className="w-full"
+                                                        >
+                                                            ثبت این قالب
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </Form>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </details>
+                ) : null}
+
+                {writable ? (
+                    <details className="group rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border">
+                        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 [&::-webkit-details-marker]:hidden">
+                            <span className="flex items-center gap-2 font-semibold">
+                                <UserCog className="size-4 text-muted-foreground" />
+                                ساخت اکانت عملیاتی یا شریک
+                            </span>
+                            <ChevronDown className="size-5 text-muted-foreground transition-transform group-open:rotate-180" />
+                        </summary>
+                        <div className="border-t border-sidebar-border/70 p-4 dark:border-sidebar-border">
+                            <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <UserCog className="size-4 text-muted-foreground" />
+                                        <h2 className="font-semibold">
+                                            ساخت اکانت عملیاتی یا شریک
+                                        </h2>
+                                    </div>
+                                    <p className="mt-1 text-sm leading-7 text-muted-foreground">
+                                        اگر چند نفر در یک سطح هستند، برای هر نفر
+                                        یا شیفت یک اکانت جدا با نام روشن بسازید؛
+                                        مثل «مدیر رواق اکوپارک - عملیات روز» یا
+                                        «مدیر کافه اکو - شیفت عصر». بعد از ساخت،
+                                        اکانت در انتخاب‌های قالب آماده و ثبت
+                                        دستی ظاهر می‌شود.
+                                    </p>
+                                </div>
+                            </div>
+                            <Form
+                                action="/admin/access-scopes/accounts"
+                                method="post"
+                                options={{ preserveScroll: true }}
+                                className="grid gap-4 lg:grid-cols-4"
+                            >
+                                {({ processing, errors }) => (
+                                    <>
+                                        <input
+                                            type="hidden"
+                                            name="role"
+                                            value={
+                                                selectedAccountRole?.governance
+                                                    .accountRole ?? 'viewer'
+                                            }
+                                        />
+                                        <div className="grid gap-2 lg:col-span-1">
+                                            <Label htmlFor="account-name">
+                                                نام اکانت
+                                            </Label>
+                                            <input
+                                                id="account-name"
+                                                name="name"
+                                                type="text"
+                                                required
+                                                placeholder="مثلا مدیر کافه اکو - شیفت عصر"
+                                                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                            />
+                                            <InputError message={errors.name} />
+                                        </div>
+                                        <div className="grid gap-2 lg:col-span-1">
+                                            <Label htmlFor="account-email">
+                                                ایمیل ورود
+                                            </Label>
+                                            <input
+                                                id="account-email"
+                                                name="email"
+                                                type="email"
+                                                required
+                                                placeholder="name@example.test"
+                                                dir="ltr"
+                                                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                            />
+                                            <InputError
+                                                message={errors.email}
+                                            />
+                                        </div>
+                                        <div className="grid gap-2 lg:col-span-1">
+                                            <Label htmlFor="account-role-key">
+                                                سطح عملیاتی اکانت
+                                            </Label>
+                                            <select
+                                                id="account-role-key"
+                                                required
+                                                value={selectedAccountRoleKey}
+                                                onChange={(event) =>
+                                                    setSelectedAccountRoleKey(
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                            >
+                                                {roleOptions.map((role) => (
+                                                    <option
+                                                        key={role.key}
+                                                        value={role.key}
+                                                    >
+                                                        {role.label}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <InputError message={errors.role} />
+                                            {selectedAccountRole ? (
+                                                <div className="rounded-md bg-muted/30 p-2 text-xs leading-6 text-muted-foreground">
+                                                    اکانت ورود:{' '}
+                                                    <strong>
+                                                        {
+                                                            selectedAccountRole
+                                                                .governance
+                                                                .accountRoleLabel
+                                                        }
+                                                    </strong>
+                                                    <div className="mt-2">
+                                                        <GovernancePill
+                                                            governance={
+                                                                selectedAccountRole.governance
+                                                            }
+                                                        />
+                                                    </div>
+                                                </div>
+                                            ) : null}
+                                        </div>
+                                        <div className="flex flex-col justify-end gap-2 lg:col-span-1">
+                                            <Button
+                                                type="submit"
+                                                disabled={processing}
+                                            >
+                                                ساخت اکانت
+                                            </Button>
+                                            <p className="text-xs leading-6 text-muted-foreground">
+                                                رمز اولیه نسخه دمو: password
+                                            </p>
+                                        </div>
+                                    </>
+                                )}
+                            </Form>
+                        </div>
+                    </details>
+                ) : null}
+
+                {writable ? (
+                    <details className="group rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border">
+                        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 [&::-webkit-details-marker]:hidden">
+                            <span className="flex items-center gap-2 font-semibold">
+                                <Plus className="size-4 text-muted-foreground" />
+                                ثبت دسترسی خاص یا موقت
+                            </span>
+                            <ChevronDown className="size-5 text-muted-foreground transition-transform group-open:rotate-180" />
+                        </summary>
+                        <div className="border-t border-sidebar-border/70 p-4 dark:border-sidebar-border">
+                            <div className="mb-4 flex items-center gap-2">
+                                <Plus className="size-4 text-muted-foreground" />
+                                <h2 className="font-semibold">
+                                    ثبت دسترسی جدید
+                                </h2>
+                            </div>
+                            <p className="mb-4 text-sm leading-7 text-muted-foreground">
+                                این بخش برای دسترسی‌های خاص، موقت یا محدوده‌هایی
+                                است که هنوز در قالب‌های آماده بالا تعریف
+                                نشده‌اند. برای کارهای روزمره اکوپارک، اول
+                                قالب‌های آماده را استفاده کنید.
+                            </p>
+                            <Form
+                                action="/admin/access-scopes"
+                                method="post"
+                                options={{ preserveScroll: true }}
+                                className="grid gap-4 lg:grid-cols-5"
+                            >
+                                {({ processing, errors }) => (
+                                    <>
+                                        <div className="grid gap-2 lg:col-span-2">
+                                            <Label htmlFor="user_id">
+                                                کاربر
+                                            </Label>
+                                            <select
+                                                id="user_id"
+                                                name="user_id"
+                                                required
+                                                value={manualUserValue}
+                                                onChange={(event) =>
+                                                    setSelectedUserId(
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                disabled={
+                                                    eligibleManualUsers.length ===
+                                                    0
+                                                }
+                                                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                            >
+                                                {eligibleManualUsers.length ===
+                                                0 ? (
+                                                    <option value="">
+                                                        کاربر مناسب برای این نقش
+                                                        موجود نیست
+                                                    </option>
+                                                ) : null}
+                                                {eligibleManualUsers.map(
+                                                    (user) => (
+                                                        <option
+                                                            key={user.id}
+                                                            value={user.id}
+                                                        >
+                                                            {userOptionLabel(
+                                                                user,
+                                                            )}
+                                                        </option>
+                                                    ),
+                                                )}
+                                            </select>
+                                            <p className="text-xs leading-6 text-muted-foreground">
+                                                اکانت‌های دموی فشار برای تخصیص
+                                                عادی نمایش داده نمی‌شوند.
+                                            </p>
+                                            <InputError
+                                                message={errors.user_id}
+                                            />
+                                        </div>
+
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="role_key">
+                                                نقش عملیاتی
+                                            </Label>
+                                            <select
+                                                id="role_key"
+                                                name="role_key"
+                                                required
+                                                value={selectedRoleKey}
+                                                onChange={(event) => {
+                                                    const nextRoleKey =
+                                                        event.target.value;
+                                                    const nextRole =
+                                                        roleOptions.find(
+                                                            (role) =>
+                                                                role.key ===
+                                                                nextRoleKey,
+                                                        );
+                                                    setSelectedRoleKey(
+                                                        nextRoleKey,
+                                                    );
+                                                    setSelectedUserId('');
+                                                    setSelectedScopeType(
+                                                        nextRole?.defaultScope ??
+                                                            'global',
+                                                    );
+                                                    setSelectedScopeId('');
+                                                }}
+                                                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                            >
+                                                {roleOptions.map((role) => (
+                                                    <option
+                                                        key={role.key}
+                                                        value={role.key}
+                                                    >
+                                                        {role.label}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            {selectedRole ? (
+                                                <div className="rounded-md bg-muted/25 p-2">
+                                                    <GovernancePill
+                                                        governance={
+                                                            selectedRole.governance
+                                                        }
+                                                    />
+                                                </div>
+                                            ) : null}
+                                            <InputError
+                                                message={errors.role_key}
+                                            />
+                                        </div>
+
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="scope_type">
+                                                دامنه
+                                            </Label>
+                                            <select
+                                                id="scope_type"
+                                                name="scope_type"
+                                                required
+                                                value={selectedScopeType}
+                                                onChange={(event) => {
+                                                    setSelectedScopeType(
+                                                        event.target.value,
+                                                    );
+                                                    setSelectedScopeId('');
+                                                }}
+                                                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                            >
+                                                {Object.keys(scopeOptions).map(
+                                                    (scopeType) => (
+                                                        <option
+                                                            key={scopeType}
+                                                            value={scopeType}
+                                                        >
+                                                            {scopeTypeLabels[
+                                                                scopeType
+                                                            ] ?? scopeType}
+                                                        </option>
+                                                    ),
+                                                )}
+                                            </select>
+                                            <InputError
+                                                message={errors.scope_type}
+                                            />
+                                        </div>
+
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="scope_id">
+                                                شناسه محدوده
+                                            </Label>
+                                            <select
+                                                id="scope_id"
+                                                name="scope_id"
+                                                value={selectedScopeId}
+                                                onChange={(event) =>
+                                                    setSelectedScopeId(
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                            >
+                                                {selectedScopeType ===
+                                                'global' ? (
+                                                    <option value="">
+                                                        کل اکسپلوریا
+                                                    </option>
+                                                ) : (
+                                                    <option value="">
+                                                        محدوده را انتخاب کنید
+                                                    </option>
+                                                )}
+                                                {selectedScopeOptions
+                                                    .filter(
+                                                        (option) => option.id,
+                                                    )
+                                                    .map((option) => (
+                                                        <option
+                                                            key={`${selectedScopeType}-${option.id}`}
+                                                            value={
+                                                                option.id ?? ''
+                                                            }
+                                                        >
+                                                            {option.label}
+                                                        </option>
+                                                    ))}
+                                            </select>
+                                            <InputError
+                                                message={errors.scope_id}
+                                            />
+                                        </div>
+
+                                        <div className="flex items-end lg:col-span-5">
+                                            <Button
+                                                type="submit"
+                                                disabled={
+                                                    processing ||
+                                                    eligibleManualUsers.length ===
+                                                        0 ||
+                                                    (selectedScopeType !==
+                                                        'global' &&
+                                                        selectedScopeId === '')
+                                                }
+                                            >
+                                                ثبت دسترسی
+                                            </Button>
+                                        </div>
+
+                                        <div className="lg:col-span-5">
+                                            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                                                {roleOptions.map((role) => (
+                                                    <div
+                                                        key={role.key}
+                                                        className="rounded-md border border-sidebar-border/70 p-3 dark:border-sidebar-border"
+                                                    >
+                                                        <p className="font-medium">
+                                                            {role.label}
+                                                        </p>
+                                                        <div className="mt-2">
+                                                            <GovernancePill
+                                                                governance={
+                                                                    role.governance
+                                                                }
+                                                            />
+                                                        </div>
                                                         <p className="mt-2 text-xs leading-6 text-muted-foreground">
                                                             {
-                                                                templateRole
-                                                                    .governance
+                                                                role.governance
                                                                     .policy
                                                             }
                                                         </p>
                                                     </div>
-                                                ) : null}
-
-                                                <input
-                                                    type="hidden"
-                                                    name="role_key"
-                                                    value={template.roleKey}
-                                                />
-                                                <input
-                                                    type="hidden"
-                                                    name="scope_type"
-                                                    value={template.scopeType}
-                                                />
-                                                <input
-                                                    type="hidden"
-                                                    name="scope_id"
-                                                    value={
-                                                        template.scopeId ?? ''
-                                                    }
-                                                />
-
-                                                <div className="mt-auto grid gap-2">
-                                                    <Label
-                                                        htmlFor={`template-user-${template.key}`}
-                                                    >
-                                                        کاربر دریافت‌کننده
-                                                        دسترسی
-                                                    </Label>
-                                                    <select
-                                                        id={`template-user-${template.key}`}
-                                                        name="user_id"
-                                                        required
-                                                        defaultValue={
-                                                            eligibleTemplateUsers[0]
-                                                                ?.id ?? ''
-                                                        }
-                                                        disabled={
-                                                            !hasEligibleTemplateUsers
-                                                        }
-                                                        className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                                                    >
-                                                        {hasEligibleTemplateUsers ? null : (
-                                                            <option value="">
-                                                                کاربر مناسب برای
-                                                                این نقش موجود
-                                                                نیست
-                                                            </option>
-                                                        )}
-                                                        {eligibleTemplateUsers.map(
-                                                            (user) => (
-                                                                <option
-                                                                    key={
-                                                                        user.id
-                                                                    }
-                                                                    value={
-                                                                        user.id
-                                                                    }
-                                                                >
-                                                                    {userOptionLabel(
-                                                                        user,
-                                                                    )}
-                                                                </option>
-                                                            ),
-                                                        )}
-                                                    </select>
-                                                    <p className="text-xs leading-6 text-muted-foreground">
-                                                        فقط کاربران سازگار با
-                                                        نوع اکانت نقش نمایش داده
-                                                        می‌شوند؛ اکانت‌های دموی
-                                                        فشار در انتخاب عادی
-                                                        پنهان شده‌اند.
-                                                    </p>
-                                                    <InputError
-                                                        message={errors.user_id}
-                                                    />
-                                                    <InputError
-                                                        message={
-                                                            errors.scope_id
-                                                        }
-                                                    />
-                                                    <Button
-                                                        type="submit"
-                                                        disabled={
-                                                            processing ||
-                                                            !template.available ||
-                                                            !hasEligibleTemplateUsers
-                                                        }
-                                                        className="w-full"
-                                                    >
-                                                        ثبت این قالب
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </Form>
-                                );
-                            })}
-                        </div>
-                    </section>
-                ) : null}
-
-                {writable ? (
-                    <section className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
-                        <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-                            <div>
-                                <div className="flex items-center gap-2">
-                                    <UserCog className="size-4 text-muted-foreground" />
-                                    <h2 className="font-semibold">
-                                        ساخت اکانت عملیاتی یا شریک
-                                    </h2>
-                                </div>
-                                <p className="mt-1 text-sm leading-7 text-muted-foreground">
-                                    اگر چند نفر در یک سطح هستند، برای هر نفر یا
-                                    شیفت یک اکانت جدا با نام روشن بسازید؛ مثل
-                                    «مدیر رواق اکوپارک - عملیات روز» یا «مدیر
-                                    کافه اکو - شیفت عصر». بعد از ساخت، اکانت در
-                                    انتخاب‌های قالب آماده و ثبت دستی ظاهر
-                                    می‌شود.
-                                </p>
-                            </div>
-                        </div>
-                        <Form
-                            action="/admin/access-scopes/accounts"
-                            method="post"
-                            options={{ preserveScroll: true }}
-                            className="grid gap-4 lg:grid-cols-4"
-                        >
-                            {({ processing, errors }) => (
-                                <>
-                                    <input
-                                        type="hidden"
-                                        name="role"
-                                        value={
-                                            selectedAccountRole?.governance
-                                                .accountRole ?? 'viewer'
-                                        }
-                                    />
-                                    <div className="grid gap-2 lg:col-span-1">
-                                        <Label htmlFor="account-name">
-                                            نام اکانت
-                                        </Label>
-                                        <input
-                                            id="account-name"
-                                            name="name"
-                                            type="text"
-                                            required
-                                            placeholder="مثلا مدیر کافه اکو - شیفت عصر"
-                                            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                                        />
-                                        <InputError message={errors.name} />
-                                    </div>
-                                    <div className="grid gap-2 lg:col-span-1">
-                                        <Label htmlFor="account-email">
-                                            ایمیل ورود
-                                        </Label>
-                                        <input
-                                            id="account-email"
-                                            name="email"
-                                            type="email"
-                                            required
-                                            placeholder="name@example.test"
-                                            dir="ltr"
-                                            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                                        />
-                                        <InputError message={errors.email} />
-                                    </div>
-                                    <div className="grid gap-2 lg:col-span-1">
-                                        <Label htmlFor="account-role-key">
-                                            سطح عملیاتی اکانت
-                                        </Label>
-                                        <select
-                                            id="account-role-key"
-                                            required
-                                            value={selectedAccountRoleKey}
-                                            onChange={(event) =>
-                                                setSelectedAccountRoleKey(
-                                                    event.target.value,
-                                                )
-                                            }
-                                            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                                        >
-                                            {roleOptions.map((role) => (
-                                                <option
-                                                    key={role.key}
-                                                    value={role.key}
-                                                >
-                                                    {role.label}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        <InputError message={errors.role} />
-                                        {selectedAccountRole ? (
-                                            <div className="rounded-md bg-muted/30 p-2 text-xs leading-6 text-muted-foreground">
-                                                اکانت ورود:{' '}
-                                                <strong>
-                                                    {
-                                                        selectedAccountRole
-                                                            .governance
-                                                            .accountRoleLabel
-                                                    }
-                                                </strong>
-                                                <div className="mt-2">
-                                                    <GovernancePill
-                                                        governance={
-                                                            selectedAccountRole.governance
-                                                        }
-                                                    />
-                                                </div>
-                                            </div>
-                                        ) : null}
-                                    </div>
-                                    <div className="flex flex-col justify-end gap-2 lg:col-span-1">
-                                        <Button
-                                            type="submit"
-                                            disabled={processing}
-                                        >
-                                            ساخت اکانت
-                                        </Button>
-                                        <p className="text-xs leading-6 text-muted-foreground">
-                                            رمز اولیه نسخه دمو: password
-                                        </p>
-                                    </div>
-                                </>
-                            )}
-                        </Form>
-                    </section>
-                ) : null}
-
-                {writable ? (
-                    <section className="rounded-lg border border-sidebar-border/70 bg-background p-4 dark:border-sidebar-border">
-                        <div className="mb-4 flex items-center gap-2">
-                            <Plus className="size-4 text-muted-foreground" />
-                            <h2 className="font-semibold">ثبت دسترسی جدید</h2>
-                        </div>
-                        <p className="mb-4 text-sm leading-7 text-muted-foreground">
-                            این بخش برای دسترسی‌های خاص، موقت یا محدوده‌هایی است
-                            که هنوز در قالب‌های آماده بالا تعریف نشده‌اند. برای
-                            کارهای روزمره اکوپارک، اول قالب‌های آماده را استفاده
-                            کنید.
-                        </p>
-                        <Form
-                            action="/admin/access-scopes"
-                            method="post"
-                            options={{ preserveScroll: true }}
-                            className="grid gap-4 lg:grid-cols-5"
-                        >
-                            {({ processing, errors }) => (
-                                <>
-                                    <div className="grid gap-2 lg:col-span-2">
-                                        <Label htmlFor="user_id">کاربر</Label>
-                                        <select
-                                            id="user_id"
-                                            name="user_id"
-                                            required
-                                            value={manualUserValue}
-                                            onChange={(event) =>
-                                                setSelectedUserId(
-                                                    event.target.value,
-                                                )
-                                            }
-                                            disabled={
-                                                eligibleManualUsers.length === 0
-                                            }
-                                            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                                        >
-                                            {eligibleManualUsers.length ===
-                                            0 ? (
-                                                <option value="">
-                                                    کاربر مناسب برای این نقش
-                                                    موجود نیست
-                                                </option>
-                                            ) : null}
-                                            {eligibleManualUsers.map((user) => (
-                                                <option
-                                                    key={user.id}
-                                                    value={user.id}
-                                                >
-                                                    {userOptionLabel(user)}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        <p className="text-xs leading-6 text-muted-foreground">
-                                            اکانت‌های دموی فشار برای تخصیص عادی
-                                            نمایش داده نمی‌شوند.
-                                        </p>
-                                        <InputError message={errors.user_id} />
-                                    </div>
-
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="role_key">
-                                            نقش عملیاتی
-                                        </Label>
-                                        <select
-                                            id="role_key"
-                                            name="role_key"
-                                            required
-                                            value={selectedRoleKey}
-                                            onChange={(event) => {
-                                                const nextRoleKey =
-                                                    event.target.value;
-                                                const nextRole =
-                                                    roleOptions.find(
-                                                        (role) =>
-                                                            role.key ===
-                                                            nextRoleKey,
-                                                    );
-                                                setSelectedRoleKey(nextRoleKey);
-                                                setSelectedUserId('');
-                                                setSelectedScopeType(
-                                                    nextRole?.defaultScope ??
-                                                        'global',
-                                                );
-                                                setSelectedScopeId('');
-                                            }}
-                                            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                                        >
-                                            {roleOptions.map((role) => (
-                                                <option
-                                                    key={role.key}
-                                                    value={role.key}
-                                                >
-                                                    {role.label}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        {selectedRole ? (
-                                            <div className="rounded-md bg-muted/25 p-2">
-                                                <GovernancePill
-                                                    governance={
-                                                        selectedRole.governance
-                                                    }
-                                                />
-                                            </div>
-                                        ) : null}
-                                        <InputError message={errors.role_key} />
-                                    </div>
-
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="scope_type">
-                                            دامنه
-                                        </Label>
-                                        <select
-                                            id="scope_type"
-                                            name="scope_type"
-                                            required
-                                            value={selectedScopeType}
-                                            onChange={(event) => {
-                                                setSelectedScopeType(
-                                                    event.target.value,
-                                                );
-                                                setSelectedScopeId('');
-                                            }}
-                                            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                                        >
-                                            {Object.keys(scopeOptions).map(
-                                                (scopeType) => (
-                                                    <option
-                                                        key={scopeType}
-                                                        value={scopeType}
-                                                    >
-                                                        {scopeTypeLabels[
-                                                            scopeType
-                                                        ] ?? scopeType}
-                                                    </option>
-                                                ),
-                                            )}
-                                        </select>
-                                        <InputError
-                                            message={errors.scope_type}
-                                        />
-                                    </div>
-
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="scope_id">
-                                            شناسه محدوده
-                                        </Label>
-                                        <select
-                                            id="scope_id"
-                                            name="scope_id"
-                                            value={selectedScopeId}
-                                            onChange={(event) =>
-                                                setSelectedScopeId(
-                                                    event.target.value,
-                                                )
-                                            }
-                                            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                                        >
-                                            {selectedScopeType === 'global' ? (
-                                                <option value="">
-                                                    کل اکسپلوریا
-                                                </option>
-                                            ) : (
-                                                <option value="">
-                                                    محدوده را انتخاب کنید
-                                                </option>
-                                            )}
-                                            {selectedScopeOptions
-                                                .filter((option) => option.id)
-                                                .map((option) => (
-                                                    <option
-                                                        key={`${selectedScopeType}-${option.id}`}
-                                                        value={option.id ?? ''}
-                                                    >
-                                                        {option.label}
-                                                    </option>
                                                 ))}
-                                        </select>
-                                        <InputError message={errors.scope_id} />
-                                    </div>
-
-                                    <div className="flex items-end lg:col-span-5">
-                                        <Button
-                                            type="submit"
-                                            disabled={
-                                                processing ||
-                                                eligibleManualUsers.length ===
-                                                    0 ||
-                                                (selectedScopeType !==
-                                                    'global' &&
-                                                    selectedScopeId === '')
-                                            }
-                                        >
-                                            ثبت دسترسی
-                                        </Button>
-                                    </div>
-
-                                    <div className="lg:col-span-5">
-                                        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                                            {roleOptions.map((role) => (
-                                                <div
-                                                    key={role.key}
-                                                    className="rounded-md border border-sidebar-border/70 p-3 dark:border-sidebar-border"
-                                                >
-                                                    <p className="font-medium">
-                                                        {role.label}
-                                                    </p>
-                                                    <div className="mt-2">
-                                                        <GovernancePill
-                                                            governance={
-                                                                role.governance
-                                                            }
-                                                        />
-                                                    </div>
-                                                    <p className="mt-2 text-xs leading-6 text-muted-foreground">
-                                                        {role.governance.policy}
-                                                    </p>
-                                                </div>
-                                            ))}
+                                            </div>
                                         </div>
-                                    </div>
-                                </>
-                            )}
-                        </Form>
-                    </section>
+                                    </>
+                                )}
+                            </Form>
+                        </div>
+                    </details>
                 ) : null}
 
                 <section className="rounded-lg border border-sidebar-border/70 bg-background dark:border-sidebar-border">

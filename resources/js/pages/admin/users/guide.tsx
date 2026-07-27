@@ -6,6 +6,7 @@ import {
     UserCog,
     UsersRound,
 } from 'lucide-react';
+import { WorkflowPageNavigation } from '@/components/dashboard/workflow-page-navigation';
 
 const sections = [
     {
@@ -87,6 +88,11 @@ export default function UserManagementGuide() {
                         </Link>
                     </div>
                 </section>
+
+                <WorkflowPageNavigation
+                    workflow="access"
+                    activeHref="/admin/users/guide"
+                />
 
                 <section className="grid gap-3 lg:grid-cols-2">
                     {sections.map((section) => {
