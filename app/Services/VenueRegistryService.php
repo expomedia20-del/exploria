@@ -65,6 +65,32 @@ class VenueRegistryService
         'موزه نادر ابراهیمی',
     ];
 
+    private const MILAD_TOWER_OFFICIAL_SOURCE_SUGGESTIONS = [
+        'رستوران گردان',
+        'سکوی دید باز',
+        'گنبد آسمان',
+        'فودکورت',
+        'مرکز همایش‌های بین‌المللی برج میلاد',
+        'سایت نمایشگاهی برج میلاد',
+        'اتاق‌های تشریفات',
+        'شهر بازی و بولینگ',
+        'سینماگیم',
+        'سرزمین افسانه‌ها',
+        'سرزمین مشاغل',
+        'سالن‌های سینما',
+        'تفریحات هیجانی',
+        'باشگاه اسکواش و پدل',
+        'اتاق فرار',
+        'کافه رستوران دنا',
+        'کافه آرینا',
+        'کافه ۴۳۵',
+        'کافه بستنی شاد',
+        'ایوان',
+        'مرکز خرید',
+        'پارکینگ',
+        'گیشه و پذیرش بلیط',
+    ];
+
     public function __construct(private readonly UserAccessScopeService $accessScopes) {}
 
     /** @return Collection<int, covariant array<string, mixed>> */
@@ -383,6 +409,9 @@ class VenueRegistryService
                         ->all(),
                     'priority' => in_array($item['priority'] ?? null, ['primary', 'secondary', 'low'], true) ? $item['priority'] : 'secondary',
                     'notes' => blank($item['notes'] ?? null) ? null : trim((string) $item['notes']),
+                    'confidence' => in_array($item['confidence'] ?? null, ['high', 'medium', 'low'], true) ? $item['confidence'] : 'medium',
+                    'fieldReviewRequired' => filter_var($item['fieldReviewRequired'] ?? $item['field_review_required'] ?? false, FILTER_VALIDATE_BOOL),
+                    'source' => blank($item['source'] ?? null) ? null : trim((string) $item['source']),
                 ];
             })
             ->filter(fn (array $item): bool => filled($item['name']))
@@ -592,6 +621,9 @@ class VenueRegistryService
             'priority' => ['priority', 'importance', 'اولویت', 'اهمیت'],
             'parent' => ['parent', 'area', 'zone', 'hub', 'بخش', 'زیرمجموعه', 'والد', 'هاب', 'زون'],
             'notes' => ['notes', 'note', 'description', 'توضیح', 'توضیحات', 'یادداشت'],
+            'confidence' => ['confidence', 'trust', 'certainty', 'review confidence', 'سطح اطمینان'],
+            'field_review_required' => ['field_review_required', 'field review', 'needs field review', 'onsite review', 'نیازمند بازدید میدانی'],
+            'source' => ['source', 'source url', 'reference', 'evidence', 'منبع', 'منبع/شاهد'],
         ];
 
         return collect($row)
@@ -629,6 +661,9 @@ class VenueRegistryService
             'campaignUses' => $this->normalizeCampaignUses($value('campaign_uses', 2)),
             'priority' => $this->normalizeFacilityPriority($value('priority', 3)),
             'notes' => blank($notes) ? null : $notes,
+            'confidence' => $this->normalizeFacilityConfidence($value('confidence', 6)),
+            'fieldReviewRequired' => $this->normalizeFieldReviewRequired($value('field_review_required', 7)),
+            'source' => blank($value('source', 8)) ? null : $value('source', 8),
         ];
     }
 
@@ -688,14 +723,28 @@ class VenueRegistryService
         };
     }
 
+    private function normalizeFacilityConfidence(string $value): string
+    {
+        return match (mb_strtolower(trim($value))) {
+            'high', 'زیاد', 'بالا', 'قطعی' => 'high',
+            'low', 'کم', 'ضعیف' => 'low',
+            default => 'medium',
+        };
+    }
+
+    private function normalizeFieldReviewRequired(string $value): bool
+    {
+        return in_array(mb_strtolower(trim($value)), ['1', 'true', 'yes', 'y', 'بله', 'نیاز دارد'], true);
+    }
+
     /** @return array<int, string> */
     private function sourceSuggestions(Venue $venue): array
     {
-        if ($venue->code !== 'ecopark-abbasabad') {
-            return [];
-        }
-
-        return self::ABBASABAD_OFFICIAL_SOURCE_SUGGESTIONS;
+        return match ($venue->code) {
+            'ecopark-abbasabad' => self::ABBASABAD_OFFICIAL_SOURCE_SUGGESTIONS,
+            'milad-tower' => self::MILAD_TOWER_OFFICIAL_SOURCE_SUGGESTIONS,
+            default => [],
+        };
     }
 
     /** @return list<array<string, mixed>> */

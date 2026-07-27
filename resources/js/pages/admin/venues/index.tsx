@@ -1,4 +1,4 @@
-import { Form, Head, Link } from '@inertiajs/react';
+import { Form, Head, Link, router } from '@inertiajs/react';
 import {
     ArrowLeft,
     Building2,
@@ -8,12 +8,15 @@ import {
     CircleDot,
     Download,
     Layers3,
+    LoaderCircle,
     MapPinned,
     RadioTower,
     Store,
     UsersRound,
+    WandSparkles,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { useState } from 'react';
 import { InternalTeamNavigation } from '@/components/dashboard/internal-team-navigation';
 
 type HubItem = {
@@ -97,6 +100,21 @@ type LocationFacility = {
     campaignUses: string[];
     priority: 'primary' | 'secondary' | 'low';
     notes: string | null;
+    confidence?: 'high' | 'medium' | 'low';
+    fieldReviewRequired?: boolean;
+    source?: string | null;
+};
+
+type FacilitySuggestion = {
+    name: string;
+    function: string;
+    campaignUses: string[];
+    priority: 'primary' | 'secondary' | 'low';
+    notes: string;
+    confidence: 'high' | 'medium' | 'low';
+    fieldReviewRequired: boolean;
+    source: string | null;
+    alreadyExists: boolean;
 };
 
 type Props = {
@@ -151,6 +169,12 @@ const priorityLabels: Record<LocationFacility['priority'], string> = {
     primary: 'اصلی',
     secondary: 'فرعی',
     low: 'کم‌اهمیت',
+};
+
+const confidenceLabels: Record<'high' | 'medium' | 'low', string> = {
+    high: 'زیاد',
+    medium: 'متوسط',
+    low: 'کم',
 };
 
 const riskLabels: Record<DemoStressPlan['summary']['riskLevel'], string> = {
@@ -208,6 +232,251 @@ function Stat({
             <p className="mt-1 font-semibold">
                 {value.toLocaleString('fa-IR')}
             </p>
+        </div>
+    );
+}
+
+function csrfToken() {
+    return (
+        document
+            .querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+            ?.getAttribute('content') ?? ''
+    );
+}
+
+function FacilitySuggestionPanel({ venue }: { venue: VenueRegistryItem }) {
+    const initialText = [
+        venue.locationProfile.sourceSuggestions.join('\n'),
+        venue.locationProfile.manualResearchNotes ?? '',
+    ]
+        .filter(Boolean)
+        .join('\n');
+    const [sourceText, setSourceText] = useState(initialText);
+    const [suggestions, setSuggestions] = useState<FacilitySuggestion[]>([]);
+    const [isSuggesting, setIsSuggesting] = useState(false);
+    const [isApplying, setIsApplying] = useState(false);
+    const [message, setMessage] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const newSuggestionsCount = suggestions.filter(
+        (suggestion) => !suggestion.alreadyExists,
+    ).length;
+
+    const payload = {
+        source_text: sourceText,
+        official_website_url:
+            venue.locationProfile.officialWebsiteUrl ?? undefined,
+        venue_type: venue.locationProfile.venueType ?? undefined,
+        primary_audience: venue.locationProfile.primaryAudience ?? undefined,
+    };
+
+    async function requestSuggestions() {
+        setIsSuggesting(true);
+        setError(null);
+        setMessage(null);
+
+        try {
+            const response = await fetch(
+                `/api/v1/admin/venues/${venue.id}/facility-suggestions`,
+                {
+                    method: 'POST',
+                    headers: {
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken(),
+                    },
+                    body: JSON.stringify(payload),
+                },
+            );
+            const json = await response.json();
+
+            if (!response.ok || json.status !== 'success') {
+                throw new Error(
+                    json.message ?? 'تولید پیشنهاد امکانات انجام نشد.',
+                );
+            }
+
+            setSuggestions(json.data.suggestions ?? []);
+            setMessage(
+                `${Number(json.data.summary?.count ?? 0).toLocaleString(
+                    'fa-IR',
+                )} پیشنهاد آماده بازبینی شد؛ ${Number(
+                    json.data.summary?.newCount ?? 0,
+                ).toLocaleString('fa-IR')} مورد جدید است.`,
+            );
+        } catch (caught) {
+            setError(
+                caught instanceof Error
+                    ? caught.message
+                    : 'تولید پیشنهاد امکانات انجام نشد.',
+            );
+        } finally {
+            setIsSuggesting(false);
+        }
+    }
+
+    async function applySuggestions() {
+        setIsApplying(true);
+        setError(null);
+        setMessage(null);
+
+        try {
+            const response = await fetch(
+                `/api/v1/admin/venues/${venue.id}/facility-suggestions`,
+                {
+                    method: 'PATCH',
+                    headers: {
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken(),
+                    },
+                    body: JSON.stringify(payload),
+                },
+            );
+            const json = await response.json();
+
+            if (!response.ok || json.status !== 'success') {
+                throw new Error(
+                    json.message ?? 'افزودن پیشنهادها به ارزیابی انجام نشد.',
+                );
+            }
+
+            setMessage('پیشنهادها به ارزیابی مکان افزوده شدند.');
+            router.reload({ only: ['venues'] });
+        } catch (caught) {
+            setError(
+                caught instanceof Error
+                    ? caught.message
+                    : 'افزودن پیشنهادها به ارزیابی انجام نشد.',
+            );
+        } finally {
+            setIsApplying(false);
+        }
+    }
+
+    return (
+        <div className="grid gap-3 rounded-lg border border-sky-200 bg-sky-50/70 p-3 text-sm dark:border-sky-900/60 dark:bg-sky-950/20">
+            <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                <div>
+                    <div className="flex items-center gap-2 font-semibold">
+                        <WandSparkles className="size-4 text-sky-700 dark:text-sky-300" />
+                        استخراج نیمه‌مکانیزه امکانات و کارکرد کمپینی
+                    </div>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                        متن خام سایت رسمی، کاتالوگ یا یادداشت بازدید را وارد
+                        کنید تا ردیف‌های پیشنهادی با کارکرد، کاربرد کمپینی،
+                        اولویت، سطح اطمینان و نیاز بازدید میدانی تولید شود.
+                    </p>
+                </div>
+                <div className="flex shrink-0 flex-wrap gap-2">
+                    <button
+                        type="button"
+                        onClick={requestSuggestions}
+                        disabled={isSuggesting || sourceText.trim() === ''}
+                        className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-sky-300 bg-background px-3 text-xs font-medium text-sky-900 hover:bg-sky-100 disabled:opacity-60 dark:border-sky-800 dark:text-sky-100 dark:hover:bg-sky-900/50"
+                    >
+                        {isSuggesting ? (
+                            <LoaderCircle className="size-3.5 animate-spin" />
+                        ) : (
+                            <WandSparkles className="size-3.5" />
+                        )}
+                        تولید پیشنهاد
+                    </button>
+                    <button
+                        type="button"
+                        onClick={applySuggestions}
+                        disabled={
+                            isApplying ||
+                            isSuggesting ||
+                            sourceText.trim() === '' ||
+                            newSuggestionsCount === 0
+                        }
+                        className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                    >
+                        {isApplying ? (
+                            <LoaderCircle className="size-3.5 animate-spin" />
+                        ) : (
+                            <CheckCircle2 className="size-3.5" />
+                        )}
+                        افزودن به ارزیابی
+                    </button>
+                </div>
+            </div>
+            <textarea
+                value={sourceText}
+                onChange={(event) => setSourceText(event.target.value)}
+                placeholder="هر مورد در یک خط یا متن معرفی مکان: رستوران گردان، سکوی دید باز، گنبد آسمان، فودکورت..."
+                className="min-h-28 rounded-md border border-input bg-background px-3 py-2 text-sm"
+            />
+            {message ? (
+                <p className="rounded-md bg-background px-3 py-2 text-xs text-sky-900 dark:text-sky-100">
+                    {message}
+                </p>
+            ) : null}
+            {error ? (
+                <p className="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                    {error}
+                </p>
+            ) : null}
+            {suggestions.length > 0 ? (
+                <div className="overflow-x-auto rounded-md border border-sky-200 bg-background dark:border-sky-900">
+                    <div className="grid min-w-[1040px] grid-cols-[1fr_0.8fr_1.3fr_0.65fr_0.65fr_0.75fr_0.75fr] gap-2 border-b border-sky-200 px-3 py-2 text-xs font-medium text-muted-foreground dark:border-sky-900">
+                        <span>نام</span>
+                        <span>کارکرد</span>
+                        <span>کاربرد کمپینی</span>
+                        <span>اولویت</span>
+                        <span>اطمینان</span>
+                        <span>بازدید میدانی</span>
+                        <span>وضعیت</span>
+                    </div>
+                    <div className="divide-y divide-sky-100 text-xs dark:divide-sky-900/70">
+                        {suggestions.map((suggestion) => (
+                            <div
+                                key={`${venue.id}-suggestion-${suggestion.name}`}
+                                className="grid min-w-[1040px] grid-cols-[1fr_0.8fr_1.3fr_0.65fr_0.65fr_0.75fr_0.75fr] gap-2 px-3 py-2"
+                            >
+                                <span className="font-medium">
+                                    {suggestion.name}
+                                </span>
+                                <span>
+                                    {facilityFunctionLabels[
+                                        suggestion.function
+                                    ] ?? suggestion.function}
+                                </span>
+                                <span>
+                                    {suggestion.campaignUses
+                                        .map(
+                                            (use) =>
+                                                campaignUseLabels[use] ?? use,
+                                        )
+                                        .join('، ')}
+                                </span>
+                                <span>
+                                    {priorityLabels[suggestion.priority]}
+                                </span>
+                                <span>
+                                    {confidenceLabels[suggestion.confidence]}
+                                </span>
+                                <span>
+                                    {suggestion.fieldReviewRequired
+                                        ? 'بله'
+                                        : 'خیر'}
+                                </span>
+                                <span
+                                    className={
+                                        suggestion.alreadyExists
+                                            ? 'text-muted-foreground'
+                                            : 'font-medium text-emerald-700 dark:text-emerald-300'
+                                    }
+                                >
+                                    {suggestion.alreadyExists
+                                        ? 'قبلاً ثبت شده'
+                                        : 'جدید'}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            ) : null}
         </div>
     );
 }
@@ -433,6 +702,9 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                     >
                                         {({ processing, errors }) => (
                                             <>
+                                                <FacilitySuggestionPanel
+                                                    venue={venue}
+                                                />
                                                 <div className="grid gap-3 md:grid-cols-2">
                                                     <label className="grid gap-1">
                                                         <span className="text-xs font-medium">
@@ -857,6 +1129,31 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                                                         placeholder="یادداشت کوتاه"
                                                                         className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                                                     />
+                                                                    <input
+                                                                        type="hidden"
+                                                                        name={`facilities[${index}][confidence]`}
+                                                                        value={
+                                                                            facility.confidence ??
+                                                                            'medium'
+                                                                        }
+                                                                    />
+                                                                    <input
+                                                                        type="hidden"
+                                                                        name={`facilities[${index}][field_review_required]`}
+                                                                        value={
+                                                                            facility.fieldReviewRequired
+                                                                                ? '1'
+                                                                                : '0'
+                                                                        }
+                                                                    />
+                                                                    <input
+                                                                        type="hidden"
+                                                                        name={`facilities[${index}][source]`}
+                                                                        value={
+                                                                            facility.source ??
+                                                                            ''
+                                                                        }
+                                                                    />
                                                                 </div>
                                                             ),
                                                         )}
@@ -889,7 +1186,7 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                                                     ) => (
                                                                         <div
                                                                             key={`${venue.id}-registered-${facility.name}`}
-                                                                            className="grid gap-2 rounded-md bg-muted/35 p-2 md:grid-cols-[1fr_0.8fr_1.2fr_0.6fr]"
+                                                                            className="grid gap-2 rounded-md bg-muted/35 p-2 md:grid-cols-[1fr_0.8fr_1.2fr_0.6fr_0.55fr_0.65fr]"
                                                                         >
                                                                             <span className="font-medium">
                                                                                 {
@@ -932,8 +1229,19 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                                                                 ] ??
                                                                                     facility.priority}
                                                                             </span>
+                                                                            <span className="text-muted-foreground">
+                                                                                {confidenceLabels[
+                                                                                    facility.confidence ??
+                                                                                        'medium'
+                                                                                ] ?? 'متوسط'}
+                                                                            </span>
+                                                                            <span className="text-muted-foreground">
+                                                                                {facility.fieldReviewRequired
+                                                                                    ? 'بازدید لازم'
+                                                                                    : 'بدون بازدید'}
+                                                                            </span>
                                                                             {facility.notes ? (
-                                                                                <span className="text-muted-foreground md:col-span-4">
+                                                                                <span className="text-muted-foreground md:col-span-6">
                                                                                     {
                                                                                         facility.notes
                                                                                     }

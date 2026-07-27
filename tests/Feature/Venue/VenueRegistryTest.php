@@ -42,6 +42,8 @@ class VenueRegistryTest extends TestCase
             ->assertJsonPath('data.0.partnerAccountsCount', 5)
             ->assertJsonPath('data.0.locationProfile.readinessScore', 0)
             ->assertJsonPath('data.0.locationProfile.sourceSuggestions.0', 'خانه موسیقی تهران')
+            ->assertJsonPath('data.2.locationProfile.sourceSuggestions.0', 'رستوران گردان')
+            ->assertJsonPath('data.2.locationProfile.sourceSuggestions.4', 'مرکز همایش‌های بین‌المللی برج میلاد')
             ->assertJsonPath('data.0.demoStressPlan.title', 'دموی فشار از ارزیابی مکان تا اجرا')
             ->assertJsonPath('data.0.demoStressPlan.summary.totalCount', 11)
             ->assertJsonPath('data.0.demoStressPlan.items.0.key', 'venue')
@@ -106,6 +108,97 @@ class VenueRegistryTest extends TestCase
             ->assertJsonPath('data.0.locationProfile.facilities.2.name', 'باغ کتاب')
             ->assertJsonPath('data.0.demoStressPlan.items.0.key', 'venue')
             ->assertJsonPath('data.0.demoStressPlan.items.0.complete', true);
+    }
+
+    public function test_admin_can_generate_facility_suggestions_from_source_text(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $venue = Venue::query()->where('code', 'ecopark-abbasabad')->firstOrFail();
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.venues.facility-suggestions', $venue), [
+                'source_text' => "سکوی دید باز\nرستوران گردان\nفودکورت برج میلاد\nمحل پذیرش و بلیت",
+                'official_website_url' => 'https://miladtower.tehran.ir/intro',
+            ])
+            ->assertOk()
+            ->assertJsonPath('status', 'success')
+            ->assertJsonPath('data.summary.count', 4)
+            ->assertJsonPath('data.summary.newCount', 4)
+            ->assertJsonPath('data.suggestions.0.name', 'سکوی دید باز')
+            ->assertJsonPath('data.suggestions.0.alreadyExists', false)
+            ->assertJsonPath('data.suggestions.0.function', 'discovery')
+            ->assertJsonPath('data.suggestions.0.campaignUses.0', 'qr')
+            ->assertJsonPath('data.suggestions.0.priority', 'primary')
+            ->assertJsonPath('data.suggestions.0.confidence', 'high')
+            ->assertJsonPath('data.suggestions.1.name', 'رستوران گردان')
+            ->assertJsonPath('data.suggestions.1.function', 'retail')
+            ->assertJsonPath('data.suggestions.1.campaignUses.0', 'reward');
+    }
+
+    public function test_facility_suggestions_keep_existing_items_visible_for_review(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $venue = Venue::query()->where('code', 'milad-tower')->firstOrFail();
+        $venue->update([
+            'metadata' => [
+                'location_profile' => [
+                    'venue_type' => 'mixed',
+                    'official_website_url' => 'https://miladtower.tehran.ir/',
+                    'facilities' => [
+                        [
+                            'name' => 'رستوران گردان',
+                            'function' => 'retail',
+                            'campaignUses' => ['reward'],
+                            'priority' => 'primary',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.venues.facility-suggestions', $venue), [
+                'source_text' => "رستوران گردان\nسکوی دید باز",
+                'official_website_url' => 'https://miladtower.tehran.ir/',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.summary.count', 2)
+            ->assertJsonPath('data.summary.newCount', 1)
+            ->assertJsonPath('data.summary.existingCount', 1)
+            ->assertJsonPath('data.suggestions.0.name', 'رستوران گردان')
+            ->assertJsonPath('data.suggestions.0.alreadyExists', true)
+            ->assertJsonPath('data.suggestions.1.name', 'سکوی دید باز')
+            ->assertJsonPath('data.suggestions.1.alreadyExists', false);
+    }
+
+    public function test_admin_can_apply_generated_facility_suggestions_to_profile(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $venue = Venue::query()->where('code', 'ecopark-abbasabad')->firstOrFail();
+
+        $this->actingAs($admin)
+            ->patchJson(route('admin.venues.facility-suggestions.apply', $venue), [
+                'source_text' => "گنبد آسمان\nرستوران گردان\nمحل پذیرش و بلیت",
+                'official_website_url' => 'https://miladtower.tehran.ir/intro',
+            ])
+            ->assertOk()
+            ->assertJsonPath('status', 'success');
+
+        $venue->refresh();
+
+        $this->assertSame('گنبد آسمان', $venue->metadata['location_profile']['facilities'][0]['name']);
+        $this->assertSame('discovery', $venue->metadata['location_profile']['facilities'][0]['function']);
+        $this->assertSame(['qr', 'mission', 'treasure'], $venue->metadata['location_profile']['facilities'][0]['campaignUses']);
+        $this->assertSame('high', $venue->metadata['location_profile']['facilities'][0]['confidence']);
+        $this->assertFalse($venue->metadata['location_profile']['facilities'][0]['fieldReviewRequired']);
+        $this->assertSame('https://miladtower.tehran.ir/intro', $venue->metadata['location_profile']['official_website_url']);
+        $this->assertSame(3, $venue->metadata['location_profile']['facility_extraction']['suggested_count']);
+        $this->assertDatabaseHas('event_log', [
+            'event_type' => 'audit.venue_facilities_suggested',
+            'actor_user_id' => $admin->id,
+            'object_type' => 'venue',
+            'object_id' => $venue->id,
+        ]);
     }
 
     public function test_admin_can_import_venue_facilities_from_spreadsheet_csv(): void

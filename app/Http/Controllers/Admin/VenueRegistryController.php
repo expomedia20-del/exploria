@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Actions\Events\RecordAdminAuditAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\SuggestVenueFacilitiesRequest;
 use App\Http\Requests\Admin\UpdateVenueProfileRequest;
 use App\Models\Venue;
+use App\Services\VenueFacilitySuggestionService;
 use App\Services\VenueRegistryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -30,14 +32,33 @@ class VenueRegistryController extends Controller
         return response()->json(['status' => 'success', 'data' => $service->list($request->user())]);
     }
 
+    public function suggestFacilities(SuggestVenueFacilitiesRequest $request, Venue $venue, VenueFacilitySuggestionService $service): JsonResponse
+    {
+        return response()->json([
+            'status' => 'success',
+            'data' => $service->suggest($venue, $request->validated()),
+        ]);
+    }
+
+    public function applyFacilitySuggestions(SuggestVenueFacilitiesRequest $request, Venue $venue, VenueFacilitySuggestionService $service, RecordAdminAuditAction $audit): JsonResponse
+    {
+        $service->applySuggestions($venue, $request->validated());
+        $audit->execute($request->user(), 'venue_facilities_suggested', 'venue', $venue->id, $request->session()->getId(), [
+            'code' => $venue->code,
+            'name' => $venue->name,
+        ]);
+
+        return response()->json(['status' => 'success']);
+    }
+
     public function facilitiesTemplate(): BinaryFileResponse|StreamedResponse
     {
         $rows = [
-            ['نام', 'کارکرد', 'کاربرد کمپینی', 'اولویت', 'زیرمجموعه', 'یادداشت'],
-            ['کافه رواق', 'retail', 'reward,sponsor', 'primary', 'پروژه رواق', 'پیشنهاد نوشیدنی یا تخفیف'],
-            ['فست فود رواق', 'retail', 'reward,ad', 'secondary', 'پروژه رواق', 'غذا، تخفیف یا کوپن'],
-            ['نقطه عکس رواق', 'discovery', 'qr,mission,treasure', 'secondary', 'پروژه رواق', 'مناسب برای مأموریت کشف و گنج'],
-            ['', '', '', '', '', ''],
+            ['نام', 'کارکرد', 'کاربرد کمپینی', 'اولویت', 'زیرمجموعه', 'یادداشت', 'سطح اطمینان', 'نیازمند بازدید میدانی', 'منبع/شاهد'],
+            ['کافه رواق', 'retail', 'reward,sponsor', 'primary', 'پروژه رواق', 'پیشنهاد نوشیدنی یا تخفیف', 'high', 'خیر', 'بازدید/منبع رسمی'],
+            ['فست فود رواق', 'retail', 'reward,ad', 'secondary', 'پروژه رواق', 'غذا، تخفیف یا کوپن', 'high', 'خیر', 'بازدید/منبع رسمی'],
+            ['نقطه عکس رواق', 'discovery', 'qr,mission,treasure', 'secondary', 'پروژه رواق', 'مناسب برای مأموریت کشف و گنج', 'medium', 'بله', 'بازدید میدانی'],
+            ['', '', '', '', '', '', '', '', ''],
         ];
 
         if (class_exists(ZipArchive::class)) {
@@ -125,7 +146,7 @@ XML);
         $xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
             .'<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" rightToLeft="1">'
             .'<sheetViews><sheetView workbookViewId="0" rightToLeft="1"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>'
-            .'<cols><col min="1" max="1" width="26" customWidth="1"/><col min="2" max="2" width="18" customWidth="1"/><col min="3" max="3" width="28" customWidth="1"/><col min="4" max="4" width="16" customWidth="1"/><col min="5" max="5" width="24" customWidth="1"/><col min="6" max="6" width="38" customWidth="1"/></cols>'
+            .'<cols><col min="1" max="1" width="26" customWidth="1"/><col min="2" max="2" width="18" customWidth="1"/><col min="3" max="3" width="28" customWidth="1"/><col min="4" max="4" width="16" customWidth="1"/><col min="5" max="5" width="24" customWidth="1"/><col min="6" max="6" width="38" customWidth="1"/><col min="7" max="7" width="18" customWidth="1"/><col min="8" max="8" width="24" customWidth="1"/><col min="9" max="9" width="32" customWidth="1"/></cols>'
             .'<sheetData>';
 
         foreach ($rows as $rowIndex => $row) {
@@ -133,7 +154,7 @@ XML);
             $xml .= '<row r="'.$excelRow.'">';
 
             foreach ($row as $columnIndex => $value) {
-                $cell = ['A', 'B', 'C', 'D', 'E', 'F'][$columnIndex].$excelRow;
+                $cell = $this->excelColumnName($columnIndex).$excelRow;
                 $style = $excelRow === 1 ? ' s="1"' : '';
                 $xml .= '<c r="'.$cell.'" t="inlineStr"'.$style.'><is><t xml:space="preserve">'.e($value).'</t></is></c>';
             }
@@ -142,6 +163,20 @@ XML);
         }
 
         return $xml.'</sheetData></worksheet>';
+    }
+
+    private function excelColumnName(int $index): string
+    {
+        $name = '';
+        $index++;
+
+        while ($index > 0) {
+            $index--;
+            $name = chr(65 + ($index % 26)).$name;
+            $index = intdiv($index, 26);
+        }
+
+        return $name;
     }
 
     public function updateProfile(UpdateVenueProfileRequest $request, Venue $venue, VenueRegistryService $service, RecordAdminAuditAction $audit): JsonResponse|RedirectResponse

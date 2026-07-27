@@ -28,6 +28,9 @@ class UpdateVenueProfileRequest extends FormRequest
             'facilities.*.campaign_uses.*' => ['string', 'max:64'],
             'facilities.*.priority' => ['nullable', 'string', 'in:primary,secondary,low'],
             'facilities.*.notes' => ['nullable', 'string', 'max:500'],
+            'facilities.*.confidence' => ['nullable', 'string', 'in:high,medium,low'],
+            'facilities.*.field_review_required' => ['nullable', 'boolean'],
+            'facilities.*.source' => ['nullable', 'string', 'max:500'],
             'constraints_text' => ['nullable', 'string', 'max:3000'],
         ];
     }
