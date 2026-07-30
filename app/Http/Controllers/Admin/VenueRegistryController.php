@@ -8,6 +8,7 @@ use App\Http\Requests\Admin\StoreVenueRequest;
 use App\Http\Requests\Admin\SuggestVenueFacilitiesRequest;
 use App\Http\Requests\Admin\UpdateVenueProfileRequest;
 use App\Models\Venue;
+use App\Services\VenueActivationService;
 use App\Services\VenueFacilitySuggestionService;
 use App\Services\VenueRegistryService;
 use Illuminate\Http\JsonResponse;
@@ -66,6 +67,30 @@ class VenueRegistryController extends Controller
         ]);
 
         return response()->json(['status' => 'success']);
+    }
+
+    public function activate(Request $request, Venue $venue, VenueActivationService $service, RecordAdminAuditAction $audit): JsonResponse|RedirectResponse
+    {
+        $result = $service->activate($venue);
+        $audit->execute($request->user(), 'venue_operational_cycle_activated', 'venue', $venue->id, $request->session()->getId(), [
+            'code' => $venue->code,
+            'name' => $venue->name,
+            'campaign_code' => $result['campaign']->code,
+            'counts' => $result['counts'],
+        ]);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'status' => 'success',
+                'data' => [
+                    'venueCode' => $venue->code,
+                    'campaignCode' => $result['campaign']->code,
+                    'counts' => $result['counts'],
+                ],
+            ]);
+        }
+
+        return back()->with('success', 'چرخه پایه مکان فعال شد و اجزای اصلی به همین مکان وصل شدند.');
     }
 
     public function facilitiesTemplate(): BinaryFileResponse|StreamedResponse

@@ -1594,6 +1594,41 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                                         <ArrowLeft className="size-4" />
                                                     </Link>
                                                 ) : null}
+                                                <Form
+                                                    action={`/admin/venues/${venue.id}/activation`}
+                                                    method="post"
+                                                    options={{ preserveScroll: true }}
+                                                >
+                                                    {({
+                                                        processing,
+                                                        wasSuccessful,
+                                                    }) => (
+                                                        <div className="grid gap-2">
+                                                            <button
+                                                                type="submit"
+                                                                disabled={
+                                                                    processing
+                                                                }
+                                                                className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-emerald-500 bg-emerald-600 px-3 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
+                                                            >
+                                                                {processing ? (
+                                                                    <LoaderCircle className="size-4 animate-spin" />
+                                                                ) : (
+                                                                    <WandSparkles className="size-4" />
+                                                                )}
+                                                                فعال‌سازی چرخه پایه مکان
+                                                            </button>
+                                                            {wasSuccessful ? (
+                                                                <p className="text-xs text-emerald-700 dark:text-emerald-300">
+                                                                    اسکلت عملیاتی
+                                                                    برای همین
+                                                                    مکان ساخته
+                                                                    شد.
+                                                                </p>
+                                                            ) : null}
+                                                        </div>
+                                                    )}
+                                                </Form>
                                             </div>
                                         </div>
 

@@ -31,6 +31,7 @@ use App\Http\Controllers\Games\EcoParkOnlineGameActionController;
 use App\Http\Controllers\Games\EcoParkTreasureGameController;
 use App\Http\Controllers\Hub\HubAdScheduleController;
 use App\Http\Controllers\Hub\HubManagerDashboardController;
+use App\Http\Controllers\MarketingLandingController;
 use App\Http\Controllers\ParticipantDashboardController;
 use App\Http\Controllers\Partner\PartnerAdvertisingController;
 use App\Http\Controllers\Partner\PartnerDashboardController;
@@ -45,10 +46,18 @@ use App\Http\Controllers\VisitExperienceController;
 use App\Http\Controllers\VisitMissionController;
 use Illuminate\Support\Facades\Route;
 
-Route::inertia('/', 'welcome')->name('home');
+Route::get('/', [MarketingLandingController::class, 'home'])->name('home');
 Route::get('/health', fn () => response('Application up'))->name('health');
+Route::get('/robots.txt', [MarketingLandingController::class, 'robots'])->name('robots');
+Route::get('/sitemap.xml', [MarketingLandingController::class, 'sitemap'])->name('sitemap');
+Route::get('/solutions/{focus}', [MarketingLandingController::class, 'solution'])
+    ->whereIn('focus', ['venues', 'commercial-units', 'visitors'])
+    ->name('marketing.solution');
+Route::post('/marketing/leads', [MarketingLandingController::class, 'storeLead'])
+    ->middleware('throttle:8,1')
+    ->name('marketing.leads.store');
 Route::inertia('/board', 'demo/board')->name('demo.board');
-Route::inertia('/demo', 'welcome')->name('demo');
+Route::get('/demo', [MarketingLandingController::class, 'home'])->name('demo');
 Route::inertia('/demo/ecosystem', 'demo/ecosystem')->name('demo.ecosystem');
 Route::inertia('/demo/missions', 'demo/missions')->name('demo.missions');
 Route::inertia('/demo/proposal', 'demo/proposal')->name('demo.proposal');
@@ -386,6 +395,12 @@ Route::post('/admin/ads/{adRequest}/archive', [AdvertisingController::class, 'ar
 Route::post('/admin/campaigns', [CampaignRegistryController::class, 'store'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.campaigns.store');
+Route::post('/admin/campaigns/{campaign}/archive', [CampaignRegistryController::class, 'archive'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.campaigns.archive');
+Route::post('/admin/campaigns/{campaign}/restore', [CampaignRegistryController::class, 'restore'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.campaigns.restore');
 Route::delete('/admin/campaigns/{campaign}', [CampaignRegistryController::class, 'destroy'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.campaigns.destroy');
@@ -430,6 +445,9 @@ Route::get('/admin/venues/facilities-template', [VenueRegistryController::class,
 Route::post('/admin/venues', [VenueRegistryController::class, 'store'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.venues.store');
+Route::post('/admin/venues/{venue}/activation', [VenueRegistryController::class, 'activate'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.venues.activate');
 Route::patch('/admin/venues/{venue}/profile', [VenueRegistryController::class, 'updateProfile'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.venues.profile.update');
@@ -515,6 +533,12 @@ Route::get('/api/v1/admin/ads', [AdvertisingController::class, 'index'])
 Route::post('/api/v1/admin/campaigns', [CampaignRegistryController::class, 'store'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.campaigns.api.store');
+Route::post('/api/v1/admin/campaigns/{campaign}/archive', [CampaignRegistryController::class, 'archive'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.campaigns.api.archive');
+Route::post('/api/v1/admin/campaigns/{campaign}/restore', [CampaignRegistryController::class, 'restore'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.campaigns.api.restore');
 
 Route::post('/api/v1/admin/rewards/{reward}/approve', [RewardApprovalController::class, 'approve'])
     ->middleware(['auth', 'role:admin,operator,hub_manager'])
@@ -565,6 +589,9 @@ Route::get('/api/v1/admin/venues', [VenueRegistryController::class, 'index'])
 Route::post('/api/v1/admin/venues', [VenueRegistryController::class, 'store'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.venues.api.store');
+Route::post('/api/v1/admin/venues/{venue}/activation', [VenueRegistryController::class, 'activate'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.venues.api.activate');
 Route::post('/api/v1/admin/venues/{venue}/facility-suggestions', [VenueRegistryController::class, 'suggestFacilities'])
     ->middleware(['auth', 'role:admin,regional_admin,operator,viewer,hub_manager'])
     ->name('admin.venues.facility-suggestions');

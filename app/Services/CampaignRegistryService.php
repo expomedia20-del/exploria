@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\RecordStatus;
 use App\Models\Campaign;
 use App\Models\User;
 use App\Models\Venue;
@@ -16,19 +17,37 @@ class CampaignRegistryService
     public function __construct(private readonly UserAccessScopeService $accessScopes) {}
 
     /** @return Collection<int, array<string, mixed>> */
-    public function list(?User $user = null): Collection
+    public function list(?User $user = null, bool $archived = false): Collection
     {
         $venueIds = $user ? $this->accessScopes->venueIds($user) : collect();
         $isGlobal = $user === null || $this->accessScopes->hasGlobalAccess($user);
 
         return Campaign::query()
             ->when(! $isGlobal, fn (Builder $query) => $query->whereIn('venue_id', $venueIds))
+            ->when(
+                $archived,
+                fn (Builder $query) => $query->where('metadata->lifecycle_state', 'archived'),
+                fn (Builder $query) => $query->where(fn (Builder $query) => $query
+                    ->whereNull('metadata->lifecycle_state')
+                    ->orWhere('metadata->lifecycle_state', '!=', 'archived'))
+            )
             ->with(['venue:id,code,name'])
-            ->withCount(['qrCodes', 'visits'])
+            ->withCount(['qrCodes', 'visits', 'missionInstances', 'rewardDefinitions', 'treasures', 'campaignParticipants'])
             ->orderBy('created_at')
             ->get()
             ->toBase()
             ->map(fn (Campaign $campaign): array => $this->serializeCampaign($campaign));
+    }
+
+    public function archivedCount(?User $user = null): int
+    {
+        $venueIds = $user ? $this->accessScopes->venueIds($user) : collect();
+        $isGlobal = $user === null || $this->accessScopes->hasGlobalAccess($user);
+
+        return Campaign::query()
+            ->when(! $isGlobal, fn (Builder $query) => $query->whereIn('venue_id', $venueIds))
+            ->where('metadata->lifecycle_state', 'archived')
+            ->count();
     }
 
     /** @return Collection<int, array{id: string, code: string, name: string}> */
@@ -161,18 +180,49 @@ class CampaignRegistryService
 
     public function delete(Campaign $campaign): void
     {
-        $hasDependencies = $campaign->qrCodes()->exists()
-            || $campaign->visits()->exists()
-            || $campaign->missionInstances()->exists()
-            || $campaign->rewardDefinitions()->exists()
-            || $campaign->treasures()->exists()
-            || $campaign->campaignParticipants()->exists();
+        $hasDependencies = array_sum($this->dependencyCounts($campaign)) > 0;
 
         if ($hasDependencies) {
             throw ValidationException::withMessages(['campaign' => 'این کمپین اجزای وابسته دارد و حذف مستقیم آن مجاز نیست. ابتدا اجزای متصل را حذف یا غیرفعال کنید.']);
         }
 
         $campaign->delete();
+    }
+
+    public function archive(Campaign $campaign, ?User $actor = null): Campaign
+    {
+        $metadata = $campaign->metadata ?? [];
+        $metadata['lifecycle_state'] = 'archived';
+        $metadata['archived_at'] = now()->toIso8601String();
+        $metadata['archived_by_user_id'] = $actor?->id;
+        $metadata['status_before_archive'] = $campaign->status->value;
+
+        $campaign->update([
+            'status' => RecordStatus::Inactive,
+            'metadata' => array_filter($metadata, fn (mixed $value): bool => $value !== null),
+        ]);
+
+        return $campaign->refresh();
+    }
+
+    public function restore(Campaign $campaign): Campaign
+    {
+        $metadata = $campaign->metadata ?? [];
+        $status = RecordStatus::tryFrom((string) ($metadata['status_before_archive'] ?? '')) ?? RecordStatus::Draft;
+
+        unset(
+            $metadata['lifecycle_state'],
+            $metadata['archived_at'],
+            $metadata['archived_by_user_id'],
+            $metadata['status_before_archive'],
+        );
+
+        $campaign->update([
+            'status' => $status,
+            'metadata' => $metadata,
+        ]);
+
+        return $campaign->refresh();
     }
 
     /** @return array<string, mixed> */
@@ -186,16 +236,44 @@ class CampaignRegistryService
             'blueprintCode' => $campaign->metadata['blueprint_code'] ?? null,
             'designSource' => $campaign->metadata['design_source'] ?? null,
             'designVenueCode' => $campaign->metadata['design_venue_code'] ?? null,
+            'isArchived' => ($campaign->metadata['lifecycle_state'] ?? null) === 'archived',
+            'archivedAt' => $campaign->metadata['archived_at'] ?? null,
             'status' => $campaign->status->value,
             'startAt' => $campaign->start_at?->toIso8601String(),
             'endAt' => $campaign->end_at?->toIso8601String(),
             'qrCodesCount' => (int) $campaign->getAttribute('qr_codes_count'),
             'visitsCount' => (int) $campaign->getAttribute('visits_count'),
+            'dependencyCount' => array_sum([
+                (int) $campaign->getAttribute('qr_codes_count'),
+                (int) $campaign->getAttribute('visits_count'),
+                (int) $campaign->getAttribute('mission_instances_count'),
+                (int) $campaign->getAttribute('reward_definitions_count'),
+                (int) $campaign->getAttribute('treasures_count'),
+                (int) $campaign->getAttribute('campaign_participants_count'),
+            ]),
             'venue' => $campaign->venue ? [
                 'id' => $campaign->venue->id,
                 'code' => $campaign->venue->code,
                 'name' => $campaign->venue->name,
             ] : null,
+        ];
+    }
+
+    /** @return array<string, int> */
+    private function dependencyCounts(Campaign $campaign): array
+    {
+        return [
+            'qrCodes' => $campaign->qrCodes()->count(),
+            'visits' => $campaign->visits()->count(),
+            'missionInstances' => $campaign->missionInstances()->count(),
+            'rewardDefinitions' => $campaign->rewardDefinitions()->count(),
+            'treasures' => $campaign->treasures()->count(),
+            'campaignParticipants' => $campaign->campaignParticipants()->count(),
+            'campaignSponsorships' => $campaign->campaignSponsorships()->count(),
+            'userRewards' => $campaign->userRewards()->count(),
+            'rewardInventoryAllocations' => DB::table('reward_inventory_allocations')->where('campaign_id', $campaign->id)->count(),
+            'scanEvents' => DB::table('scan_events')->where('campaign_id', $campaign->id)->count(),
+            'gameParties' => DB::table('game_parties')->where('campaign_id', $campaign->id)->count(),
         ];
     }
 

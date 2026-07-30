@@ -18,8 +18,12 @@ class CampaignRegistryController extends Controller
 {
     public function page(Request $request, CampaignRegistryService $service, MissionRewardBlueprintService $blueprints): Response
     {
+        $archiveMode = $request->boolean('archived');
+
         return Inertia::render('admin/campaigns/index', [
-            'campaigns' => $service->list($request->user()),
+            'campaigns' => $service->list($request->user(), $archiveMode),
+            'archiveMode' => $archiveMode,
+            'archivedCampaignsCount' => $service->archivedCount($request->user()),
             'venueOptions' => $service->venueOptions($request->user()),
             'selectedCampaign' => $service->context($request->user(), $request->query('campaign')),
             'selectedVenue' => $service->venueContext($request->user(), $request->query('venue')),
@@ -29,7 +33,7 @@ class CampaignRegistryController extends Controller
 
     public function index(Request $request, CampaignRegistryService $service): JsonResponse
     {
-        return response()->json(['status' => 'success', 'data' => $service->list($request->user())]);
+        return response()->json(['status' => 'success', 'data' => $service->list($request->user(), $request->boolean('archived'))]);
     }
 
     public function store(StoreCampaignRequest $request, CampaignRegistryService $service, RecordAdminAuditAction $audit): JsonResponse|RedirectResponse
@@ -78,5 +82,36 @@ class CampaignRegistryController extends Controller
         }
 
         return back()->with('success', 'کمپین حذف شد.');
+    }
+    public function archive(Request $request, Campaign $campaign, CampaignRegistryService $service, RecordAdminAuditAction $audit): JsonResponse|RedirectResponse
+    {
+        $archived = $service->archive($campaign, $request->user());
+        $audit->execute($request->user(), 'campaign_archived', 'campaign', $archived->id, $request->session()->getId(), [
+            'code' => $archived->code,
+            'name' => $archived->name,
+            'archived_at' => $archived->metadata['archived_at'] ?? null,
+        ]);
+
+        if ($request->expectsJson()) {
+            return response()->json(['status' => 'success', 'data' => ['id' => $archived->id, 'isArchived' => true]]);
+        }
+
+        return back()->with('success', 'کمپین به آرشیو منتقل شد و از فهرست اصلی خارج شد.');
+    }
+
+    public function restore(Request $request, Campaign $campaign, CampaignRegistryService $service, RecordAdminAuditAction $audit): JsonResponse|RedirectResponse
+    {
+        $restored = $service->restore($campaign);
+        $audit->execute($request->user(), 'campaign_restored', 'campaign', $restored->id, $request->session()->getId(), [
+            'code' => $restored->code,
+            'name' => $restored->name,
+            'status' => $restored->status->value,
+        ]);
+
+        if ($request->expectsJson()) {
+            return response()->json(['status' => 'success', 'data' => ['id' => $restored->id, 'isArchived' => false]]);
+        }
+
+        return back()->with('success', 'کمپین از آرشیو برگشت و دوباره در فهرست اصلی دیده می‌شود.');
     }
 }

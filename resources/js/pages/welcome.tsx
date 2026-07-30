@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Form, Head, Link, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
     BadgeDollarSign,
@@ -26,11 +26,25 @@ const proposalImages = {
 const internalRoles = ['admin', 'regional_admin', 'operator', 'viewer'];
 
 type SharedProps = {
+    flash?: {
+        success?: string;
+    };
     auth?: {
         user?: {
             role?: string;
         } | null;
     };
+};
+
+type SeoProfile = {
+    title: string;
+    description: string;
+    canonicalPath: string;
+};
+
+type WelcomeProps = {
+    marketingFocus?: string;
+    seo?: SeoProfile;
 };
 
 function roleAwareHref(path: string, role?: string) {
@@ -163,9 +177,54 @@ const revenuePacks = [
     },
 ];
 
-export default function Welcome() {
-    const { auth } = usePage<SharedProps>().props;
+const focusProfiles: Record<
+    string,
+    { eyebrow: string; headline: string; summary: string; audienceType: string }
+> = {
+    home: {
+        eyebrow: 'پلتفرم کمپین‌های تجربه‌سازی و درآمدزایی مکان‌ها',
+        headline: 'چالش و پاداش بازدیدها، فروش و درآمد مکان‌ها',
+        summary:
+            'بازدیدکننده با QR وارد مسیر مأموریت، پاداش، پیشنهاد واحدها و گزارش قابل ارائه می‌شود.',
+        audienceType: 'venue',
+    },
+    venues: {
+        eyebrow: 'راهکار اکسپلوریا برای مکان‌های گردشگری و تفریحی',
+        headline: 'از برج، پارک و شهربازی یک مسیر کمپینی قابل فروش بسازید',
+        summary:
+            'اکسپلوریا امکانات مکان را به QR، مأموریت، گنج، پاداش، تبلیغات و گزارش اجرایی وصل می‌کند.',
+        audienceType: 'venue',
+    },
+    'commercial-units': {
+        eyebrow: 'راهکار اکسپلوریا برای فروشگاه، فودکورت و واحد تجاری',
+        headline: 'مراجعه بازدیدکننده را به پیشنهاد، مصرف کد و فروش قابل پیگیری تبدیل کنید',
+        summary:
+            'واحد تجاری در کمپین مکان دیده می‌شود، پاداش تعریف می‌کند و اثر مراجعه و مصرف را در پنل خود می‌بیند.',
+        audienceType: 'commercial_unit',
+    },
+    visitors: {
+        eyebrow: 'راهکار اکسپلوریا برای جذب و مشارکت بازدیدکننده',
+        headline: 'بازدید معمولی را به بازی، مأموریت، امتیاز و برگشت دوباره تبدیل کنید',
+        summary:
+            'کاربر با QR وارد تجربه می‌شود، مسیر را دنبال می‌کند، پاداش می‌گیرد و با پیشنهادهای مرتبط ادامه می‌دهد.',
+        audienceType: 'visitor_growth',
+    },
+};
+
+const defaultSeo = {
+    title: 'اکسپلوریا | پلتفرم تجربه، کمپین و درآمد مکان',
+    description:
+        'اکسپلوریا برای مکان‌های گردشگری، مراکز تجاری و اسپانسرها کمپین QR، مأموریت، پاداش، تبلیغات و گزارش فروش‌پذیر می‌سازد.',
+    canonicalPath: '/',
+};
+
+export default function Welcome({
+    marketingFocus = 'home',
+    seo = defaultSeo,
+}: WelcomeProps) {
+    const { auth, flash } = usePage<SharedProps>().props;
     const userRole = auth?.user?.role;
+    const focus = focusProfiles[marketingFocus] ?? focusProfiles.home;
     const commercializationHref = roleAwareHref(
         '/admin/commercialization',
         userRole,
@@ -173,7 +232,17 @@ export default function Welcome() {
 
     return (
         <>
-            <Head title="اکسپلوریا | پلتفرم تجربه، کمپین و درآمد مکان" />
+            <Head title={seo.title}>
+                <meta name="description" content={seo.description} />
+                <meta
+                    name="keywords"
+                    content="اکسپلوریا، کمپین مکان، QR، پاداش، گیمیفیکیشن، گردشگری، مرکز تجاری، اسپانسرینگ، جذب بازدیدکننده"
+                />
+                <link rel="canonical" href={seo.canonicalPath} />
+                <meta property="og:title" content={seo.title} />
+                <meta property="og:description" content={seo.description} />
+                <meta property="og:type" content="website" />
+            </Head>
 
             <main dir="rtl" className="min-h-screen bg-stone-50 text-zinc-950">
                 <section className="relative overflow-hidden bg-[#061033] text-white">
@@ -226,6 +295,12 @@ export default function Welcome() {
                                 >
                                     ورود مدیریتی
                                 </Link>
+                                <a
+                                    href="#demo-request"
+                                    className="inline-flex h-10 items-center rounded-md border border-white/20 px-4 hover:bg-white/10"
+                                >
+                                    درخواست دمو
+                                </a>
                                 <Link
                                     href={`/scan/${demoQrCode}`}
                                     className="inline-flex h-10 items-center gap-2 rounded-md bg-emerald-400 px-4 font-semibold text-zinc-950 hover:bg-emerald-300"
@@ -240,24 +315,17 @@ export default function Welcome() {
                             <div className="mx-auto max-w-4xl">
                                 <p className="mx-auto flex w-fit rounded-full border border-fuchsia-200/50 bg-white/[0.07] px-5 py-2.5 text-center text-base font-semibold shadow-[0_0_24px_rgba(217,70,239,0.18)] sm:text-lg">
                                     <span className="bg-gradient-to-l from-emerald-200 via-fuchsia-100 to-cyan-200 bg-clip-text text-transparent">
-                                        پلتفرم کمپین‌های تجربه‌سازی و درآمدزایی
-                                        مکان‌ها
+                                        {focus.eyebrow}
                                     </span>
                                 </p>
                                 <h1
-                                    aria-label="چالش و پاداش بازدیدها، فروش و درآمد مکان‌ها"
+                                    aria-label={focus.headline}
                                     className="mt-6 text-4xl leading-tight font-semibold sm:text-6xl"
                                 >
-                                    <span className="block">
-                                        چالش و پاداش بازدیدها
-                                    </span>
-                                    <span className="block">
-                                        فروش و درآمد مکان‌ها
-                                    </span>
+                                    {focus.headline}
                                 </h1>
                                 <p className="mx-auto mt-6 max-w-2xl text-base leading-8 text-zinc-300">
-                                    بازدیدکننده با QR وارد مسیر ماموریت، پاداش،
-                                    پیشنهاد واحدها و گزارش قابل ارائه می‌شود.
+                                    {focus.summary}
                                 </p>
                                 <div className="mx-auto mt-7 grid max-w-3xl gap-2 sm:grid-cols-2">
                                     {[
@@ -492,8 +560,8 @@ export default function Welcome() {
                     </div>
                 </section>
 
-                <section className="bg-white">
-                    <div className="mx-auto grid max-w-7xl gap-5 px-5 py-9 sm:px-8 lg:grid-cols-[1fr_auto] lg:items-center lg:px-10">
+                <section id="demo-request" className="bg-white">
+                    <div className="mx-auto grid max-w-7xl gap-6 px-5 py-9 sm:px-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start lg:px-10">
                         <div>
                             <p className="text-sm font-medium text-emerald-700">
                                 قدم بعدی
@@ -506,23 +574,159 @@ export default function Welcome() {
                                 شروع کنید؛ برای تست تجربه کاربر، QR دمو را باز
                                 کنید.
                             </p>
+                            <div className="mt-5 flex flex-wrap gap-3">
+                                <Link
+                                    href={commercializationHref}
+                                    className="inline-flex h-11 items-center gap-2 rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white hover:bg-zinc-800"
+                                >
+                                    تجاری‌سازی
+                                    <ArrowLeft className="size-4" />
+                                </Link>
+                                <Link
+                                    href={`/scan/${demoQrCode}`}
+                                    className="inline-flex h-11 items-center gap-2 rounded-md border border-zinc-300 px-4 text-sm font-semibold hover:bg-zinc-50"
+                                >
+                                    QR دمو
+                                    <QrCode className="size-4" />
+                                </Link>
+                            </div>
                         </div>
-                        <div className="flex flex-wrap gap-3">
-                            <Link
-                                href={commercializationHref}
-                                className="inline-flex h-11 items-center gap-2 rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white hover:bg-zinc-800"
-                            >
-                                تجاری‌سازی
-                                <ArrowLeft className="size-4" />
-                            </Link>
-                            <Link
-                                href={`/scan/${demoQrCode}`}
-                                className="inline-flex h-11 items-center gap-2 rounded-md border border-zinc-300 px-4 text-sm font-semibold hover:bg-zinc-50"
-                            >
-                                QR دمو
-                                <QrCode className="size-4" />
-                            </Link>
-                        </div>
+                        <Form
+                            action="/marketing/leads"
+                            method="post"
+                            options={{ preserveScroll: true }}
+                            className="rounded-lg border border-zinc-200 bg-stone-50 p-5"
+                        >
+                            {({ errors, processing, recentlySuccessful }) => (
+                                <div className="grid gap-3">
+                                    <input
+                                        type="hidden"
+                                        name="source_path"
+                                        value={seo.canonicalPath}
+                                    />
+                                    <input
+                                        type="text"
+                                        name="company_url"
+                                        tabIndex={-1}
+                                        autoComplete="off"
+                                        className="hidden"
+                                    />
+                                    <div className="grid gap-1.5">
+                                        <label
+                                            htmlFor="audience_type"
+                                            className="text-sm font-medium"
+                                        >
+                                            نوع همکاری
+                                        </label>
+                                        <select
+                                            id="audience_type"
+                                            name="audience_type"
+                                            defaultValue={focus.audienceType}
+                                            className="h-11 rounded-md border border-zinc-300 bg-white px-3 text-sm"
+                                        >
+                                            <option value="venue">
+                                                مکان گردشگری یا تفریحی
+                                            </option>
+                                            <option value="commercial_unit">
+                                                واحد تجاری یا فودکورت
+                                            </option>
+                                            <option value="sponsor">
+                                                اسپانسر یا برند
+                                            </option>
+                                            <option value="visitor_growth">
+                                                جذب و مشارکت بازدیدکننده
+                                            </option>
+                                            <option value="other">سایر</option>
+                                        </select>
+                                        {errors.audience_type ? (
+                                            <p className="text-xs text-red-600">
+                                                {errors.audience_type}
+                                            </p>
+                                        ) : null}
+                                    </div>
+                                    <div className="grid gap-3 sm:grid-cols-2">
+                                        <div className="grid gap-1.5">
+                                            <label
+                                                htmlFor="contact_name"
+                                                className="text-sm font-medium"
+                                            >
+                                                نام مسئول پیگیری
+                                            </label>
+                                            <input
+                                                id="contact_name"
+                                                name="contact_name"
+                                                required
+                                                className="h-11 rounded-md border border-zinc-300 bg-white px-3 text-sm"
+                                                placeholder="مثلا مدیر بازاریابی"
+                                            />
+                                            {errors.contact_name ? (
+                                                <p className="text-xs text-red-600">
+                                                    {errors.contact_name}
+                                                </p>
+                                            ) : null}
+                                        </div>
+                                        <div className="grid gap-1.5">
+                                            <label
+                                                htmlFor="mobile"
+                                                className="text-sm font-medium"
+                                            >
+                                                شماره تماس
+                                            </label>
+                                            <input
+                                                id="mobile"
+                                                name="mobile"
+                                                required
+                                                dir="ltr"
+                                                className="h-11 rounded-md border border-zinc-300 bg-white px-3 text-sm"
+                                                placeholder="0912..."
+                                            />
+                                            {errors.mobile ? (
+                                                <p className="text-xs text-red-600">
+                                                    {errors.mobile}
+                                                </p>
+                                            ) : null}
+                                        </div>
+                                    </div>
+                                    <div className="grid gap-3 sm:grid-cols-2">
+                                        <input
+                                            name="organization_name"
+                                            className="h-11 rounded-md border border-zinc-300 bg-white px-3 text-sm"
+                                            placeholder="نام مجموعه یا برند"
+                                        />
+                                        <input
+                                            name="city"
+                                            className="h-11 rounded-md border border-zinc-300 bg-white px-3 text-sm"
+                                            placeholder="شهر"
+                                        />
+                                    </div>
+                                    <input
+                                        name="project_hint"
+                                        className="h-11 rounded-md border border-zinc-300 bg-white px-3 text-sm"
+                                        placeholder="نمونه پروژه: برج، پارک، مرکز خرید، فودکورت..."
+                                    />
+                                    <textarea
+                                        name="notes"
+                                        rows={3}
+                                        className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm"
+                                        placeholder="اگر هدف خاصی دارید بنویسید: جذب بازدید، اسپانسر، فروش واحدها، SEO یا اجرای پایلوت..."
+                                    />
+                                    {flash?.success || recentlySuccessful ? (
+                                        <p className="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+                                            {flash?.success ??
+                                                'درخواست ثبت شد.'}
+                                        </p>
+                                    ) : null}
+                                    <button
+                                        type="submit"
+                                        disabled={processing}
+                                        className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-emerald-600 px-4 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+                                    >
+                                        ثبت درخواست دمو
+                                        <ArrowLeft className="size-4" />
+                                    </button>
+                                </div>
+                            )}
+                        </Form>
                     </div>
                 </section>
             </main>

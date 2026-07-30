@@ -1,11 +1,13 @@
 import { Form, Head, Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import {
+    Archive,
     CalendarClock,
     Megaphone,
     Pencil,
     Plus,
     QrCode,
+    RotateCcw,
     SquareActivity,
     Trash2,
 } from 'lucide-react';
@@ -57,6 +59,9 @@ type CampaignItem = {
     endAt: string | null;
     qrCodesCount: number;
     visitsCount: number;
+    dependencyCount: number;
+    isArchived: boolean;
+    archivedAt: string | null;
     venue: RegistryEntity | null;
 };
 
@@ -74,6 +79,8 @@ type SelectedCampaign = {
 
 type Props = {
     campaigns: CampaignItem[];
+    archiveMode: boolean;
+    archivedCampaignsCount: number;
     venueOptions: RegistryEntity[];
     selectedCampaign: SelectedCampaign | null;
     selectedVenue: RegistryEntity | null;
@@ -174,6 +181,8 @@ function campaignContextUrl(
 
 export default function CampaignRegistryIndex({
     campaigns,
+    archiveMode,
+    archivedCampaignsCount,
     venueOptions,
     selectedCampaign,
     selectedVenue,
@@ -221,7 +230,7 @@ export default function CampaignRegistryIndex({
                             مدیریت کمپین‌ها
                         </h1>
                     </div>
-                    <div className="grid grid-cols-3 gap-3 text-sm">
+                    <div className="grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
                         <div className="rounded-lg border border-border/80 bg-card/80 px-3 py-2 shadow-sm">
                             <p className="text-muted-foreground">کل کمپین‌ها</p>
                             <p className="mt-1 font-semibold">
@@ -246,10 +255,38 @@ export default function CampaignRegistryIndex({
                                     .toLocaleString('fa-IR')}
                             </p>
                         </div>
+                        <div className="rounded-lg border border-border/80 bg-card/80 px-3 py-2 shadow-sm">
+                            <p className="text-muted-foreground">آرشیو</p>
+                            <p className="mt-1 font-semibold">
+                                {archivedCampaignsCount.toLocaleString('fa-IR')}
+                            </p>
+                        </div>
                     </div>
                 </header>
 
                 <InternalTeamNavigation activeHref="/admin/campaigns" />
+
+                <section className="flex flex-wrap items-center gap-2 text-sm">
+                    <Button
+                        asChild
+                        size="sm"
+                        variant={archiveMode ? 'outline' : 'default'}
+                    >
+                        <Link href="/admin/campaigns">پروژه‌های جاری</Link>
+                    </Button>
+                    <Button
+                        asChild
+                        size="sm"
+                        variant={archiveMode ? 'default' : 'outline'}
+                    >
+                        <Link href="/admin/campaigns?archived=1">
+                            آرشیو پروژه‌ها
+                        </Link>
+                    </Button>
+                    <span className="text-xs text-muted-foreground">
+                        پروژه‌های آرشیوشده از فهرست اصلی کمپین‌ها جدا می‌شوند.
+                    </span>
+                </section>
 
                 {selectedBlueprint ? (
                     <section className="rounded-lg border border-primary/25 bg-primary/5 p-4 text-sm shadow-sm">
@@ -658,7 +695,9 @@ export default function CampaignRegistryIndex({
 
                     {campaigns.length === 0 ? (
                         <div className="p-8 text-center text-sm text-muted-foreground">
-                            هنوز کمپینی ثبت نشده است.
+                            {archiveMode
+                                ? 'هنوز پروژه‌ای در آرشیو نیست.'
+                                : 'هنوز کمپینی ثبت نشده است.'}
                         </div>
                     ) : (
                         <div className="min-w-[860px] divide-y divide-border/70">
@@ -704,6 +743,11 @@ export default function CampaignRegistryIndex({
                                             'venue_blueprint_recommendation' ? (
                                                 <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800 dark:bg-emerald-950 dark:text-emerald-100">
                                                     از ارزیابی مکان
+                                                </span>
+                                            ) : null}
+                                            {campaign.isArchived ? (
+                                                <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-700 dark:bg-zinc-800 dark:text-zinc-100">
+                                                    آرشیوشده
                                                 </span>
                                             ) : null}
                                         </div>
@@ -779,6 +823,62 @@ export default function CampaignRegistryIndex({
                                                 >
                                                     <Pencil className="size-4" />
                                                 </Button>
+                                                {campaign.isArchived ? (
+                                                    <Form
+                                                        action={`/admin/campaigns/${campaign.id}/restore`}
+                                                        method="post"
+                                                        options={{
+                                                            preserveScroll: true,
+                                                        }}
+                                                    >
+                                                        {({ processing }) => (
+                                                            <Button
+                                                                type="submit"
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="h-8 px-2 text-primary hover:text-primary"
+                                                                disabled={
+                                                                    processing
+                                                                }
+                                                                title="بازگردانی از آرشیو"
+                                                            >
+                                                                <RotateCcw className="size-4" />
+                                                            </Button>
+                                                        )}
+                                                    </Form>
+                                                ) : (
+                                                    <Form
+                                                        action={`/admin/campaigns/${campaign.id}/archive`}
+                                                        method="post"
+                                                        options={{
+                                                            preserveScroll: true,
+                                                        }}
+                                                        onSubmit={(event) => {
+                                                            if (
+                                                                !window.confirm(
+                                                                    'این پروژه به آرشیو منتقل شود؟ از فهرست اصلی خارج می‌شود اما داده‌هایش حفظ می‌ماند.',
+                                                                )
+                                                            ) {
+                                                                event.preventDefault();
+                                                            }
+                                                        }}
+                                                    >
+                                                        {({ processing }) => (
+                                                            <Button
+                                                                type="submit"
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="h-8 px-2"
+                                                                disabled={
+                                                                    processing
+                                                                }
+                                                                title="انتقال به آرشیو"
+                                                            >
+                                                                <Archive className="size-4" />
+                                                            </Button>
+                                                        )}
+                                                    </Form>
+                                                )}
                                                 <Form
                                                     action={`/admin/campaigns/${campaign.id}`}
                                                     method="delete"
@@ -802,9 +902,16 @@ export default function CampaignRegistryIndex({
                                                             size="sm"
                                                             className="h-8 px-2 text-destructive hover:text-destructive"
                                                             disabled={
-                                                                processing
+                                                                processing ||
+                                                                campaign.dependencyCount >
+                                                                    0
                                                             }
-                                                            title="حذف کمپین"
+                                                            title={
+                                                                campaign.dependencyCount >
+                                                                0
+                                                                    ? 'برای کمپین دارای وابستگی از آرشیو استفاده کنید'
+                                                                    : 'حذف کمپین'
+                                                            }
                                                         >
                                                             <Trash2 className="size-4" />
                                                         </Button>

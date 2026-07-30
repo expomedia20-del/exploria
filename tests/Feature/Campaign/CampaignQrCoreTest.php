@@ -164,6 +164,61 @@ class CampaignQrCoreTest extends TestCase
         ]);
     }
 
+    public function test_admin_can_archive_and_restore_dependent_campaigns_out_of_the_main_registry(): void
+    {
+        $this->withoutVite();
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $campaign = Campaign::query()->where('code', 'ecopark-pilot-1405')->firstOrFail();
+
+        $this->actingAs($admin)
+            ->from(route('admin.campaigns.page'))
+            ->post(route('admin.campaigns.archive', ['campaign' => $campaign->id]))
+            ->assertRedirect(route('admin.campaigns.page'));
+
+        $campaign->refresh();
+        $this->assertSame(RecordStatus::Inactive, $campaign->status);
+        $this->assertSame('archived', $campaign->metadata['lifecycle_state']);
+        $this->assertNotEmpty($campaign->metadata['archived_at']);
+        $this->assertDatabaseHas('event_log', [
+            'event_type' => 'audit.campaign_archived',
+            'actor_user_id' => $admin->id,
+            'object_id' => $campaign->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.campaigns.page'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('admin/campaigns/index')
+                ->where('archiveMode', false)
+                ->where('archivedCampaignsCount', 1)
+                ->has('campaigns', 0));
+
+        $this->actingAs($admin)
+            ->get(route('admin.campaigns.page', ['archived' => 1]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('admin/campaigns/index')
+                ->where('archiveMode', true)
+                ->has('campaigns', 1)
+                ->where('campaigns.0.code', 'ecopark-pilot-1405')
+                ->where('campaigns.0.isArchived', true));
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.campaigns.api.restore', ['campaign' => $campaign->id]))
+            ->assertOk()
+            ->assertJsonPath('data.isArchived', false);
+
+        $campaign->refresh();
+        $this->assertSame(RecordStatus::Active, $campaign->status);
+        $this->assertArrayNotHasKey('lifecycle_state', $campaign->metadata ?? []);
+        $this->assertDatabaseHas('event_log', [
+            'event_type' => 'audit.campaign_restored',
+            'actor_user_id' => $admin->id,
+            'object_id' => $campaign->id,
+        ]);
+    }
+
     public function test_viewer_can_open_campaign_builder_page(): void
     {
         $this->withoutVite();

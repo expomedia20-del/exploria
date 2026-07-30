@@ -3,8 +3,22 @@
 namespace Tests\Feature\Venue;
 
 use App\Enums\UserRole;
+use App\Models\Campaign;
+use App\Models\CampaignParticipant;
+use App\Models\CampaignSponsorship;
+use App\Models\DisplayDevice;
+use App\Models\Hub;
+use App\Models\MissionInstance;
+use App\Models\PartnerAccount;
+use App\Models\QrCode;
+use App\Models\RewardDefinition;
+use App\Models\RewardInventoryAllocation;
+use App\Models\Touchpoint;
+use App\Models\Treasure;
 use App\Models\User;
+use App\Models\UserAccessScope;
 use App\Models\Venue;
+use App\Models\Zone;
 use Database\Seeders\PilotLocationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -157,6 +171,63 @@ class VenueRegistryTest extends TestCase
             ->assertJsonPath('data.summary.count', 3)
             ->assertJsonPath('data.summary.newCount', 3)
             ->assertJsonPath('data.suggestions.1.function', 'retail');
+    }
+
+    public function test_admin_can_activate_the_base_operational_cycle_for_any_venue(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $venue = Venue::query()->where('code', 'eram-park')->firstOrFail();
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.venues.api.activate', $venue))
+            ->assertOk()
+            ->assertJsonPath('status', 'success')
+            ->assertJsonPath('data.venueCode', 'eram-park')
+            ->assertJsonPath('data.campaignCode', 'eram-park-activation-campaign')
+            ->assertJsonPath('data.counts.zones', 1)
+            ->assertJsonPath('data.counts.campaigns', 1)
+            ->assertJsonPath('data.counts.qrCodes', 1)
+            ->assertJsonPath('data.counts.partners', 3)
+            ->assertJsonPath('data.counts.missions', 4)
+            ->assertJsonPath('data.counts.rewards', 3);
+
+        $venue->refresh();
+        $campaign = Campaign::query()->where('venue_id', $venue->id)->where('code', 'eram-park-activation-campaign')->firstOrFail();
+
+        $this->assertSame('active', $venue->status->value);
+        $this->assertSame('active', $venue->profile_status->value);
+        $this->assertGreaterThanOrEqual(4, count($venue->metadata['location_profile']['facilities']));
+        $this->assertSame('venue-activation-pilot', $campaign->metadata['blueprint_code']);
+        $this->assertNotNull($campaign->metadata['route_reviewed_at']);
+        $this->assertSame(1, Zone::query()->where('venue_id', $venue->id)->where('code', 'activation-core-zone')->count());
+        $this->assertSame(3, Hub::query()->whereHas('zone', fn ($query) => $query->where('venue_id', $venue->id))->count());
+        $this->assertSame(3, Touchpoint::query()->whereHas('hub.zone', fn ($query) => $query->where('venue_id', $venue->id))->count());
+        $this->assertSame(1, QrCode::query()->where('venue_id', $venue->id)->where('campaign_id', $campaign->id)->where('code', 'eram-park-entry-qr')->count());
+        $this->assertSame(3, PartnerAccount::query()->where('venue_id', $venue->id)->count());
+        $this->assertSame(3, CampaignParticipant::query()->where('campaign_id', $campaign->id)->where('onboarding_status', 'ready')->count());
+        $this->assertSame(4, MissionInstance::query()->where('campaign_id', $campaign->id)->where('venue_id', $venue->id)->count());
+        $this->assertSame(1, Treasure::query()->where('campaign_id', $campaign->id)->where('venue_id', $venue->id)->count());
+        $this->assertSame(3, RewardDefinition::query()->where('campaign_id', $campaign->id)->where('venue_id', $venue->id)->count());
+        $this->assertSame(1, RewardInventoryAllocation::query()->where('campaign_id', $campaign->id)->where('status', 'active')->count());
+        $this->assertSame(1, DisplayDevice::query()->where('venue_id', $venue->id)->where('code', 'eram-park-activation-display')->count());
+        $this->assertSame(1, CampaignSponsorship::query()->where('campaign_id', $campaign->id)->where('status', 'active')->count());
+        $this->assertSame(1, UserAccessScope::query()->where('role_key', 'venue_executive')->where('scope_type', 'venue')->where('scope_id', $venue->id)->count());
+        $this->assertDatabaseHas('event_log', [
+            'event_type' => 'audit.venue_operational_cycle_activated',
+            'actor_user_id' => $admin->id,
+            'object_type' => 'venue',
+            'object_id' => $venue->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.venues.api.activate', $venue))
+            ->assertOk()
+            ->assertJsonPath('data.counts.zones', 1)
+            ->assertJsonPath('data.counts.campaigns', 1)
+            ->assertJsonPath('data.counts.qrCodes', 1)
+            ->assertJsonPath('data.counts.partners', 3)
+            ->assertJsonPath('data.counts.missions', 4)
+            ->assertJsonPath('data.counts.rewards', 3);
     }
 
     public function test_admin_can_generate_facility_suggestions_from_source_text(): void
