@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\DemoCycleController;
 use App\Http\Controllers\Admin\DisplayOperationsController;
 use App\Http\Controllers\Admin\FinanceWalletController;
 use App\Http\Controllers\Admin\InternalOperationsController;
+use App\Http\Controllers\Admin\MarketingLeadInboxController;
 use App\Http\Controllers\Admin\MissionRewardBlueprintController;
 use App\Http\Controllers\Admin\MissionRewardRegistryController;
 use App\Http\Controllers\Admin\PartnerRegistryController;
@@ -239,6 +240,13 @@ Route::post('/admin/demo-cycle/run-stress-demo', [DemoCycleController::class, 'r
 Route::get('/admin/commercialization', [CommercializationController::class, 'page'])
     ->middleware(['auth', 'role:admin,regional_admin,operator,viewer'])
     ->name('admin.commercialization.page');
+
+Route::get('/admin/marketing-leads', [MarketingLeadInboxController::class, 'page'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator,viewer'])
+    ->name('admin.marketing-leads.page');
+Route::patch('/admin/marketing-leads/{lead}/status', [MarketingLeadInboxController::class, 'updateStatus'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.marketing-leads.status.update');
 
 Route::get('/admin/finance-wallets', [FinanceWalletController::class, 'page'])
     ->middleware(['auth', 'role:admin,regional_admin,operator,viewer'])
@@ -484,6 +492,13 @@ Route::get('/api/v1/admin/campaign-participants', [CampaignParticipantController
 Route::post('/api/v1/admin/campaign-participants', [CampaignParticipantController::class, 'store'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.campaign-participants.api.store');
+
+Route::get('/api/v1/admin/marketing-leads', [MarketingLeadInboxController::class, 'index'])
+    ->middleware(['auth', 'role:admin,regional_admin,operator,viewer'])
+    ->name('admin.marketing-leads.index');
+Route::patch('/api/v1/admin/marketing-leads/{lead}/status', [MarketingLeadInboxController::class, 'updateStatus'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.marketing-leads.api.status.update');
 
 Route::get('/api/v1/admin/sponsors', [SponsorActivationController::class, 'index'])
     ->middleware(['auth', 'role:admin,regional_admin,operator,viewer,hub_manager'])

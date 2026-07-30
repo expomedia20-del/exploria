@@ -69,6 +69,7 @@ const stages: InternalStage[] = [
         icon: BadgeDollarSign,
         pages: [
             { href: '/admin/commercialization', label: 'تجاری‌سازی' },
+            { href: '/admin/marketing-leads', label: 'صندوق درخواست دمو' },
             { href: '/admin/finance-wallets', label: 'اقتصاد و کیف پول' },
         ],
     },

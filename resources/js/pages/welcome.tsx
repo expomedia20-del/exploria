@@ -179,7 +179,14 @@ const revenuePacks = [
 
 const focusProfiles: Record<
     string,
-    { eyebrow: string; headline: string; summary: string; audienceType: string }
+    {
+        eyebrow: string;
+        headline: string;
+        summary: string;
+        audienceType: string;
+        demoLabel: string;
+        demoHint: string;
+    }
 > = {
     home: {
         eyebrow: 'پلتفرم کمپین‌های تجربه‌سازی و درآمدزایی مکان‌ها',
@@ -187,6 +194,9 @@ const focusProfiles: Record<
         summary:
             'بازدیدکننده با QR وارد مسیر مأموریت، پاداش، پیشنهاد واحدها و گزارش قابل ارائه می‌شود.',
         audienceType: 'venue',
+        demoLabel: 'مشاهده دموی نمونه اکوپارک',
+        demoHint:
+            'دمو با داده نمونه اکوپارک عباس‌آباد اجرا می‌شود تا مسیر QR، مأموریت، پاداش و گزارش را نشان دهد.',
     },
     venues: {
         eyebrow: 'راهکار اکسپلوریا برای مکان‌های گردشگری و تفریحی',
@@ -194,20 +204,31 @@ const focusProfiles: Record<
         summary:
             'اکسپلوریا امکانات مکان را به QR، مأموریت، گنج، پاداش، تبلیغات و گزارش اجرایی وصل می‌کند.',
         audienceType: 'venue',
+        demoLabel: 'مشاهده دموی مکان اکوپارک',
+        demoHint:
+            'این دمو نمونه اجرایی اکوپارک عباس‌آباد است و برای ارزیابی مکان‌هایی مثل برج، پارک یا شهربازی قابل تطبیق خواهد بود.',
     },
     'commercial-units': {
         eyebrow: 'راهکار اکسپلوریا برای فروشگاه، فودکورت و واحد تجاری',
-        headline: 'مراجعه بازدیدکننده را به پیشنهاد، مصرف کد و فروش قابل پیگیری تبدیل کنید',
+        headline:
+            'مراجعه بازدیدکننده را به پیشنهاد، مصرف کد و فروش قابل پیگیری تبدیل کنید',
         summary:
             'واحد تجاری در کمپین مکان دیده می‌شود، پاداش تعریف می‌کند و اثر مراجعه و مصرف را در پنل خود می‌بیند.',
         audienceType: 'commercial_unit',
+        demoLabel: 'مشاهده مسیر فروشگاه در دموی اکوپارک',
+        demoHint:
+            'شروع دمو کاربر را وارد نمونه اکوپارک می‌کند تا نقش فروشگاه، پیشنهاد، مصرف پاداش و اثر مراجعه را ببیند.',
     },
     visitors: {
         eyebrow: 'راهکار اکسپلوریا برای جذب و مشارکت بازدیدکننده',
-        headline: 'بازدید معمولی را به بازی، مأموریت، امتیاز و برگشت دوباره تبدیل کنید',
+        headline:
+            'بازدید معمولی را به بازی، مأموریت، امتیاز و برگشت دوباره تبدیل کنید',
         summary:
             'کاربر با QR وارد تجربه می‌شود، مسیر را دنبال می‌کند، پاداش می‌گیرد و با پیشنهادهای مرتبط ادامه می‌دهد.',
         audienceType: 'visitor_growth',
+        demoLabel: 'تجربه بازدیدکننده در دموی اکوپارک',
+        demoHint:
+            'این مسیر یک نمونه واقعی‌نما از ورود QR، رضایت، مأموریت و پاداش در اکوپارک عباس‌آباد است.',
     },
 };
 
@@ -305,7 +326,7 @@ export default function Welcome({
                                     href={`/scan/${demoQrCode}`}
                                     className="inline-flex h-10 items-center gap-2 rounded-md bg-emerald-400 px-4 font-semibold text-zinc-950 hover:bg-emerald-300"
                                 >
-                                    شروع دمو
+                                    {focus.demoLabel}
                                     <ArrowLeft className="size-4" />
                                 </Link>
                             </nav>
@@ -348,7 +369,7 @@ export default function Welcome({
                                         href={`/scan/${demoQrCode}`}
                                         className="inline-flex h-12 items-center gap-2 rounded-md bg-emerald-400 px-5 text-sm font-semibold text-zinc-950 hover:bg-emerald-300"
                                     >
-                                        شروع دموی اکوپارک
+                                        {focus.demoLabel}
                                         <QrCode className="size-4" />
                                     </Link>
                                     <Link
@@ -374,9 +395,9 @@ export default function Welcome({
                                     </Link>
                                 </div>
                                 <p className="mx-auto mt-3 max-w-2xl text-xs leading-6 text-zinc-400">
-                                    صفحه تجاری‌سازی و چرخه دمو با حساب داخلی باز
-                                    می‌شوند؛ حساب بازدیدکننده به تجربه QR و
-                                    داشبورد خودش هدایت می‌شود.
+                                    {focus.demoHint} صفحه تجاری‌سازی و چرخه دمو
+                                    با حساب داخلی باز می‌شوند؛ حساب بازدیدکننده
+                                    به تجربه QR و داشبورد خودش هدایت می‌شود.
                                 </p>
                             </div>
                         </div>
