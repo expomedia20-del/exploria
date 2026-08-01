@@ -53,7 +53,7 @@ class MarketingLeadInboxController extends Controller
 
         abort_unless($user instanceof User, 401);
 
-        $lead = $service->updateStatus($lead, $request->validated());
+        $lead = $service->updateStatus($lead, $request->payload());
         $audit->execute($user, 'marketing_lead.status_updated', 'marketing_lead', $lead->id, $request->session()->getId(), [
             'status' => $lead->status,
             'audience_type' => $lead->audience_type,

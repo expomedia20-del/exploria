@@ -21,4 +21,17 @@ class UpdateMarketingLeadStatusRequest extends FormRequest
             'internal_notes' => ['nullable', 'string', 'max:1200'],
         ];
     }
+
+    /** @return array{status: string, internal_notes: string|null} */
+    public function payload(): array
+    {
+        $validated = $this->validated();
+
+        return [
+            'status' => (string) $validated['status'],
+            'internal_notes' => isset($validated['internal_notes'])
+                ? (string) $validated['internal_notes']
+                : null,
+        ];
+    }
 }

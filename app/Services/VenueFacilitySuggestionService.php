@@ -6,11 +6,20 @@ use App\Models\Venue;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 
+/**
+ * @phpstan-type FacilityCandidate array{name: string, confidence: string, field_review_required: bool}
+ * @phpstan-type EnrichedSuggestion array{name: string, function: string, campaignUses: array<int, string>, priority: string, notes: string, confidence: string, fieldReviewRequired: bool, source: string}
+ * @phpstan-type FacilitySuggestion array{name: string, function: string, campaignUses: array<int, string>, priority: string, notes: string, confidence: string, fieldReviewRequired: bool, source: string, alreadyExists: bool}
+ * @phpstan-type SuggestionResult array{suggestions: array<int, FacilitySuggestion>, summary: array{count: int, newCount: int, existingCount: int, sourceMode: string, needsHumanReview: bool}}
+ */
 class VenueFacilitySuggestionService
 {
     private const MAX_SUGGESTIONS = 40;
 
-    /** @param array<string, mixed> $data */
+    /**
+     * @param  array<string, mixed>  $data
+     * @return SuggestionResult
+     */
     public function suggest(Venue $venue, array $data): array
     {
         $sourceText = $this->sourceText($venue, $data);
@@ -51,15 +60,25 @@ class VenueFacilitySuggestionService
     public function applySuggestions(Venue $venue, array $data): Venue
     {
         $result = $this->suggest($venue, $data);
-        $suggestions = collect($result['suggestions'])
-            ->reject(fn (array $suggestion): bool => (bool) ($suggestion['alreadyExists'] ?? false))
-            ->map(function (array $suggestion): array {
-                unset($suggestion['alreadyExists']);
+        $suggestions = [];
 
-                return $suggestion;
-            })
-            ->values()
-            ->all();
+        foreach ($result['suggestions'] as $suggestion) {
+            if ($suggestion['alreadyExists']) {
+                continue;
+            }
+
+            $suggestions[] = [
+                'name' => $suggestion['name'],
+                'function' => $suggestion['function'],
+                'campaignUses' => $suggestion['campaignUses'],
+                'priority' => $suggestion['priority'],
+                'notes' => $suggestion['notes'],
+                'confidence' => $suggestion['confidence'],
+                'fieldReviewRequired' => $suggestion['fieldReviewRequired'],
+                'source' => $suggestion['source'],
+            ];
+        }
+
         $metadata = is_array($venue->metadata) ? $venue->metadata : [];
         $profile = Arr::get($metadata, 'location_profile', []);
         $profile = is_array($profile) ? $profile : [];
@@ -93,7 +112,10 @@ class VenueFacilitySuggestionService
         return $venue->refresh();
     }
 
-    /** @param array{name: string, confidence: string, field_review_required: bool} $candidate */
+    /**
+     * @param  FacilityCandidate  $candidate
+     * @return EnrichedSuggestion
+     */
     private function enrich(array $candidate, ?string $source): array
     {
         $name = $candidate['name'];
@@ -114,6 +136,7 @@ class VenueFacilitySuggestionService
         ];
     }
 
+    /** @param array<string, mixed> $data */
     private function sourceText(Venue $venue, array $data): string
     {
         return collect([
@@ -125,7 +148,7 @@ class VenueFacilitySuggestionService
             ->implode("\n");
     }
 
-    /** @return Collection<int, array{name: string, confidence: string, field_review_required: bool}> */
+    /** @return Collection<int, FacilityCandidate> */
     private function candidateNames(string $sourceText): Collection
     {
         $text = html_entity_decode(strip_tags($sourceText), ENT_QUOTES | ENT_HTML5, 'UTF-8');
@@ -140,7 +163,7 @@ class VenueFacilitySuggestionService
             ->values();
     }
 
-    /** @return array<int, array{name: string, confidence: string, field_review_required: bool}> */
+    /** @return array<int, FacilityCandidate> */
     private function lineCandidates(string $line): array
     {
         $line = preg_replace('/^[\s\-\*\x{2022}\x{2013}\x{2014}0-9۰-۹\.\(\)\[\]]+/u', '', $line) ?? $line;

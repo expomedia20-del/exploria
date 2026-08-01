@@ -118,7 +118,10 @@ class VenueActivationService
         ]);
     }
 
-    /** @param array<string, mixed> $profile */
+    /**
+     * @param  array<string, mixed>  $profile
+     * @return array<int, array{name: string, function: string, campaignUses: array<int, string>, priority: string, notes: string|null, confidence: string, fieldReviewRequired: bool, source: string}>
+     */
     private function facilities(array $profile): array
     {
         $facilities = collect(is_array($profile['facilities'] ?? null) ? $profile['facilities'] : [])
@@ -136,16 +139,26 @@ class VenueActivationService
             ->merge($defaults)
             ->unique(fn (array $item): string => Str::lower(trim((string) $item['name'])))
             ->take(12)
-            ->map(fn (array $item): array => [
-                'name' => (string) $item['name'],
-                'function' => $item['function'] ?? 'discovery',
-                'campaignUses' => array_values(array_unique($item['campaignUses'] ?? ['mission'])),
-                'priority' => $item['priority'] ?? 'secondary',
-                'notes' => $item['notes'] ?? null,
-                'confidence' => $item['confidence'] ?? 'medium',
-                'fieldReviewRequired' => (bool) ($item['fieldReviewRequired'] ?? true),
-                'source' => $item['source'] ?? 'venue_profile',
-            ])
+            ->map(function (array $item): array {
+                $campaignUses = is_array($item['campaignUses'] ?? null)
+                    ? $item['campaignUses']
+                    : ['mission'];
+                $notes = $item['notes'] ?? null;
+
+                return [
+                    'name' => (string) $item['name'],
+                    'function' => (string) ($item['function'] ?? 'discovery'),
+                    'campaignUses' => array_values(array_unique(array_map(
+                        static fn (mixed $use): string => (string) $use,
+                        $campaignUses,
+                    ))),
+                    'priority' => (string) ($item['priority'] ?? 'secondary'),
+                    'notes' => filled($notes) ? (string) $notes : null,
+                    'confidence' => (string) ($item['confidence'] ?? 'medium'),
+                    'fieldReviewRequired' => (bool) ($item['fieldReviewRequired'] ?? true),
+                    'source' => (string) ($item['source'] ?? 'venue_profile'),
+                ];
+            })
             ->values()
             ->all();
     }
@@ -358,7 +371,10 @@ class VenueActivationService
         );
     }
 
-    /** @param array<int, PartnerAccount> $partners */
+    /**
+     * @param  array<int, PartnerAccount>  $partners
+     * @return array{RewardDefinition, RewardDefinition, RewardDefinition}
+     */
     private function rewards(Venue $venue, Campaign $campaign, array $partners, MissionInstance $mission, Treasure $treasure): array
     {
         return [

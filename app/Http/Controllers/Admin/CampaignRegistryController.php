@@ -83,6 +83,7 @@ class CampaignRegistryController extends Controller
 
         return back()->with('success', 'کمپین حذف شد.');
     }
+
     public function archive(Request $request, Campaign $campaign, CampaignRegistryService $service, RecordAdminAuditAction $audit): JsonResponse|RedirectResponse
     {
         $archived = $service->archive($campaign, $request->user());

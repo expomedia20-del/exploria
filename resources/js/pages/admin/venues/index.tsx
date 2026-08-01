@@ -1393,7 +1393,8 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                                                                 {confidenceLabels[
                                                                                     facility.confidence ??
                                                                                         'medium'
-                                                                                ] ?? 'متوسط'}
+                                                                                ] ??
+                                                                                    'متوسط'}
                                                                             </span>
                                                                             <span className="text-muted-foreground">
                                                                                 {facility.fieldReviewRequired
@@ -1597,7 +1598,9 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                                 <Form
                                                     action={`/admin/venues/${venue.id}/activation`}
                                                     method="post"
-                                                    options={{ preserveScroll: true }}
+                                                    options={{
+                                                        preserveScroll: true,
+                                                    }}
                                                 >
                                                     {({
                                                         processing,
@@ -1616,14 +1619,15 @@ export default function VenueRegistryIndex({ venues }: Props) {
                                                                 ) : (
                                                                     <WandSparkles className="size-4" />
                                                                 )}
-                                                                فعال‌سازی چرخه پایه مکان
+                                                                فعال‌سازی چرخه
+                                                                پایه مکان
                                                             </button>
                                                             {wasSuccessful ? (
                                                                 <p className="text-xs text-emerald-700 dark:text-emerald-300">
-                                                                    اسکلت عملیاتی
-                                                                    برای همین
-                                                                    مکان ساخته
-                                                                    شد.
+                                                                    اسکلت
+                                                                    عملیاتی برای
+                                                                    همین مکان
+                                                                    ساخته شد.
                                                                 </p>
                                                             ) : null}
                                                         </div>

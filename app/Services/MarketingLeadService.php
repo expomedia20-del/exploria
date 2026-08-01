@@ -97,9 +97,9 @@ class MarketingLeadService
             'statusLabel' => $this->statusLabel($lead->status),
             'sourcePath' => $lead->source_path,
             'internalNotes' => $lead->metadata['internal_notes'] ?? null,
-            'createdAt' => $lead->created_at?->toIso8601String(),
-            'createdAtLabel' => $lead->created_at?->timezone('Asia/Tehran')->format('Y/m/d H:i'),
-            'updatedAt' => $lead->updated_at?->toIso8601String(),
+            'createdAt' => $lead->created_at->toIso8601String(),
+            'createdAtLabel' => $lead->created_at->timezone('Asia/Tehran')->format('Y/m/d H:i'),
+            'updatedAt' => $lead->updated_at->toIso8601String(),
         ];
     }
 
