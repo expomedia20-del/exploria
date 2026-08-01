@@ -7,7 +7,7 @@
 | نوع سند | Working Status Snapshot - غیرجایگزین اسناد Canonical |
 | تاریخ Snapshot | 2026-08-01 |
 | Codebase | Laravel + React Monolith / Inertia-style |
-| شاخه مبنا | `fix/phase-13-quality-gates` |
+| شاخه مبنا | `main` |
 | هدف | تفکیک روشن قابلیت‌های آماده، نمایشی، مسدود پیش از پایلوت و خارج از Scope |
 
 این رجیستر وضعیت اجرایی Codebase را ثبت می‌کند و جایگزین BRD، FRD، Scope Lock، Backlog یا اسناد Governance مصوب نیست. در صورت تعارض، سلسله‌مراتب سند 21 اعمال می‌شود.
@@ -76,7 +76,7 @@
 
 ## 5. Blockerهای رسمی پیش از پایلوت
 
-1. قفل Pilot Charter شامل مکان، زمان، نقش‌ها، KPI، بودجه و Decision Gate.
+1. Pilot Charter در `docs/pilot/EXPLORIA_EcoPark_Pilot_Charter_v0.1.md` تدوین شده است؛ قفل نهایی تاریخ، اشخاص، KPI و بودجه به تأیید Product Owner نیاز دارد.
 2. اجرای Test Suite و Migration روی PostgreSQL واقعی.
 3. Provider واقعی OTP و حذف کامل OTP ثابت از محیط غیرLocal.
 4. متن حقوقی Consent و سیاست Data Governance.
