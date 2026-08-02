@@ -33,6 +33,7 @@ type Props = {
         partnerName: string | null;
         description: string | null;
     }[];
+    entryUrl: string;
     gamePhysicalScan: {
         role: 'onsite_gate' | 'physical_checkpoint';
         checkpointKey: string | null;
@@ -75,6 +76,7 @@ export default function ScanLanding({
     qr,
     missionPreview,
     rewardOptions,
+    entryUrl,
     gamePhysicalScan,
 }: Props) {
     const physicalStateTone =
@@ -354,22 +356,14 @@ export default function ScanLanding({
                       !gamePhysicalScan.isAuthenticated ? (
                         <Button
                             className="mt-6 h-11 w-full"
-                            onClick={() =>
-                                window.location.assign(
-                                    `/access?sourceQrCode=${encodeURIComponent(qr.code)}`,
-                                )
-                            }
+                            onClick={() => window.location.assign(entryUrl)}
                         >
                             ورود با حساب بازی و اتصال به مجوز موجود
                         </Button>
                     ) : !gamePhysicalScan ? (
                         <Button
                             className="mt-6 h-11 w-full"
-                            onClick={() =>
-                                window.location.assign(
-                                    `/access?sourceQrCode=${encodeURIComponent(qr.code)}`,
-                                )
-                            }
+                            onClick={() => window.location.assign(entryUrl)}
                         >
                             شروع تجربه
                         </Button>

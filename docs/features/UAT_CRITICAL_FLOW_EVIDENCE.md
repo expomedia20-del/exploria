@@ -48,3 +48,17 @@
 - PHPStan، Pint، ESLint، Prettier، TypeScript و Production Build — PASS.
 - Audit وابستگی‌های npm و Composer در ۲۰۲۶-۰۷-۱۹ — PASS، بدون Advisory شناخته‌شده.
 - Stress Demo با سفر کامل بازدیدکننده و مصرف پاداش — PASS، پیشرفت چک‌لیست ۱۰۰٪.
+
+## اجرای مرحله چهارم — ۲۰۲۶-۰۸-۰۲
+
+وضعیت `PARTIAL PASS` قبلی با اجرای تعاملی واقعی در مرورگر جایگزین شد. مسیر QR، OTP محلی، Consent، Visit، پنج مرحله آنلاین، صدور مجوز، چهار گام حضوری، گنج پایانی، پنل مشارکت‌کننده و Event Monitor با کلیک و ارسال فرم واقعی اجرا شد.
+
+- نتیجه مسیر: ۹ از ۹ مرحله، ۴ از ۴ گام حضوری و ۸۲۰ امتیاز — PASS.
+- Demo Readiness: ۱۹ PASS، صفر Warning و صفر Fail.
+- Campaign Assurance با الزام شواهد اجرا: ۱۰ PASS، صفر Warning و صفر Fail.
+- کنترل Desktop، Mobile 390 و Tablet 768: RTL و بدون سرریز افقی — PASS.
+- یک نقص بازگشت تکراری Visitor احراز‌شده به OTP کشف، اصلاح و با دو تست رگرسیون و اجرای مجدد مرورگر تأیید شد.
+- PHPUnit کامل: ۳۶۳ تست و ۴۶۹۱ Assertion — PASS.
+- PHPStan، Pint، ESLint، Prettier، TypeScript، Build و Audit وابستگی‌ها — PASS.
+
+نتیجه جاری UAT محلی: **PASS**. این نتیجه مجوز Production Go-Live نیست؛ متن حقوقی نهایی Consent و کنترل‌های محیط واقعی همچنان پیش‌نیاز اجرای عمومی‌اند. گزارش و تصاویر در `docs/uat/EXPLORIA_Stage_4_UAT_Dry_Run_v1.0.md` ثبت شده‌اند.

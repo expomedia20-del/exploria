@@ -51,3 +51,23 @@
 ## وضعیت تست خودکار
 
 این قرارداد در تست `tests/Feature/Auth/RolePanelJourneyTest.php` پوشش داده شده است. هر تغییر بعدی در نقش‌ها، سایدبار، مقصد ورود یا Route middleware باید این تست را سبز نگه دارد.
+
+## نتیجه اجرای مرورگری مرحله چهارم — ۲۰۲۶-۰۸-۰۲
+
+- Admin مرکزی: داشبورد، چرخه دمو و Event Monitor — PASS.
+- Admin منطقه‌ای: حساب Seeder و داشبورد Scopeشده — PASS.
+- Viewer: داشبورد خواندنی — PASS.
+- Visitor: پنل مشارکت‌کننده و مسیر کامل ۹ از ۹ — PASS.
+- مدیر مکان: `/venue/dashboard` — PASS.
+- مدیر رواق: `/ravaq/dashboard` — PASS.
+- Partner: `/partner/dashboard` — PASS.
+- Sponsor: `/sponsor/dashboard` — PASS.
+- فروشگاه رواق و مدیر پروژه در تست خودکار Role Journey — PASS.
+
+کنترل‌های منفی در مرورگر:
+
+- Partner به `/admin/access-scopes`: پاسخ 403 — PASS.
+- Viewer به `/admin/display-operations`: پاسخ 403 — PASS.
+- Sponsor به `/partner/dashboard` و `/partner/ads`: پاسخ 403 — PASS.
+
+تست هدفمند نقش‌ها و جریان بحرانی در مجموعه ۳۵ تست و ۱۰۴۰ Assertion و تست کامل پروژه در مجموعه ۳۶۳ تست و ۴۶۹۱ Assertion سبز است. جزئیات و تصاویر در `docs/uat/EXPLORIA_Stage_4_UAT_Dry_Run_v1.0.md` قرار دارد.

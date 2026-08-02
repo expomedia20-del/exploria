@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Consent;
 
+use App\Enums\UserRole;
 use App\Models\ConsentVersion;
 use App\Models\MissionInstance;
 use App\Models\User;
@@ -61,6 +62,37 @@ class ConsentFlowTest extends TestCase
             ->get('/consent')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page->component('consent'));
+    }
+
+    public function test_scan_landing_sends_an_authenticated_visitor_directly_to_consent(): void
+    {
+        $this->withoutVite();
+        $this->seed(PilotLocationSeeder::class);
+
+        $visitor = User::factory()->create(['role' => UserRole::Visitor]);
+
+        $this->actingAs($visitor)
+            ->get('/scan/'.PilotLocationSeeder::DEMO_QR_CODE)
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('scan/landing')
+                ->where('entryUrl', route('visitor.consent', [
+                    'sourceQrCode' => PilotLocationSeeder::DEMO_QR_CODE,
+                ])));
+    }
+
+    public function test_scan_landing_sends_a_guest_to_otp_entry(): void
+    {
+        $this->withoutVite();
+        $this->seed(PilotLocationSeeder::class);
+
+        $this->get('/scan/'.PilotLocationSeeder::DEMO_QR_CODE)
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('scan/landing')
+                ->where('entryUrl', route('visitor.otp', [
+                    'sourceQrCode' => PilotLocationSeeder::DEMO_QR_CODE,
+                ])));
     }
 
     public function test_acceptance_records_version_user_timestamp_session_and_source(): void

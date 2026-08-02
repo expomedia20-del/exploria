@@ -131,6 +131,9 @@ class ScanLandingController extends Controller
             ],
             'missionPreview' => $missionPreview,
             'rewardOptions' => $rewardOptions,
+            'entryUrl' => $isVisitor
+                ? route('visitor.consent', ['sourceQrCode' => $qr->code])
+                : route('visitor.otp', ['sourceQrCode' => $qr->code]),
             'gamePhysicalScan' => $isPhysicalGameQr ? [
                 'role' => $gameQrRole,
                 'checkpointKey' => data_get($qr->metadata, 'checkpoint_key'),
