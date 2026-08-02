@@ -18,13 +18,19 @@ class HttpOtpProvider implements OtpProvider
             throw new RuntimeException('OTP HTTP provider is not configured.');
         }
 
+        $endpointParts = parse_url(trim($endpoint));
+
+        if (! is_array($endpointParts) || ($endpointParts['scheme'] ?? null) !== 'https' || ! isset($endpointParts['host'])) {
+            throw new RuntimeException('OTP HTTP provider requires a valid HTTPS endpoint.');
+        }
+
         $code = (string) random_int(100000, 999999);
 
         $response = Http::timeout((int) config('otp.http.timeout_seconds'))
             ->acceptJson()
             ->asJson()
             ->withToken($token)
-            ->post($endpoint, [
+            ->post(trim($endpoint), [
                 'mobile' => $mobile,
                 'code' => $code,
                 'sender' => is_string($sender) && trim($sender) !== '' ? $sender : null,

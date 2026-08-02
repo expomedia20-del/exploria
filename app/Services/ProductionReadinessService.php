@@ -49,8 +49,8 @@ class ProductionReadinessService
             $this->check(
                 'app_key',
                 'کلید رمزنگاری برنامه',
-                is_string(config('app.key')) && config('app.key') !== '',
-                config('app.key') ? 'configured' : 'missing',
+                is_string(config('app.key')) && trim((string) config('app.key')) !== '',
+                is_string(config('app.key')) && trim((string) config('app.key')) !== '' ? 'configured' : 'missing',
                 'APP_KEY باید خارج از مخزن و در Environment تنظیم شود.',
             ),
             $this->check(
@@ -104,13 +104,18 @@ class ProductionReadinessService
             ),
             $this->check(
                 'secure_cookie',
-                'Cookie امن Session',
-                config('session.secure') === true && config('session.http_only') === true,
+                'امنیت Session',
+                config('session.secure') === true
+                    && config('session.http_only') === true
+                    && config('session.encrypt') === true
+                    && in_array(config('session.same_site'), ['lax', 'strict'], true),
                 [
                     'secure' => config('session.secure'),
                     'httpOnly' => config('session.http_only'),
+                    'encrypted' => config('session.encrypt'),
+                    'sameSite' => config('session.same_site'),
                 ],
-                'SESSION_SECURE_COOKIE و SESSION_HTTP_ONLY باید فعال باشند.',
+                'SESSION_SECURE_COOKIE، SESSION_HTTP_ONLY و SESSION_ENCRYPT باید فعال و SESSION_SAME_SITE برابر lax یا strict باشد.',
             ),
             $this->check(
                 'logging',
@@ -194,14 +199,20 @@ class ProductionReadinessService
         }
 
         if ($this->otpProvider instanceof HttpOtpProvider) {
-            $endpointConfigured = is_string(config('otp.http.endpoint')) && trim((string) config('otp.http.endpoint')) !== '';
+            $endpoint = config('otp.http.endpoint');
+            $endpointParts = is_string($endpoint) ? parse_url(trim($endpoint)) : false;
+            $endpointConfigured = is_array($endpointParts)
+                && ($endpointParts['scheme'] ?? null) === 'https'
+                && isset($endpointParts['host']);
             $tokenConfigured = is_string(config('otp.http.token')) && trim((string) config('otp.http.token')) !== '';
 
             return [
                 $endpointConfigured && $tokenConfigured,
                 [
                     'provider' => class_basename($this->otpProvider),
-                    'endpoint' => $endpointConfigured ? 'configured' : 'missing',
+                    'endpoint' => $endpointConfigured
+                        ? 'securely-configured'
+                        : (is_string($endpoint) && trim($endpoint) !== '' ? 'insecure-or-invalid' : 'missing'),
                     'token' => $tokenConfigured ? 'configured' : 'missing',
                 ],
             ];

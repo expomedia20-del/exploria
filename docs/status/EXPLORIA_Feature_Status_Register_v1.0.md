@@ -5,7 +5,7 @@
 | فیلد | مقدار |
 |---|---|
 | نوع سند | Working Status Snapshot - غیرجایگزین اسناد Canonical |
-| تاریخ Snapshot | 2026-08-01 |
+| تاریخ Snapshot | 2026-08-02 |
 | Codebase | Laravel + React Monolith / Inertia-style |
 | شاخه مبنا | `main` |
 | هدف | تفکیک روشن قابلیت‌های آماده، نمایشی، مسدود پیش از پایلوت و خارج از Scope |
@@ -31,13 +31,13 @@
 | Modelهای Laravel | 52 |
 | Serviceهای Domain/Application | 34 |
 | فایل‌های تست PHP | 59 |
-| نتیجه Test Suite | 358 Test / 4652 Assertion / 0 Failure |
+| نتیجه Test Suite | 361 Test / 4671 Assertion / 0 Failure |
 | تحلیل ایستا و کیفیت | PHPStan 0 Error؛ ESLint، TypeScript، Pint و Prettier موفق |
 | Build تولیدی | 2339 Module / موفق |
 | Demo Readiness | 19 Pass / 0 Warning / 0 Fail |
 | Production Readiness در محیط Local | 4 Pass / 8 Fail - مورد انتظار برای Local |
-| NPM Audit پس از Stage 1 | 0 Vulnerability |
-| Composer Audit پس از Stage 1 | 0 Advisory / 0 Abandoned Package |
+| NPM Audit پس از Stage 3 | 0 Vulnerability |
+| Composer Audit پس از Stage 3 | 0 Advisory / 0 Abandoned Package |
 
 ## 4. ماتریس وضعیت قابلیت‌ها
 
@@ -47,7 +47,7 @@
 | وب عمومی | Landing بازاریابی فارسی، معرفی مخاطبان، پکیج‌ها و ثبت درخواست دمو | `/`، `welcome.tsx`، `MarketingLandingController` | `DEMO_READY` | بازبینی متن فروش و اتصال فرآیند پیگیری واقعی |
 | برد ارائه | ورود رسمی جلسه، اکوسیستم، پروپوزال و مأموریت‌های نمایشی | `/demo` و صفحات `resources/js/pages/demo` | `DEMO_READY` | اسکریپت ارائه و Reset داده قبل از جلسه |
 | Authentication | ورود Session، بازیابی رمز، تأیید ایمیل، 2FA/Passkey و مسیرهای امنیت حساب | Fortify، صفحات `auth` و `settings/security` | `VERIFIED_LOCAL` | سیاست حساب سازمانی و MFA پیش از Production |
-| OTP | Contract/Provider، Rate Limit و OTP ثابت Local/Test | `/access`، `RequestOtpAction`، `VerifyOtpAction` و تست‌های Auth | `PILOT_BLOCKED` | Provider واقعی، هزینه، SLA و Fail-Closed در Staging |
+| OTP | Contract/Provider، Rate Limit، OTP ثابت Local/Test و الزام HTTPS برای Provider بیرونی | `/access`، `HttpOtpProvider` و تست‌های Auth/Readiness | `PILOT_BLOCKED` | Provider واقعی، Credential، هزینه، SLA و آزمون ارسال در Staging |
 | Consent | Consent نسخه‌دار و ثبت پذیرش با زمان و Subject | `/consent`، مدل‌ها و تست‌های Consent | `PILOT_BLOCKED` | متن حقوقی نهایی و سیاست نگهداری/حذف داده |
 | مدل مکان | Venue، Zone، Hub، Touchpoint، پروفایل و فعال‌سازی مکان | `/admin/venues`، `VenueActivationService` | `DEMO_READY` | داده میدانی، مالک هر نقطه و تأیید نصب واقعی |
 | کمپین | Registry، Builder، Blueprint، Activation و نقشه عملیات | `/admin/campaigns`، `/admin/campaign-builder` | `DEMO_READY` | قفل کمپین پایلوت و UAT نقش‌محور |
@@ -66,8 +66,8 @@
 | تجاری‌سازی | بسته‌های فروش، Sponsor/Merchant Narrative و Lead Inbox | `/admin/commercialization`، `/admin/marketing-leads` | `DEMO_READY` | قیمت‌گذاری، Sales Playbook و مالک پیگیری Lead |
 | پشتیبانی | راهنمای نقش، صفحه Support و مسیرهای دسترسی مشترک | `/admin/support`، `/admin/users/guide` | `DEMO_READY` | SLA، Ticket/Complaint Workflow و Escalation واقعی |
 | چرخه دمو | چک‌لیست 72 ساعت، روز اجرا، خروجی فروش و Stress Demo | `/admin/demo-cycle`، Readiness Serviceها | `DEMO_READY` | تبدیل چک‌لیست Demo به Runbook پایلوت مصوب |
-| PostgreSQL | Configuration، Migration و فایل تست PostgreSQL موجود است | `.env.example`، `phpunit.pgsql.xml`، Migrationها | `PILOT_BLOCKED` | اجرای کامل Migration/Test در PostgreSQL Staging |
-| استقرار | Release-based Staging Deploy، Backup Gate، Rollback و `/up` | `scripts/deploy-staging.sh` و Backup Scriptها | `PRODUCTION_BLOCKED` | Provisioning Staging و اجرای واقعی Deployment Drill |
+| PostgreSQL | Server 18، Client Tooling، PHP Extension، Configuration و تست Fail-Closed موجود است | `.env.example`، `phpunit.pgsql.xml` و اسکریپت‌های PostgreSQL | `PILOT_BLOCKED` | ارائه Credential ایزوله و اجرای Migration/Test/Backup/Restore |
+| استقرار | Release-based Deploy، Backup Gate، Rollback، `/up` و Preflight امنیت Session/OTP | `scripts/deploy-staging.sh` و `docs/staging/EXPLORIA_Stage_3_Staging_Readiness_v1.0.md` | `PRODUCTION_BLOCKED` | Provisioning سرور/دامنه و اجرای واقعی Deployment Drill |
 | Logging/Monitoring | Application Log، Event/Audit پایه و Production Readiness Check | Logging Config و Audit Actionها | `PRODUCTION_BLOCKED` | Retention، Central Logging، Metrics و Alerting |
 | Offline | پیام خطا/Retry و Fallback محدود؛ Sync کامل پیاده‌سازی نشده است | تصمیم OD-006 و Scope Lock | `OUT_OF_SCOPE` | Change Request پس از اثبات نیاز پایلوت |
 | حقوقی و Data Governance | مدل فنی Consent/Audit موجود؛ سیاست‌های رسمی نهایی نیست | OD-002، OD-009 و CPL-17/18 | `PILOT_BLOCKED` | متن حقوقی، Data Ownership، Retention و Incident Policy |
@@ -85,7 +85,13 @@
 7. Runbook روز اجرا، Support، Incident و Low Connectivity Fallback.
 8. Staging با HTTPS، Queue/Session پایدار، Backup/Restore و Monitoring.
 
-## 6. مواردی که فعلاً نباید توسعه یابند
+## 6. نتیجه Stage 3
+
+آمادگی Repository برای Staging با وضعیت `CONDITIONAL COMPLETE` ثبت شد. Session رمزنگاری‌شده، OTP فقط روی Endpoint معتبر HTTPS، Preflight استقرار، Headerهای Nginx و Runbook عملیاتی آماده‌اند. استقرار بیرونی انجام نشده است، زیرا سرور، دامنه/TLS، PostgreSQL Credential، OTP Credential و سامانه Monitoring واقعی ارائه نشده‌اند.
+
+مرجع Evidence: `docs/staging/EXPLORIA_Stage_3_Staging_Readiness_v1.0.md`
+
+## 7. مواردی که فعلاً نباید توسعه یابند
 
 - Native Mobile App
 - Microservices یا Repository جدا
@@ -94,7 +100,7 @@
 - Analytics پیشرفته بدون KPI و Baseline مصوب
 - توسعه هم‌زمان چند Venue پیش از نتیجه پایلوت اول
 
-## 7. Gate به‌روزرسانی رجیستر
+## 8. Gate به‌روزرسانی رجیستر
 
 این رجیستر باید در نقاط زیر بازبینی شود:
 

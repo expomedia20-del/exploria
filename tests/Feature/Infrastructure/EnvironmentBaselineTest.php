@@ -25,7 +25,10 @@ class EnvironmentBaselineTest extends TestCase
         $this->assertStringContainsString('DB_CONNECTION=pgsql', $stagingEnvironment);
         $this->assertStringContainsString('QUEUE_CONNECTION=database', $stagingEnvironment);
         $this->assertStringContainsString('SESSION_DRIVER=database', $stagingEnvironment);
+        $this->assertStringContainsString('SESSION_ENCRYPT=true', $stagingEnvironment);
         $this->assertStringContainsString('SESSION_SECURE_COOKIE=true', $stagingEnvironment);
+        $this->assertStringContainsString('SESSION_HTTP_ONLY=true', $stagingEnvironment);
+        $this->assertStringContainsString('SESSION_SAME_SITE=lax', $stagingEnvironment);
         $this->assertStringContainsString('OTP_DRIVER=http', $stagingEnvironment);
         $this->assertStringContainsString('OTP_HTTP_TOKEN=', $stagingEnvironment);
         $this->assertStringNotContainsString('OTP_HTTP_TOKEN=sk_', $stagingEnvironment);
@@ -129,6 +132,12 @@ class EnvironmentBaselineTest extends TestCase
         $this->assertStringContainsString("app_environment\" == 'staging'", $deployScript);
         $this->assertStringContainsString("app_debug\" == 'false'", $deployScript);
         $this->assertStringContainsString("database_connection\" == 'pgsql'", $deployScript);
+        $this->assertStringContainsString("session_encrypt\" == 'true'", $deployScript);
+        $this->assertStringContainsString("session_secure_cookie\" == 'true'", $deployScript);
+        $this->assertStringContainsString("session_http_only\" == 'true'", $deployScript);
+        $this->assertStringContainsString("otp_driver\" == 'http'", $deployScript);
+        $this->assertStringContainsString('OTP_HTTP_ENDPOINT must be a valid HTTPS URL', $deployScript);
+        $this->assertStringContainsString('OTP_HTTP_TOKEN must be configured outside the repository', $deployScript);
         $this->assertStringContainsString('EXPLORIA_HEALTH_URL must match APP_URL plus /up', $deployScript);
         $this->assertStringContainsString('git status --porcelain', $deployScript);
         $this->assertStringContainsString('git archive', $deployScript);
@@ -144,6 +153,8 @@ class EnvironmentBaselineTest extends TestCase
         $this->assertStringNotContainsString('rm -rf', $deployScript);
         $this->assertStringContainsString('root /var/www/exploria-staging/current/public;', $nginx);
         $this->assertStringContainsString('X-Robots-Tag "noindex, nofollow, noarchive"', $nginx);
+        $this->assertStringContainsString('Strict-Transport-Security "max-age=31536000; includeSubDomains"', $nginx);
+        $this->assertStringContainsString('Permissions-Policy "camera=(), microphone=(), geolocation=()"', $nginx);
         $this->assertStringContainsString('php8.4-fpm.sock', $nginx);
         $this->assertStringContainsString('User=exploria', $queue);
         $this->assertStringContainsString('queue:work database', $queue);

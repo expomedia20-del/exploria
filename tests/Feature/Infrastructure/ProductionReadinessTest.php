@@ -30,6 +30,8 @@ class ProductionReadinessTest extends TestCase
             'session.driver' => 'database',
             'session.secure' => true,
             'session.http_only' => true,
+            'session.encrypt' => true,
+            'session.same_site' => 'lax',
             'logging.default' => 'stack',
         ]);
         $this->app->bind(OtpProvider::class, fn (): OtpProvider => new class implements OtpProvider
@@ -75,6 +77,41 @@ class ProductionReadinessTest extends TestCase
         $this->assertSame('missing', $otpCheck['actual']['token']);
     }
 
+    public function test_http_otp_driver_rejects_an_insecure_endpoint(): void
+    {
+        config([
+            'otp.driver' => 'http',
+            'otp.http.endpoint' => 'http://sms-provider.example.test/otp',
+            'otp.http.token' => 'configured-outside-repository',
+        ]);
+        $this->app->forgetInstance(OtpProvider::class);
+        $this->app->forgetInstance(ProductionReadinessService::class);
+
+        $report = app(ProductionReadinessService::class)->report('staging', false);
+        $otpCheck = collect($report['checks'])->firstWhere('key', 'otp');
+
+        $this->assertIsArray($otpCheck);
+        $this->assertSame('fail', $otpCheck['status']);
+        $this->assertSame('insecure-or-invalid', $otpCheck['actual']['endpoint']);
+    }
+
+    public function test_unencrypted_session_cannot_satisfy_staging_readiness(): void
+    {
+        config([
+            'session.secure' => true,
+            'session.http_only' => true,
+            'session.encrypt' => false,
+            'session.same_site' => 'lax',
+        ]);
+
+        $report = app(ProductionReadinessService::class)->report('staging', false);
+        $sessionCheck = collect($report['checks'])->firstWhere('key', 'secure_cookie');
+
+        $this->assertIsArray($sessionCheck);
+        $this->assertSame('fail', $sessionCheck['status']);
+        $this->assertFalse($sessionCheck['actual']['encrypted']);
+    }
+
     public function test_configured_http_otp_driver_can_satisfy_staging_readiness(): void
     {
         config([
@@ -90,6 +127,8 @@ class ProductionReadinessTest extends TestCase
             'session.driver' => 'database',
             'session.secure' => true,
             'session.http_only' => true,
+            'session.encrypt' => true,
+            'session.same_site' => 'lax',
             'logging.default' => 'stack',
         ]);
         $this->app->forgetInstance(OtpProvider::class);

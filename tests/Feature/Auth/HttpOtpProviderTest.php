@@ -43,4 +43,23 @@ class HttpOtpProviderTest extends TestCase
 
         app(HttpOtpProvider::class)->issue('09120000000');
     }
+
+    public function test_http_provider_fails_closed_for_an_insecure_endpoint(): void
+    {
+        config([
+            'otp.http.endpoint' => 'http://sms-provider.example.test/otp',
+            'otp.http.token' => 'test-token',
+        ]);
+
+        Http::fake();
+
+        try {
+            app(HttpOtpProvider::class)->issue('09120000000');
+            $this->fail('The insecure OTP endpoint was accepted.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('OTP HTTP provider requires a valid HTTPS endpoint.', $exception->getMessage());
+        }
+
+        Http::assertNothingSent();
+    }
 }

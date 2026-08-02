@@ -65,13 +65,33 @@ app_debug="$(read_environment_value APP_DEBUG)"
 app_url="$(read_environment_value APP_URL)"
 app_key="$(read_environment_value APP_KEY)"
 database_connection="$(read_environment_value DB_CONNECTION)"
+queue_connection="$(read_environment_value QUEUE_CONNECTION)"
+cache_store="$(read_environment_value CACHE_STORE)"
+session_driver="$(read_environment_value SESSION_DRIVER)"
+session_encrypt="$(read_environment_value SESSION_ENCRYPT)"
+session_secure_cookie="$(read_environment_value SESSION_SECURE_COOKIE)"
+session_http_only="$(read_environment_value SESSION_HTTP_ONLY)"
+session_same_site="$(read_environment_value SESSION_SAME_SITE)"
+otp_driver="$(read_environment_value OTP_DRIVER)"
+otp_http_endpoint="$(read_environment_value OTP_HTTP_ENDPOINT)"
+otp_http_token="$(read_environment_value OTP_HTTP_TOKEN)"
 
 [[ "$app_environment" == 'staging' ]] || fail 'shared .env must contain APP_ENV=staging.'
 [[ "$app_debug" == 'false' ]] || fail 'shared .env must contain APP_DEBUG=false.'
 [[ "$app_url" =~ ^https:// ]] || fail 'shared APP_URL must use HTTPS.'
 [[ "${app_url%/}/up" == "$health_url" ]] || fail 'EXPLORIA_HEALTH_URL must match APP_URL plus /up.'
-[[ -n "$app_key" ]] || fail 'shared APP_KEY must be configured.'
+[[ "$app_key" =~ [^[:space:]] ]] || fail 'shared APP_KEY must be configured.'
 [[ "$database_connection" == 'pgsql' ]] || fail 'shared .env must contain DB_CONNECTION=pgsql.'
+[[ "$queue_connection" != 'sync' && "$queue_connection" != 'null' && -n "$queue_connection" ]] || fail 'shared QUEUE_CONNECTION must use a persistent backend.'
+[[ "$cache_store" != 'array' && "$cache_store" != 'null' && -n "$cache_store" ]] || fail 'shared CACHE_STORE must use a persistent backend.'
+[[ "$session_driver" == 'database' || "$session_driver" == 'redis' ]] || fail 'shared SESSION_DRIVER must be database or redis.'
+[[ "$session_encrypt" == 'true' ]] || fail 'shared SESSION_ENCRYPT must be true.'
+[[ "$session_secure_cookie" == 'true' ]] || fail 'shared SESSION_SECURE_COOKIE must be true.'
+[[ "$session_http_only" == 'true' ]] || fail 'shared SESSION_HTTP_ONLY must be true.'
+[[ "$session_same_site" == 'lax' || "$session_same_site" == 'strict' ]] || fail 'shared SESSION_SAME_SITE must be lax or strict.'
+[[ "$otp_driver" == 'http' ]] || fail 'shared OTP_DRIVER must use the configured HTTP provider.'
+[[ "$otp_http_endpoint" =~ ^https://[^/[:space:]]+(/[^[:space:]]*)?$ ]] || fail 'shared OTP_HTTP_ENDPOINT must be a valid HTTPS URL.'
+[[ "$otp_http_token" =~ [^[:space:]] ]] || fail 'shared OTP_HTTP_TOKEN must be configured outside the repository.'
 
 if ! find "$verified_backup_path" -mmin "-$backup_max_age_minutes" -print -quit | grep -q .; then
     fail "the verified backup is older than $backup_max_age_minutes minutes."
