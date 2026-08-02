@@ -3,6 +3,8 @@ param(
     [int]$MinimumCampaigns = 2,
     [switch]$SkipCi,
     [switch]$SkipBuild,
+    [switch]$LocalDryRun,
+    [string]$HealthUrl,
     [switch]$RequirePostgreSQL,
     [string]$BackupOutputDirectory,
     [string]$RestoreBackupPath
@@ -89,6 +91,10 @@ $php = Resolve-Tool -Name 'php' -Candidates @(
 $npm = Resolve-Tool -Name 'npm' -Candidates @(
     (Join-Path $root '.codex-runtime\node\npm.cmd')
 )
+$composer = Resolve-Tool -Name 'composer' -Candidates @(
+    (Join-Path $root '.codex-runtime\composer\composer.bat'),
+    (Join-Path $root '.codex-runtime\composer\composer.cmd')
+)
 $composerPhar = Join-Path $root '.codex-runtime\exploria-toolchain-local\composer\composer.phar'
 
 if (-not $php) {
@@ -104,17 +110,70 @@ Invoke-Step -Name 'Multi-campaign assurance gate' -Command {
     & $php artisan exploria:campaign-assurance --venue=$Venue --minimum-campaigns=$MinimumCampaigns --require-execution --json
 }
 
-Invoke-Step -Name 'Staging/production readiness gate' -Command {
-    & $php artisan exploria:production-readiness --json
+Invoke-Step -Name 'Demo readiness gate' -Command {
+    & $php artisan exploria:demo-readiness --venue=$Venue --json
+}
+
+if ($LocalDryRun) {
+    Write-Host '==> Local production-block verification'
+    $readinessLines = @(& $php artisan exploria:production-readiness --json 2>&1)
+    $readinessExitCode = $LASTEXITCODE
+    $readinessJson = ($readinessLines | ForEach-Object { $_.ToString() }) -join "`n"
+    Write-Host $readinessJson
+
+    try {
+        $readinessReport = $readinessJson | ConvertFrom-Json -ErrorAction Stop
+    } catch {
+        throw 'The local production-readiness report was not valid JSON.'
+    }
+
+    $environmentCheck = $readinessReport.checks | Where-Object { $_.key -eq 'environment' } | Select-Object -First 1
+    if ($readinessExitCode -eq 0 -or $readinessReport.summary.ready -ne $false) {
+        throw 'Local dry run failed closed: the local environment unexpectedly passed the production-readiness gate.'
+    }
+
+    if (-not $environmentCheck -or $environmentCheck.actual -ne 'local') {
+        throw 'Local dry run requires the production-readiness report to identify the environment as local.'
+    }
+
+    Write-Host 'Local dry run remains production-blocked, as required.'
+} else {
+    Invoke-Step -Name 'Staging/production readiness gate' -Command {
+        & $php artisan exploria:production-readiness --json
+    }
+}
+
+if (-not [string]::IsNullOrWhiteSpace($HealthUrl)) {
+    $healthUri = $null
+    if (-not [Uri]::TryCreate($HealthUrl, [UriKind]::Absolute, [ref]$healthUri)) {
+        throw 'HealthUrl must be an absolute HTTP(S) URL.'
+    }
+
+    $allowedSchemes = if ($LocalDryRun) { @('http', 'https') } else { @('https') }
+    if ($allowedSchemes -notcontains $healthUri.Scheme) {
+        throw 'HealthUrl must use HTTPS outside LocalDryRun mode.'
+    }
+
+    Write-Host "==> Runtime health check: $HealthUrl"
+    $healthResponse = Invoke-WebRequest -UseBasicParsing -Uri $healthUri -TimeoutSec 15
+    if ([int]$healthResponse.StatusCode -lt 200 -or [int]$healthResponse.StatusCode -ge 300) {
+        throw "Runtime health check failed with HTTP $($healthResponse.StatusCode)."
+    }
+
+    Write-Host "Runtime health check passed with HTTP $($healthResponse.StatusCode)."
 }
 
 if (-not $SkipCi) {
-    if (-not (Test-Path -LiteralPath $composerPhar -PathType Leaf)) {
-        throw 'composer.phar was not found in the local toolchain.'
-    }
-
-    Invoke-Step -Name 'Full application CI' -Command {
-        & $php $composerPhar ci:check
+    if ($composer) {
+        Invoke-Step -Name 'Full application CI' -Command {
+            & $composer ci:check
+        }
+    } elseif (Test-Path -LiteralPath $composerPhar -PathType Leaf) {
+        Invoke-Step -Name 'Full application CI' -Command {
+            & $php $composerPhar ci:check
+        }
+    } else {
+        throw 'Composer was not found on PATH or in the local toolchain.'
     }
 }
 
@@ -149,4 +208,5 @@ if (-not [string]::IsNullOrWhiteSpace($RestoreBackupPath)) {
     }
 }
 
-Write-Host 'Launch assurance completed.'
+$mode = if ($LocalDryRun) { 'local dry run' } else { 'staging/production' }
+Write-Host "Launch assurance completed in $mode mode."

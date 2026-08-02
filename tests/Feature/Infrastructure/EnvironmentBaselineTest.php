@@ -97,7 +97,14 @@ class EnvironmentBaselineTest extends TestCase
         $this->assertStringContainsString('--if-exists', $linuxRestoreScript);
         $this->assertStringContainsString('--exit-on-error', $linuxRestoreScript);
         $this->assertStringContainsString('exploria:campaign-assurance', $launchAssuranceScript);
+        $this->assertStringContainsString('exploria:demo-readiness', $launchAssuranceScript);
         $this->assertStringContainsString('exploria:production-readiness', $launchAssuranceScript);
+        $this->assertStringContainsString('[switch]$LocalDryRun', $launchAssuranceScript);
+        $this->assertStringContainsString('[string]$HealthUrl', $launchAssuranceScript);
+        $this->assertStringContainsString('Local dry run remains production-blocked, as required.', $launchAssuranceScript);
+        $this->assertStringContainsString('HealthUrl must use HTTPS outside LocalDryRun mode.', $launchAssuranceScript);
+        $this->assertStringContainsString("Resolve-Tool -Name 'composer'", $launchAssuranceScript);
+        $this->assertStringContainsString('Composer was not found on PATH or in the local toolchain.', $launchAssuranceScript);
         $this->assertStringContainsString('scripts\test-postgresql.ps1', $launchAssuranceScript);
         $this->assertStringContainsString('scripts\backup-postgresql.ps1', $launchAssuranceScript);
         $this->assertStringContainsString('scripts\test-postgresql-restore.ps1', $launchAssuranceScript);
