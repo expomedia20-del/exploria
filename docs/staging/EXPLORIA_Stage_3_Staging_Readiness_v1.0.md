@@ -6,7 +6,7 @@
 |---|---|
 | نوع سند | Working Staging Readiness Record - غیرجایگزین اسناد Canonical |
 | مرحله | Stage 3 — Staging & Security |
-| تاریخ Snapshot | 2026-08-02 |
+| تاریخ Snapshot | 2026-08-16 |
 | وضعیت | `CONDITIONAL COMPLETE — REPOSITORY READY, EXTERNAL STAGING NOT PROVISIONED` |
 | Scope | آماده‌سازی Repository و تمرین Fail-Closed؛ بدون استقرار عمومی |
 | مجوز Production/Pilot | صادر نشده است |
@@ -91,6 +91,12 @@
 - HSTS
 - Permissions Policy برای Camera، Microphone و Geolocation
 - X-Content-Type-Options، X-Frame-Options و Referrer Policy
+
+### 4.5 حاکمیت پاداش و PostgreSQL CI
+
+- صدور پاداش فعال بدون مالک هزینه، مدل موجودی، ظرفیت معتبر، انقضا و محدودیت صدور در Gate آمادگی رد می‌شود.
+- CI با PostgreSQL 18 آخرین Migration را اجرا، یک مرحله Rollback و سپس Migration مجدد را راستی‌آزمایی می‌کند.
+- این شواهد فقط سازگاری Repository و Migration را اثبات می‌کنند؛ جایگزین Migration، reconciliation و Drill روی Staging مستقل نیستند.
 
 ## 5. معماری استقرار آماده‌شده
 
@@ -195,6 +201,8 @@ EXPLORIA_VERIFIED_BACKUP_PATH=<verified_dump_path>
 | EXT-S3-05 | Central Logging، Retention و Alerting | Tech/Legal | Pending |
 | EXT-S3-06 | محل Backup و Restore Drill | Infrastructure/DBA | Pending |
 | EXT-S3-07 | UAT Accounts و شماره‌های مجاز | Product/QA | Pending |
+| EXT-S3-08 | Mail و Storage Provider واقعی و آزمون E2E | Product/Infrastructure | Pending |
+| EXT-S3-09 | Queue Worker، Scheduler، Cache و Session عملیاتی | Infrastructure/Operations | Pending |
 
 ## 8. نتیجه Stage 3
 
@@ -202,16 +210,23 @@ Repository برای تحویل به اپراتور Staging سخت‌گیری ش�
 
 **نتیجه:** `CONDITIONAL COMPLETE — EXTERNAL PROVISIONING REQUIRED`
 
-## 9. فایل‌های تغییرکرده
+## 9. فایل‌های اصلی Evidence
 
 - `.env.staging.example`
+- `.github/workflows/tests.yml`
 - `app/Infrastructure/Otp/HttpOtpProvider.php`
 - `app/Services/ProductionReadinessService.php`
+- `app/Services/MissionRewardRegistryService.php`
+- `database/migrations/2026_08_15_000001_add_reward_governance_controls.php`
 - `scripts/deploy-staging.sh`
 - `deploy/nginx/exploria-staging.conf.example`
+- `composer.lock`
+- `package-lock.json`
 - `tests/Feature/Auth/HttpOtpProviderTest.php`
 - `tests/Feature/Infrastructure/ProductionReadinessTest.php`
 - `tests/Feature/Infrastructure/EnvironmentBaselineTest.php`
+- `tests/Feature/Governance/RewardGovernanceTest.php`
+- `tests/Feature/Infrastructure/RewardGovernanceReadinessTest.php`
 - `docs/staging/EXPLORIA_Stage_3_Staging_Readiness_v1.0.md`
 - `docs/status/EXPLORIA_Feature_Status_Register_v1.0.md`
 
@@ -219,20 +234,22 @@ Repository برای تحویل به اپراتور Staging سخت‌گیری ش�
 
 | بررسی | نتیجه |
 |---|---|
-| تست هدفمند Auth/Infrastructure | 16 Test / 138 Assertion / Pass |
-| Full CI | 361 Test / 4671 Assertion / 0 Failure |
+| Test Suite محلی | 369 Test / 4729 Assertion / 0 Failure |
+| GitHub CI روی PR شماره 3 | 4 Check موفق: Quality، PHP 8.4، PHP 8.5 و PostgreSQL |
+| PostgreSQL CI | Migration Fresh، Rollback آخرین Migration، Migration مجدد و Test Suite موفق |
 | ESLint / Prettier / TypeScript | Pass |
 | Pint / PHPStan | Pass / 0 Error |
 | Composer / NPM Audit | 0 Advisory / 0 Vulnerability |
 | Production Build | 2339 Module / Pass |
-| Migration Local | همه Migrationها اجرا شده؛ مورد معوق وجود ندارد |
+| Migration Local | 1 مورد معوق: `2026_08_15_000001_add_reward_governance_controls` |
 | Demo Readiness | 19 Pass / 0 Warning / 0 Fail |
-| Production Readiness در Local | 4 Pass / 8 Fail؛ Fail-Closed مورد انتظار |
+| Production Readiness در Local | 3 Pass / 10 Fail / `ready=false`؛ Fail-Closed مورد انتظار |
 | Headerهای HTTP محلی | Nosniff، SameOrigin، Referrer Policy و Permissions Policy فعال |
 | Syntax اسکریپت Deploy | `bash -n` موفق |
 | PostgreSQL Tooling | Server/Client/PHP Extension آماده |
 | PostgreSQL Migration/Test/Backup/Restore | Pending — Credential ایزوله ارائه نشده است |
 | Secret Scan دستی فایل‌های تغییرکرده | هیچ Secret واقعی افزوده نشد |
-| تغییر معماری/Role/Schema/Package | انجام نشد |
+| تغییر معماری/Role | انجام نشد |
+| Schema/Dependency Hardening | Migration حاکمیت پاداش و به‌روزرسانی Lockfileها در PR شماره 3 ادغام شد |
 
-Full CI و Build روی Codebase نهایی Stage 3 اجرا شده‌اند. عدم اجرای PostgreSQL Runtime Gate به‌عنوان Pass ثبت نشده و تا ارائه Credential ایزوله، مانع `STAGING LIVE` باقی می‌ماند.
+Full CI و Build روی Codebase ادغام‌شده اجرا شده‌اند. PostgreSQL CI سازگاری Migration و Test Suite را اثبات می‌کند، اما اجرای Runtime Gate، Migration، Reward reconciliation، Backup/Restore و Deployment/Rollback روی Staging مستقل هنوز انجام نشده و تا ارائه زیرساخت و Credential ایزوله، مانع `STAGING LIVE` باقی می‌ماند.

@@ -5,9 +5,10 @@
 | فیلد | مقدار |
 |---|---|
 | نوع سند | Working Status Snapshot - غیرجایگزین اسناد Canonical |
-| تاریخ Snapshot | 2026-08-02 |
+| تاریخ Snapshot | 2026-08-16 |
 | Codebase | Laravel + React Monolith / Inertia-style |
 | شاخه مبنا | `main` |
+| Commit مبنا | `a9a9e45` — Merge PR #3 |
 | هدف | تفکیک روشن قابلیت‌های آماده، نمایشی، مسدود پیش از پایلوت و خارج از Scope |
 
 این رجیستر وضعیت اجرایی Codebase را ثبت می‌کند و جایگزین BRD، FRD، Scope Lock، Backlog یا اسناد Governance مصوب نیست. در صورت تعارض، سلسله‌مراتب سند 21 اعمال می‌شود.
@@ -29,15 +30,17 @@
 | Routeهای ثبت‌شده | 242 |
 | صفحات React | 51 |
 | Modelهای Laravel | 52 |
-| Serviceهای Domain/Application | 34 |
-| فایل‌های تست PHP | 59 |
-| نتیجه Test Suite | 361 Test / 4671 Assertion / 0 Failure |
+| Serviceهای Domain/Application | 35 |
+| فایل‌های تست PHP | 61 |
+| نتیجه Test Suite محلی | 369 Test / 4729 Assertion / 0 Failure |
+| CI روی PR شماره 3 | 4 Check موفق: Quality، PHP 8.4، PHP 8.5 و PostgreSQL |
 | تحلیل ایستا و کیفیت | PHPStan 0 Error؛ ESLint، TypeScript، Pint و Prettier موفق |
-| Build تولیدی | 2339 Module / موفق |
+| Build تولیدی | آخرین Build ثبت‌شده: 2339 Module / موفق؛ Build در CI نیز موفق |
 | Demo Readiness | 19 Pass / 0 Warning / 0 Fail |
-| Production Readiness در محیط Local | 4 Pass / 8 Fail - مورد انتظار برای Local |
-| NPM Audit پس از Stage 3 | 0 Vulnerability |
-| Composer Audit پس از Stage 3 | 0 Advisory / 0 Abandoned Package |
+| Production Readiness در محیط Local | 3 Pass / 10 Fail / `ready=false` - Fail-Closed مورد انتظار |
+| Migration Local | 1 مورد معوق: `2026_08_15_000001_add_reward_governance_controls` |
+| NPM Audit در 2026-08-16 | 0 Vulnerability |
+| Composer Audit در 2026-08-16 | 0 Advisory |
 
 ## 4. ماتریس وضعیت قابلیت‌ها
 
@@ -55,7 +58,7 @@
 | Attribution | ثبت Scan/Visit/Event متصل به QR، مکان، کمپین و کاربر/Session | `ScanEvent`، `Visit`، Event Log و تست‌های Feature | `VERIFIED_LOCAL` | Data Dictionary و Baseline پایلوت |
 | داشبورد | خلاصه مدیریتی و پنل‌های عملیاتی نقش‌محور | `/dashboard` و Dashboard Serviceها | `DEMO_READY` | KPI مصوب، مقایسه Baseline و گزارش تصمیم‌ساز |
 | مأموریت و گنج | Mission Template/Instance، Treasure، Progress و Completion | `/admin/missions`، `/demo/missions` | `DEMO_READY` | سناریوی نهایی، محتوا، Brand Safety و UAT میدانی |
-| پاداش و Redemption | تعریف/تأیید پاداش، تخصیص موجودی و تأیید مصرف | Reward Modelها، پنل Partner و تست‌ها | `PILOT_BLOCKED` | بودجه، سقف، ضدتقلب، مسئول تأمین و سیاست مصرف |
+| پاداش و Redemption | تعریف/تأیید پاداش، تخصیص موجودی، مصرف و کنترل مالک هزینه/موجودی/ظرفیت/انقضا/صدور | `RewardDefinition`، `MissionRewardRegistryService`، Migration و تست‌های Reward Governance | `PILOT_BLOCKED` | اجرای Migration و reconciliation در Staging؛ سپس بودجه، مسئول تأمین و سیاست مصرف واقعی |
 | بازی اکوپارک | مسیر بازی آنلاین/حضوری، Party/Invitation و QR ایستگاه‌ها | `/games/ecopark-treasure` و تست‌های Game | `DEMO_READY` | انتخاب سناریوی پایلوت و آزمون روی موبایل واقعی |
 | مشارکت‌کنندگان | عضویت کمپین، Onboarding، اتصال نقش و پنل شخصی | `/admin/campaign-participants`، `/participant/dashboard` | `DEMO_READY` | لیست اشخاص واقعی و RACI عملیات |
 | فروشگاه/Partner | پروفایل، پیشنهاد، تبلیغ، پاداش و Redemption | `/partner/dashboard`، `/partner/ads` | `DEMO_READY` | Merchant Onboarding، قرارداد و UAT فروشگاه واقعی |
@@ -66,7 +69,7 @@
 | تجاری‌سازی | بسته‌های فروش، Sponsor/Merchant Narrative و Lead Inbox | `/admin/commercialization`، `/admin/marketing-leads` | `DEMO_READY` | قیمت‌گذاری، Sales Playbook و مالک پیگیری Lead |
 | پشتیبانی | راهنمای نقش، صفحه Support و مسیرهای دسترسی مشترک | `/admin/support`، `/admin/users/guide` | `DEMO_READY` | SLA، Ticket/Complaint Workflow و Escalation واقعی |
 | چرخه دمو | چک‌لیست 72 ساعت، روز اجرا، خروجی فروش و Stress Demo | `/admin/demo-cycle`، Readiness Serviceها | `DEMO_READY` | تبدیل چک‌لیست Demo به Runbook پایلوت مصوب |
-| PostgreSQL | Server 18، Client Tooling، PHP Extension، Configuration و تست Fail-Closed موجود است | `.env.example`، `phpunit.pgsql.xml` و اسکریپت‌های PostgreSQL | `PILOT_BLOCKED` | ارائه Credential ایزوله و اجرای Migration/Test/Backup/Restore |
+| PostgreSQL | Server/Client محلی و CI با PostgreSQL 18؛ Migration، Rollback آخرین Migration و Test Suite در CI موفق است | `.github/workflows/tests.yml`، `phpunit.pgsql.xml` و اسکریپت‌های PostgreSQL | `PILOT_BLOCKED` | اجرای مستقل Migration، Reward reconciliation، Backup/Restore و Drill روی Staging واقعی |
 | استقرار | Release-based Deploy، Backup Gate، Rollback، `/up` و Preflight امنیت Session/OTP | `scripts/deploy-staging.sh` و `docs/staging/EXPLORIA_Stage_3_Staging_Readiness_v1.0.md` | `PRODUCTION_BLOCKED` | Provisioning سرور/دامنه و اجرای واقعی Deployment Drill |
 | Logging/Monitoring | Application Log، Event/Audit پایه و Production Readiness Check | Logging Config و Audit Actionها | `PRODUCTION_BLOCKED` | Retention، Central Logging، Metrics و Alerting |
 | Offline | پیام خطا/Retry و Fallback محدود؛ Sync کامل پیاده‌سازی نشده است | تصمیم OD-006 و Scope Lock | `OUT_OF_SCOPE` | Change Request پس از اثبات نیاز پایلوت |
@@ -76,18 +79,20 @@
 
 ## 5. Blockerهای رسمی پیش از پایلوت
 
-1. Pilot Charter در `docs/pilot/EXPLORIA_EcoPark_Pilot_Charter_v0.1.md` تدوین شده است؛ قفل نهایی تاریخ، اشخاص، KPI و بودجه به تأیید Product Owner نیاز دارد.
-2. اجرای Test Suite و Migration روی PostgreSQL واقعی.
-3. Provider واقعی OTP و حذف کامل OTP ثابت از محیط غیرLocal.
-4. متن حقوقی Consent و سیاست Data Governance.
+1. Pilot Charter در `docs/pilot/EXPLORIA_EcoPark_Pilot_Charter_v0.1.md` تدوین شده است؛ قفل نهایی تاریخ، اشخاص، KPI، بودجه و RACI به تأیید Product Owner نیاز دارد.
+2. Staging مستقل با HTTPS و PostgreSQL ایزوله؛ اجرای Migration، Reward reconciliation، Backup/Restore و Deployment/Rollback Drill در همان محیط.
+3. Provider واقعی OTP و آزمون E2E واقعی OTP، Mail و Storage.
+4. متن حقوقی Consent و تصویب Privacy، Retention و Deletion Policy.
 5. QR Domain/Print/Installation Plan و داده میدانی تأییدشده.
-6. Reward Budget، Anti-Fraud و Redemption Policy.
-7. Runbook روز اجرا، Support، Incident و Low Connectivity Fallback.
-8. Staging با HTTPS، Queue/Session پایدار، Backup/Restore و Monitoring.
+6. Reward Budget، Anti-Fraud، مسئول تأمین و Redemption Policy.
+7. تصمیم رسمی و حداقل کنترل Scoped Pause/Resume با Incident Linkage و Audit Trail.
+8. Queue، Cache، Session و Scheduler پایدار و راستی‌آزمایی‌شده در Staging.
+9. Central Monitoring، Logging، Alerting، On-call و Runbook Incident مصوب.
+10. UAT رسمی روی Staging و صورت‌جلسه امضاشده Go/No-Go.
 
 ## 6. نتیجه Stage 3
 
-آمادگی Repository برای Staging با وضعیت `CONDITIONAL COMPLETE` ثبت شد. Session رمزنگاری‌شده، OTP فقط روی Endpoint معتبر HTTPS، Preflight استقرار، Headerهای Nginx و Runbook عملیاتی آماده‌اند. استقرار بیرونی انجام نشده است، زیرا سرور، دامنه/TLS، PostgreSQL Credential، OTP Credential و سامانه Monitoring واقعی ارائه نشده‌اند.
+آمادگی Repository برای Staging با وضعیت `CONDITIONAL COMPLETE` ثبت شد. Session رمزنگاری‌شده، OTP فقط روی Endpoint معتبر HTTPS، Preflight استقرار، Headerهای Nginx، Runbook عملیاتی، Gate حاکمیت پاداش و PostgreSQL CI آماده‌اند. استقرار بیرونی انجام نشده است، زیرا سرور، دامنه/TLS، PostgreSQL Credential، Providerهای واقعی و سامانه Monitoring/Backup واقعی ارائه نشده‌اند. این وضعیت مجوز Production یا Pilot نیست.
 
 مرجع Evidence: `docs/staging/EXPLORIA_Stage_3_Staging_Readiness_v1.0.md`
 

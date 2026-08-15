@@ -20,7 +20,7 @@
 
 - `EXPLORIA_EcoPark_Pilot_Charter_v0.1.md`: Charter پیشنهادی و Gateهای G0 تا G5.
 - `../staging/EXPLORIA_Stage_3_Staging_Readiness_v1.0.md`: وضعیت آمادگی Staging و وابستگی‌های خارجی.
-- `../uat/EXPLORIA_Stage_4_UAT_Dry_Run_Report_v1.0.md`: نتیجه مانور UAT مرحله ۴.
+- `../uat/EXPLORIA_Stage_4_UAT_Dry_Run_v1.0.md`: نتیجه مانور UAT مرحله ۴.
 - `../ECOPARK_PILOT_OPERATIONAL_PLAYBOOK.md`: مسیر عملیات روز اجرا و سناریوهای خطا.
 - `../features/POSTGRESQL_BACKUP_RESTORE_RUNBOOK.md`: ضوابط Backup و Restore ایمن.
 - `.env.staging.example`: قرارداد پیکربندی Staging بدون Secret.
