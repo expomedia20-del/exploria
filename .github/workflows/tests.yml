@@ -125,6 +125,11 @@ jobs:
       - name: Run PostgreSQL Migrations
         run: php artisan migrate:fresh --force --no-interaction
 
+      - name: Verify Latest Migration Rollback
+        run: |
+          php artisan migrate:rollback --step=1 --force --no-interaction
+          php artisan migrate --force --no-interaction
+
       - name: Run PostgreSQL Tests
         shell: bash
         run: |

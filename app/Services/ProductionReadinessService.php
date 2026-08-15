@@ -3,9 +3,11 @@
 namespace App\Services;
 
 use App\Contracts\OtpProvider;
+use App\Enums\RecordStatus;
 use App\Infrastructure\Otp\HttpOtpProvider;
 use App\Infrastructure\Otp\LocalFixedOtpProvider;
 use App\Infrastructure\Otp\UnavailableOtpProvider;
+use App\Models\RewardDefinition;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Migrations\Migrator;
 use Throwable;
@@ -16,6 +18,7 @@ class ProductionReadinessService
         private readonly DatabaseManager $database,
         private readonly Migrator $migrator,
         private readonly OtpProvider $otpProvider,
+        private readonly RewardGovernanceService $rewardGovernance,
     ) {}
 
     /**
@@ -29,6 +32,7 @@ class ProductionReadinessService
     {
         $environment ??= app()->environment();
         [$databaseRuntimeReady, $databaseRuntimeStatus] = $this->databaseRuntimeStatus($checkDatabaseRuntime);
+        [$rewardGovernanceReady, $rewardGovernanceStatus] = $this->rewardGovernanceStatus($checkDatabaseRuntime, $databaseRuntimeReady);
         [$otpProviderReady, $otpProviderStatus] = $this->otpProviderStatus();
 
         $checks = [
@@ -73,6 +77,13 @@ class ProductionReadinessService
                 $databaseRuntimeReady,
                 $databaseRuntimeStatus,
                 'اتصال دیتابیس باید برقرار و همه Migrationها اجرا شده باشند.',
+            ),
+            $this->check(
+                'reward_governance',
+                'حاکمیت پاداش فعال',
+                $rewardGovernanceReady,
+                $rewardGovernanceStatus,
+                'همه پاداش‌های فعال باید مالک هزینه، موجودی، ظرفیت و محدودیت صدور معتبر داشته باشند.',
             ),
             $this->check(
                 'otp',
@@ -186,6 +197,60 @@ class ProductionReadinessService
                 : [false, "pending-migrations:{$pendingCount}"];
         } catch (Throwable) {
             return [false, 'connection-failed'];
+        }
+    }
+
+    /**
+     * @return array{bool, string|array{activeRewards: int, invalidRewards: int, invalidRewardCodes: list<string>, invalidFields: list<string>}}
+     */
+    private function rewardGovernanceStatus(bool $shouldCheck, bool $databaseRuntimeReady): array
+    {
+        if (! $shouldCheck) {
+            return [true, 'skipped-for-isolated-test'];
+        }
+
+        if (! $databaseRuntimeReady) {
+            return [false, 'database-runtime-not-ready'];
+        }
+
+        try {
+            $rewards = RewardDefinition::query()
+                ->where('status', RecordStatus::Active->value)
+                ->with(['costOwnerFinancialAccount', 'inventoryAllocations.partnerAccount'])
+                ->orderBy('code')
+                ->get();
+
+            $invalidRewardCodes = [];
+            $invalidFields = [];
+
+            foreach ($rewards as $reward) {
+                $errors = $this->rewardGovernance->configurationErrors($reward);
+
+                if ($errors === []) {
+                    continue;
+                }
+
+                $invalidRewardCodes[] = $reward->code;
+
+                foreach (array_keys($errors) as $field) {
+                    $invalidFields[$field] = true;
+                }
+            }
+
+            $invalidFields = array_keys($invalidFields);
+            sort($invalidFields);
+
+            return [
+                $invalidRewardCodes === [],
+                [
+                    'activeRewards' => $rewards->count(),
+                    'invalidRewards' => count($invalidRewardCodes),
+                    'invalidRewardCodes' => $invalidRewardCodes,
+                    'invalidFields' => $invalidFields,
+                ],
+            ];
+        } catch (Throwable) {
+            return [false, 'reward-governance-check-failed'];
         }
     }
 
