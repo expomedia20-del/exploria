@@ -120,7 +120,7 @@ class EcoParkDemoReadinessService
             $this->minimumCountCheck(
                 'reward_layers',
                 'پاداش‌های چندلایه',
-                $this->countForVenueCampaigns(RewardDefinition::query(), $venueId, $campaignIds),
+                $this->countForVenueCampaigns(RewardDefinition::query()->availableForIssuance(), $venueId, $campaignIds),
                 3,
                 'پاداش‌های پایه، شریک و اسپانسر در دمو وجود دارند.',
                 'برای ماموریت‌ها پاداش داخلی، شریک و اسپانسری تعریف کنید.',
@@ -145,7 +145,7 @@ class EcoParkDemoReadinessService
                 'inventory_allocations',
                 'ردیابی سهم و موجودی',
                 $campaignIds->isEmpty() ? 0 : RewardInventoryAllocation::query()
-                    ->whereIn('reward_definition_id', RewardDefinition::query()->whereIn('campaign_id', $campaignIds)->select('id'))
+                    ->whereIn('reward_definition_id', RewardDefinition::query()->whereIn('campaign_id', $campaignIds)->availableForIssuance()->select('id'))
                     ->where('status', RecordStatus::Active)
                     ->count(),
                 1,
@@ -258,7 +258,7 @@ class EcoParkDemoReadinessService
         $query = RewardDefinition::query()
             ->where('venue_id', $venueId)
             ->whereIn('campaign_id', $campaignIds)
-            ->where('status', RecordStatus::Active);
+            ->availableForIssuance();
 
         if ($sponsorOnly) {
             $sponsorIds = PartnerAccount::query()

@@ -318,7 +318,7 @@ class ParticipantDashboardController extends Controller
             ->with(['campaign:id,name,code', 'partnerAccount:id,name,partner_type'])
             ->withCount('userRewards')
             ->whereIn('campaign_id', $activeCampaignIds)
-            ->where('status', RecordStatus::Active)
+            ->availableForIssuance()
             ->orderBy('point_cost')
             ->limit(10)
             ->get()

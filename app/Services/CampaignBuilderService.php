@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\RecordStatus;
 use App\Models\AdRequest;
 use App\Models\Campaign;
 use App\Models\CampaignParticipant;
@@ -97,7 +96,7 @@ class CampaignBuilderService
             'rewards' => RewardDefinition::query()->where('campaign_id', $campaign->id)->count(),
             'approvedRewards' => RewardDefinition::query()
                 ->where('campaign_id', $campaign->id)
-                ->where('status', RecordStatus::Active)
+                ->availableForIssuance()
                 ->where(function (Builder $query): void {
                     $query->where('metadata->approval_status', 'approved')
                         ->orWhereNull('metadata->approval_status');

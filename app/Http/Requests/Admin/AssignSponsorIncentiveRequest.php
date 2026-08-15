@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Admin;
 
 use App\Enums\RecordStatus;
+use App\Enums\RewardInventoryMode;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -36,6 +37,12 @@ class AssignSponsorIncentiveRequest extends FormRequest
             ],
             'point_cost' => ['nullable', 'integer', 'min:0', 'max:1000000'],
             'stock_quantity' => ['nullable', 'integer', 'min:0', 'max:1000000'],
+            'cost_owner_financial_account_id' => ['nullable', 'uuid', 'exists:financial_accounts,id'],
+            'inventory_mode' => ['nullable', Rule::enum(RewardInventoryMode::class)],
+            'available_from' => ['nullable', 'date'],
+            'available_until' => ['nullable', 'date', 'after_or_equal:available_from'],
+            'expires_after_minutes' => ['nullable', 'integer', 'min:1', 'max:525600'],
+            'per_user_award_limit' => ['nullable', 'integer', 'min:1', 'max:1'],
             'partner_allocations' => ['nullable', 'array'],
             'partner_allocations.*.partner_account_id' => ['required_with:partner_allocations', 'uuid', 'exists:partner_accounts,id'],
             'partner_allocations.*.quantity' => ['nullable', 'integer', 'min:0', 'max:1000000'],

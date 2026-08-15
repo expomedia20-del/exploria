@@ -7,6 +7,7 @@ use App\Models\MissionInstance;
 use App\Models\User;
 use App\Models\Visit;
 use App\Services\MissionFlowService;
+use App\Services\RewardGovernanceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -39,7 +40,7 @@ class VisitMissionController extends Controller
         return back()->with('success', 'ماموریت شروع شد.');
     }
 
-    public function complete(Request $request, Visit $visit, MissionInstance $mission, MissionFlowService $service, RecordDomainEventAction $recordEvent): JsonResponse|RedirectResponse
+    public function complete(Request $request, Visit $visit, MissionInstance $mission, MissionFlowService $service, RewardGovernanceService $governance, RecordDomainEventAction $recordEvent): JsonResponse|RedirectResponse
     {
         $user = $this->authenticatedUser($request);
         $result = $service->complete($user, $visit, $mission);
@@ -56,6 +57,7 @@ class VisitMissionController extends Controller
                 'source' => 'mission_completed',
                 'mission_id' => $mission->id,
                 'reward_definition_id' => $result['reward']->reward_definition_id,
+                ...$governance->issuanceEventPayload($result['reward']),
                 'quality_flag' => false,
             ], $this->attribution($visit));
         }

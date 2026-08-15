@@ -7,6 +7,7 @@ use App\Enums\UserRole;
 use App\Models\AdRequest;
 use App\Models\Campaign;
 use App\Models\CampaignParticipant;
+use App\Models\CampaignSponsorship;
 use App\Models\DisplayDevice;
 use App\Models\GameParty;
 use App\Models\Hub;
@@ -15,7 +16,6 @@ use App\Models\PartnerLocation;
 use App\Models\QrCode;
 use App\Models\RewardDefinition;
 use App\Models\RewardInventoryAllocation;
-use App\Models\RewardRedemption;
 use App\Models\SponsorAccount;
 use App\Models\SponsorProposal;
 use App\Models\SponsorProposalActivation;
@@ -26,12 +26,14 @@ use App\Models\Treasure;
 use App\Models\User;
 use App\Models\UserAccessScope;
 use App\Models\UserMissionProgress;
-use App\Models\UserReward;
 use App\Models\Venue;
 use App\Models\Visit;
 use App\Models\Zone;
 use App\Services\EcoParkOnlineGameService;
+use App\Services\FinancialLedgerService;
 use App\Services\MissionRewardRegistryService;
+use App\Services\PartnerDashboardService;
+use App\Services\RewardGovernanceService;
 use App\Services\SponsorActivationService;
 use App\Services\VenueRegistryService;
 use Illuminate\Console\Command;
@@ -54,11 +56,14 @@ class PrepareStressDemoCommand extends Command
         MissionRewardRegistryService $registry,
         VenueRegistryService $venues,
         EcoParkOnlineGameService $onlineGame,
+        FinancialLedgerService $financialLedger,
+        RewardGovernanceService $rewardGovernance,
+        PartnerDashboardService $partnerDashboard,
     ): int {
         $campaignCode = Str::lower((string) $this->option('campaign'));
         $venueCode = Str::lower((string) $this->option('venue'));
 
-        $result = DB::transaction(function () use ($campaignCode, $onlineGame, $sponsors, $venueCode): array {
+        $result = DB::transaction(function () use ($campaignCode, $financialLedger, $onlineGame, $partnerDashboard, $rewardGovernance, $sponsors, $venueCode): array {
             $actor = $this->adminUser();
             $venue = $this->venue($venueCode);
             $zone = $this->zone($venue);
@@ -118,7 +123,7 @@ class PrepareStressDemoCommand extends Command
             }
 
             $this->qrCodes($venue, $campaign, $touchpoint, $onsiteTouchpoint, $physicalTouchpoints);
-            $this->partnerReward($campaign, $partners[0]);
+            $this->partnerReward($campaign, $partners[0], $actor, $financialLedger, $rewardGovernance);
             $this->rewardedGameAds($campaign, $partners);
             $this->storefrontAndDisplayAds($campaign, $partners);
             $proposal = $this->sponsorProposal($sponsors, $actor, $campaign, $venue, $partners->take(2)->values());
@@ -132,14 +137,14 @@ class PrepareStressDemoCommand extends Command
 
             $campaign->refresh();
             $this->finalTreasure($campaign);
-            $this->gameCommerceRewards($campaign, $partners);
+            $this->gameCommerceRewards($campaign, $partners, $actor, $financialLedger, $rewardGovernance);
             GameParty::query()
                 ->where('campaign_id', $campaign->id)
                 ->with(['members', 'progress', 'bonusClaims'])
                 ->each(fn (GameParty $party) => $onlineGame->syncCommercialRewards($party));
 
             if ($this->option('execute-visitor')) {
-                $this->executeVisitorJourney($campaign, $partners[0]);
+                $this->executeVisitorJourney($campaign, $partners[0], $rewardGovernance, $partnerDashboard);
             }
 
             return [
@@ -479,18 +484,25 @@ class PrepareStressDemoCommand extends Command
         });
     }
 
-    private function partnerReward(Campaign $campaign, PartnerAccount $partner): void
+    private function partnerReward(Campaign $campaign, PartnerAccount $partner, User $actor, FinancialLedgerService $financialLedger, RewardGovernanceService $governance): void
     {
-        RewardDefinition::query()->updateOrCreate(
+        $costOwner = $financialLedger->ensurePartnerAccount($partner);
+        $reward = RewardDefinition::query()->updateOrCreate(
             ['campaign_id' => $campaign->id, 'code' => 'stress-demo-small-drink-coupon'],
             [
                 'venue_id' => $campaign->venue_id,
                 'partner_account_id' => $partner->id,
                 'name' => 'نوشیدنی کوچک کافه اکو',
                 'reward_type' => 'partner_coupon',
+                'inventory_mode' => 'finite',
                 'point_cost' => 180,
                 'stock_quantity' => 300,
-                'status' => RecordStatus::Active,
+                'cost_owner_financial_account_id' => $costOwner->id,
+                'available_from' => $campaign->start_at,
+                'available_until' => $campaign->end_at,
+                'expires_after_minutes' => 10080,
+                'per_user_award_limit' => 1,
+                'status' => RecordStatus::Draft,
                 'metadata' => [
                     'is_demo' => true,
                     'stress_demo' => true,
@@ -501,6 +513,20 @@ class PrepareStressDemoCommand extends Command
                 ],
             ],
         );
+
+        RewardInventoryAllocation::query()->updateOrCreate(
+            ['reward_definition_id' => $reward->id, 'partner_account_id' => $partner->id],
+            [
+                'campaign_id' => $campaign->id,
+                'allocated_quantity' => 300,
+                'reserved_quantity' => 0,
+                'redeemed_quantity' => 0,
+                'status' => 'planned',
+                'metadata' => ['source' => 'stress_demo_partner_reward'],
+            ],
+        );
+
+        $governance->activate($reward, $actor, 'Stress demo setup');
     }
 
     /** @param Collection<int, PartnerAccount> $partners */
@@ -674,8 +700,13 @@ class PrepareStressDemoCommand extends Command
     }
 
     /** @param Collection<int, PartnerAccount> $partners */
-    private function gameCommerceRewards(Campaign $campaign, Collection $partners): void
-    {
+    private function gameCommerceRewards(
+        Campaign $campaign,
+        Collection $partners,
+        User $actor,
+        FinancialLedgerService $financialLedger,
+        RewardGovernanceService $governance,
+    ): void {
         $definitions = [
             ['code' => 'ecopark-fire-water-cafe-15', 'partner' => 0, 'name' => 'تخفیف ۱۵٪ کافه اکو', 'type' => 'partner_coupon', 'checkpoint' => 'fire-water'],
             ['code' => 'ecopark-nature-store-20', 'partner' => 1, 'name' => 'تخفیف ۲۰٪ انتخاب سبز فروشگاه X', 'type' => 'partner_coupon', 'checkpoint' => 'nature'],
@@ -690,16 +721,23 @@ class PrepareStressDemoCommand extends Command
                 continue;
             }
 
-            RewardDefinition::query()->updateOrCreate(
+            $costOwner = $financialLedger->ensurePartnerAccount($partner);
+            $reward = RewardDefinition::query()->updateOrCreate(
                 ['campaign_id' => $campaign->id, 'code' => $definition['code']],
                 [
                     'venue_id' => $campaign->venue_id,
                     'partner_account_id' => $partner->id,
                     'name' => $definition['name'],
                     'reward_type' => $definition['type'],
+                    'inventory_mode' => 'finite',
                     'point_cost' => 0,
                     'stock_quantity' => 200,
-                    'status' => RecordStatus::Active,
+                    'cost_owner_financial_account_id' => $costOwner->id,
+                    'available_from' => $campaign->start_at,
+                    'available_until' => $campaign->end_at,
+                    'expires_after_minutes' => 10080,
+                    'per_user_award_limit' => 1,
+                    'status' => RecordStatus::Draft,
                     'metadata' => [
                         'is_demo' => true,
                         'stress_demo' => true,
@@ -713,20 +751,42 @@ class PrepareStressDemoCommand extends Command
                     ],
                 ],
             );
+
+            RewardInventoryAllocation::query()->updateOrCreate(
+                ['reward_definition_id' => $reward->id, 'partner_account_id' => $partner->id],
+                [
+                    'campaign_id' => $campaign->id,
+                    'allocated_quantity' => 200,
+                    'reserved_quantity' => 0,
+                    'redeemed_quantity' => 0,
+                    'status' => 'planned',
+                    'metadata' => ['source' => 'stress_demo_game_reward'],
+                ],
+            );
+            $governance->activate($reward, $actor, 'Stress demo game checkpoint');
         }
 
         $finalPartner = $partners->get(1);
 
-        RewardDefinition::query()->updateOrCreate(
+        $finalCostOwner = $finalPartner instanceof PartnerAccount
+            ? $financialLedger->ensurePartnerAccount($finalPartner)
+            : null;
+        $finalReward = RewardDefinition::query()->updateOrCreate(
             ['campaign_id' => $campaign->id, 'code' => 'ecopark-final-explorer-base'],
             [
                 'venue_id' => $campaign->venue_id,
                 'partner_account_id' => $finalPartner instanceof PartnerAccount ? $finalPartner->id : null,
                 'name' => 'مشوق پایه پایان مسیر',
                 'reward_type' => 'partner_coupon',
+                'inventory_mode' => 'finite',
                 'point_cost' => 0,
                 'stock_quantity' => 300,
-                'status' => RecordStatus::Active,
+                'cost_owner_financial_account_id' => $finalCostOwner?->id,
+                'available_from' => $campaign->start_at,
+                'available_until' => $campaign->end_at,
+                'expires_after_minutes' => 10080,
+                'per_user_award_limit' => 1,
+                'status' => RecordStatus::Draft,
                 'metadata' => [
                     'is_demo' => true,
                     'stress_demo' => true,
@@ -740,6 +800,21 @@ class PrepareStressDemoCommand extends Command
                 ],
             ],
         );
+
+        if ($finalPartner instanceof PartnerAccount) {
+            RewardInventoryAllocation::query()->updateOrCreate(
+                ['reward_definition_id' => $finalReward->id, 'partner_account_id' => $finalPartner->id],
+                [
+                    'campaign_id' => $campaign->id,
+                    'allocated_quantity' => 300,
+                    'reserved_quantity' => 0,
+                    'redeemed_quantity' => 0,
+                    'status' => 'planned',
+                    'metadata' => ['source' => 'stress_demo_final_reward'],
+                ],
+            );
+            $governance->activate($finalReward, $actor, 'Stress demo final reward');
+        }
 
         $boostedReward = RewardDefinition::query()
             ->where('campaign_id', $campaign->id)
@@ -756,7 +831,7 @@ class PrepareStressDemoCommand extends Command
 
         if ($boostedReward) {
             $boostedReward->update([
-                'status' => RecordStatus::Active,
+                'status' => RecordStatus::Draft,
                 'metadata' => array_merge($boostedReward->metadata ?? [], [
                     'availability_status' => 'active',
                     'game_auto_award' => true,
@@ -765,11 +840,13 @@ class PrepareStressDemoCommand extends Command
                     'terms' => 'پس از تکمیل مسیر و تحقق شرط تقویت، کد مصرف هفت‌روزه صادر می‌شود.',
                 ]),
             ]);
+            $this->syncStressRewardAllocations($boostedReward->refresh());
+            $governance->activate($boostedReward, $actor, 'Stress demo boosted reward');
         }
 
         if ($premiumReward) {
             $premiumReward->update([
-                'status' => RecordStatus::Active,
+                'status' => RecordStatus::Draft,
                 'metadata' => array_merge($premiumReward->metadata ?? [], [
                     'availability_status' => 'active',
                     'game_auto_award' => true,
@@ -778,6 +855,32 @@ class PrepareStressDemoCommand extends Command
                     'terms' => 'پس از پایان مسیر؛ موجودی محدود و مصرف در واحدهای عضو تعیین‌شده.',
                 ]),
             ]);
+            $this->syncStressRewardAllocations($premiumReward->refresh());
+            $governance->activate($premiumReward, $actor, 'Stress demo premium reward');
+        }
+    }
+
+    private function syncStressRewardAllocations(RewardDefinition $reward): void
+    {
+        foreach ((array) ($reward->metadata['partner_allocations'] ?? []) as $allocation) {
+            $partnerId = $allocation['partner_account_id'] ?? null;
+            $quantity = (int) ($allocation['quantity'] ?? 0);
+
+            if (! is_string($partnerId) || $partnerId === '' || $quantity < 1) {
+                continue;
+            }
+
+            RewardInventoryAllocation::query()->updateOrCreate(
+                ['reward_definition_id' => $reward->id, 'partner_account_id' => $partnerId],
+                [
+                    'campaign_id' => $reward->campaign_id,
+                    'allocated_quantity' => $quantity,
+                    'reserved_quantity' => 0,
+                    'redeemed_quantity' => 0,
+                    'status' => 'planned',
+                    'metadata' => ['source' => 'stress_demo_sponsor_reward'],
+                ],
+            );
         }
     }
 
@@ -840,6 +943,24 @@ class PrepareStressDemoCommand extends Command
         if (! SponsorProposalActivation::query()->where('sponsor_proposal_id', $proposal->id)->exists()) {
             $sponsors->activateProposal($proposal, ['activation_notes' => 'آماده برای دموی فشار از ارزیابی مکان تا مصرف پاداش.'], $actor);
         }
+
+        $sponsorship = CampaignSponsorship::query()
+            ->where('campaign_id', $campaign->id)
+            ->where('sponsor_account_id', $sponsor->id)
+            ->firstOrFail();
+        $sponsors->storeSponsorship([
+            'sponsorship_id' => $sponsorship->id,
+            'campaign_id' => $campaign->id,
+            'sponsor_account_id' => $sponsor->id,
+            'sponsorship_goal' => $sponsorship->sponsorship_goal,
+            'package_type' => $sponsorship->package_type,
+            'status' => RecordStatus::Active->value,
+            'budget_amount' => $sponsorship->budget_amount,
+            'contract_value' => $sponsorship->contract_value,
+            'starts_at' => $campaign->start_at,
+            'ends_at' => $campaign->end_at,
+            'notes' => 'Stress demo sponsorship approved before reward activation.',
+        ]);
 
         return $proposal->refresh();
     }
@@ -941,8 +1062,12 @@ class PrepareStressDemoCommand extends Command
         );
     }
 
-    private function executeVisitorJourney(Campaign $campaign, PartnerAccount $partner): void
-    {
+    private function executeVisitorJourney(
+        Campaign $campaign,
+        PartnerAccount $partner,
+        RewardGovernanceService $governance,
+        PartnerDashboardService $partnerDashboard,
+    ): void {
         $visitor = User::query()->updateOrCreate(
             ['email' => 'visitor.stress-demo@example.test'],
             ['name' => 'کاربر دموی فشار', 'password' => 'password', 'role' => UserRole::Visitor],
@@ -984,36 +1109,24 @@ class PrepareStressDemoCommand extends Command
             ->orderBy('created_at')
             ->firstOrFail();
 
-        $userReward = UserReward::query()->updateOrCreate(
-            [
-                'user_id' => $visitor->id,
-                'reward_definition_id' => $reward->id,
-                'campaign_id' => $campaign->id,
-            ],
-            [
-                'status' => 'awarded',
-                'awarded_at' => now(),
-                'expires_at' => now()->addDays(7),
-                'metadata' => [
-                    'is_demo' => true,
-                    'stress_demo' => true,
-                    'source' => 'stress_demo_visitor_execution',
-                    'reward_code' => $reward->code,
-                ],
-            ],
-        );
+        $userReward = $governance->issue($visitor, $reward, [
+            'is_demo' => true,
+            'stress_demo' => true,
+            'source' => 'stress_demo_visitor_execution',
+            'reward_code' => $reward->code,
+        ]);
 
-        RewardRedemption::query()->updateOrCreate(
-            ['redemption_code' => 'STRESS-DEMO-REDEEM-001'],
-            [
-                'user_reward_id' => $userReward->id,
-                'user_id' => $visitor->id,
-                'partner_account_id' => $partner->id,
-                'status' => 'confirmed',
-                'redeemed_at' => now(),
-                'metadata' => ['is_demo' => true, 'stress_demo' => true, 'confirmed_by' => 'stress_demo_command'],
+        $redemption = $partnerDashboard->ensureRedemptionForReward($userReward);
+        $redemption->update([
+            'status' => 'confirmed',
+            'redeemed_at' => now(),
+            'metadata' => [
+                ...($redemption->metadata ?? []),
+                'is_demo' => true,
+                'stress_demo' => true,
+                'confirmed_by' => 'stress_demo_command',
             ],
-        );
+        ]);
 
         $allocation = RewardInventoryAllocation::query()
             ->where('reward_definition_id', $reward->id)

@@ -8,6 +8,7 @@ use App\Models\Campaign;
 use App\Models\CampaignParticipant;
 use App\Models\CampaignSponsorship;
 use App\Models\DisplayDevice;
+use App\Models\FinancialAccount;
 use App\Models\Hub;
 use App\Models\HubManagementAssignment;
 use App\Models\MissionInstance;
@@ -29,6 +30,8 @@ use Illuminate\Support\Str;
 
 class VenueActivationService
 {
+    public function __construct(private readonly FinancialLedgerService $financialLedger) {}
+
     /** @return array<string, mixed> */
     public function activate(Venue $venue): array
     {
@@ -61,9 +64,10 @@ class VenueActivationService
 
             $missions = $this->missions($venue, $campaign, $entryHub, $missionTouchpoint, $rewardHub, $rewardTouchpoint);
             $treasure = $this->treasure($venue, $campaign, $missions[3]);
-            $rewards = $this->rewards($venue, $campaign, $partners, $missions[2], $treasure);
-            $this->inventory($campaign, $rewards[1], $partners[0], $missions[2], $treasure);
-            $this->sponsorship($venue, $campaign, $prefix);
+            $sponsorship = $this->sponsorship($venue, $campaign, $prefix);
+            $rewards = $this->rewards($venue, $campaign, $partners, $missions[2], $treasure, $sponsorship);
+            $this->inventory($campaign, $rewards[1], $partners[0], $missions[2], $treasure, 100);
+            $this->inventory($campaign, $rewards[2], $partners[2], $missions[3], $treasure, 50);
             $this->accessScopes($venue, $commercialHub, $partners);
 
             return [
@@ -375,8 +379,13 @@ class VenueActivationService
      * @param  array<int, PartnerAccount>  $partners
      * @return array{RewardDefinition, RewardDefinition, RewardDefinition}
      */
-    private function rewards(Venue $venue, Campaign $campaign, array $partners, MissionInstance $mission, Treasure $treasure): array
+    private function rewards(Venue $venue, Campaign $campaign, array $partners, MissionInstance $mission, Treasure $treasure, CampaignSponsorship $sponsorship): array
     {
+        $this->financialLedger->ensureDefaultSetup();
+        $platformCostOwner = FinancialAccount::query()->where('account_key', 'exploria-platform-main')->firstOrFail();
+        $partnerCostOwner = $this->financialLedger->ensurePartnerAccount($partners[0]);
+        $sponsorCostOwner = $this->financialLedger->ensureSponsorAccount($sponsorship->sponsorAccount);
+
         return [
             RewardDefinition::query()->updateOrCreate(
                 ['campaign_id' => $campaign->id, 'code' => 'activation-points-reward'],
@@ -385,8 +394,14 @@ class VenueActivationService
                     'partner_account_id' => null,
                     'name' => 'امتیاز پایه '.$venue->name,
                     'reward_type' => 'points',
+                    'inventory_mode' => 'non_inventory',
                     'point_cost' => null,
                     'stock_quantity' => null,
+                    'cost_owner_financial_account_id' => $platformCostOwner->id,
+                    'available_from' => $campaign->start_at,
+                    'available_until' => $campaign->end_at,
+                    'expires_after_minutes' => null,
+                    'per_user_award_limit' => 1,
                     'status' => RecordStatus::Active,
                     'metadata' => ['source' => 'admin_venue_activation', 'approval_status' => 'approved'],
                 ],
@@ -398,8 +413,14 @@ class VenueActivationService
                     'partner_account_id' => $partners[0]->id,
                     'name' => 'پاداش واحد تجاری '.$venue->name,
                     'reward_type' => 'partner_coupon',
+                    'inventory_mode' => 'finite',
                     'point_cost' => 40,
                     'stock_quantity' => 100,
+                    'cost_owner_financial_account_id' => $partnerCostOwner->id,
+                    'available_from' => $campaign->start_at,
+                    'available_until' => $campaign->end_at,
+                    'expires_after_minutes' => 10080,
+                    'per_user_award_limit' => 1,
                     'status' => RecordStatus::Active,
                     'metadata' => ['source' => 'partner_offer_submission', 'approval_status' => 'approved'],
                 ],
@@ -411,8 +432,14 @@ class VenueActivationService
                     'partner_account_id' => $partners[2]->id,
                     'name' => 'مشوق اسپانسری '.$venue->name,
                     'reward_type' => 'sponsor_bonus',
+                    'inventory_mode' => 'finite',
                     'point_cost' => 80,
                     'stock_quantity' => 50,
+                    'cost_owner_financial_account_id' => $sponsorCostOwner->id,
+                    'available_from' => $campaign->start_at,
+                    'available_until' => $campaign->end_at,
+                    'expires_after_minutes' => 10080,
+                    'per_user_award_limit' => 1,
                     'status' => RecordStatus::Active,
                     'metadata' => [
                         'source' => 'admin_sponsor_activation',
@@ -426,7 +453,7 @@ class VenueActivationService
         ];
     }
 
-    private function inventory(Campaign $campaign, RewardDefinition $reward, PartnerAccount $partner, MissionInstance $mission, Treasure $treasure): RewardInventoryAllocation
+    private function inventory(Campaign $campaign, RewardDefinition $reward, PartnerAccount $partner, MissionInstance $mission, Treasure $treasure, int $quantity): RewardInventoryAllocation
     {
         return RewardInventoryAllocation::query()->updateOrCreate(
             ['reward_definition_id' => $reward->id, 'partner_account_id' => $partner->id],
@@ -435,7 +462,7 @@ class VenueActivationService
                 'campaign_id' => $campaign->id,
                 'sponsor_proposal_activation_id' => null,
                 'mission_instance_id' => $mission->id,
-                'allocated_quantity' => 100,
+                'allocated_quantity' => $quantity,
                 'reserved_quantity' => 0,
                 'redeemed_quantity' => 0,
                 'status' => 'active',
@@ -460,7 +487,7 @@ class VenueActivationService
             ],
         );
 
-        return CampaignSponsorship::query()->updateOrCreate(
+        $sponsorship = CampaignSponsorship::query()->updateOrCreate(
             ['campaign_id' => $campaign->id, 'sponsor_account_id' => $sponsor->id],
             [
                 'sponsorship_goal' => 'route_activation',
@@ -474,6 +501,10 @@ class VenueActivationService
                 'metadata' => ['source' => 'admin_venue_activation'],
             ],
         );
+
+        $sponsorship->setRelation('sponsorAccount', $sponsor);
+
+        return $sponsorship;
     }
 
     /** @param array<int, PartnerAccount> $partners */

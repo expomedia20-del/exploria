@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\ContractTemplate;
 use App\Models\FinancialAccount;
 use App\Models\FinancialLedgerEntry;
+use App\Models\PartnerAccount;
+use App\Models\SponsorAccount;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
@@ -87,7 +89,7 @@ class FinancialLedgerService
         ]);
     }
 
-    private function ensureDefaultSetup(): void
+    public function ensureDefaultSetup(): void
     {
         foreach ($this->defaultAccounts() as $account) {
             FinancialAccount::query()->firstOrCreate(
@@ -102,6 +104,54 @@ class FinancialLedgerService
                 $template,
             );
         }
+    }
+
+    public function ensureSponsorAccount(SponsorAccount $sponsor): FinancialAccount
+    {
+        $existing = FinancialAccount::query()
+            ->where('account_type', 'sponsor')
+            ->where('owner_reference_type', 'sponsor_code')
+            ->where('owner_reference_id', $sponsor->code)
+            ->first();
+
+        if ($existing) {
+            return $existing;
+        }
+
+        return FinancialAccount::query()->create([
+            'account_key' => 'sponsor-'.substr($sponsor->code, 0, 60).'-'.substr($sponsor->id, 0, 8),
+            'account_type' => 'sponsor',
+            'owner_name' => $sponsor->name,
+            'owner_reference_type' => 'sponsor_code',
+            'owner_reference_id' => $sponsor->code,
+            'currency' => 'IRR',
+            'status' => 'active',
+            'metadata' => ['wallet_role' => 'sponsor_budget_and_rewards', 'source' => 'sponsor_activation'],
+        ]);
+    }
+
+    public function ensurePartnerAccount(PartnerAccount $partner): FinancialAccount
+    {
+        $existing = FinancialAccount::query()
+            ->where('account_type', 'partner')
+            ->where('owner_reference_type', 'partner_code')
+            ->where('owner_reference_id', $partner->code)
+            ->first();
+
+        if ($existing) {
+            return $existing;
+        }
+
+        return FinancialAccount::query()->create([
+            'account_key' => 'partner-'.substr($partner->code, 0, 60).'-'.substr($partner->id, 0, 8),
+            'account_type' => 'partner',
+            'owner_name' => $partner->name,
+            'owner_reference_type' => 'partner_code',
+            'owner_reference_id' => $partner->code,
+            'currency' => 'IRR',
+            'status' => 'active',
+            'metadata' => ['wallet_role' => 'reward_redemption_settlement', 'source' => 'partner_activation'],
+        ]);
     }
 
     /** @return array<int, array<string, mixed>> */

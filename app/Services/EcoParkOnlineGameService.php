@@ -13,7 +13,6 @@ use App\Models\GamePartyInvitation;
 use App\Models\GamePartyMember;
 use App\Models\QrCode;
 use App\Models\RewardDefinition;
-use App\Models\RewardInventoryAllocation;
 use App\Models\RewardRedemption;
 use App\Models\User;
 use App\Models\UserReward;
@@ -24,6 +23,11 @@ use Illuminate\Validation\ValidationException;
 
 class EcoParkOnlineGameService
 {
+    public function __construct(
+        private readonly RewardGovernanceService $rewardGovernance,
+        private readonly PartnerDashboardService $partnerDashboard,
+    ) {}
+
     public const CAMPAIGN_CODE = 'ecopark-online-treasure-map-game-campaign';
 
     public const BLUEPRINT_CODE = 'ecopark-online-treasure-map-game';
@@ -1515,7 +1519,7 @@ class EcoParkOnlineGameService
         $commerce = $this->commerceSnapshot($party);
         $rewards = RewardDefinition::query()
             ->where('campaign_id', $party->campaign_id)
-            ->where('status', 'active')
+            ->availableForIssuance()
             ->get()
             ->filter(function (RewardDefinition $reward) use ($checkpointKey, $commerce, $step): bool {
                 if (! (bool) data_get($reward->metadata, 'game_auto_award', false)) {
@@ -1549,40 +1553,17 @@ class EcoParkOnlineGameService
             }
 
             foreach ($rewards as $reward) {
-                if (
-                    $reward->stock_quantity !== null
-                    && $reward->userRewards()->count() >= $reward->stock_quantity
-                ) {
-                    continue;
-                }
+                $user = User::query()->findOrFail((int) $member->user_id);
+                $userReward = $this->rewardGovernance->issue($user, $reward, [
+                    'source' => $step === 9 ? 'game_final_reward' : 'game_physical_checkpoint',
+                    'game_party_id' => $party->id,
+                    'step_index' => $step,
+                    'checkpoint_key' => $checkpointKey,
+                    'final_tier' => $step === 9 ? $commerce['finalTier'] : null,
+                ]);
 
-                $userReward = UserReward::query()->firstOrCreate(
-                    [
-                        'user_id' => (int) $member->user_id,
-                        'reward_definition_id' => $reward->id,
-                        'campaign_id' => $party->campaign_id,
-                    ],
-                    [
-                        'status' => 'awarded',
-                        'awarded_at' => now(),
-                        'expires_at' => now()->addDays(7),
-                        'metadata' => [
-                            'source' => $step === 9 ? 'game_final_reward' : 'game_physical_checkpoint',
-                            'game_party_id' => $party->id,
-                            'step_index' => $step,
-                            'checkpoint_key' => $checkpointKey,
-                            'final_tier' => $step === 9 ? $commerce['finalTier'] : null,
-                        ],
-                    ],
-                );
-
-                $hasInventory = RewardInventoryAllocation::query()
-                    ->where('reward_definition_id', $reward->id)
-                    ->whereRaw('allocated_quantity > reserved_quantity + redeemed_quantity')
-                    ->exists();
-
-                if ($userReward->wasRecentlyCreated && ($reward->partner_account_id || $hasInventory)) {
-                    app(PartnerDashboardService::class)->ensureRedemptionForReward($userReward);
+                if ($this->rewardGovernance->isRedeemable($reward)) {
+                    $this->partnerDashboard->ensureRedemptionForReward($userReward);
                 }
             }
         }

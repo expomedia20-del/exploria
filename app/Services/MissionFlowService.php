@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Enums\RecordStatus;
 use App\Models\MissionInstance;
 use App\Models\RewardDefinition;
-use App\Models\RewardInventoryAllocation;
 use App\Models\User;
 use App\Models\UserMissionProgress;
 use App\Models\UserReward;
@@ -16,6 +15,11 @@ use Illuminate\Validation\ValidationException;
 
 class MissionFlowService
 {
+    public function __construct(
+        private readonly RewardGovernanceService $rewardGovernance,
+        private readonly PartnerDashboardService $partnerDashboard,
+    ) {}
+
     /** @return array<string, mixed> */
     public function visitMissionSummary(User $user, Visit $visit): array
     {
@@ -348,32 +352,17 @@ class MissionFlowService
             return null;
         }
 
-        $userReward = UserReward::query()->firstOrCreate(
-            [
-                'user_id' => $user->id,
-                'reward_definition_id' => $rewardDefinition->id,
-                'campaign_id' => $mission->campaign_id,
-            ],
-            [
-                'status' => 'awarded',
-                'awarded_at' => now(),
-                'metadata' => ['source' => 'mission_completed', 'mission_code' => $mission->code],
-            ],
+        $userReward = $this->rewardGovernance->issue(
+            $user,
+            $rewardDefinition,
+            ['source' => 'mission_completed', 'mission_code' => $mission->code],
         );
 
-        if ($rewardDefinition->partner_account_id || $this->hasRedeemableInventory($rewardDefinition)) {
-            app(PartnerDashboardService::class)->ensureRedemptionForReward($userReward);
+        if ($this->rewardGovernance->isRedeemable($rewardDefinition)) {
+            $this->partnerDashboard->ensureRedemptionForReward($userReward);
         }
 
         return $userReward;
-    }
-
-    private function hasRedeemableInventory(RewardDefinition $rewardDefinition): bool
-    {
-        return RewardInventoryAllocation::query()
-            ->where('reward_definition_id', $rewardDefinition->id)
-            ->whereRaw('allocated_quantity > reserved_quantity + redeemed_quantity')
-            ->exists();
     }
 
     private function existingRewardForMission(User $user, MissionInstance $mission): ?UserReward

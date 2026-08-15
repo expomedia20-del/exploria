@@ -21,6 +21,7 @@ class UpdatePartnerOfferRequest extends FormRequest
             'availability_status' => ['required', 'string', Rule::in(['active', 'paused'])],
             'available_from' => ['nullable', 'date'],
             'available_until' => ['nullable', 'date', 'after_or_equal:available_from'],
+            'expires_after_minutes' => ['nullable', 'integer', 'min:1', 'max:525600'],
             'description' => ['nullable', 'string', 'max:1000'],
             'terms' => ['nullable', 'string', 'max:1000'],
         ];

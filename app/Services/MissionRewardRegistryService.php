@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\RecordStatus;
 use App\Models\Campaign;
+use App\Models\FinancialAccount;
 use App\Models\Hub;
 use App\Models\MissionInstance;
 use App\Models\MissionTemplate;
@@ -23,6 +24,7 @@ class MissionRewardRegistryService
     public function __construct(
         private readonly UserAccessScopeService $accessScopes,
         private readonly CampaignBlueprintConsistencyService $blueprintConsistency,
+        private readonly RewardGovernanceService $rewardGovernance,
     ) {}
 
     /** @return array<string, mixed> */
@@ -64,6 +66,7 @@ class MissionRewardRegistryService
                 'campaign:id,code,name',
                 'venue:id,code,name',
                 'partnerAccount:id,code,name,partner_type',
+                'costOwnerFinancialAccount:id,account_key,account_type,owner_name',
                 'inventoryAllocations.partnerAccount:id,code,name,partner_type',
             ])
             ->withCount('userRewards')
@@ -148,6 +151,18 @@ class MissionRewardRegistryService
                 ->orderBy('name')
                 ->get(['id', 'code', 'name', 'partner_type'])
                 ->map(fn (PartnerAccount $partner): array => ['id' => $partner->id, 'code' => $partner->code, 'name' => $partner->name, 'partnerType' => $partner->partner_type]),
+            'financialAccounts' => FinancialAccount::query()
+                ->where('status', RecordStatus::Active->value)
+                ->whereIn('account_type', ['platform', 'venue', 'partner', 'sponsor'])
+                ->orderBy('account_type')
+                ->orderBy('owner_name')
+                ->get(['id', 'account_key', 'account_type', 'owner_name'])
+                ->map(fn (FinancialAccount $account): array => [
+                    'id' => $account->id,
+                    'accountKey' => $account->account_key,
+                    'accountType' => $account->account_type,
+                    'ownerName' => $account->owner_name,
+                ]),
         ];
     }
 
@@ -235,22 +250,29 @@ class MissionRewardRegistryService
     }
 
     /** @param array<string, mixed> $data */
-    public function createReward(array $data): RewardDefinition
+    public function createReward(array $data, User $actor): RewardDefinition
     {
         $campaign = Campaign::query()->findOrFail($this->requiredId($data, 'campaign_id'));
         $this->assertSameVenuePartner($campaign, $this->optionalString($data, 'partner_account_id'));
         $this->blueprintConsistency->assertRewardInput($campaign, $data);
 
+        $requestedStatus = $data['status'];
         $attributes = [
             'campaign_id' => $campaign->id,
             'venue_id' => $campaign->venue_id,
             'partner_account_id' => $data['partner_account_id'] ?? null,
+            'cost_owner_financial_account_id' => $data['cost_owner_financial_account_id'] ?? null,
             'code' => $data['code'],
             'name' => $data['name'],
             'reward_type' => $data['reward_type'],
+            'inventory_mode' => $data['inventory_mode'] ?? null,
             'point_cost' => $data['point_cost'] ?? null,
             'stock_quantity' => $data['stock_quantity'] ?? null,
-            'status' => $data['status'],
+            'available_from' => $data['available_from'] ?? null,
+            'available_until' => $data['available_until'] ?? null,
+            'expires_after_minutes' => $data['expires_after_minutes'] ?? null,
+            'per_user_award_limit' => $data['per_user_award_limit'] ?? 1,
+            'status' => $requestedStatus === RecordStatus::Active->value ? RecordStatus::Draft : $requestedStatus,
             'metadata' => [
                 'source' => 'admin_campaign_components',
                 'approval_status' => $data['status'],
@@ -259,15 +281,21 @@ class MissionRewardRegistryService
                 'reward_option' => $data['reward_option'] ?? null,
                 'cycle_step_index' => $data['cycle_step_index'] ?? null,
                 'cycle_step_label' => $data['cycle_step_label'] ?? null,
-                'available_from' => $data['available_from'] ?? null,
-                'available_until' => $data['available_until'] ?? null,
                 'fulfillment_window' => $data['fulfillment_window'] ?? null,
                 'description' => $data['description'] ?? null,
                 'terms' => $data['terms'] ?? null,
             ],
         ];
 
-        return DB::transaction(fn (): RewardDefinition => $this->replaceRewardCycleStep($campaign, $data['cycle_step_index'] ?? null, $attributes));
+        return DB::transaction(function () use ($actor, $attributes, $campaign, $data, $requestedStatus): RewardDefinition {
+            $reward = $this->replaceRewardCycleStep($campaign, $data['cycle_step_index'] ?? null, $attributes);
+
+            if ($requestedStatus === RecordStatus::Active->value) {
+                return $this->rewardGovernance->activate($reward, $actor);
+            }
+
+            return $reward;
+        });
     }
 
     /** @param array<string, mixed> $data */
@@ -371,10 +399,17 @@ class MissionRewardRegistryService
                 $metadata['partner_allocations'] = $partnerAllocations->all();
             }
 
+            $requestedStatus = $data['status'];
             $reward->update([
                 'point_cost' => $data['point_cost'] ?? null,
                 'stock_quantity' => $stockQuantity,
-                'status' => $data['status'],
+                'cost_owner_financial_account_id' => $data['cost_owner_financial_account_id'] ?? $reward->cost_owner_financial_account_id,
+                'inventory_mode' => $data['inventory_mode'] ?? $reward->inventory_mode,
+                'available_from' => $data['available_from'] ?? $reward->available_from,
+                'available_until' => $data['available_until'] ?? $reward->available_until,
+                'expires_after_minutes' => $data['expires_after_minutes'] ?? $reward->expires_after_minutes,
+                'per_user_award_limit' => $data['per_user_award_limit'] ?? $reward->per_user_award_limit ?? 1,
+                'status' => $requestedStatus === RecordStatus::Active->value ? RecordStatus::Draft : $requestedStatus,
                 'metadata' => $metadata,
             ]);
 
@@ -403,7 +438,11 @@ class MissionRewardRegistryService
 
             $this->syncRewardInventoryAllocations($reward->refresh(), $treasure, $mission);
 
-            return $reward->refresh()->load('inventoryAllocations.partnerAccount');
+            $reward = $reward->refresh()->load('inventoryAllocations.partnerAccount');
+
+            return $requestedStatus === RecordStatus::Active->value
+                ? $this->rewardGovernance->activate($reward, $actor, $data['notes'] ?? null)
+                : $reward;
         });
     }
 
@@ -719,6 +758,7 @@ class MissionRewardRegistryService
             'code' => $reward->code,
             'name' => $reward->name,
             'rewardType' => $reward->reward_type,
+            'inventoryMode' => $reward->inventory_mode?->value,
             'status' => $reward->status->value,
             'approvalStatus' => $reward->metadata['approval_status'] ?? $reward->status->value,
             'availabilityStatus' => $reward->metadata['availability_status'] ?? ($reward->status->value === 'inactive' ? 'paused' : 'active'),
@@ -733,8 +773,16 @@ class MissionRewardRegistryService
                 'index' => $reward->metadata['cycle_step_index'] ?? null,
                 'label' => $reward->metadata['cycle_step_label'] ?? null,
             ],
-            'availableFrom' => $reward->metadata['available_from'] ?? null,
-            'availableUntil' => $reward->metadata['available_until'] ?? null,
+            'availableFrom' => $reward->available_from?->toIso8601String(),
+            'availableUntil' => $reward->available_until?->toIso8601String(),
+            'expiresAfterMinutes' => $reward->expires_after_minutes,
+            'perUserAwardLimit' => $reward->per_user_award_limit,
+            'costOwner' => $reward->costOwnerFinancialAccount ? [
+                'id' => $reward->costOwnerFinancialAccount->id,
+                'accountKey' => $reward->costOwnerFinancialAccount->account_key,
+                'ownerName' => $reward->costOwnerFinancialAccount->owner_name,
+                'accountType' => $reward->costOwnerFinancialAccount->account_type,
+            ] : null,
             'fulfillmentWindow' => $reward->metadata['fulfillment_window'] ?? null,
             'description' => $reward->metadata['description'] ?? null,
             'terms' => $reward->metadata['terms'] ?? null,

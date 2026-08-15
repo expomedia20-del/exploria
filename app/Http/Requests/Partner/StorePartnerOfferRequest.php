@@ -25,6 +25,9 @@ class StorePartnerOfferRequest extends FormRequest
             'reward_option' => ['nullable', 'string', 'max:255'],
             'point_cost' => ['nullable', 'integer', 'min:0', 'max:1000000'],
             'stock_quantity' => ['nullable', 'integer', 'min:1', 'max:1000000'],
+            'available_from' => ['nullable', 'date'],
+            'available_until' => ['nullable', 'date', 'after_or_equal:available_from'],
+            'expires_after_minutes' => ['nullable', 'integer', 'min:1', 'max:525600'],
             'description' => ['nullable', 'string', 'max:1000'],
             'terms' => ['nullable', 'string', 'max:1000'],
         ];

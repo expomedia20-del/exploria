@@ -119,8 +119,9 @@ class CampaignOperationsBlueprintService
             'externalSponsors' => $participants->filter(fn (array $participant): bool => $participant['participantType'] === 'sponsor' && $participant['hub'] === null)->count(),
             'missions' => $this->missions($campaign, $scope)->count(),
             'rewards' => $rewards->count(),
-            'approvedRewards' => $rewards->where('approvalStatus', 'approved')->count(),
+            'approvedRewards' => $rewards->where('approvalStatus', 'approved')->where('issuanceReady', true)->count(),
             'pendingRewards' => $rewards->where('approvalStatus', 'pending_review')->count(),
+            'invalidActiveRewards' => $rewards->where('status', 'active')->where('issuanceReady', false)->count(),
             'treasures' => $this->treasures($campaign, $scope)->count(),
             'qrCodes' => $this->qrCodes($campaign, $scope)->count(),
             'adRequests' => $this->adRequests($campaign, $scope)->count(),
@@ -146,6 +147,14 @@ class CampaignOperationsBlueprintService
             $this->operationCheck('pending_rewards', 'پیشنهاد معلق', 'پیشنهاد پاداش در انتظار بررسی باقی نمانده باشد.', $stats['pendingRewards'] === 0, $stats['pendingRewards']),
             $this->operationCheck('alignment', 'همخوانی الگو', 'چرخه، ماموریت، پاداش و گنج با الگوی مرجع همخوان باشند.', collect($alignment['issues'])->where('level', 'error')->isEmpty(), (int) ($alignment['completedSteps'] ?? 0)),
         ];
+
+        $checks[] = $this->operationCheck(
+            'reward_governance',
+            'آمادگی صدور پاداش',
+            'هر پاداش فعال باید مالک هزینه، حالت موجودی، بازه زمانی و سقف صدور معتبر داشته باشد.',
+            $stats['invalidActiveRewards'] === 0,
+            $stats['invalidActiveRewards'],
+        );
 
         if (($stats['adRequests'] + $stats['displayDevices']) === 0) {
             $checks[] = $this->operationCheck('media', 'رسانه و نمایشگر', 'برای اجرای میدانی بهتر، نمایشگر یا درخواست تبلیغاتی مرتبط مشخص شود.', false, 0, 'warning');
@@ -219,8 +228,9 @@ class CampaignOperationsBlueprintService
             'externalSponsors' => $externalSponsors->count(),
             'missions' => $missions->count(),
             'rewards' => $rewards->count(),
-            'approvedRewards' => $rewards->where('approvalStatus', 'approved')->count(),
+            'approvedRewards' => $rewards->where('approvalStatus', 'approved')->where('issuanceReady', true)->count(),
             'pendingRewards' => $rewards->where('approvalStatus', 'pending_review')->count(),
+            'invalidActiveRewards' => $rewards->where('status', 'active')->where('issuanceReady', false)->count(),
             'treasures' => $treasures->count(),
             'qrCodes' => $qrCodes->count(),
             'adRequests' => $adRequests->count(),
@@ -289,7 +299,7 @@ class CampaignOperationsBlueprintService
             $stepMissions = $missions->filter(fn (array $item): bool => (int) ($item['cycleStep']['index'] ?? 0) === $stepIndex)->values();
             $stepRewards = $rewards->filter(fn (array $item): bool => (int) ($item['cycleStep']['index'] ?? 0) === $stepIndex)->values();
             $stepTreasures = $treasures->filter(fn (array $item): bool => (int) ($item['cycleStep']['index'] ?? 0) === $stepIndex)->values();
-            $approvedRewards = $stepRewards->where('approvalStatus', 'approved')->count();
+            $approvedRewards = $stepRewards->where('approvalStatus', 'approved')->where('issuanceReady', true)->count();
             $pendingRewards = $stepRewards->where('approvalStatus', 'pending_review')->count();
 
             $checks = [
@@ -463,11 +473,18 @@ class CampaignOperationsBlueprintService
      */
     private function rewards(Campaign $campaign, array $scope): Collection
     {
-        return RewardDefinition::query()
+        $query = RewardDefinition::query()
             ->where('campaign_id', $campaign->id)
             ->when(! $scope['isGlobal'], fn (Builder $query) => $query->where(function (Builder $query) use ($scope): void {
                 $query->whereIn('venue_id', $scope['assignedVenueIds'])->orWhereIn('partner_account_id', $scope['partnerIds']);
-            }))
+            }));
+
+        $issuanceReadyIds = (clone $query)
+            ->availableForIssuance()
+            ->pluck('id')
+            ->flip();
+
+        return $query
             ->with('partnerAccount:id,code,name,partner_type')
             ->orderBy('created_at')
             ->get()
@@ -481,6 +498,7 @@ class CampaignOperationsBlueprintService
                 'status' => $reward->status->value,
                 'approvalStatus' => $reward->metadata['approval_status'] ?? $reward->status->value,
                 'availabilityStatus' => $reward->metadata['availability_status'] ?? ($reward->status->value === 'inactive' ? 'paused' : 'active'),
+                'issuanceReady' => $issuanceReadyIds->has($reward->id),
                 'source' => $reward->metadata['source'] ?? null,
                 'rewardTier' => $reward->metadata['reward_tier'] ?? null,
                 'rewardOption' => $reward->metadata['reward_option'] ?? null,

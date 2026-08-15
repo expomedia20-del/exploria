@@ -16,9 +16,13 @@ export type RewardDefinition = {
     code: string;
     name: string;
     rewardType: string;
+    inventoryMode: 'finite' | 'non_inventory' | null;
     status: string;
     pointCost: number | null;
     stockQuantity: number | null;
+    costOwnerFinancialAccountId: string | null;
+    expiresAfterMinutes: number | null;
+    perUserAwardLimit: number | null;
     userRewardsCount: number;
     awardedCount: number;
     inventoryAllocated: number;

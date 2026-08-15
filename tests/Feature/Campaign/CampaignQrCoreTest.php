@@ -444,7 +444,7 @@ class CampaignQrCoreTest extends TestCase
         $this->assertSame('bronze', $reward->metadata['reward_tier']);
         $this->assertSame('نشان شروع مسیر', $reward->metadata['reward_option']);
         $this->assertSame(1, $reward->metadata['cycle_step_index']);
-        $this->assertSame('2026-07-02 09:00:00', $reward->metadata['available_from']);
+        $this->assertSame('2026-07-02 09:00:00', $reward->available_from?->format('Y-m-d H:i:s'));
         $this->assertSame('same day', $reward->metadata['fulfillment_window']);
         $this->assertSame(1, RewardDefinition::query()->where('code', 'builder-test-reward')->count());
         $this->assertSame(1, RewardDefinition::query()->where('campaign_id', $campaign->id)->where('metadata->cycle_step_index', 1)->count());
@@ -638,6 +638,18 @@ class CampaignQrCoreTest extends TestCase
         $operator = User::factory()->create(['role' => UserRole::Operator]);
         $campaign = Campaign::query()->where('code', 'ecopark-pilot-1405')->firstOrFail();
         $campaign->update(['status' => RecordStatus::Draft, 'metadata' => ['blueprint_code' => 'family-route']]);
+        $pendingSponsorReward = RewardDefinition::query()
+            ->where('campaign_id', $campaign->id)
+            ->where('code', 'pilot-prize-draw')
+            ->firstOrFail();
+        $pendingSponsorReward->update([
+            'status' => RecordStatus::Inactive,
+            'metadata' => [
+                ...($pendingSponsorReward->metadata ?? []),
+                'approval_status' => 'rejected',
+                'review_notes' => 'Excluded from this launch review until sponsor funding is approved.',
+            ],
+        ]);
 
         $this->actingAs($operator)
             ->from(route('admin.campaign-participants.page', ['campaign' => $campaign->code]))

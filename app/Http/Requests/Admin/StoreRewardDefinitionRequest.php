@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Admin;
 
 use App\Enums\RecordStatus;
+use App\Enums\RewardInventoryMode;
 use App\Models\RewardDefinition;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -20,6 +21,7 @@ class StoreRewardDefinitionRequest extends FormRequest
         return [
             'campaign_id' => ['required', 'uuid', 'exists:campaigns,id'],
             'partner_account_id' => ['nullable', 'uuid', 'exists:partner_accounts,id'],
+            'cost_owner_financial_account_id' => ['nullable', 'uuid', 'exists:financial_accounts,id'],
             'code' => [
                 'required',
                 'string',
@@ -48,6 +50,9 @@ class StoreRewardDefinitionRequest extends FormRequest
             'cycle_step_label' => ['nullable', 'string', 'max:255'],
             'point_cost' => ['nullable', 'integer', 'min:0', 'max:1000000'],
             'stock_quantity' => ['nullable', 'integer', 'min:0', 'max:1000000'],
+            'inventory_mode' => ['nullable', Rule::enum(RewardInventoryMode::class)],
+            'expires_after_minutes' => ['nullable', 'integer', 'min:1', 'max:525600'],
+            'per_user_award_limit' => ['nullable', 'integer', 'min:1', 'max:1'],
             'status' => ['required', Rule::enum(RecordStatus::class)],
             'available_from' => ['nullable', 'date'],
             'available_until' => ['nullable', 'date', 'after_or_equal:available_from'],

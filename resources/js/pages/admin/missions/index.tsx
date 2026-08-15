@@ -64,6 +64,7 @@ type RewardItem = {
     code: string;
     name: string;
     rewardType: string;
+    inventoryMode: 'finite' | 'non_inventory' | null;
     status: string;
     approvalStatus: string;
     rewardTier: string | null;
@@ -85,6 +86,14 @@ type RewardItem = {
     reviewedAt: string | null;
     pointCost: number | null;
     stockQuantity: number | null;
+    expiresAfterMinutes: number | null;
+    perUserAwardLimit: number | null;
+    costOwner: {
+        id: string;
+        accountKey: string;
+        ownerName: string;
+        accountType: string;
+    } | null;
     awardedCount: number;
     campaign: RegistryEntity | null;
     venue: RegistryEntity | null;
@@ -251,6 +260,12 @@ type FormOptions = {
     hubs: FormEntity[];
     touchpoints: (FormEntity & { hubId: string })[];
     partners: PartnerOption[];
+    financialAccounts: {
+        id: string;
+        accountKey: string;
+        accountType: string;
+        ownerName: string;
+    }[];
 };
 
 const statusLabels: Record<string, string> = {
@@ -1813,6 +1828,109 @@ export default function MissionRewardRegistryIndex({
                                                     className="h-9 rounded-md border border-input bg-background px-3 text-sm"
                                                 />
                                             </div>
+                                        </div>
+                                        <input
+                                            type="hidden"
+                                            name="per_user_award_limit"
+                                            value="1"
+                                        />
+                                        <div className="grid gap-2 sm:grid-cols-2">
+                                            <div className="grid gap-1.5">
+                                                <label
+                                                    htmlFor="inventory_mode"
+                                                    className="text-xs font-medium"
+                                                >
+                                                    نوع کنترل موجودی
+                                                </label>
+                                                <select
+                                                    key={`reward-inventory-mode-${editingReward?.id ?? 'new'}`}
+                                                    id="inventory_mode"
+                                                    name="inventory_mode"
+                                                    defaultValue={
+                                                        editingReward?.inventoryMode ??
+                                                        'finite'
+                                                    }
+                                                    className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                                >
+                                                    <option value="finite">
+                                                        موجودی محدود
+                                                    </option>
+                                                    <option value="non_inventory">
+                                                        بدون موجودی فیزیکی
+                                                    </option>
+                                                </select>
+                                                <InputError
+                                                    message={
+                                                        errors.inventory_mode
+                                                    }
+                                                />
+                                            </div>
+                                            <div className="grid gap-1.5">
+                                                <label
+                                                    htmlFor="expires_after_minutes"
+                                                    className="text-xs font-medium"
+                                                >
+                                                    مهلت مصرف پس از صدور (دقیقه)
+                                                </label>
+                                                <input
+                                                    key={`reward-expiry-${editingReward?.id ?? 'new'}`}
+                                                    id="expires_after_minutes"
+                                                    name="expires_after_minutes"
+                                                    type="number"
+                                                    min="1"
+                                                    defaultValue={
+                                                        editingReward?.expiresAfterMinutes ??
+                                                        10080
+                                                    }
+                                                    className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                                />
+                                                <InputError
+                                                    message={
+                                                        errors.expires_after_minutes
+                                                    }
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="grid gap-1.5">
+                                            <label
+                                                htmlFor="cost_owner_financial_account_id"
+                                                className="text-xs font-medium"
+                                            >
+                                                حساب مسئول هزینه پاداش
+                                            </label>
+                                            <select
+                                                key={`reward-cost-owner-${editingReward?.id ?? 'new'}`}
+                                                id="cost_owner_financial_account_id"
+                                                name="cost_owner_financial_account_id"
+                                                defaultValue={
+                                                    editingReward?.costOwner
+                                                        ?.id ?? ''
+                                                }
+                                                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                            >
+                                                <option value="">
+                                                    انتخاب حساب مالی
+                                                </option>
+                                                {formOptions.financialAccounts.map(
+                                                    (account) => (
+                                                        <option
+                                                            key={account.id}
+                                                            value={account.id}
+                                                        >
+                                                            {account.ownerName}{' '}
+                                                            /{' '}
+                                                            {
+                                                                account.accountType
+                                                            }
+                                                        </option>
+                                                    ),
+                                                )}
+                                            </select>
+                                            <InputError
+                                                message={
+                                                    errors.cost_owner_financial_account_id
+                                                }
+                                            />
                                         </div>
                                         <div className="grid gap-1.5">
                                             <label
