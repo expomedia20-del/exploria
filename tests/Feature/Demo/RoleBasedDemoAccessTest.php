@@ -95,8 +95,8 @@ class RoleBasedDemoAccessTest extends TestCase
             ->getJson(route('partner.dashboard.index', ['campaign' => 'ecopark-online-treasure-map-game-campaign']))
             ->assertOk()
             ->assertJsonPath('data.partner.code', 'cafe-eco')
-            ->assertJsonPath('data.stats.confirmedRedemptions', 1);
-        $this->assertSame('confirmed', collect($partnerResponse->json('data.redemptions'))->first()['status'] ?? null);
+            ->assertJsonPath('data.stats.confirmedRedemptions', 0);
+        $this->assertEmpty($partnerResponse->json('data.redemptions'));
 
         $this->actingAs($sponsor)
             ->getJson(route('sponsor.dashboard.index'))

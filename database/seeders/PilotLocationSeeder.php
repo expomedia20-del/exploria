@@ -3,10 +3,12 @@
 namespace Database\Seeders;
 
 use App\Enums\RecordStatus;
+use App\Enums\RewardInventoryMode;
 use App\Enums\UserRole;
 use App\Models\Campaign;
 use App\Models\CampaignParticipant;
 use App\Models\DisplayDevice;
+use App\Models\FinancialAccount;
 use App\Models\Hub;
 use App\Models\HubManagementAssignment;
 use App\Models\MissionInstance;
@@ -23,6 +25,7 @@ use App\Models\User;
 use App\Models\UserAccessScope;
 use App\Models\Venue;
 use App\Models\Zone;
+use App\Services\FinancialLedgerService;
 use Illuminate\Database\Seeder;
 
 class PilotLocationSeeder extends Seeder
@@ -354,6 +357,8 @@ class PilotLocationSeeder extends Seeder
             ],
         );
 
+        app(FinancialLedgerService::class)->ensureDefaultSetup();
+
         $campaignParticipants = [
             'cafe-eco' => ['participation_role' => 'reward_redemption', 'onboarding_status' => 'ready', 'connections' => ['rewards' => 1, 'ads' => 0, 'qr_codes' => 0, 'missions' => 1]],
             'ravaq-store' => ['participation_role' => 'commercial_activation', 'onboarding_status' => 'ready', 'connections' => ['rewards' => 0, 'ads' => 1, 'qr_codes' => 0, 'missions' => 1]],
@@ -546,6 +551,9 @@ class PilotLocationSeeder extends Seeder
 
         $cafePartner = PartnerAccount::query()->where('code', 'cafe-eco')->first();
         $sponsorPartner = PartnerAccount::query()->where('code', 'family-route-sponsor')->first();
+        $platformCostOwner = FinancialAccount::query()->where('account_key', 'exploria-platform-main')->firstOrFail();
+        $cafeCostOwner = FinancialAccount::query()->where('account_key', 'partner-cafe-eco')->firstOrFail();
+        $sponsorCostOwner = FinancialAccount::query()->where('account_key', 'sponsor-family-route')->firstOrFail();
 
         $rewardDefinitions = [
             [
@@ -553,32 +561,48 @@ class PilotLocationSeeder extends Seeder
                 'name' => 'نشان ورود پایلوت',
                 'reward_type' => 'badge',
                 'partner' => null,
+                'cost_owner' => $platformCostOwner,
+                'inventory_mode' => RewardInventoryMode::NonInventory,
                 'point_cost' => null,
                 'stock_quantity' => null,
+                'expires_after_minutes' => null,
+                'status' => RecordStatus::Active,
             ],
             [
                 'code' => 'small-drink-coupon',
                 'name' => 'کوپن نوشیدنی کوچک',
                 'reward_type' => 'partner_coupon',
                 'partner' => $cafePartner,
+                'cost_owner' => $cafeCostOwner,
+                'inventory_mode' => RewardInventoryMode::Finite,
                 'point_cost' => 180,
                 'stock_quantity' => 500,
+                'expires_after_minutes' => 10080,
+                'status' => RecordStatus::Active,
             ],
             [
                 'code' => 'special-mission-unlock',
                 'name' => 'باز شدن ماموریت ویژه',
                 'reward_type' => 'mission_unlock',
                 'partner' => null,
+                'cost_owner' => $platformCostOwner,
+                'inventory_mode' => RewardInventoryMode::NonInventory,
                 'point_cost' => null,
                 'stock_quantity' => null,
+                'expires_after_minutes' => null,
+                'status' => RecordStatus::Active,
             ],
             [
                 'code' => 'pilot-prize-draw',
                 'name' => 'قرعه‌کشی جایزه پایلوت',
                 'reward_type' => 'sponsor_prize_draw',
                 'partner' => $sponsorPartner,
+                'cost_owner' => $sponsorCostOwner,
+                'inventory_mode' => RewardInventoryMode::Finite,
                 'point_cost' => 520,
                 'stock_quantity' => 100,
+                'expires_after_minutes' => 10080,
+                'status' => RecordStatus::Draft,
             ],
         ];
 
@@ -591,12 +615,24 @@ class PilotLocationSeeder extends Seeder
                 [
                     'venue_id' => $ecoPark->id,
                     'partner_account_id' => $rewardPartner?->id,
+                    'cost_owner_financial_account_id' => $rewardData['cost_owner']->id,
                     'name' => $rewardData['name'],
                     'reward_type' => $rewardData['reward_type'],
+                    'inventory_mode' => $rewardData['inventory_mode'],
                     'point_cost' => $rewardData['point_cost'],
                     'stock_quantity' => $rewardData['stock_quantity'],
-                    'status' => RecordStatus::Active,
-                    'metadata' => ['is_demo' => true],
+                    'available_from' => $campaign->start_at,
+                    'available_until' => $campaign->end_at,
+                    'expires_after_minutes' => $rewardData['expires_after_minutes'],
+                    'per_user_award_limit' => 1,
+                    'status' => $rewardData['status'],
+                    'metadata' => [
+                        'is_demo' => true,
+                        'approval_status' => $rewardData['status'] === RecordStatus::Active ? 'approved' : 'pending_review',
+                        'readiness_note' => $rewardData['status'] === RecordStatus::Draft
+                            ? 'Sponsor account, active sponsorship, and commercial funding approval are required before activation.'
+                            : null,
+                    ],
                 ],
             );
 

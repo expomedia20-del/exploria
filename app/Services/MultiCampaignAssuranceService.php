@@ -189,7 +189,7 @@ class MultiCampaignAssuranceService
 
         $baseQuery = RewardDefinition::query()
             ->whereIn('campaign_id', $campaignIds)
-            ->where('status', RecordStatus::Active);
+            ->availableForIssuance();
 
         $hasInternal = (clone $baseQuery)->whereNull('partner_account_id')->exists();
         $hasPartner = (clone $baseQuery)

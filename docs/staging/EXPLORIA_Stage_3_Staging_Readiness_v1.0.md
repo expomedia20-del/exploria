@@ -177,7 +177,7 @@ EXPLORIA_VERIFIED_BACKUP_PATH=<verified_dump_path>
 ### Gate S3-05 — پس از Deploy
 
 - `/up` باید روی HTTPS پاسخ موفق دهد.
-- `exploria:production-readiness --json` باید 12 Pass / 0 Fail باشد.
+- `exploria:production-readiness --json` باید 13 Pass / 0 Fail باشد؛ پاداش فعال فاقد مالک هزینه، موجودی یا محدودیت صدور نیز Gate را متوقف می‌کند.
 - `exploria:demo-readiness --json` باید بدون Fail باشد.
 - Queue Worker و Scheduler باید Active باشند.
 - Headerهای HSTS، No-Index و Permissions Policy باید روی پاسخ واقعی دیده شوند.

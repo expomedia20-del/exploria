@@ -11,11 +11,13 @@ use App\Models\GameParty;
 use App\Models\PartnerAccount;
 use App\Models\QrCode;
 use App\Models\RewardDefinition;
+use App\Models\RewardInventoryAllocation;
 use App\Models\RewardRedemption;
 use App\Models\User;
 use App\Models\UserReward;
 use App\Models\Visit;
 use App\Services\EcoParkOnlineGameService;
+use App\Services\FinancialLedgerService;
 use Database\Seeders\ConsentVersionSeeder;
 use Database\Seeders\PilotLocationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -445,6 +447,7 @@ class EcoParkCollaborativeGameTest extends TestCase
         $service = app(EcoParkOnlineGameService::class);
         $wrongVisit = $this->physicalVisit($user, $visit, 'mina');
         $partner = PartnerAccount::query()->where('venue_id', $campaign->venue_id)->firstOrFail();
+        $costOwner = app(FinancialLedgerService::class)->ensurePartnerAccount($partner);
         $checkpointReward = RewardDefinition::query()->create([
             'campaign_id' => $campaign->id,
             'venue_id' => $campaign->venue_id,
@@ -452,7 +455,13 @@ class EcoParkCollaborativeGameTest extends TestCase
             'code' => 'test-fire-water-reward',
             'name' => 'پاداش ایستگاه آب‌وآتش',
             'reward_type' => 'partner_coupon',
+            'inventory_mode' => 'finite',
             'stock_quantity' => 20,
+            'cost_owner_financial_account_id' => $costOwner->id,
+            'available_from' => $campaign->start_at,
+            'available_until' => $campaign->end_at,
+            'expires_after_minutes' => 10080,
+            'per_user_award_limit' => 1,
             'status' => 'active',
             'metadata' => [
                 'game_auto_award' => true,
@@ -466,7 +475,13 @@ class EcoParkCollaborativeGameTest extends TestCase
             'code' => 'test-final-base-reward',
             'name' => 'پاداش پایه پایان',
             'reward_type' => 'partner_coupon',
+            'inventory_mode' => 'finite',
             'stock_quantity' => 20,
+            'cost_owner_financial_account_id' => $costOwner->id,
+            'available_from' => $campaign->start_at,
+            'available_until' => $campaign->end_at,
+            'expires_after_minutes' => 10080,
+            'per_user_award_limit' => 1,
             'status' => 'active',
             'metadata' => [
                 'game_auto_award' => true,
@@ -480,13 +495,32 @@ class EcoParkCollaborativeGameTest extends TestCase
             'code' => 'test-final-boosted-reward',
             'name' => 'پاداش تقویت‌شده پایان',
             'reward_type' => 'sponsor_discount',
+            'inventory_mode' => 'finite',
             'stock_quantity' => 20,
+            'cost_owner_financial_account_id' => $costOwner->id,
+            'available_from' => $campaign->start_at,
+            'available_until' => $campaign->end_at,
+            'expires_after_minutes' => 10080,
+            'per_user_award_limit' => 1,
             'status' => 'active',
             'metadata' => [
                 'game_auto_award' => true,
                 'game_final_level' => 'boosted',
             ],
         ]);
+
+        foreach ([$checkpointReward, $baseReward, $boostedReward] as $gameReward) {
+            RewardInventoryAllocation::query()->create([
+                'reward_definition_id' => $gameReward->id,
+                'campaign_id' => $campaign->id,
+                'partner_account_id' => $partner->id,
+                'allocated_quantity' => 20,
+                'reserved_quantity' => 0,
+                'redeemed_quantity' => 0,
+                'status' => 'active',
+                'metadata' => ['source' => 'game_test'],
+            ]);
+        }
 
         try {
             $service->redeemOnsiteVisit($user, $wrongVisit->load('qrCode'));

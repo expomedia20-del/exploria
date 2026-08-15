@@ -208,7 +208,7 @@ class VenueRegistryTest extends TestCase
         $this->assertSame(4, MissionInstance::query()->where('campaign_id', $campaign->id)->where('venue_id', $venue->id)->count());
         $this->assertSame(1, Treasure::query()->where('campaign_id', $campaign->id)->where('venue_id', $venue->id)->count());
         $this->assertSame(3, RewardDefinition::query()->where('campaign_id', $campaign->id)->where('venue_id', $venue->id)->count());
-        $this->assertSame(1, RewardInventoryAllocation::query()->where('campaign_id', $campaign->id)->where('status', 'active')->count());
+        $this->assertSame(2, RewardInventoryAllocation::query()->where('campaign_id', $campaign->id)->where('status', 'active')->count());
         $this->assertSame(1, DisplayDevice::query()->where('venue_id', $venue->id)->where('code', 'eram-park-activation-display')->count());
         $this->assertSame(1, CampaignSponsorship::query()->where('campaign_id', $campaign->id)->where('status', 'active')->count());
         $this->assertSame(1, UserAccessScope::query()->where('role_key', 'venue_executive')->where('scope_type', 'venue')->where('scope_id', $venue->id)->count());

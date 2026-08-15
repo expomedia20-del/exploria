@@ -4,6 +4,7 @@ namespace Tests\Feature\Admin;
 
 use App\Enums\UserRole;
 use App\Models\Campaign;
+use App\Models\CampaignSponsorship;
 use App\Models\MissionInstance;
 use App\Models\MissionTemplate;
 use App\Models\PartnerAccount;
@@ -490,6 +491,27 @@ class SponsorActivationTest extends TestCase
                 'cycle_step_label' => 'گام جایزه اسپانسری',
             ],
         ]);
+
+        $sponsorship = CampaignSponsorship::query()
+            ->where('campaign_id', $campaign->id)
+            ->where('sponsor_account_id', $sponsor->id)
+            ->firstOrFail();
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.campaign-sponsorships.api.store'), [
+                'sponsorship_id' => $sponsorship->id,
+                'campaign_id' => $campaign->id,
+                'sponsor_account_id' => $sponsor->id,
+                'sponsorship_goal' => $sponsorship->sponsorship_goal,
+                'package_type' => $sponsorship->package_type,
+                'status' => 'active',
+                'budget_amount' => $sponsorship->budget_amount,
+                'contract_value' => $sponsorship->contract_value,
+                'starts_at' => $campaign->start_at?->toIso8601String(),
+                'ends_at' => $campaign->end_at?->toIso8601String(),
+                'notes' => 'Approved before sponsored reward activation.',
+            ])
+            ->assertCreated();
 
         $this->actingAs($admin)
             ->postJson(route('admin.rewards.api.sponsor-assignment', $reward), [

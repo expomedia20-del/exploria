@@ -7,6 +7,8 @@ use App\Models\AdRequest;
 use App\Models\Campaign;
 use App\Models\PartnerAccount;
 use App\Models\RewardDefinition;
+use App\Models\RewardInventoryAllocation;
+use App\Services\FinancialLedgerService;
 use App\Services\SmartOffersService;
 use Database\Seeders\PilotLocationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -144,15 +146,22 @@ class SmartOffersPageTest extends TestCase
         $partner = PartnerAccount::query()->where('status', RecordStatus::Active)->firstOrFail();
         $campaign = Campaign::query()->where('venue_id', $partner->venue_id)->firstOrFail();
 
-        return RewardDefinition::query()->create([
+        $costOwner = app(FinancialLedgerService::class)->ensurePartnerAccount($partner);
+        $reward = RewardDefinition::query()->create([
             'campaign_id' => $campaign->id,
             'venue_id' => $partner->venue_id,
             'partner_account_id' => $partner->id,
             'code' => str($name)->slug()->append('-offer')->toString(),
             'name' => $name,
             'reward_type' => 'partner_coupon',
+            'inventory_mode' => 'finite',
             'point_cost' => 80,
             'stock_quantity' => 15,
+            'cost_owner_financial_account_id' => $costOwner->id,
+            'available_from' => $campaign->start_at,
+            'available_until' => $campaign->end_at,
+            'expires_after_minutes' => 10080,
+            'per_user_award_limit' => 1,
             'status' => $status,
             'metadata' => [
                 'approval_status' => $status === RecordStatus::Active ? 'approved' : 'rejected',
@@ -161,6 +170,18 @@ class SmartOffersPageTest extends TestCase
                 'terms' => 'اعتبار مصرف پس از تایید فروشگاه ثبت می‌شود.',
             ],
         ]);
+
+        RewardInventoryAllocation::query()->create([
+            'reward_definition_id' => $reward->id,
+            'campaign_id' => $campaign->id,
+            'partner_account_id' => $partner->id,
+            'allocated_quantity' => 15,
+            'reserved_quantity' => 0,
+            'redeemed_quantity' => 0,
+            'status' => $status === RecordStatus::Active ? 'active' : 'inactive',
+        ]);
+
+        return $reward;
     }
 
     /** @param array<string, mixed> $options */

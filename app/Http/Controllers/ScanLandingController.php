@@ -75,7 +75,7 @@ class ScanLandingController extends Controller
 
         $rewardOptions = RewardDefinition::query()
             ->where('campaign_id', $campaign->id)
-            ->where('status', RecordStatus::Active)
+            ->availableForIssuance()
             ->where(function ($query): void {
                 $query->where('metadata->approval_status', 'approved')
                     ->orWhereNull('metadata->approval_status');

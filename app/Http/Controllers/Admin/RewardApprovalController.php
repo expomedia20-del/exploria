@@ -8,26 +8,18 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ReviewRewardRequest;
 use App\Models\RewardDefinition;
 use App\Services\HubManagerAccessService;
+use App\Services\RewardGovernanceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 
 class RewardApprovalController extends Controller
 {
-    public function approve(ReviewRewardRequest $request, RewardDefinition $reward, HubManagerAccessService $access, RecordAdminAuditAction $audit): JsonResponse|RedirectResponse
+    public function approve(ReviewRewardRequest $request, RewardDefinition $reward, HubManagerAccessService $access, RewardGovernanceService $governance, RecordAdminAuditAction $audit): JsonResponse|RedirectResponse
     {
         $access->ensureCanReviewReward($request->user(), $reward);
         $data = $request->validated();
 
-        $reward->update([
-            'status' => RecordStatus::Active,
-            'metadata' => [
-                ...($reward->metadata ?? []),
-                'approval_status' => 'approved',
-                'approved_by_user_id' => $request->user()?->id,
-                'approved_at' => now()->toIso8601String(),
-                'review_notes' => $data['notes'] ?? null,
-            ],
-        ]);
+        $reward = $governance->activate($reward, $request->user(), $data['notes'] ?? null);
         $this->audit($request, $reward, $audit, 'reward_approved');
 
         if ($request->expectsJson()) {
@@ -92,6 +84,12 @@ class RewardApprovalController extends Controller
             'name' => $reward->name,
             'status' => $reward->status->value,
             'decision' => $reward->metadata['approval_status'] ?? null,
+            'cost_owner_financial_account_id' => $reward->cost_owner_financial_account_id,
+            'inventory_mode' => $reward->inventory_mode?->value,
+            'available_from' => $reward->available_from?->toIso8601String(),
+            'available_until' => $reward->available_until?->toIso8601String(),
+            'expires_after_minutes' => $reward->expires_after_minutes,
+            'per_user_award_limit' => $reward->per_user_award_limit,
         ]);
     }
 

@@ -60,7 +60,7 @@ class MissionRewardRegistryController extends Controller
 
     public function storeReward(StoreRewardDefinitionRequest $request, MissionRewardRegistryService $service, RecordAdminAuditAction $audit): JsonResponse|RedirectResponse
     {
-        $reward = $service->createReward($request->validated());
+        $reward = $service->createReward($request->validated(), $request->user());
         $audit->execute($request->user(), $reward->wasRecentlyCreated ? 'reward_created' : 'reward_updated', 'reward', $reward->id, $request->session()->getId(), [
             'code' => $reward->code,
             'name' => $reward->name,

@@ -170,14 +170,14 @@ class VisitMissionFlowTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.stats.totalPoints', 780)
             ->assertJsonPath('data.stats.completedMissions', 4)
-            ->assertJsonPath('data.stats.rewards', 4);
+            ->assertJsonPath('data.stats.rewards', 3);
 
         $redemption = RewardRedemption::query()->firstOrFail();
 
         $this->actingAs($this->visitor)
             ->getJson(route('rewards.wallet'))
             ->assertOk()
-            ->assertJsonCount(4, 'data')
+            ->assertJsonCount(3, 'data')
             ->assertJsonFragment([
                 'redemptionCode' => $redemption->redemption_code,
                 'status' => 'pending',

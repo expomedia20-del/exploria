@@ -22,7 +22,10 @@ use Illuminate\Validation\ValidationException;
 
 class SponsorActivationService
 {
-    public function __construct(private readonly UserAccessScopeService $accessScopes) {}
+    public function __construct(
+        private readonly UserAccessScopeService $accessScopes,
+        private readonly FinancialLedgerService $financialLedger,
+    ) {}
 
     /** @return array<string, mixed> */
     public function overview(?User $user = null, ?string $campaignId = null): array
@@ -131,10 +134,16 @@ class SponsorActivationService
                 $metadata = array_merge($sponsor->metadata ?? [], $attributes['metadata']);
                 $sponsor->update(array_merge($attributes, ['metadata' => $metadata]));
 
-                return $sponsor->refresh();
+                $sponsor = $sponsor->refresh();
+                $this->financialLedger->ensureSponsorAccount($sponsor);
+
+                return $sponsor;
             }
 
-            return SponsorAccount::query()->create($attributes);
+            $sponsor = SponsorAccount::query()->create($attributes);
+            $this->financialLedger->ensureSponsorAccount($sponsor);
+
+            return $sponsor;
         });
     }
 
@@ -290,6 +299,7 @@ class SponsorActivationService
 
         $campaign = $sponsorship->campaign;
         $sponsor = $sponsorship->sponsorAccount;
+        $costOwner = $this->financialLedger->ensureSponsorAccount($sponsor);
         $targetPartnerIds = SponsorPartnerAssignment::query()
             ->where('campaign_id', $sponsorship->campaign_id)
             ->where('sponsor_account_id', $sponsorship->sponsor_account_id)
@@ -329,8 +339,14 @@ class SponsorActivationService
                 'partner_account_id' => $partnerId,
                 'name' => $this->manualSponsorshipRewardName($sponsorship),
                 'reward_type' => 'sponsor_reward',
+                'inventory_mode' => 'finite',
                 'point_cost' => null,
                 'stock_quantity' => null,
+                'cost_owner_financial_account_id' => $costOwner->id,
+                'available_from' => $sponsorship->starts_at ?? $campaign->start_at,
+                'available_until' => $sponsorship->ends_at ?? $campaign->end_at,
+                'expires_after_minutes' => 10080,
+                'per_user_award_limit' => 1,
                 'status' => 'draft',
                 'metadata' => $metadata,
             ],
@@ -433,7 +449,7 @@ class SponsorActivationService
     {
         $proposal->loadMissing([
             'sponsorAccount:id,venue_id,code,name,sponsor_type,status',
-            'campaign:id,venue_id,code,name,status',
+            'campaign:id,venue_id,code,name,status,start_at,end_at',
             'partnerAccounts.partnerAccount:id,venue_id,code,name,partner_type,status',
             'items',
             'activation',
@@ -539,6 +555,7 @@ class SponsorActivationService
         SponsorAccount $sponsor,
         int $index,
     ): RewardDefinition {
+        $costOwner = $this->financialLedger->ensureSponsorAccount($sponsor);
         $targetPartnerIds = $item->target_partner_account_ids ?? [];
         $partnerId = count($targetPartnerIds) === 1 ? $targetPartnerIds[0] : null;
         $code = $this->rewardCodeForSponsorItem($proposal, $item, $index);
@@ -568,8 +585,14 @@ class SponsorActivationService
                 'partner_account_id' => $partnerId,
                 'name' => $item->title,
                 'reward_type' => $this->rewardTypeForSponsorItem($item->item_type),
+                'inventory_mode' => 'finite',
                 'point_cost' => null,
                 'stock_quantity' => $item->quantity,
+                'cost_owner_financial_account_id' => $costOwner->id,
+                'available_from' => $campaign->start_at,
+                'available_until' => $campaign->end_at,
+                'expires_after_minutes' => 10080,
+                'per_user_award_limit' => 1,
                 'status' => 'draft',
                 'metadata' => $metadata,
             ],

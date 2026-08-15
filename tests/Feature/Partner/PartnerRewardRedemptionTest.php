@@ -4,6 +4,7 @@ namespace Tests\Feature\Partner;
 
 use App\Enums\RecordStatus;
 use App\Enums\UserRole;
+use App\Models\CampaignSponsorship;
 use App\Models\EventLog;
 use App\Models\Hub;
 use App\Models\MissionInstance;
@@ -15,8 +16,10 @@ use App\Models\QrCode;
 use App\Models\RewardDefinition;
 use App\Models\RewardInventoryAllocation;
 use App\Models\RewardRedemption;
+use App\Models\SponsorAccount;
 use App\Models\User;
 use App\Models\Visit;
+use App\Services\FinancialLedgerService;
 use App\Services\MissionRewardBlueprintService;
 use Database\Seeders\PilotLocationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -217,14 +220,38 @@ class PartnerRewardRedemptionTest extends TestCase
             ->where('partner_account_id', $partner->id)
             ->delete();
 
+        $sponsor = SponsorAccount::query()->create([
+            'venue_id' => $campaign->venue_id,
+            'code' => 'inventory-redemption-sponsor',
+            'name' => 'Inventory Redemption Sponsor',
+            'sponsor_type' => 'brand',
+            'status' => 'active',
+        ]);
+        $costOwner = app(FinancialLedgerService::class)->ensureSponsorAccount($sponsor);
+        CampaignSponsorship::query()->create([
+            'campaign_id' => $campaign->id,
+            'sponsor_account_id' => $sponsor->id,
+            'sponsorship_goal' => 'reward_funding',
+            'package_type' => 'pilot_activation',
+            'status' => 'active',
+            'starts_at' => $campaign->start_at,
+            'ends_at' => $campaign->end_at,
+        ]);
+
         $reward = RewardDefinition::query()->create([
             'campaign_id' => $campaign->id,
             'venue_id' => $campaign->venue_id,
             'code' => 'sponsor-inventory-redemption',
             'name' => 'Sponsor Inventory Redemption',
             'reward_type' => 'sponsor_reward',
+            'inventory_mode' => 'finite',
             'point_cost' => 0,
             'stock_quantity' => 3,
+            'cost_owner_financial_account_id' => $costOwner->id,
+            'available_from' => $campaign->start_at,
+            'available_until' => $campaign->end_at,
+            'expires_after_minutes' => 10080,
+            'per_user_award_limit' => 1,
             'status' => 'active',
             'metadata' => [
                 'source' => 'admin_sponsor_activation',
@@ -669,7 +696,7 @@ class PartnerRewardRedemptionTest extends TestCase
         $response = $this->actingAs($admin)
             ->getJson(route('admin.missions.index'))
             ->assertOk()
-            ->assertJsonPath('data.stats.pendingRewards', 1);
+            ->assertJsonPath('data.stats.pendingRewards', 2);
 
         $reward = collect($response->json('data.rewards'))
             ->firstWhere('id', $offer->id);

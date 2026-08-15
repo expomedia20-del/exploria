@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\RecordStatus;
 use App\Models\AdEvent;
 use App\Models\AdPlacement;
 use App\Models\AdRequest;
@@ -493,15 +492,7 @@ class SmartOffersService
                     ->where('campaign_id', $campaign->id)
                     ->orWhere('venue_id', $campaign->venue_id);
             }))
-            ->where('status', RecordStatus::Active)
-            ->where(function ($query) use ($now): void {
-                $query->whereNull('metadata->available_from')
-                    ->orWhere('metadata->available_from', '<=', $now->toIso8601String());
-            })
-            ->where(function ($query) use ($now): void {
-                $query->whereNull('metadata->available_until')
-                    ->orWhere('metadata->available_until', '>=', $now->toIso8601String());
-            })
+            ->availableForIssuance($now)
             ->with(['venue:id,code,name', 'campaign:id,code,name', 'partnerAccount:id,code,name,partner_type'])
             ->withCount(['userRewards'])
             ->latest('created_at')
@@ -643,8 +634,8 @@ class SmartOffersService
             'terms' => $reward->metadata['terms'] ?? null,
             'rewardTier' => $reward->metadata['reward_tier'] ?? null,
             'rewardOption' => $reward->metadata['reward_option'] ?? null,
-            'availableFrom' => $reward->metadata['available_from'] ?? null,
-            'availableUntil' => $reward->metadata['available_until'] ?? null,
+            'availableFrom' => $reward->available_from?->toIso8601String(),
+            'availableUntil' => $reward->available_until?->toIso8601String(),
             'venueName' => $reward->venue?->name,
             'campaignName' => $reward->campaign?->name,
             'partnerName' => $reward->partnerAccount?->name,

@@ -190,6 +190,6 @@ class StressDemoCommandTest extends TestCase
                 ->count(),
         );
         $this->assertSame(2, RewardInventoryAllocation::query()->where('reward_definition_id', $discount->id)->count());
-        $this->assertSame(1, RewardRedemption::query()->where('redemption_code', 'STRESS-DEMO-REDEEM-001')->count());
+        $this->assertSame(1, RewardRedemption::query()->where('metadata->stress_demo', true)->count());
     }
 }

@@ -5,17 +5,21 @@ namespace Tests\Feature\Campaign;
 use App\Enums\RecordStatus;
 use App\Enums\UserRole;
 use App\Models\Campaign;
+use App\Models\CampaignSponsorship;
 use App\Models\Hub;
 use App\Models\MissionInstance;
 use App\Models\MissionTemplate;
 use App\Models\PartnerAccount;
 use App\Models\QrCode;
+use App\Models\RewardDefinition;
 use App\Models\RewardRedemption;
+use App\Models\SponsorAccount;
 use App\Models\Touchpoint;
 use App\Models\User;
 use App\Models\Venue;
 use App\Models\Visit;
 use App\Services\MultiCampaignAssuranceService;
+use App\Services\RewardGovernanceService;
 use Database\Seeders\PilotLocationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
@@ -38,6 +42,29 @@ class MultiCampaignAssuranceTest extends TestCase
         $pilotVisit = $this->visitForQr($visitor, $pilotQr);
         $pointsOnly = $this->createPointsOnlyCampaign();
         $pointsOnlyVisit = $this->visitForQr($visitor, $pointsOnly['qr']);
+        $pilotCampaign = Campaign::query()->findOrFail($pilotVisit->campaign_id);
+        $sponsor = SponsorAccount::query()->create([
+            'venue_id' => $pilotCampaign->venue_id,
+            'code' => 'family-route-sponsor',
+            'name' => 'Family Route Sponsor',
+            'sponsor_type' => 'brand',
+            'status' => RecordStatus::Active,
+        ]);
+        CampaignSponsorship::query()->create([
+            'campaign_id' => $pilotCampaign->id,
+            'sponsor_account_id' => $sponsor->id,
+            'sponsorship_goal' => 'reward_funding',
+            'package_type' => 'pilot_activation',
+            'status' => RecordStatus::Active,
+            'starts_at' => $pilotCampaign->start_at,
+            'ends_at' => $pilotCampaign->end_at,
+        ]);
+        $sponsorReward = RewardDefinition::query()->where('code', 'pilot-prize-draw')->firstOrFail();
+        app(RewardGovernanceService::class)->activate(
+            $sponsorReward,
+            User::factory()->create(['role' => UserRole::Admin]),
+            'Sponsor funding approved for multi-campaign assurance.',
+        );
 
         foreach (['scan-entry-qr', 'discover-route-guide', 'watch-place-story', 'photo-memory-challenge'] as $code) {
             $mission = MissionInstance::query()->where('code', $code)->firstOrFail();

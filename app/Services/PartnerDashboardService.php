@@ -23,6 +23,7 @@ class PartnerDashboardService
         private readonly UserAccessScopeService $accessScopes,
         private readonly MissionRewardBlueprintService $blueprints,
         private readonly CampaignBlueprintConsistencyService $blueprintConsistency,
+        private readonly RewardGovernanceService $rewardGovernance,
     ) {}
 
     public function partnerForUser(User $user): PartnerAccount
@@ -258,8 +259,14 @@ class PartnerDashboardService
             'code' => $this->uniqueOfferCode($campaign->id, $partner->code),
             'name' => $data['name'],
             'reward_type' => $data['reward_type'],
+            'inventory_mode' => 'finite',
             'point_cost' => $data['point_cost'] ?? null,
             'stock_quantity' => $data['stock_quantity'] ?? null,
+            'cost_owner_financial_account_id' => $this->rewardGovernance->matchingPartnerFinancialAccount($partner)?->id,
+            'available_from' => $data['available_from'] ?? $campaign->start_at,
+            'available_until' => $data['available_until'] ?? $campaign->end_at,
+            'expires_after_minutes' => $data['expires_after_minutes'] ?? 10080,
+            'per_user_award_limit' => 1,
             'status' => RecordStatus::Draft,
             'metadata' => [
                 'source' => 'partner_offer_submission',
@@ -287,33 +294,44 @@ class PartnerDashboardService
             ]);
         }
 
-        $metadata = $this->metadataArray($reward->metadata);
-        $approvalStatus = $metadata['approval_status'] ?? $reward->status->value;
-        $isPaused = $data['availability_status'] === 'paused';
+        return DB::transaction(function () use ($data, $partner, $partnerUser, $reward): RewardDefinition {
+            $lockedReward = RewardDefinition::query()->lockForUpdate()->findOrFail($reward->id);
+            $metadata = $this->metadataArray($lockedReward->metadata);
+            $approvalStatus = $metadata['approval_status'] ?? $lockedReward->status->value;
+            $isPaused = $data['availability_status'] === 'paused';
 
-        $status = $reward->status;
-        if ($approvalStatus === 'approved') {
-            $status = $isPaused ? RecordStatus::Inactive : RecordStatus::Active;
-        }
+            $status = $lockedReward->status;
+            if ($approvalStatus === 'approved') {
+                $status = $isPaused ? RecordStatus::Inactive : RecordStatus::Draft;
+            }
 
-        $reward->update([
-            'point_cost' => $data['point_cost'] ?? null,
-            'stock_quantity' => $data['stock_quantity'] ?? null,
-            'status' => $status,
-            'metadata' => [
-                ...$metadata,
-                'availability_status' => $data['availability_status'],
-                'is_paused' => $isPaused,
-                'available_from' => $data['available_from'] ?? null,
-                'available_until' => $data['available_until'] ?? null,
-                'description' => $data['description'] ?? ($metadata['description'] ?? null),
-                'terms' => $data['terms'] ?? ($metadata['terms'] ?? null),
-                'updated_by_partner_user_id' => $partnerUser->id,
-                'partner_updated_at' => now()->toIso8601String(),
-            ],
-        ]);
+            $lockedReward->update([
+                'point_cost' => $data['point_cost'] ?? null,
+                'stock_quantity' => $data['stock_quantity'] ?? null,
+                'cost_owner_financial_account_id' => $lockedReward->cost_owner_financial_account_id ?? $this->rewardGovernance->matchingPartnerFinancialAccount($partner)?->id,
+                'available_from' => $data['available_from'] ?? $lockedReward->available_from,
+                'available_until' => $data['available_until'] ?? $lockedReward->available_until,
+                'expires_after_minutes' => $data['expires_after_minutes'] ?? $lockedReward->expires_after_minutes ?? 10080,
+                'per_user_award_limit' => 1,
+                'status' => $status,
+                'metadata' => [
+                    ...$metadata,
+                    'availability_status' => $data['availability_status'],
+                    'is_paused' => $isPaused,
+                    'description' => $data['description'] ?? ($metadata['description'] ?? null),
+                    'terms' => $data['terms'] ?? ($metadata['terms'] ?? null),
+                    'updated_by_partner_user_id' => $partnerUser->id,
+                    'partner_updated_at' => now()->toIso8601String(),
+                ],
+            ]);
 
-        return $reward->fresh(['campaign:id,code,name']) ?? $reward;
+            if ($approvalStatus === 'approved' && ! $isPaused) {
+                $this->rewardGovernance->assertOperationalReadiness($lockedReward);
+                $lockedReward->update(['status' => RecordStatus::Active]);
+            }
+
+            return $lockedReward->fresh(['campaign:id,code,name']) ?? $lockedReward;
+        });
     }
 
     /** @return array<string, mixed> */
@@ -338,6 +356,10 @@ class PartnerDashboardService
             'status' => $reward->status->value,
             'pointCost' => $reward->point_cost,
             'stockQuantity' => $reward->stock_quantity,
+            'inventoryMode' => $reward->inventory_mode?->value,
+            'costOwnerFinancialAccountId' => $reward->cost_owner_financial_account_id,
+            'expiresAfterMinutes' => $reward->expires_after_minutes,
+            'perUserAwardLimit' => $reward->per_user_award_limit,
             'userRewardsCount' => (int) $reward->getAttribute('user_rewards_count'),
             'awardedCount' => (int) $reward->getAttribute('awarded_count'),
             'inventoryAllocated' => $inventoryAllocated,
@@ -351,8 +373,8 @@ class PartnerDashboardService
             'cycleStepLabel' => $reward->metadata['cycle_step_label'] ?? null,
             'rewardTier' => $reward->metadata['reward_tier'] ?? null,
             'rewardOption' => $reward->metadata['reward_option'] ?? null,
-            'availableFrom' => $reward->metadata['available_from'] ?? null,
-            'availableUntil' => $reward->metadata['available_until'] ?? null,
+            'availableFrom' => $reward->available_from?->toIso8601String(),
+            'availableUntil' => $reward->available_until?->toIso8601String(),
             'description' => $reward->metadata['description'] ?? null,
             'terms' => $reward->metadata['terms'] ?? null,
             'reviewNotes' => $reward->metadata['review_notes'] ?? null,
@@ -361,7 +383,8 @@ class PartnerDashboardService
 
     public function ensureRedemptionForReward(UserReward $userReward): RewardRedemption
     {
-        $userReward->loadMissing('rewardDefinition');
+        $userReward->loadMissing('rewardDefinition.costOwnerFinancialAccount');
+        $this->rewardGovernance->assertCanRedeem($userReward);
 
         return DB::transaction(function () use ($userReward): RewardRedemption {
             $existing = RewardRedemption::query()
@@ -383,7 +406,7 @@ class PartnerDashboardService
                 ]);
             }
 
-            return RewardRedemption::query()->create([
+            $redemption = RewardRedemption::query()->create([
                 'user_reward_id' => $userReward->id,
                 'user_id' => $userReward->user_id,
                 'partner_account_id' => $partnerId,
@@ -393,8 +416,21 @@ class PartnerDashboardService
                     'source' => 'reward_awarded',
                     'reward_inventory_allocation_id' => $allocation?->id,
                     'reserved_at' => $allocation ? now()->toIso8601String() : null,
+                    'cost_owner_financial_account_id' => data_get($userReward->metadata, 'cost_owner_financial_account_id'),
+                    'cost_owner_account_key' => data_get($userReward->metadata, 'cost_owner_account_key'),
+                    'expires_at' => $userReward->expires_at?->toIso8601String(),
                 ],
             ]);
+
+            $userReward->update([
+                'metadata' => [
+                    ...($userReward->metadata ?? []),
+                    'supplier_partner_account_id' => $partnerId,
+                    'reward_inventory_allocation_id' => $allocation?->id,
+                ],
+            ]);
+
+            return $redemption;
         });
     }
 
@@ -435,6 +471,8 @@ class PartnerDashboardService
                 ]);
             }
 
+            $this->rewardGovernance->assertCanRedeem($redemption->userReward);
+
             $allocation = $this->allocationForRedemption($redemption);
 
             if ($allocation) {
@@ -473,6 +511,7 @@ class PartnerDashboardService
 
         $query = RewardInventoryAllocation::query()
             ->where('reward_definition_id', $reward->id)
+            ->where('status', RecordStatus::Active->value)
             ->whereRaw('allocated_quantity > reserved_quantity + redeemed_quantity')
             ->lockForUpdate();
 
