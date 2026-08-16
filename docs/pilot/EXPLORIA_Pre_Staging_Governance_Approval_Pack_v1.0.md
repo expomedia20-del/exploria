@@ -12,6 +12,8 @@
 
 این سند تصمیم‌های پیشنهادی محافظه‌کارانه، شواهد Repository و فیلدهای امضای لازم را در یک محل جمع می‌کند. وجود این فایل به معنی تأیید Product، Legal، Security، Operations یا Finance نیست. نام، تاریخ و مرجع مصوبه واقعی باید تکمیل شود؛ Secret، قرارداد، شماره تماس خصوصی و امضای اسکن‌شده نباید در Repository ذخیره شوند.
 
+توصیه فنی Provider-agnostic برای Mail، Storage، Monitoring، Backup و Runtime در `docs/staging/EXPLORIA_Operational_Architecture_Decision_v1.0.md` ثبت شده و تا تکمیل همین Approval Pack در وضعیت `DRAFT RECOMMENDED` باقی می‌ماند.
+
 ## 2. مراجع Canonical و شواهد فعلی
 
 - BRD: `docs/governance/product/Exploria_BRD_v1.1_Pilot_Revenue_Update.md`؛ مسئولیت داده، RACI و تصمیم ادامه/توقف.
@@ -150,6 +152,7 @@
 | Incident Policy و RACI | v1.0 | `TBD` | `TBD` | `TBD` | Pending |
 | Budget | v1.0 | `TBD` | `TBD` | `TBD` | Pending |
 | Provider Shortlist/Contracts | v1.0 | `TBD` | `TBD` | `TBD` | Pending |
+| Operational Architecture ADR | v1.0 | `TBD` Product/Security/Operations | `TBD` | `docs/staging/EXPLORIA_Operational_Architecture_Decision_v1.0.md` | Draft Recommended |
 
 نتیجه هر ردیف فقط با یکی از `Approved`، `Approved with conditions` یا `Rejected` ثبت می‌شود. شرط باید Owner و Due Date داشته باشد. نقص Privacy، داده کودک، P0 Incident Owner، Backup یا Secret Management قابل `Approved with conditions` برای Pilot عمومی نیست.
 

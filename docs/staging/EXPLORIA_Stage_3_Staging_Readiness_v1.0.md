@@ -140,6 +140,8 @@ Deploy به‌صورت Release-based انجام می‌شود، Revision و زم
 
 بسته ثبت تصمیم و Approval این Gate در `docs/pilot/EXPLORIA_Pre_Staging_Governance_Approval_Pack_v1.0.md` آماده شده است. تا تکمیل Approver، تاریخ، مرجع مصوبه، بودجه و Provider واقعی، Gate `S3-01` همچنان Fail باقی می‌ماند.
 
+معماری Provider-agnostic پیشنهادی Mail/Storage/Monitoring/Backup در `docs/staging/EXPLORIA_Operational_Architecture_Decision_v1.0.md` ثبت شده است؛ این ADR تا عبور گام 3 و انتخاب Provider واقعی Draft است.
+
 ### Gate S3-02 — فایل Environment بیرون Repository
 
 فایل `/var/www/exploria-staging/shared/.env` از `.env.staging.example` ساخته می‌شود. موارد زیر باید با Secret Manager یا کانال امن مقداردهی شوند:
