@@ -138,6 +138,8 @@ Deploy به‌صورت Release-based انجام می‌شود، Revision و زم
 5. مقصد Log متمرکز، Retention و Alert Channel.
 6. مسیر Backup رمزگذاری‌شده و سیاست نگهداری.
 
+بسته ثبت تصمیم و Approval این Gate در `docs/pilot/EXPLORIA_Pre_Staging_Governance_Approval_Pack_v1.0.md` آماده شده است. تا تکمیل Approver، تاریخ، مرجع مصوبه، بودجه و Provider واقعی، Gate `S3-01` همچنان Fail باقی می‌ماند.
+
 ### Gate S3-02 — فایل Environment بیرون Repository
 
 فایل `/var/www/exploria-staging/shared/.env` از `.env.staging.example` ساخته می‌شود. موارد زیر باید با Secret Manager یا کانال امن مقداردهی شوند:
@@ -211,6 +213,7 @@ EXPLORIA_VERIFIED_BACKUP_PATH=<verified_dump_path>
 | EXT-S3-07 | UAT Accounts و شماره‌های مجاز | Product/QA | Pending |
 | EXT-S3-08 | Mail و Storage Provider واقعی و آزمون E2E | Product/Infrastructure | Pending |
 | EXT-S3-09 | Queue Worker، Scheduler، Cache و Session عملیاتی | Infrastructure/Operations | Pending |
+| EXT-S3-10 | شش تصویب رسمی Privacy/Retention/Incident/RACI/Budget/Provider | Product/Legal/Security/Operations/Finance | Pack Prepared / Approvals Pending |
 
 ## 8. نتیجه Stage 3
 

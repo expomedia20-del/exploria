@@ -74,7 +74,7 @@
 | استقرار | Release-based Deploy، Backup Gate، Rollback، `/up` و Preflight امنیت Session/OTP | `scripts/deploy-staging.sh` و `docs/staging/EXPLORIA_Stage_3_Staging_Readiness_v1.0.md` | `PRODUCTION_BLOCKED` | Provisioning سرور/دامنه و اجرای واقعی Deployment Drill |
 | Logging/Monitoring | Application Log، Event/Audit پایه و Production Readiness Check | Logging Config و Audit Actionها | `PRODUCTION_BLOCKED` | Retention، Central Logging، Metrics و Alerting |
 | Offline | پیام خطا/Retry و Fallback محدود؛ Sync کامل پیاده‌سازی نشده است | تصمیم OD-006 و Scope Lock | `OUT_OF_SCOPE` | Change Request پس از اثبات نیاز پایلوت |
-| حقوقی و Data Governance | مدل فنی Consent/Audit موجود؛ سیاست‌های رسمی نهایی نیست | OD-002، OD-009 و CPL-17/18 | `PILOT_BLOCKED` | متن حقوقی، Data Ownership، Retention و Incident Policy |
+| حقوقی و Data Governance | مدل فنی Consent/Audit و بسته تصمیم Privacy/Retention/Incident/RACI/Budget/Provider موجود؛ تأییدهای واقعی نهایی نیست | OD-002، OD-009، CPL-17/18 و `EXPLORIA_Pre_Staging_Governance_Approval_Pack_v1.0.md` | `PILOT_BLOCKED` | تکمیل Approver/Date/Decision، متن حقوقی، نام RACI، مبالغ و Providerهای واقعی |
 | Native/Microservices | در معماری MVP وجود ندارد | Framework-20 و PCG-01 | `OUT_OF_SCOPE` | فقط با Change Request و تصمیم معماری آینده |
 | Analytics/Settlement پیشرفته | اجزای پایه داده/مالی وجود دارد؛ موتور کامل نهایی نیست | Scope Lock و Backlog | `OUT_OF_SCOPE` | پس از گزارش و Decision Gate پایلوت |
 
@@ -83,7 +83,7 @@
 1. Pilot Charter در `docs/pilot/EXPLORIA_EcoPark_Pilot_Charter_v0.1.md` تدوین شده است؛ قفل نهایی تاریخ، اشخاص، KPI، بودجه و RACI به تأیید Product Owner نیاز دارد.
 2. Staging مستقل با HTTPS و PostgreSQL ایزوله؛ اجرای Migration، Reward reconciliation، Backup/Restore و Deployment/Rollback Drill در همان محیط.
 3. Provider واقعی OTP و آزمون E2E واقعی OTP، Mail و Storage.
-4. متن حقوقی Consent و تصویب Privacy، Retention و Deletion Policy.
+4. بسته تصمیم Privacy، Retention/Deletion، Incident، RACI، Budget و Provider آماده است؛ شش Approval رسمی، متن حقوقی و مقادیر واقعی هنوز Pending هستند.
 5. QR Domain/Print/Installation Plan و داده میدانی تأییدشده.
 6. Reward Budget، Anti-Fraud، مسئول تأمین و Redemption Policy.
 7. تصویب RACI/Incident Policy و اجرای مانور Scoped Pause/Resume روی Staging؛ حداقل فنی، Incident Linkage و Audit Trail در Local پیاده‌سازی شده است.
