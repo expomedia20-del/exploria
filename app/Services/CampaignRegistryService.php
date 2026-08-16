@@ -97,6 +97,7 @@ class CampaignRegistryService
             'designSource' => $campaign->metadata['design_source'] ?? null,
             'designVenueCode' => $campaign->metadata['design_venue_code'] ?? null,
             'status' => $campaign->status->value,
+            'operationalControl' => $campaign->operationalControl(),
             'venue' => $campaign->venue ? [
                 'id' => $campaign->venue->id,
                 'code' => $campaign->venue->code,
@@ -151,6 +152,13 @@ class CampaignRegistryService
         return DB::transaction(function () use ($data, $attributes): Campaign {
             if (! empty($data['campaign_id'])) {
                 $campaign = Campaign::query()->findOrFail($this->requiredId($data, 'campaign_id'));
+
+                if ($campaign->isOperationallyPaused()) {
+                    throw ValidationException::withMessages([
+                        'status' => 'کمپین در توقف عملیاتی است؛ ابتدا اقدام اصلاحی را تکمیل و از مسیر تأییدشده آن را از سر بگیرید.',
+                    ]);
+                }
+
                 $metadata = array_filter(array_merge($campaign->metadata ?? [], $attributes['metadata']));
                 $campaign->update(array_merge($attributes, ['metadata' => $metadata]));
 
@@ -239,6 +247,7 @@ class CampaignRegistryService
             'isArchived' => ($campaign->metadata['lifecycle_state'] ?? null) === 'archived',
             'archivedAt' => $campaign->metadata['archived_at'] ?? null,
             'status' => $campaign->status->value,
+            'operationalControl' => $campaign->operationalControl(),
             'startAt' => $campaign->start_at?->toIso8601String(),
             'endAt' => $campaign->end_at?->toIso8601String(),
             'qrCodesCount' => (int) $campaign->getAttribute('qr_codes_count'),

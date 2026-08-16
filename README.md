@@ -7,11 +7,12 @@
 Bootstrap رسمی و توسعه قابلیت‌های MVP انجام شده و Codebase روی شاخه `main` در Commit ادغامی `a9a9e45` قرار دارد. Snapshot راستی‌آزمایی‌شده 2026-08-16:
 
 - چهار Check مربوط به PR شماره 3 شامل Linter/Quality، PHP 8.4، PHP 8.5 و PostgreSQL موفق بوده‌اند.
-- Test Suite محلی: 369 Test / 4729 Assertion / 0 Failure.
+- Test Suite محلی: 373 Test / 4799 Assertion / 0 Failure.
 - Pint، PHPStan، ESLint، Prettier و TypeScript بدون خطا اجرا شده‌اند.
 - Composer Audit بدون Advisory و NPM Audit بدون Vulnerability است.
-- Production Readiness در محیط Local عمداً Fail-Closed است: 3 Pass / 10 Fail و `ready=false`.
+- Production Readiness در محیط Local عمداً Fail-Closed است: 3 Pass / 11 Fail و `ready=false`.
 - Migration حاکمیت پاداش `2026_08_15_000001_add_reward_governance_controls` در دیتابیس Local معوق است؛ همان Migration و Rollback آن در PostgreSQL CI موفق بوده‌اند.
+- حداقل SAFE-05/06 برای Scoped Pause/Resume کمپین، هماهنگی Fail-Closed با QR/Mission/Reward و Audit بازیابی در Local پیاده‌سازی و تست شده است؛ تصویب RACI/Incident Policy و مانور Staging هنوز باقی است.
 - Staging بیرونی، سرویس‌های واقعی و Gateهای عملیاتی هنوز تأیید نشده‌اند؛ بنابراین وضعیت Production همچنان **NO-GO** است.
 
 مراجع وضعیت جاری:

@@ -59,6 +59,7 @@
 - [ ] یک مسیر QR تا Mission، Reward و Redemption انتهابه‌انتها ثبت شده است.
 - [ ] کنترل دسترسی نقش‌ها، 403، QR نامعتبر و خطای OTP بررسی شده‌اند.
 - [ ] مانور Incident و Escalation حداقل یک‌بار اجرا شده است.
+- [ ] Scoped Pause/Resume یک Campaign با Reason، Incident Reference، Corrective Action، Recovery Evidence، Admin Approval و Audit Trail تمرین شده است.
 - [ ] دستور Launch Assurance متناسب با محیط بدون خطا پایان یافته است.
 
 ### G4 — کنترل روزانه پایلوت

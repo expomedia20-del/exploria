@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Actions\Events\RecordAdminAuditAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\PauseCampaignRequest;
+use App\Http\Requests\Admin\ResumeCampaignRequest;
 use App\Http\Requests\Admin\StoreCampaignRequest;
 use App\Models\Campaign;
+use App\Services\CampaignOperationalControlService;
 use App\Services\CampaignRegistryService;
 use App\Services\MissionRewardBlueprintService;
 use Illuminate\Http\JsonResponse;
@@ -114,5 +117,37 @@ class CampaignRegistryController extends Controller
         }
 
         return back()->with('success', 'کمپین از آرشیو برگشت و دوباره در فهرست اصلی دیده می‌شود.');
+    }
+
+    public function pause(PauseCampaignRequest $request, Campaign $campaign, CampaignOperationalControlService $service): JsonResponse|RedirectResponse
+    {
+        $campaign = $service->pause($campaign, $request->user(), $request->session()->getId(), $request->operationalData());
+
+        if ($request->expectsJson()) {
+            return response()->json(['status' => 'success', 'data' => $this->operationalControlData($campaign)]);
+        }
+
+        return back()->with('success', 'کمپین در کوچک‌ترین دامنه عملیاتی متوقف شد؛ QR، مأموریت و صدور پاداش جدید همان کمپین بسته است.');
+    }
+
+    public function resume(ResumeCampaignRequest $request, Campaign $campaign, CampaignOperationalControlService $service): JsonResponse|RedirectResponse
+    {
+        $campaign = $service->resume($campaign, $request->user(), $request->session()->getId(), $request->operationalData());
+
+        if ($request->expectsJson()) {
+            return response()->json(['status' => 'success', 'data' => $this->operationalControlData($campaign)]);
+        }
+
+        return back()->with('success', 'اقدام اصلاحی و شاهد بازیابی ثبت شد و کمپین با تأیید ادمین از سر گرفته شد.');
+    }
+
+    /** @return array<string, mixed> */
+    private function operationalControlData(Campaign $campaign): array
+    {
+        return [
+            'id' => $campaign->id,
+            'status' => $campaign->status->value,
+            'operationalControl' => $campaign->operationalControl(),
+        ];
     }
 }

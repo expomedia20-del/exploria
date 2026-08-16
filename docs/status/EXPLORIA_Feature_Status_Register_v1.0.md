@@ -30,14 +30,14 @@
 | Routeهای ثبت‌شده | 242 |
 | صفحات React | 51 |
 | Modelهای Laravel | 52 |
-| Serviceهای Domain/Application | 35 |
-| فایل‌های تست PHP | 61 |
-| نتیجه Test Suite محلی | 369 Test / 4729 Assertion / 0 Failure |
+| Serviceهای Domain/Application | 36 |
+| فایل‌های تست PHP | 62 |
+| نتیجه Test Suite محلی | 373 Test / 4799 Assertion / 0 Failure |
 | CI روی PR شماره 3 | 4 Check موفق: Quality، PHP 8.4، PHP 8.5 و PostgreSQL |
 | تحلیل ایستا و کیفیت | PHPStan 0 Error؛ ESLint، TypeScript، Pint و Prettier موفق |
 | Build تولیدی | آخرین Build ثبت‌شده: 2339 Module / موفق؛ Build در CI نیز موفق |
 | Demo Readiness | 19 Pass / 0 Warning / 0 Fail |
-| Production Readiness در محیط Local | 3 Pass / 10 Fail / `ready=false` - Fail-Closed مورد انتظار |
+| Production Readiness در محیط Local | 3 Pass / 11 Fail / `ready=false` - Fail-Closed مورد انتظار |
 | Migration Local | 1 مورد معوق: `2026_08_15_000001_add_reward_governance_controls` |
 | NPM Audit در 2026-08-16 | 0 Vulnerability |
 | Composer Audit در 2026-08-16 | 0 Advisory |
@@ -54,6 +54,7 @@
 | Consent | Consent نسخه‌دار و ثبت پذیرش با زمان و Subject | `/consent`، مدل‌ها و تست‌های Consent | `PILOT_BLOCKED` | متن حقوقی نهایی و سیاست نگهداری/حذف داده |
 | مدل مکان | Venue، Zone، Hub، Touchpoint، پروفایل و فعال‌سازی مکان | `/admin/venues`، `VenueActivationService` | `DEMO_READY` | داده میدانی، مالک هر نقطه و تأیید نصب واقعی |
 | کمپین | Registry، Builder، Blueprint، Activation و نقشه عملیات | `/admin/campaigns`، `/admin/campaign-builder` | `DEMO_READY` | قفل کمپین پایلوت و UAT نقش‌محور |
+| توقف/ازسرگیری عملیاتی | Scoped Pause در سطح Campaign، انسداد هماهنگ QR/Mission/Reward، Incident Reference، Recovery Evidence، Admin Resume Approval و Audit append-only | `CampaignOperationalControlService`، صفحه Campaign و `CampaignOperationalControlTest` | `VERIFIED_LOCAL` | تصویب RACI/Incident Policy و مانور Pause/Resume در Staging |
 | QR | Registry، Binding، وضعیت، Scan Landing و کدهای عملیاتی | `/admin/qr-codes`، `/scan/{code}` | `VERIFIED_LOCAL` | قالب دامنه، چاپ، ابعاد و نصب میدانی |
 | Attribution | ثبت Scan/Visit/Event متصل به QR، مکان، کمپین و کاربر/Session | `ScanEvent`، `Visit`، Event Log و تست‌های Feature | `VERIFIED_LOCAL` | Data Dictionary و Baseline پایلوت |
 | داشبورد | خلاصه مدیریتی و پنل‌های عملیاتی نقش‌محور | `/dashboard` و Dashboard Serviceها | `DEMO_READY` | KPI مصوب، مقایسه Baseline و گزارش تصمیم‌ساز |
@@ -85,7 +86,7 @@
 4. متن حقوقی Consent و تصویب Privacy، Retention و Deletion Policy.
 5. QR Domain/Print/Installation Plan و داده میدانی تأییدشده.
 6. Reward Budget، Anti-Fraud، مسئول تأمین و Redemption Policy.
-7. تصمیم رسمی و حداقل کنترل Scoped Pause/Resume با Incident Linkage و Audit Trail.
+7. تصویب RACI/Incident Policy و اجرای مانور Scoped Pause/Resume روی Staging؛ حداقل فنی، Incident Linkage و Audit Trail در Local پیاده‌سازی شده است.
 8. Queue، Cache، Session و Scheduler پایدار و راستی‌آزمایی‌شده در Staging.
 9. Central Monitoring، Logging، Alerting، On-call و Runbook Incident مصوب.
 10. UAT رسمی روی Staging و صورت‌جلسه امضاشده Go/No-Go.

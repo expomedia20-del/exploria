@@ -4,7 +4,9 @@ import {
     Archive,
     CalendarClock,
     Megaphone,
+    PauseCircle,
     Pencil,
+    PlayCircle,
     Plus,
     QrCode,
     RotateCcw,
@@ -62,7 +64,22 @@ type CampaignItem = {
     dependencyCount: number;
     isArchived: boolean;
     archivedAt: string | null;
+    operationalControl: OperationalControl | null;
     venue: RegistryEntity | null;
+};
+
+type OperationalControl = {
+    state: 'paused' | 'resumed';
+    scope: 'campaign';
+    reason: string;
+    incident_reference: string;
+    paused_by_name: string;
+    paused_at: string;
+    corrective_action?: string;
+    recovery_evidence?: string;
+    approval_note?: string;
+    resume_approved_by_name?: string;
+    resumed_at?: string;
 };
 
 type SelectedCampaign = {
@@ -189,6 +206,7 @@ export default function CampaignRegistryIndex({
     selectedBlueprint,
 }: Props) {
     const { flash, auth } = usePage<SharedProps>().props;
+    const isAdmin = auth.user.role === 'admin';
     const [editingCampaign, setEditingCampaign] = useState<CampaignItem | null>(
         null,
     );
@@ -962,6 +980,277 @@ export default function CampaignRegistryIndex({
                                             )}
                                         </span>
                                     </div>
+                                    {campaign.operationalControl?.state ===
+                                    'paused' ? (
+                                        <div className="col-span-6 grid gap-4 rounded-lg border border-amber-300 bg-amber-50/80 p-4 lg:grid-cols-2 dark:border-amber-800 dark:bg-amber-950/30">
+                                            <div className="space-y-2">
+                                                <div className="flex items-center gap-2 font-semibold text-amber-900 dark:text-amber-100">
+                                                    <PauseCircle className="size-4" />
+                                                    توقف عملیاتی Scoped فعال است
+                                                </div>
+                                                <p className="text-sm text-amber-950 dark:text-amber-50">
+                                                    {
+                                                        campaign
+                                                            .operationalControl
+                                                            .reason
+                                                    }
+                                                </p>
+                                                <dl className="grid gap-1 text-xs text-amber-900/80 dark:text-amber-100/80">
+                                                    <div className="flex gap-2">
+                                                        <dt>مرجع رخداد:</dt>
+                                                        <dd dir="ltr">
+                                                            {
+                                                                campaign
+                                                                    .operationalControl
+                                                                    .incident_reference
+                                                            }
+                                                        </dd>
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                        <dt>ثبت‌کننده:</dt>
+                                                        <dd>
+                                                            {
+                                                                campaign
+                                                                    .operationalControl
+                                                                    .paused_by_name
+                                                            }
+                                                        </dd>
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                        <dt>زمان توقف:</dt>
+                                                        <dd>
+                                                            {formatDate(
+                                                                campaign
+                                                                    .operationalControl
+                                                                    .paused_at,
+                                                            )}
+                                                        </dd>
+                                                    </div>
+                                                </dl>
+                                                <p className="text-xs text-amber-900/80 dark:text-amber-100/80">
+                                                    QRهای متصل، ادامه مأموریت و
+                                                    صدور پاداش جدید فقط برای
+                                                    همین کمپین بسته‌اند؛ وضعیت
+                                                    مستقل اجزا تغییر نکرده است.
+                                                </p>
+                                            </div>
+
+                                            {isAdmin ? (
+                                                <Form
+                                                    action={`/admin/campaigns/${campaign.id}/resume`}
+                                                    method="post"
+                                                    options={{
+                                                        preserveScroll: true,
+                                                    }}
+                                                    className="grid gap-3 rounded-md border border-amber-200 bg-background p-3 dark:border-amber-900"
+                                                >
+                                                    {({
+                                                        processing,
+                                                        errors,
+                                                    }) => (
+                                                        <>
+                                                            <input
+                                                                type="hidden"
+                                                                name="incident_reference"
+                                                                value={
+                                                                    campaign
+                                                                        .operationalControl
+                                                                        ?.incident_reference ??
+                                                                    ''
+                                                                }
+                                                            />
+                                                            <div className="grid gap-1.5">
+                                                                <Label
+                                                                    htmlFor={`corrective-action-${campaign.id}`}
+                                                                >
+                                                                    اقدام اصلاحی
+                                                                </Label>
+                                                                <textarea
+                                                                    id={`corrective-action-${campaign.id}`}
+                                                                    name="corrective_action"
+                                                                    required
+                                                                    minLength={
+                                                                        10
+                                                                    }
+                                                                    className="min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                                                    placeholder="علت ریشه‌ای چگونه رفع شد؟"
+                                                                />
+                                                                <InputError
+                                                                    message={
+                                                                        errors.corrective_action
+                                                                    }
+                                                                />
+                                                            </div>
+                                                            <div className="grid gap-1.5">
+                                                                <Label
+                                                                    htmlFor={`recovery-evidence-${campaign.id}`}
+                                                                >
+                                                                    شاهد بازیابی
+                                                                </Label>
+                                                                <textarea
+                                                                    id={`recovery-evidence-${campaign.id}`}
+                                                                    name="recovery_evidence"
+                                                                    required
+                                                                    minLength={
+                                                                        10
+                                                                    }
+                                                                    className="min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                                                    placeholder="نتیجه Smoke Test، بررسی QR یا شناسه Evidence"
+                                                                />
+                                                                <InputError
+                                                                    message={
+                                                                        errors.recovery_evidence
+                                                                    }
+                                                                />
+                                                            </div>
+                                                            <div className="grid gap-1.5">
+                                                                <Label
+                                                                    htmlFor={`approval-note-${campaign.id}`}
+                                                                >
+                                                                    یادداشت
+                                                                    تأیید
+                                                                    ازسرگیری
+                                                                </Label>
+                                                                <textarea
+                                                                    id={`approval-note-${campaign.id}`}
+                                                                    name="approval_note"
+                                                                    required
+                                                                    minLength={
+                                                                        10
+                                                                    }
+                                                                    className="min-h-16 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                                                    placeholder="دامنه و دلیل تأیید ازسرگیری"
+                                                                />
+                                                                <InputError
+                                                                    message={
+                                                                        errors.approval_note
+                                                                    }
+                                                                />
+                                                            </div>
+                                                            <label className="flex items-start gap-2 text-xs leading-5">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    name="approval_confirmed"
+                                                                    value="1"
+                                                                    required
+                                                                    className="mt-1"
+                                                                />
+                                                                بررسی اقدام
+                                                                اصلاحی، شاهد
+                                                                بازیابی و مرجع
+                                                                رخداد را تأیید
+                                                                می‌کنم.
+                                                            </label>
+                                                            <InputError
+                                                                message={
+                                                                    errors.approval_confirmed
+                                                                }
+                                                            />
+                                                            <Button
+                                                                disabled={
+                                                                    processing
+                                                                }
+                                                            >
+                                                                <PlayCircle className="size-4" />
+                                                                تأیید و ازسرگیری
+                                                                کمپین
+                                                            </Button>
+                                                        </>
+                                                    )}
+                                                </Form>
+                                            ) : (
+                                                <div className="rounded-md border border-amber-200 bg-background p-3 text-sm text-muted-foreground dark:border-amber-900">
+                                                    ازسرگیری فقط پس از ثبت اقدام
+                                                    اصلاحی و شاهد بازیابی توسط
+                                                    ادمین مجاز است.
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : canMutate(auth.user.role) &&
+                                      !campaign.isArchived &&
+                                      campaign.status === 'active' ? (
+                                        <details className="col-span-6 rounded-lg border border-border/80 bg-muted/20 p-3">
+                                            <summary className="flex cursor-pointer items-center gap-2 text-sm font-medium">
+                                                <PauseCircle className="size-4 text-destructive" />
+                                                توقف کنترل‌شده همین کمپین
+                                            </summary>
+                                            <Form
+                                                action={`/admin/campaigns/${campaign.id}/pause`}
+                                                method="post"
+                                                options={{
+                                                    preserveScroll: true,
+                                                }}
+                                                className="mt-3 grid gap-3 md:grid-cols-2"
+                                            >
+                                                {({ processing, errors }) => (
+                                                    <>
+                                                        <div className="grid gap-1.5">
+                                                            <Label
+                                                                htmlFor={`pause-reason-${campaign.id}`}
+                                                            >
+                                                                دلیل توقف
+                                                            </Label>
+                                                            <textarea
+                                                                id={`pause-reason-${campaign.id}`}
+                                                                name="reason"
+                                                                required
+                                                                minLength={10}
+                                                                className="min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                                                placeholder="ریسک یا اختلال دقیق این کمپین"
+                                                            />
+                                                            <InputError
+                                                                message={
+                                                                    errors.reason
+                                                                }
+                                                            />
+                                                        </div>
+                                                        <div className="grid content-start gap-1.5">
+                                                            <Label
+                                                                htmlFor={`incident-reference-${campaign.id}`}
+                                                            >
+                                                                مرجع رخداد یا
+                                                                تیکت
+                                                            </Label>
+                                                            <Input
+                                                                id={`incident-reference-${campaign.id}`}
+                                                                name="incident_reference"
+                                                                required
+                                                                minLength={3}
+                                                                maxLength={128}
+                                                                dir="ltr"
+                                                                placeholder="INC-2026-001"
+                                                            />
+                                                            <InputError
+                                                                message={
+                                                                    errors.incident_reference
+                                                                }
+                                                            />
+                                                        </div>
+                                                        <div className="md:col-span-2">
+                                                            <p className="mb-3 text-xs text-muted-foreground">
+                                                                این اقدام فقط
+                                                                همین کمپین را
+                                                                متوقف می‌کند و
+                                                                در Audit
+                                                                append-only ثبت
+                                                                می‌شود.
+                                                            </p>
+                                                            <Button
+                                                                variant="destructive"
+                                                                disabled={
+                                                                    processing
+                                                                }
+                                                            >
+                                                                <PauseCircle className="size-4" />
+                                                                توقف عملیاتی
+                                                                کمپین
+                                                            </Button>
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </Form>
+                                        </details>
+                                    ) : null}
                                 </article>
                             ))}
                         </div>

@@ -98,6 +98,14 @@
 - CI با PostgreSQL 18 آخرین Migration را اجرا، یک مرحله Rollback و سپس Migration مجدد را راستی‌آزمایی می‌کند.
 - این شواهد فقط سازگاری Repository و Migration را اثبات می‌کنند؛ جایگزین Migration، reconciliation و Drill روی Staging مستقل نیستند.
 
+### 4.6 Scoped Pause/Resume
+
+- Campaign فعال با Reason و Incident Reference توسط Admin/Operator در Scope همان Campaign متوقف می‌شود.
+- وضعیت Campaign ورودی QR، ادامه Mission و صدور Reward جدید همان Campaign را Fail-Closed می‌کند، بدون آنکه وضعیت مستقل اجزا به‌صورت انبوه بازنویسی شود.
+- Resume فقط برای Admin و پس از ثبت Corrective Action، Recovery Evidence، Approval Note و تأیید صریح مجاز است.
+- رویدادهای `audit.campaign_paused` و `audit.campaign_resumed` Actor، Timestamp و Evidence را append-only نگه می‌دارند.
+- این قابلیت در Local تست شده است؛ مانور Incident/Pause/Recovery/Resume در Staging و تصویب RACI/Incident Policy همچنان Pending است.
+
 ## 5. معماری استقرار آماده‌شده
 
 ```text
@@ -183,7 +191,7 @@ EXPLORIA_VERIFIED_BACKUP_PATH=<verified_dump_path>
 ### Gate S3-05 — پس از Deploy
 
 - `/up` باید روی HTTPS پاسخ موفق دهد.
-- `exploria:production-readiness --json` باید 13 Pass / 0 Fail باشد؛ پاداش فعال فاقد مالک هزینه، موجودی یا محدودیت صدور نیز Gate را متوقف می‌کند.
+- `exploria:production-readiness --json` باید 14 Pass / 0 Fail باشد؛ پاداش فعال فاقد حاکمیت یا Campaign دارای توقف عملیاتی نیز Gate را متوقف می‌کند.
 - `exploria:demo-readiness --json` باید بدون Fail باشد.
 - Queue Worker و Scheduler باید Active باشند.
 - Headerهای HSTS، No-Index و Permissions Policy باید روی پاسخ واقعی دیده شوند.
@@ -217,6 +225,7 @@ Repository برای تحویل به اپراتور Staging سخت‌گیری ش�
 - `app/Infrastructure/Otp/HttpOtpProvider.php`
 - `app/Services/ProductionReadinessService.php`
 - `app/Services/MissionRewardRegistryService.php`
+- `app/Services/CampaignOperationalControlService.php`
 - `database/migrations/2026_08_15_000001_add_reward_governance_controls.php`
 - `scripts/deploy-staging.sh`
 - `deploy/nginx/exploria-staging.conf.example`
@@ -227,6 +236,7 @@ Repository برای تحویل به اپراتور Staging سخت‌گیری ش�
 - `tests/Feature/Infrastructure/EnvironmentBaselineTest.php`
 - `tests/Feature/Governance/RewardGovernanceTest.php`
 - `tests/Feature/Infrastructure/RewardGovernanceReadinessTest.php`
+- `tests/Feature/Campaign/CampaignOperationalControlTest.php`
 - `docs/staging/EXPLORIA_Stage_3_Staging_Readiness_v1.0.md`
 - `docs/status/EXPLORIA_Feature_Status_Register_v1.0.md`
 
@@ -234,7 +244,8 @@ Repository برای تحویل به اپراتور Staging سخت‌گیری ش�
 
 | بررسی | نتیجه |
 |---|---|
-| Test Suite محلی | 369 Test / 4729 Assertion / 0 Failure |
+| Test Suite محلی | 373 Test / 4799 Assertion / 0 Failure |
+| تست هدفمند Scoped Pause/Resume | 4 Test / 70 Assertion / Pass |
 | GitHub CI روی PR شماره 3 | 4 Check موفق: Quality، PHP 8.4، PHP 8.5 و PostgreSQL |
 | PostgreSQL CI | Migration Fresh، Rollback آخرین Migration، Migration مجدد و Test Suite موفق |
 | ESLint / Prettier / TypeScript | Pass |
@@ -243,7 +254,7 @@ Repository برای تحویل به اپراتور Staging سخت‌گیری ش�
 | Production Build | 2339 Module / Pass |
 | Migration Local | 1 مورد معوق: `2026_08_15_000001_add_reward_governance_controls` |
 | Demo Readiness | 19 Pass / 0 Warning / 0 Fail |
-| Production Readiness در Local | 3 Pass / 10 Fail / `ready=false`؛ Fail-Closed مورد انتظار |
+| Production Readiness در Local | 3 Pass / 11 Fail / `ready=false`؛ Fail-Closed مورد انتظار |
 | Headerهای HTTP محلی | Nosniff، SameOrigin، Referrer Policy و Permissions Policy فعال |
 | Syntax اسکریپت Deploy | `bash -n` موفق |
 | PostgreSQL Tooling | Server/Client/PHP Extension آماده |
