@@ -21,6 +21,7 @@ Bootstrap رسمی و توسعه قابلیت‌های MVP انجام شده و 
 - `docs/status/EXPLORIA_Feature_Status_Register_v1.0.md`
 - `docs/staging/EXPLORIA_Stage_3_Staging_Readiness_v1.0.md`
 - `docs/staging/EXPLORIA_Operational_Architecture_Decision_v1.0.md`
+- `docs/staging/EXPLORIA_Provider_Shortlist_2026-08-16.md`
 - `docs/uat/EXPLORIA_Stage_4_UAT_Dry_Run_v1.0.md`
 - `docs/pilot/EXPLORIA_Stage_5_Controlled_Pilot_Launch_Kit_v1.0.md`
 - `docs/pilot/EXPLORIA_Pre_Staging_Governance_Approval_Pack_v1.0.md`

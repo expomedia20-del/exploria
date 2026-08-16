@@ -14,6 +14,8 @@
 
 توصیه فنی Provider-agnostic برای Mail، Storage، Monitoring، Backup و Runtime در `docs/staging/EXPLORIA_Operational_Architecture_Decision_v1.0.md` ثبت شده و تا تکمیل همین Approval Pack در وضعیت `DRAFT RECOMMENDED` باقی می‌ماند.
 
+Shortlist تاریخ‌دار و Compatibility Gap ارائه‌دهندگان در `docs/staging/EXPLORIA_Provider_Shortlist_2026-08-16.md` ثبت شده است. Liara Stack، Kavenegar و IPPanel صرفاً Candidate هستند؛ هیچ Provider تصویب یا خریداری نشده است.
+
 ## 2. مراجع Canonical و شواهد فعلی
 
 - BRD: `docs/governance/product/Exploria_BRD_v1.1_Pilot_Revenue_Update.md`؛ مسئولیت داده، RACI و تصمیم ادامه/توقف.

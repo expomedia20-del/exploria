@@ -142,6 +142,8 @@ Deploy به‌صورت Release-based انجام می‌شود، Revision و زم
 
 معماری Provider-agnostic پیشنهادی Mail/Storage/Monitoring/Backup در `docs/staging/EXPLORIA_Operational_Architecture_Decision_v1.0.md` ثبت شده است؛ این ADR تا عبور گام 3 و انتخاب Provider واقعی Draft است.
 
+Candidateهای Provider، منابع رسمی و Gapهای Compatibility در `docs/staging/EXPLORIA_Provider_Shortlist_2026-08-16.md` ثبت شده‌اند؛ Shortlist مجوز خرید یا Approval نیست.
+
 ### Gate S3-02 — فایل Environment بیرون Repository
 
 فایل `/var/www/exploria-staging/shared/.env` از `.env.staging.example` ساخته می‌شود. موارد زیر باید با Secret Manager یا کانال امن مقداردهی شوند:
