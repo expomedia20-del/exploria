@@ -4,10 +4,10 @@
 
 | فیلد | مقدار |
 |---|---|
-| تاریخ بررسی | 2026-08-16 |
+| تاریخ بررسی | 2026-08-16؛ بازبینی قیمت/تصمیم مالک 2026-08-17 |
 | نوع | Decision Support — نه Approval و نه مجوز خرید |
-| وضعیت | `SHORTLIST PREPARED — OWNER/BUDGET/LEGAL APPROVAL PENDING` |
-| فرض کاری | کاربران Pilot دارای شماره ایران (`09xxxxxxxxx`) و UI فارسی هستند؛ محل داده و روش پرداخت باید توسط مالک پروژه تأیید شود. |
+| وضعیت | `IRAN/RIAL CONSTRAINTS CONFIRMED — VENDOR APPROVAL/PURCHASE PENDING` |
+| تصمیم مالک | محل داده و Backup فقط ایران؛ بودجه و پرداخت فعلاً ریالی؛ Provider خارجی برای داده/Log/Backup واجد شرایط نیست. |
 
 قیمت، SLA و شرایط قرارداد ممکن است تغییر کنند. فقط صفحه رسمی Product/Documentation در تاریخ بالا بررسی شده است؛ Quote، DPA، Data Region، مالیات، Egress، شرایط حذف و امکان خرید باید پیش از Approval دوباره کنترل شوند.
 
@@ -23,12 +23,12 @@
 | Transactional Mail | Liara Mail SMTP | سرویس Transactional Email و SMTP رسمی؛ بدون Driver اختصاصی Laravel قابل استفاده است. | SPF/DKIM/DMARC، Bounce/Suppression، Rate Limit، SLA و UAT Delivery |
 | OTP Primary Candidate | Kavenegar VerifyLookup | REST روی HTTPS، متد Verification Template، Delivery Status و Status Page رسمی دارد. | Quote/SLA، Hide/PII policy، Template approval، Cost Cap و Adapter اختصاصی |
 | OTP Comparison Candidate | IPPanel Pattern API | API Token، Pattern Send، گزارش وضعیت و شماره ایران در مستندات رسمی دیده می‌شود. | Quote/SLA، Data/PII policy، Template approval، Cost Cap و Adapter اختصاصی |
-| Uptime/Alert | Better Stack یا Uptime Kuma روی Provider/Account مستقل | Better Stack Uptime/Heartbeat/On-call را ارائه می‌کند؛ Uptime Kuma نیز قابل میزبانی جداست. | امکان پرداخت/دسترسی، Data Region، Alert واقعی و استقلال از Application Provider |
-| Off-host Backup | Provider دوم S3-compatible؛ Backblaze B2 فقط در صورت امکان قرارداد/پرداخت | B2 برای Backup/Recovery و API سازگار S3 طراحی شده است و Region بین‌المللی دارد. | تأیید Legal/Data Region، پرداخت ارزی، دسترسی پایدار، Encryption و Restore از ایران |
+| Uptime/Alert | Probe/Monitoring روی Provider و Account مستقل داخل ایران | از دسترس‌پذیری خارج Failure Domain برنامه، Heartbeat، Alert و On-call پشتیبانی کند. | Candidate دوم ایرانی، Data Retention، Alert واقعی و Drill |
+| Off-host Backup | Provider/Account دوم داخل ایران و مستقل از Liara | Common-mode failure را کاهش دهد و Export/Restore مستقل ممکن باشد. | Encryption، Lifecycle، Hash Manifest، Credential مستقل و Restore Drill |
 
 تمرکز Compute، DB، Mail و Media در یک Provider عملیات Pilot را ساده می‌کند، اما Common-mode Risk ایجاد می‌کند. بنابراین Uptime Probe و حداقل یک Backup قابل Restore باید بیرون همان حساب/Failure Domain باشد.
 
-### مسیر B — International، فقط در صورت تأیید پرداخت و Legal
+### مسیر B — International، تحت تصمیم فعلی غیرمجاز
 
 | Capability | Candidate | Evidence رسمی | مانع فعلی |
 |---|---|---|---|
@@ -39,7 +39,13 @@
 | Monitoring | Better Stack | Uptime، Heartbeat، Incident/On-call و Log Retention | پرداخت/دسترسی/Legal |
 | OTP ایران | Kavenegar یا IPPanel | پشتیبانی شماره ایران | همچنان Adapter و قرارداد داخلی لازم است |
 
-این مسیر فقط وقتی برتر است که دسترسی سازمانی پایدار، پرداخت ارزی، قرارداد و انتقال داده برون‌مرزی رسماً مجاز باشند. صرف قیمت دلاری کمتر یا امکانات بیشتر دلیل کافی نیست.
+این مسیر با تصمیم فعلی مالک مبنی بر Iran-only و Rial-only سازگار نیست و برای داده، Log و Backup انتخاب نمی‌شود. بازگشایی آن فقط با تصمیم مالک جدید و Legal/Security Review ممکن است.
+
+## 2.1 برآورد رسمی اولیه، نه Quote خرید
+
+صفحه رسمی قیمت Liara در بازبینی 2026-08-17، نمونه‌های زیر را اعلام می‌کرد: VPS دو گیگابایت `589,000 تومان/month` به‌علاوه IPv4 برابر `149,000 تومان/month`، DBaaS PostgreSQL دو گیگابایت `589,000 تومان/month`، Email پایه پولی `589,000 تومان/month` و Object Storage بیست گیگابایت `209,000 تومان/month`. قیمت و مالیات باید درست پیش از خرید دوباره کنترل شود.
+
+صفحه رسمی Kavenegar، پلن پیشرفته را `600,000 تومان/year` و پلن فوق‌پیشرفته را `1,200,000 تومان/year` اعلام می‌کند و OTP را مناسب این دو پلن می‌داند؛ هزینه مصرف پیامک در Quote جداگانه لازم است.
 
 ## 3. Evidence رسمی بررسی‌شده
 
@@ -137,17 +143,16 @@ Kavenegar، API Key را در URL و پارامترهای `receptor/token/templa
 | Liara Stack | بالا | محتمل/ریالی | متوسط به علت تمرکز سرویس‌ها | متوسط | `PRIMARY DUE-DILIGENCE CANDIDATE` |
 | Kavenegar OTP | متوسط؛ Adapter لازم | ریالی | کم با Contract داخلی | خوب برای API | `OTP PRIMARY CANDIDATE` |
 | IPPanel OTP | متوسط؛ Adapter لازم | ریالی | کم با Contract داخلی | متوسط | `OTP COMPARISON CANDIDATE` |
-| DigitalOcean Stack | بالا | نامشخص | متوسط | خوب | `CONDITIONAL INTERNATIONAL` |
-| Backblaze B2 | بالا برای Backup | نامشخص | کم به علت S3 | خوب | `CONDITIONAL OFF-HOST` |
-| Better Stack | بالا برای Uptime/Logs | نامشخص | متوسط | خوب | `CONDITIONAL MONITORING` |
+| DigitalOcean Stack | بالا | ارزی/خارج ایران | متوسط | خوب | `NOT ELIGIBLE UNDER CURRENT OWNER DECISION` |
+| Backblaze B2 | بالا برای Backup | ارزی/خارج ایران | کم به علت S3 | خوب | `NOT ELIGIBLE UNDER CURRENT OWNER DECISION` |
+| Better Stack | بالا برای Uptime/Logs | ارزی/خارج ایران | متوسط | خوب | `NOT ELIGIBLE UNDER CURRENT OWNER DECISION` |
 
 ## 7. تصمیم‌هایی که هنوز از مالک لازم است
 
-1. ایران‌محور یا بین‌المللی بودن محل داده و قرارداد.
-2. امکان پرداخت ارزی و داشتن حساب سازمانی پایدار.
-3. سقف ماهانه Staging و سقف مصرف OTP/Mail/Storage/Monitoring/Backup.
-4. پذیرش یا رد Liara به‌عنوان Candidate اصلی Due-diligence.
-5. انتخاب Kavenegar یا IPPanel برای Sandbox/Quote؛ انتخاب نهایی فقط پس از E2E.
-6. تعیین Provider دوم مستقل برای Backup و Uptime.
+1. پذیرش یا اصلاح سقف ماهانه پیشنهادی Staging و OTP/Mail/Storage/Monitoring/Backup.
+2. پذیرش یا رد Liara به‌عنوان Candidate اصلی Due-diligence، بدون مجوز خرید.
+3. پذیرش Kavenegar به‌عنوان Candidate اول Sandbox/Quote؛ انتخاب نهایی فقط پس از Adapter و E2E.
+4. تعیین Provider ایرانی دوم مستقل برای Backup و Uptime.
+5. تعیین Operations/Security Owner برای اجرای Due-diligence و امضای Evidence.
 
-**Verdict فعلی:** `SHORTLIST ONLY — NO PROVIDER APPROVED, NO PURCHASE AUTHORIZED`
+**Verdict فعلی:** `IRAN-FIRST SHORTLIST — NO PROVIDER APPROVED, NO PURCHASE AUTHORIZED`

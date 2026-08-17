@@ -5,9 +5,9 @@
 | فیلد | مقدار |
 |---|---|
 | نوع سند | Working Approval Pack — غیرجایگزین مشاوره و تأیید حقوقی |
-| تاریخ | 2026-08-16 |
+| تاریخ | 2026-08-16؛ آخرین بازبینی 2026-08-17 |
 | دامنه | Privacy، Retention/Deletion، Incident، RACI، Budget و Provider Approval |
-| وضعیت | `PREPARED — FORMAL APPROVALS PENDING` |
+| وضعیت | `OWNER INPUT RECORDED — LEGAL/SECURITY/OPERATIONS APPROVALS PENDING` |
 | Gate | پیش از خرید Staging، ورود داده واقعی، UAT رسمی یا Pilot |
 
 این سند تصمیم‌های پیشنهادی محافظه‌کارانه، شواهد Repository و فیلدهای امضای لازم را در یک محل جمع می‌کند. وجود این فایل به معنی تأیید Product، Legal، Security، Operations یا Finance نیست. نام، تاریخ و مرجع مصوبه واقعی باید تکمیل شود؛ Secret، قرارداد، شماره تماس خصوصی و امضای اسکن‌شده نباید در Repository ذخیره شوند.
@@ -15,6 +15,8 @@
 توصیه فنی Provider-agnostic برای Mail، Storage، Monitoring، Backup و Runtime در `docs/staging/EXPLORIA_Operational_Architecture_Decision_v1.0.md` ثبت شده و تا تکمیل همین Approval Pack در وضعیت `DRAFT RECOMMENDED` باقی می‌ماند.
 
 Shortlist تاریخ‌دار و Compatibility Gap ارائه‌دهندگان در `docs/staging/EXPLORIA_Provider_Shortlist_2026-08-16.md` ثبت شده است. Liara Stack، Kavenegar و IPPanel صرفاً Candidate هستند؛ هیچ Provider تصویب یا خریداری نشده است.
+
+تصمیم‌های قطعی مالک و پیشنهادهایی که هنوز نیازمند پذیرش هستند در `docs/pilot/EXPLORIA_Owner_Decision_Record_2026-08-17.md` از یکدیگر تفکیک شده‌اند. ایمیل شخصی اعلام‌شده عمداً در Repository ثبت نشده است.
 
 ## 2. مراجع Canonical و شواهد فعلی
 
@@ -38,13 +40,13 @@ Shortlist تاریخ‌دار و Compatibility Gap ارائه‌دهندگان �
 | GOV-PRIV-01 | ورود داده واقعی فقط پس از انتشار یک `ConsentVersion` جدید با `is_demo=false`؛ نسخه Demo نباید بازنویسی یا به‌عنوان متن حقوقی استفاده شود. | Proposed | Product + Legal |
 | GOV-PRIV-02 | جمع‌آوری فقط برای ورود امن، اجرای تجربه، انتساب رویداد، پاداش، پشتیبانی و امنیت؛ استفاده تبلیغاتی/فروش Lead نیازمند رضایت جداگانه و اختیاری است. | Proposed | Product + Legal |
 | GOV-PRIV-03 | Pilot تا تصویب سازوکار والد/سرپرست و سیاست داده کودک، فقط برای افراد واجد اهلیت اعلام‌شده اجرا شود؛ هیچ ادعای سنی خودکار از روی داده انجام نشود. | Proposed Safe Default | Product + Legal + Venue |
-| GOV-PRIV-04 | Privacy Notice باید هویت شخصیت حقوقی مالک داده، هدف‌ها، دسته داده، دریافت‌کنندگان/پردازشگران، مدت نگهداری، حقوق کاربر، مسیر تماس و اثر انصراف را روشن کند. | Proposed | Legal |
+| GOV-PRIV-04 | Privacy Notice باید هویت دقیق متولی/کنترل‌کننده پردازش را، اعم از شخص حقیقی یا حقوقی، همراه هدف‌ها، دسته داده، دریافت‌کنندگان/پردازشگران، مدت نگهداری، حقوق کاربر، مسیر تماس و اثر انصراف روشن کند. اشخاص موضوع داده حقوق قانونی خود را حفظ می‌کنند. | Proposed | Legal |
 | GOV-PRIV-05 | فهرست Providerها و محل پردازش/Backup باید پیش از فعال‌سازی در Processor Register تصویب شود؛ Credential خارج Repository می‌ماند. | Proposed | Legal + Security + Operations |
 | GOV-PRIV-06 | داده Demo، Test و UAT از Production/Pilot جدا باشد و ورود PII واقعی در Screenshot، Ticket عمومی، Git و Log ممنوع بماند. | Technical Baseline | Security + QA |
 
 ### Gapهای واقعی Privacy
 
-1. متن حقوقی نهایی، هویت Controller، نشانی تماس Privacy و نسخه انتشار واقعی وجود ندارد.
+1. مالک پلتفرم به‌عنوان شخص حقیقی معرفی شده، اما عنوان حقوقی دقیق Controller/Processor، متن نهایی Privacy، نشانی رسمی دامنه‌ای و نسخه انتشار واقعی هنوز تأیید حقوقی نشده است.
 2. رضایت مستقل Marketing/Lead و مسیر Withdraw اثبات نشده است.
 3. سیاست کودک/اهلیت و روش اجرای آن تصویب نشده است.
 4. Processor Register برای OTP، Mail، Storage، Monitoring، Hosting و Backup وجود ندارد.
@@ -102,13 +104,15 @@ Shortlist تاریخ‌دار و Compatibility Gap ارائه‌دهندگان �
 
 | نقش | Accountable/اختیار اصلی | نام واقعی | جانشین | کانال On-call | وضعیت |
 |---|---|---|---|---|---|
-| Product Owner | Scope، KPI، Budget و Go/No-Go | `TBD` | `TBD` | خارج Repository | Pending |
-| Incident Commander / Pilot Manager | فرمان Incident و ادامه/توقف | `TBD` | `TBD` | خارج Repository | Pending |
+| Product Owner | Scope، KPI، Budget و Go/No-Go | علی رحمان سلیمانی‌زاده — پیشنهاد نقش هم‌زمان برای مرحله Pre-Staging | `TBD` | خارج Repository | Recommended — Owner acceptance pending |
+| Incident Commander / Pilot Manager | فرمان Incident و ادامه/توقف | علی رحمان سلیمانی‌زاده — فقط موقت برای Pre-Staging | `TBD` | خارج Repository | Recommended; alternate required before Pilot |
 | Tech Lead | Code/Deploy/Recovery فنی | `TBD` | `TBD` | خارج Repository | Pending |
-| Security/Privacy Owner | رخداد امنیت/PII و Data Request | `TBD` | `TBD` | خارج Repository | Pending |
+| Privacy/Data Accountable Owner | هدف پردازش، Data Request و پاسخ‌گویی کسب‌وکار | علی رحمان سلیمانی‌زاده — مالک شخص حقیقی | `TBD` | نشانی شخصی خارج Repository | Owner-confirmed; independent Legal review pending |
+| Legal Approver | متن Consent/Privacy، Retention، حقوق کاربر و قرارداد پردازشگر | `TBD — مشاور حقوقی مستقل ایران` | `TBD` | خارج Repository | Blocker before real data |
+| Security Owner | Incident امنیتی، Secret، Access Review و Risk Acceptance فنی | `TBD — متخصص مستقل` | `TBD` | خارج Repository | Blocker before Staging activation |
 | Operations/Infrastructure | Server، DB، Queue، Backup و Monitoring | `TBD` | `TBD` | خارج Repository | Pending |
 | QA/UAT Lead | Evidence، Regression و UAT Sign-off | `TBD` | `TBD` | خارج Repository | Pending |
-| Finance/Commercial | بودجه، Provider Contract و Reward Liability | `TBD` | `TBD` | خارج Repository | Pending |
+| Finance/Commercial | بودجه، Provider Contract و Reward Liability | علی رحمان سلیمانی‌زاده — پیشنهاد برای پروژه خودتأمین | `TBD` | خارج Repository | Recommended — caps pending acceptance |
 | Venue/Field Lead | ایمنی، نصب QR و عملیات محل | `TBD` | `TBD` | خارج Repository | Pending |
 | Support Lead | Triage، شکایت و ارتباط کاربر | `TBD` | `TBD` | خارج Repository | Pending |
 
@@ -118,14 +122,13 @@ Shortlist تاریخ‌دار و Compatibility Gap ارائه‌دهندگان �
 
 | سرفصل | سقف/واحد | مالک تأیید | Evidence لازم | وضعیت |
 |---|---|---|---|---|
-| Staging Hosting/Domain/TLS | `TBD` | Product + Finance | Quote/Invoice و دوره پرداخت | Pending |
-| OTP/SMS | `TBD` پیام و مبلغ ماهانه | Product + Commercial | تعرفه، SLA، Sender و محدودیت هزینه | Pending |
-| Transactional Mail | `TBD` | Product + Operations | تعرفه، Domain Verification و SLA | Pending |
-| Object Storage/CDN | `TBD` GB/Transfer | Operations + Finance | Region، Encryption، Egress و SLA | Pending |
-| Monitoring/Logging/Alerting | `TBD` | Security + Operations | Retention، Alert Channel و On-call | Pending |
-| Backup/Restore | `TBD` | Operations + Finance | فضای مستقل، Encryption و هزینه Egress | Pending |
-| Reward/Redemption | `TBD` کل و هر کاربر | Product + Finance/Commercial | مالک هزینه، موجودی، انقضا و Liability | Pending |
-| Field/QR/Equipment/Contingency | `TBD` | Pilot Manager + Venue | Quote، تعداد، مسئول تحویل و سقف اضطراری | Pending |
+| Staging Compute/PostgreSQL/IPv4 | سقف پیشنهادی `25,000,000 IRR/month` | Product + Finance | Quote/Invoice و دوره پرداخت | Recommended — not approved |
+| OTP/SMS | سقف پیشنهادی `2,000 OTP/month` و `10,000,000 IRR/month`؛ هرکدام زودتر | Product + Commercial | تعرفه، SLA، Sender و Cost Alert | Recommended — not approved |
+| Mail/Storage/Monitoring/Backup | سقف تجمیعی پیشنهادی `25,000,000 IRR/month` | Product + Operations + Finance | Quote، Region، Retention، Alert و Restore | Recommended — not approved |
+| کل هزینه تکرارشونده Staging | سقف سخت پیشنهادی `60,000,000 IRR/month` | Product + Finance | Cost Alert در 50/75/90 درصد و توقف خرید در 100 درصد | Recommended — not approved |
+| Reward/Redemption در Staging/UAT | `0 IRR` تعهد واقعی؛ فقط داده و Reward غیرواقعی | Product + Finance/Commercial | جداسازی Test Data و عدم صدور تعهد واقعی | Safe default — acceptance pending |
+| Reward/Redemption در Pilot | فرمول: کاربران واجد شرایط × سقف هر کاربر × دفعات مجاز + ذخیره احتیاطی؛ مبلغ هنوز `TBD` | Product + Finance/Commercial | مالک هزینه، موجودی، انقضا و Liability | Blocker before Pilot, not before technical Staging |
+| Field/QR/Equipment/Contingency | `TBD` | Pilot Manager + Venue | Quote، تعداد، مسئول تحویل و سقف اضطراری | Blocker before Pilot |
 
 تا سقف کل، سقف روزانه OTP، سقف Reward هر کاربر و اختیار مصرف اضطراری تصویب نشده باشد، خرید Provider یا ورود Reward واقعی مجاز نیست.
 
@@ -133,9 +136,9 @@ Shortlist تاریخ‌دار و Compatibility Gap ارائه‌دهندگان �
 
 | Capability | Provider/Plan واقعی | معیار اجباری | Data/Region | DPA/Contract | Owner | وضعیت |
 |---|---|---|---|---|---|---|
-| Independent Staging | `TBD` | Linux، SSH محدود، Snapshot، SLA و جداسازی Production | `TBD` | `TBD` | Operations | Pending |
-| PostgreSQL | `TBD` | Backup/PITR، TLS، Credential مستقل و Restore Test | `TBD` | `TBD` | DBA/Operations | Pending |
-| OTP/SMS | `TBD` | HTTPS API، Sender مجاز، Delivery Report، Rate/Cost Cap و SLA | `TBD` | `TBD` | Product/Commercial | Pending |
+| Independent Staging | Liara VPS/IaaS — Candidate برای Due-diligence، نه خرید | Linux، SSH محدود، Snapshot، SLA و جداسازی Production | Iran-only confirmed | `TBD` | Operations | Recommended — owner acceptance pending |
+| PostgreSQL | Liara DBaaS PostgreSQL — Candidate برای Due-diligence | Backup/PITR، TLS، Credential مستقل و Restore Test | Iran-only confirmed | `TBD` | DBA/Operations | Recommended — owner acceptance pending |
+| OTP/SMS | Kavenegar Sandbox/Quote — Candidate اول؛ IPPanel مقایسه دوم | HTTPS API، Sender مجاز، Delivery Report، Rate/Cost Cap، Retention و SLA | Iran-only confirmed | `TBD` | Product/Commercial | Recommended — dedicated adapter required |
 | Transactional Mail | `TBD` | SPF/DKIM/DMARC، Bounce Handling، TLS و Suppression | `TBD` | `TBD` | Operations | Pending |
 | Object Storage | `TBD` | S3-compatible یا Adapter مصوب، Encryption، Private Default و Lifecycle | `TBD` | `TBD` | Operations/Security | Pending |
 | Central Logging/Monitoring | `TBD` | Laravel/System Metrics، PII Redaction، Alerting و Export | `TBD` | `TBD` | Security/Operations | Pending |
@@ -148,12 +151,12 @@ Shortlist تاریخ‌دار و Compatibility Gap ارائه‌دهندگان �
 
 | حوزه | تصمیم/نسخه | Approver واقعی | تاریخ | مرجع مصوبه بیرونی | نتیجه |
 |---|---|---|---|---|---|
-| Product Scope و Privacy Purpose | v1.0 | `TBD` | `TBD` | `TBD` | Pending |
+| Product Scope و Privacy Purpose | v1.0 | علی رحمان سلیمانی‌زاده — پیشنهاد Product Owner | `TBD` | Owner Decision Record | Awaiting explicit acceptance |
 | Legal: Consent/Privacy/Child/Data Rights | v1.0 | `TBD` | `TBD` | `TBD` | Pending |
 | Retention/Deletion/Legal Hold | v1.0 | `TBD` | `TBD` | `TBD` | Pending |
 | Incident Policy و RACI | v1.0 | `TBD` | `TBD` | `TBD` | Pending |
-| Budget | v1.0 | `TBD` | `TBD` | `TBD` | Pending |
-| Provider Shortlist/Contracts | v1.0 | `TBD` | `TBD` | `TBD` | Pending |
+| Budget | v1.0 | علی رحمان سلیمانی‌زاده — پیشنهاد Finance Approver | `TBD` | Owner Decision Record | Recommended caps awaiting acceptance |
+| Provider Shortlist/Contracts | v1.0 | Product + Finance + Operations/Security | `TBD` | Provider Shortlist | Iran/Rial constraints confirmed; vendors pending |
 | Operational Architecture ADR | v1.0 | `TBD` Product/Security/Operations | `TBD` | `docs/staging/EXPLORIA_Operational_Architecture_Decision_v1.0.md` | Draft Recommended |
 
 نتیجه هر ردیف فقط با یکی از `Approved`، `Approved with conditions` یا `Rejected` ثبت می‌شود. شرط باید Owner و Due Date داشته باشد. نقص Privacy، داده کودک، P0 Incident Owner، Backup یا Secret Management قابل `Approved with conditions` برای Pilot عمومی نیست.
@@ -170,4 +173,4 @@ Shortlist تاریخ‌دار و Compatibility Gap ارائه‌دهندگان �
 - Providerهای منتخب یا Shortlist مصوب با Owner و سقف هزینه مشخص باشند.
 - هیچ Secret، قرارداد محرمانه یا PII در Git قرار نگرفته باشد.
 
-**نتیجه فعلی:** `NO-GO — APPROVAL PACK PREPARED; SIX FORMAL APPROVALS AND REAL-WORLD VALUES PENDING`
+**نتیجه فعلی:** `NO-GO — OWNER/REGION/CURRENCY RECORDED; LEGAL, SECURITY, OPERATIONS, CAPS AND PROVIDER ACCEPTANCE PENDING`

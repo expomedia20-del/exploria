@@ -13,7 +13,7 @@ Bootstrap رسمی و توسعه قابلیت‌های MVP انجام شده و 
 - Production Readiness در محیط Local عمداً Fail-Closed است: 3 Pass / 11 Fail و `ready=false`.
 - Migration حاکمیت پاداش `2026_08_15_000001_add_reward_governance_controls` در دیتابیس Local معوق است؛ همان Migration و Rollback آن در PostgreSQL CI موفق بوده‌اند.
 - حداقل SAFE-05/06 برای Scoped Pause/Resume کمپین، هماهنگی Fail-Closed با QR/Mission/Reward و Audit بازیابی در Local پیاده‌سازی و تست شده است؛ تصویب RACI/Incident Policy و مانور Staging هنوز باقی است.
-- بسته تصمیم گام ۳ برای Privacy، Retention/Deletion، Incident، RACI، Budget و Providerها آماده است؛ همه امضاها، نام اشخاص، مبالغ و Providerهای واقعی همچنان Pending هستند و نباید به‌عنوان Approval تلقی شوند.
+- بسته تصمیم گام ۳ برای Privacy، Retention/Deletion، Incident، RACI، Budget و Providerها آماده است؛ مالک شخص حقیقی، Iran-only و Rial-only ثبت شده‌اند. نقش‌ها، سقف‌ها و Candidateها هنوز توصیه و نیازمند پذیرش/تأیید مستقل هستند و نباید Approval تلقی شوند.
 - Staging بیرونی، سرویس‌های واقعی و Gateهای عملیاتی هنوز تأیید نشده‌اند؛ بنابراین وضعیت Production همچنان **NO-GO** است.
 
 مراجع وضعیت جاری:
@@ -25,6 +25,7 @@ Bootstrap رسمی و توسعه قابلیت‌های MVP انجام شده و 
 - `docs/uat/EXPLORIA_Stage_4_UAT_Dry_Run_v1.0.md`
 - `docs/pilot/EXPLORIA_Stage_5_Controlled_Pilot_Launch_Kit_v1.0.md`
 - `docs/pilot/EXPLORIA_Pre_Staging_Governance_Approval_Pack_v1.0.md`
+- `docs/pilot/EXPLORIA_Owner_Decision_Record_2026-08-17.md`
 
 ## قواعد الزامی
 

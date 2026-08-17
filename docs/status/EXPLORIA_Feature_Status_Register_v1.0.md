@@ -74,7 +74,7 @@
 | استقرار | Release-based Deploy، Backup Gate، Rollback، `/up` و Preflight امنیت Session/OTP | `scripts/deploy-staging.sh` و `docs/staging/EXPLORIA_Stage_3_Staging_Readiness_v1.0.md` | `PRODUCTION_BLOCKED` | Provisioning سرور/دامنه و اجرای واقعی Deployment Drill |
 | Logging/Monitoring | Application Log، Event/Audit پایه و Production Readiness Check | Logging Config و Audit Actionها | `PRODUCTION_BLOCKED` | Retention، Central Logging، Metrics و Alerting |
 | Offline | پیام خطا/Retry و Fallback محدود؛ Sync کامل پیاده‌سازی نشده است | تصمیم OD-006 و Scope Lock | `OUT_OF_SCOPE` | Change Request پس از اثبات نیاز پایلوت |
-| حقوقی و Data Governance | مدل فنی Consent/Audit و بسته تصمیم Privacy/Retention/Incident/RACI/Budget/Provider موجود؛ تأییدهای واقعی نهایی نیست | OD-002، OD-009، CPL-17/18 و `EXPLORIA_Pre_Staging_Governance_Approval_Pack_v1.0.md` | `PILOT_BLOCKED` | تکمیل Approver/Date/Decision، متن حقوقی، نام RACI، مبالغ و Providerهای واقعی |
+| حقوقی و Data Governance | مدل فنی Consent/Audit و بسته تصمیم موجود؛ مالک شخص حقیقی، Iran-only و Rial-only ثبت شده‌اند، اما نقش‌ها/سقف‌ها/Providerها هنوز توصیه و تأییدهای مستقل نهایی نیستند | OD-002، OD-009، CPL-17/18، `EXPLORIA_Pre_Staging_Governance_Approval_Pack_v1.0.md` و `EXPLORIA_Owner_Decision_Record_2026-08-17.md` | `PILOT_BLOCKED` | پذیرش نقش/سقف/Candidate، Legal Approver، Operations/Security Owner، متن حقوقی، جانشین Incident و Providerهای واقعی |
 | Native/Microservices | در معماری MVP وجود ندارد | Framework-20 و PCG-01 | `OUT_OF_SCOPE` | فقط با Change Request و تصمیم معماری آینده |
 | Analytics/Settlement پیشرفته | اجزای پایه داده/مالی وجود دارد؛ موتور کامل نهایی نیست | Scope Lock و Backlog | `OUT_OF_SCOPE` | پس از گزارش و Decision Gate پایلوت |
 
