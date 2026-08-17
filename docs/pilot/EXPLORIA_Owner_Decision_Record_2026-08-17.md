@@ -6,7 +6,7 @@
 |---|---|
 | تاریخ ثبت | 2026-08-17 |
 | نوع | Decision Record — تفکیک تصمیم قطعی از توصیه |
-| وضعیت | `PARTIAL OWNER INPUT — RECOMMENDATIONS AWAITING ACCEPTANCE` |
+| وضعیت | `OWNER ACCEPTANCE RECORDED 2026-08-18 — INDEPENDENT APPROVALS PENDING` |
 | دامنه | نقش‌ها، محل داده، ارز، بودجه و Candidateهای Staging |
 
 این سند جایگزین مشاوره حقوقی، قرارداد Provider یا امضای Go/No-Go نیست. اطلاعات تماس خصوصی، شناسه هویتی، Credential و امضای اسکن‌شده نباید در Repository عمومی ثبت شوند.
@@ -22,15 +22,15 @@
 
 اصطلاح دقیق حقوقی «مالک داده» باید توسط مشاور حقوقی تعیین شود. مالک پلتفرم مسئول هدف و شیوه پردازش است، اما اشخاص موضوع داده حقوق دسترسی، اصلاح و حذف خود را حفظ می‌کنند.
 
-## 3. توصیه نقش‌ها
+## 3. نقش‌های پذیرفته‌شده و نقش‌های مستقل
 
 | نقش | توصیه حداقلی | زمان الزام | وضعیت |
 |---|---|---|---|
-| Product Owner | علی رحمان سلیمانی‌زاده؛ چون مالک Scope، اولویت، بودجه و تصمیم Go/No-Go است. | اکنون | `RECOMMENDED — ACCEPTANCE REQUIRED` |
-| Finance Approver | علی رحمان سلیمانی‌زاده برای پروژه شخصی/خودتأمین؛ هر هزینه فقط داخل سقف مصوب و با Invoice. | پیش از خرید Staging | `RECOMMENDED — ACCEPTANCE REQUIRED` |
+| Product Owner | علی رحمان سلیمانی‌زاده؛ چون مالک Scope، اولویت، بودجه و تصمیم Go/No-Go است. | اکنون | `OWNER ACCEPTED — 2026-08-18` |
+| Finance Approver | علی رحمان سلیمانی‌زاده برای پروژه شخصی/خودتأمین؛ هر هزینه فقط داخل سقف مصوب و با Invoice. | پیش از خرید Staging | `OWNER ACCEPTED — 2026-08-18` |
 | Privacy/Data Accountable Owner | علی رحمان سلیمانی‌زاده؛ پاسخ‌گوی کسب‌وکار و Data Request، نه جایگزین وکیل. | اکنون | `OWNER CONFIRMED; LEGAL REVIEW PENDING` |
 | Legal Approver | وکیل یا مشاور مستقل آشنا با تجارت الکترونیکی، حریم خصوصی و قراردادهای ایران. | پیش از ورود هر داده واقعی | `BLOCKER — PERSON TBD` |
-| Incident Commander | علی رحمان سلیمانی‌زاده فقط برای Pre-Staging؛ پیش از Pilot یک جانشین آموزش‌دیده و کانال On-call مستقل لازم است. | Pre-Staging / Pilot | `RECOMMENDED; ALTERNATE BLOCKER BEFORE PILOT` |
+| Incident Commander | علی رحمان سلیمانی‌زاده فقط برای Pre-Staging؛ پیش از Pilot یک جانشین آموزش‌دیده و کانال On-call مستقل لازم است. | Pre-Staging / Pilot | `OWNER ACCEPTED FOR PRE-STAGING; ALTERNATE BLOCKER BEFORE PILOT` |
 | Operations/Security Owner | فرد یا پیمانکار فنی مستقل و دارای صلاحیت برای Server، Access، Backup، Monitoring و Incident. مالک کسب‌وکار می‌تواند Accountable باشد ولی تأیید فنی مستقل لازم است. | پیش از فعال‌سازی Staging | `BLOCKER — PERSON TBD` |
 | QA/UAT Lead | فردی غیر از پیاده‌ساز اصلی برای Evidence و Sign-off. | پیش از UAT رسمی | `BLOCKER BEFORE UAT` |
 | Venue/Field و Support Lead | نماینده محل Pilot و مسئول تماس/شکایت. | پیش از Pilot | `BLOCKER BEFORE PILOT` |
@@ -53,9 +53,9 @@
 
 این جمع‌بندی مشاوره حقوقی نیست. Legal Approver باید نوع شخصیت، متن Consent/Privacy، Retention، داده کودک، قرارداد پردازشگر، شکایت و حقوق کاربر را مستقل تأیید کند.
 
-## 6. سقف‌های مالی پیشنهادی ایمن
+## 6. سقف‌های مالی پذیرفته‌شده
 
-همه ارقام ریال هستند و تا پذیرش صریح مالک، مجوز خرید نیستند.
+همه ارقام ریال هستند و در 2026-08-18 توسط Product Owner/Finance Approver پذیرفته شده‌اند. این سقف‌ها به‌تنهایی مجوز خرید نیستند؛ Vendor باید Gateهای Due-diligence را عبور کند و Invoice داخل سقف باشد.
 
 | سرفصل | سقف پیشنهادی | کنترل هزینه |
 |---|---:|---|
@@ -66,14 +66,16 @@
 | Reward واقعی در Staging/UAT | `0 IRR` | فقط داده و Reward غیرواقعی |
 | Reward واقعی Pilot | `TBD` | کاربران واجد شرایط × سقف هر کاربر × دفعات مجاز + ذخیره احتیاطی |
 
+**تصمیم مالی:** سقف‌های پنج ردیف اول `APPROVED WITH CONDITIONS` هستند. Reward واقعی Pilot همچنان `PENDING/BLOCKER BEFORE PILOT` است.
+
 تعرفه رسمی بررسی‌شده Liara در 2026-08-17 برای برآورد اولیه، پلن‌های ایران، IPv4، PostgreSQL، Email و Object Storage را ریالی/تومانی فهرست می‌کند: `https://liara.ir/pricing`. تعرفه نهایی باید درست پیش از خرید دوباره دریافت شود.
 
 ## 7. توصیه Provider
 
 | Capability | توصیه | وضعیت تصمیم |
 |---|---|---|
-| Staging/DB/Mail/Object Storage | Liara فقط به‌عنوان Candidate اول Due-diligence؛ خرید پس از پاسخ فنی، قراردادی، Security و Budget. | `RECOMMENDED — ACCEPTANCE REQUIRED` |
-| OTP Sandbox | Kavenegar Candidate اول؛ مستندات HTTPS/OTP/Delivery و Status Page عمومی دارد. IPPanel فقط Comparator است. | `RECOMMENDED — ACCEPTANCE REQUIRED` |
+| Staging/DB/Mail/Object Storage | Liara فقط به‌عنوان Candidate اول Due-diligence؛ خرید پس از پاسخ فنی، قراردادی، Security و Budget. | `DUE-DILIGENCE ACCEPTED — PURCHASE NOT AUTHORIZED` |
+| OTP Sandbox | Kavenegar Candidate اول؛ مستندات HTTPS/OTP/Delivery و Status Page عمومی دارد. IPPanel فقط Comparator است. | `SANDBOX/QUOTE ACCEPTED — ACCOUNT/REAL SEND NOT AUTHORIZED` |
 | OTP Integration | Adapter اختصاصی داخل Contract فعلی Laravel؛ قراردادن URL مستقیم در Provider عمومی موجود ممنوع است. | `TECHNICAL GAP — CHANGE REQUIRED AFTER VENDOR APPROVAL` |
 | Backup | Provider/Account ایرانی دوم و مستقل از Failure Domain اصلی. | `BLOCKER — PROVIDER TBD` |
 | Uptime/Alerting | Probe ایرانی مستقل از Application Provider و متصل به On-call. | `BLOCKER — PROVIDER/OWNER TBD` |
@@ -81,13 +83,15 @@
 
 Kavenegar در تعرفه رسمی، OTP را برای پلن‌های پیشرفته/فوق‌پیشرفته اعلام کرده و Sandbox/اعتبار آزمایشی دارد؛ هزینه هر پیام و قرارداد باید Quote شود: `https://kavenegar.com/pricing.html`.
 
+نتیجه Evidence عمومی و پرسش‌های اجباری Vendor در `docs/staging/EXPLORIA_Provider_Due_Diligence_2026-08-18.md` ثبت شده است. Liara به علت امکان انتقال/دسترسی بین‌المللی مندرج در Privacy Policy فعلاً `CONDITIONAL HOLD` است.
+
 ## 8. تصمیم‌های بعدی مورد نیاز از مالک
 
-1. پذیرش یا اصلاح نقش‌های پیشنهادی Product Owner، Finance Approver و Incident Commander موقت.
-2. پذیرش یا اصلاح چهار سقف مالی پیشنهادی.
-3. اجازه Due-diligence بدون خرید برای Liara و Sandbox/Quote برای Kavenegar.
-4. معرفی یا اجازه انتخاب مشاور حقوقی مستقل و متخصص Operations/Security.
-5. انتخاب دامنه رسمی برای ایمیل‌های نقش‌محور.
+1. معرفی مشاور حقوقی مستقل و متخصص Operations/Security.
+2. دریافت پاسخ مکتوب Liara درباره انتقال بین‌المللی، DPA، RPO/RTO/PITR، MFA/Audit و حذف/خروج داده.
+3. دریافت پاسخ مکتوب Kavenegar درباره محل/مدت نگهداری Mobile و OTP، DPA، MFA، Cost/Rate Cap و Template برای شخص حقیقی.
+4. انتخاب دامنه رسمی برای ایمیل‌های نقش‌محور.
+5. تعیین Provider ایرانی دوم برای Backup و Uptime.
 6. تعیین ظرفیت Pilot، سقف Reward هر کاربر و کل Liability فقط پس از طراحی Pilot.
 
-**نتیجه فعلی:** `NO PURCHASE — NO REAL DATA — OWNER CONSTRAINTS RECORDED; ACCEPTANCE AND INDEPENDENT APPROVALS PENDING`
+**نتیجه فعلی:** `NO PURCHASE — NO REAL DATA — OWNER ACCEPTANCE RECORDED; VENDOR AND INDEPENDENT APPROVALS PENDING`

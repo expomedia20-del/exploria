@@ -6,10 +6,12 @@
 |---|---|
 | تاریخ بررسی | 2026-08-16؛ بازبینی قیمت/تصمیم مالک 2026-08-17 |
 | نوع | Decision Support — نه Approval و نه مجوز خرید |
-| وضعیت | `IRAN/RIAL CONSTRAINTS CONFIRMED — VENDOR APPROVAL/PURCHASE PENDING` |
+| وضعیت | `CANDIDATES ACCEPTED FOR DUE-DILIGENCE — VENDOR APPROVAL/PURCHASE PENDING` |
 | تصمیم مالک | محل داده و Backup فقط ایران؛ بودجه و پرداخت فعلاً ریالی؛ Provider خارجی برای داده/Log/Backup واجد شرایط نیست. |
 
 قیمت، SLA و شرایط قرارداد ممکن است تغییر کنند. فقط صفحه رسمی Product/Documentation در تاریخ بالا بررسی شده است؛ Quote، DPA، Data Region، مالیات، Egress، شرایط حذف و امکان خرید باید پیش از Approval دوباره کنترل شوند.
+
+Product Owner در 2026-08-18 انجام Due-diligence Liara و Sandbox/Quote کاوه‌نگار را پذیرفت. نتیجه تفصیلی در `docs/staging/EXPLORIA_Provider_Due_Diligence_2026-08-18.md` نشان می‌دهد Liara به علت بند انتقال/دسترسی بین‌المللی Privacy Policy فعلاً `CONDITIONAL HOLD` است.
 
 ## 2. نتیجه پیشنهادی
 
@@ -55,6 +57,7 @@
 | Liara DBaaS | PostgreSQL، Backup/Restore، Metrics و کنترل Public Network | `https://developers.liara.ir/pages/dbaas` |
 | Liara Object Storage | S3-compatible، SSL و لینک موقت | `https://liara.ir/products/object-storage` |
 | Liara Mail | Transactional Email و SMTP | `https://liara.ir/products/email` |
+| Liara Terms/Privacy/SLA | مسئولیت Backup با مشتری، امکان انتقال/دسترسی بین‌المللی و سقف جبران SLA | `https://liara.ir/terms`، `https://liara.ir/privacy-policy/`، `https://liara.ir/sla` |
 | Liara Platform API | Environment، Metrics، Domain/SSL و Disk | `https://developers.liara.ir/pages/paas` |
 | Kavenegar REST | HTTPS REST، Verify/Lookup، Delivery Status و API Key | `https://kavenegar.com/rest.html` |
 | Kavenegar Status | Public Status Page | `https://status.kavenegar.com/` |
@@ -140,8 +143,8 @@ Kavenegar، API Key را در URL و پارامترهای `receptor/token/templa
 
 | Candidate | Fit فنی | پرداخت ایران | Vendor Lock-in | Evidence عمومی | نتیجه فعلی |
 |---|---|---|---|---|---|
-| Liara Stack | بالا | محتمل/ریالی | متوسط به علت تمرکز سرویس‌ها | متوسط | `PRIMARY DUE-DILIGENCE CANDIDATE` |
-| Kavenegar OTP | متوسط؛ Adapter لازم | ریالی | کم با Contract داخلی | خوب برای API | `OTP PRIMARY CANDIDATE` |
+| Liara Stack | بالا | ریالی | متوسط به علت تمرکز سرویس‌ها | متوسط | `CONDITIONAL HOLD — IRAN-ONLY CONTRACT CLARIFICATION` |
+| Kavenegar OTP | متوسط؛ Adapter لازم | ریالی | کم با Contract داخلی | خوب برای API؛ Privacy/Retention عمومی ناکافی | `DUE-DILIGENCE — WRITTEN ANSWERS REQUIRED` |
 | IPPanel OTP | متوسط؛ Adapter لازم | ریالی | کم با Contract داخلی | متوسط | `OTP COMPARISON CANDIDATE` |
 | DigitalOcean Stack | بالا | ارزی/خارج ایران | متوسط | خوب | `NOT ELIGIBLE UNDER CURRENT OWNER DECISION` |
 | Backblaze B2 | بالا برای Backup | ارزی/خارج ایران | کم به علت S3 | خوب | `NOT ELIGIBLE UNDER CURRENT OWNER DECISION` |
@@ -149,10 +152,8 @@ Kavenegar، API Key را در URL و پارامترهای `receptor/token/templa
 
 ## 7. تصمیم‌هایی که هنوز از مالک لازم است
 
-1. پذیرش یا اصلاح سقف ماهانه پیشنهادی Staging و OTP/Mail/Storage/Monitoring/Backup.
-2. پذیرش یا رد Liara به‌عنوان Candidate اصلی Due-diligence، بدون مجوز خرید.
-3. پذیرش Kavenegar به‌عنوان Candidate اول Sandbox/Quote؛ انتخاب نهایی فقط پس از Adapter و E2E.
-4. تعیین Provider ایرانی دوم مستقل برای Backup و Uptime.
-5. تعیین Operations/Security Owner برای اجرای Due-diligence و امضای Evidence.
+1. تعیین Provider ایرانی دوم مستقل برای Backup و Uptime.
+2. تعیین Operations/Security Owner برای امضای Evidence فنی.
+3. تصمیم نهایی درباره Vendorها فقط پس از پاسخ مکتوب پرسش‌های Due-diligence.
 
-**Verdict فعلی:** `IRAN-FIRST SHORTLIST — NO PROVIDER APPROVED, NO PURCHASE AUTHORIZED`
+**Verdict فعلی:** `DUE-DILIGENCE IN PROGRESS — NO PROVIDER APPROVED, NO PURCHASE AUTHORIZED`

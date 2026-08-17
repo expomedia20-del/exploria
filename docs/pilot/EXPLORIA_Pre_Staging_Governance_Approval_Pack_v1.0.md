@@ -7,7 +7,7 @@
 | نوع سند | Working Approval Pack — غیرجایگزین مشاوره و تأیید حقوقی |
 | تاریخ | 2026-08-16؛ آخرین بازبینی 2026-08-17 |
 | دامنه | Privacy، Retention/Deletion، Incident، RACI، Budget و Provider Approval |
-| وضعیت | `OWNER INPUT RECORDED — LEGAL/SECURITY/OPERATIONS APPROVALS PENDING` |
+| وضعیت | `OWNER APPROVALS RECORDED — LEGAL/SECURITY/OPERATIONS/VENDOR GATES PENDING` |
 | Gate | پیش از خرید Staging، ورود داده واقعی، UAT رسمی یا Pilot |
 
 این سند تصمیم‌های پیشنهادی محافظه‌کارانه، شواهد Repository و فیلدهای امضای لازم را در یک محل جمع می‌کند. وجود این فایل به معنی تأیید Product، Legal، Security، Operations یا Finance نیست. نام، تاریخ و مرجع مصوبه واقعی باید تکمیل شود؛ Secret، قرارداد، شماره تماس خصوصی و امضای اسکن‌شده نباید در Repository ذخیره شوند.
@@ -104,15 +104,15 @@ Shortlist تاریخ‌دار و Compatibility Gap ارائه‌دهندگان �
 
 | نقش | Accountable/اختیار اصلی | نام واقعی | جانشین | کانال On-call | وضعیت |
 |---|---|---|---|---|---|
-| Product Owner | Scope، KPI، Budget و Go/No-Go | علی رحمان سلیمانی‌زاده — پیشنهاد نقش هم‌زمان برای مرحله Pre-Staging | `TBD` | خارج Repository | Recommended — Owner acceptance pending |
-| Incident Commander / Pilot Manager | فرمان Incident و ادامه/توقف | علی رحمان سلیمانی‌زاده — فقط موقت برای Pre-Staging | `TBD` | خارج Repository | Recommended; alternate required before Pilot |
+| Product Owner | Scope، KPI، Budget و Go/No-Go | علی رحمان سلیمانی‌زاده | `TBD` | خارج Repository | Owner accepted — 2026-08-18 |
+| Incident Commander / Pilot Manager | فرمان Incident و ادامه/توقف | علی رحمان سلیمانی‌زاده — فقط موقت برای Pre-Staging | `TBD` | خارج Repository | Owner accepted; alternate required before Pilot |
 | Tech Lead | Code/Deploy/Recovery فنی | `TBD` | `TBD` | خارج Repository | Pending |
 | Privacy/Data Accountable Owner | هدف پردازش، Data Request و پاسخ‌گویی کسب‌وکار | علی رحمان سلیمانی‌زاده — مالک شخص حقیقی | `TBD` | نشانی شخصی خارج Repository | Owner-confirmed; independent Legal review pending |
 | Legal Approver | متن Consent/Privacy، Retention، حقوق کاربر و قرارداد پردازشگر | `TBD — مشاور حقوقی مستقل ایران` | `TBD` | خارج Repository | Blocker before real data |
 | Security Owner | Incident امنیتی، Secret، Access Review و Risk Acceptance فنی | `TBD — متخصص مستقل` | `TBD` | خارج Repository | Blocker before Staging activation |
 | Operations/Infrastructure | Server، DB، Queue، Backup و Monitoring | `TBD` | `TBD` | خارج Repository | Pending |
 | QA/UAT Lead | Evidence، Regression و UAT Sign-off | `TBD` | `TBD` | خارج Repository | Pending |
-| Finance/Commercial | بودجه، Provider Contract و Reward Liability | علی رحمان سلیمانی‌زاده — پیشنهاد برای پروژه خودتأمین | `TBD` | خارج Repository | Recommended — caps pending acceptance |
+| Finance/Commercial | بودجه، Provider Contract و Reward Liability | علی رحمان سلیمانی‌زاده — پروژه خودتأمین | `TBD` | خارج Repository | Owner accepted — caps approved with conditions |
 | Venue/Field Lead | ایمنی، نصب QR و عملیات محل | `TBD` | `TBD` | خارج Repository | Pending |
 | Support Lead | Triage، شکایت و ارتباط کاربر | `TBD` | `TBD` | خارج Repository | Pending |
 
@@ -122,11 +122,11 @@ Shortlist تاریخ‌دار و Compatibility Gap ارائه‌دهندگان �
 
 | سرفصل | سقف/واحد | مالک تأیید | Evidence لازم | وضعیت |
 |---|---|---|---|---|
-| Staging Compute/PostgreSQL/IPv4 | سقف پیشنهادی `25,000,000 IRR/month` | Product + Finance | Quote/Invoice و دوره پرداخت | Recommended — not approved |
-| OTP/SMS | سقف پیشنهادی `2,000 OTP/month` و `10,000,000 IRR/month`؛ هرکدام زودتر | Product + Commercial | تعرفه، SLA، Sender و Cost Alert | Recommended — not approved |
-| Mail/Storage/Monitoring/Backup | سقف تجمیعی پیشنهادی `25,000,000 IRR/month` | Product + Operations + Finance | Quote، Region، Retention، Alert و Restore | Recommended — not approved |
-| کل هزینه تکرارشونده Staging | سقف سخت پیشنهادی `60,000,000 IRR/month` | Product + Finance | Cost Alert در 50/75/90 درصد و توقف خرید در 100 درصد | Recommended — not approved |
-| Reward/Redemption در Staging/UAT | `0 IRR` تعهد واقعی؛ فقط داده و Reward غیرواقعی | Product + Finance/Commercial | جداسازی Test Data و عدم صدور تعهد واقعی | Safe default — acceptance pending |
+| Staging Compute/PostgreSQL/IPv4 | `25,000,000 IRR/month` | Product + Finance | Quote/Invoice و دوره پرداخت | Approved with conditions — 2026-08-18 |
+| OTP/SMS | `2,000 OTP/month` و `10,000,000 IRR/month`؛ هرکدام زودتر | Product + Commercial | تعرفه، SLA، Sender و Cost Alert | Approved with conditions — 2026-08-18 |
+| Mail/Storage/Monitoring/Backup | `25,000,000 IRR/month` تجمیعی | Product + Operations + Finance | Quote، Region، Retention، Alert و Restore | Approved with conditions — 2026-08-18 |
+| کل هزینه تکرارشونده Staging | `60,000,000 IRR/month` سقف سخت | Product + Finance | Cost Alert در 50/75/90 درصد و توقف خرید در 100 درصد | Approved with conditions — 2026-08-18 |
+| Reward/Redemption در Staging/UAT | `0 IRR` تعهد واقعی؛ فقط داده و Reward غیرواقعی | Product + Finance/Commercial | جداسازی Test Data و عدم صدور تعهد واقعی | Approved safe default — 2026-08-18 |
 | Reward/Redemption در Pilot | فرمول: کاربران واجد شرایط × سقف هر کاربر × دفعات مجاز + ذخیره احتیاطی؛ مبلغ هنوز `TBD` | Product + Finance/Commercial | مالک هزینه، موجودی، انقضا و Liability | Blocker before Pilot, not before technical Staging |
 | Field/QR/Equipment/Contingency | `TBD` | Pilot Manager + Venue | Quote، تعداد، مسئول تحویل و سقف اضطراری | Blocker before Pilot |
 
@@ -136,9 +136,9 @@ Shortlist تاریخ‌دار و Compatibility Gap ارائه‌دهندگان �
 
 | Capability | Provider/Plan واقعی | معیار اجباری | Data/Region | DPA/Contract | Owner | وضعیت |
 |---|---|---|---|---|---|---|
-| Independent Staging | Liara VPS/IaaS — Candidate برای Due-diligence، نه خرید | Linux، SSH محدود، Snapshot، SLA و جداسازی Production | Iran-only confirmed | `TBD` | Operations | Recommended — owner acceptance pending |
-| PostgreSQL | Liara DBaaS PostgreSQL — Candidate برای Due-diligence | Backup/PITR، TLS، Credential مستقل و Restore Test | Iran-only confirmed | `TBD` | DBA/Operations | Recommended — owner acceptance pending |
-| OTP/SMS | Kavenegar Sandbox/Quote — Candidate اول؛ IPPanel مقایسه دوم | HTTPS API، Sender مجاز، Delivery Report، Rate/Cost Cap، Retention و SLA | Iran-only confirmed | `TBD` | Product/Commercial | Recommended — dedicated adapter required |
+| Independent Staging | Liara VPS/IaaS — Candidate پذیرفته‌شده برای Due-diligence، نه خرید | Linux، SSH محدود، Snapshot، SLA و جداسازی Production | Iran-only required; transfer conflict pending | `TBD` | Operations | Conditional hold — written answers required |
+| PostgreSQL | Liara DBaaS PostgreSQL — Candidate پذیرفته‌شده برای Due-diligence | Backup/PITR، TLS، Credential مستقل و Restore Test | Iran-only required; transfer conflict pending | `TBD` | DBA/Operations | Conditional hold — written answers required |
+| OTP/SMS | Kavenegar Sandbox/Quote — Candidate اول پذیرفته‌شده؛ IPPanel مقایسه دوم | HTTPS API، Sender مجاز، Delivery Report، Rate/Cost Cap، Retention و SLA | Iran-only required; public evidence pending | `TBD` | Product/Commercial | Sandbox/quote accepted; account/send pending |
 | Transactional Mail | `TBD` | SPF/DKIM/DMARC، Bounce Handling، TLS و Suppression | `TBD` | `TBD` | Operations | Pending |
 | Object Storage | `TBD` | S3-compatible یا Adapter مصوب، Encryption، Private Default و Lifecycle | `TBD` | `TBD` | Operations/Security | Pending |
 | Central Logging/Monitoring | `TBD` | Laravel/System Metrics، PII Redaction، Alerting و Export | `TBD` | `TBD` | Security/Operations | Pending |
@@ -151,12 +151,12 @@ Shortlist تاریخ‌دار و Compatibility Gap ارائه‌دهندگان �
 
 | حوزه | تصمیم/نسخه | Approver واقعی | تاریخ | مرجع مصوبه بیرونی | نتیجه |
 |---|---|---|---|---|---|
-| Product Scope و Privacy Purpose | v1.0 | علی رحمان سلیمانی‌زاده — پیشنهاد Product Owner | `TBD` | Owner Decision Record | Awaiting explicit acceptance |
+| Product Scope و Privacy Purpose | v1.0 | علی رحمان سلیمانی‌زاده — Product Owner | 2026-08-18 | Owner Decision Record | Approved with Legal conditions |
 | Legal: Consent/Privacy/Child/Data Rights | v1.0 | `TBD` | `TBD` | `TBD` | Pending |
 | Retention/Deletion/Legal Hold | v1.0 | `TBD` | `TBD` | `TBD` | Pending |
 | Incident Policy و RACI | v1.0 | `TBD` | `TBD` | `TBD` | Pending |
-| Budget | v1.0 | علی رحمان سلیمانی‌زاده — پیشنهاد Finance Approver | `TBD` | Owner Decision Record | Recommended caps awaiting acceptance |
-| Provider Shortlist/Contracts | v1.0 | Product + Finance + Operations/Security | `TBD` | Provider Shortlist | Iran/Rial constraints confirmed; vendors pending |
+| Budget | v1.0 | علی رحمان سلیمانی‌زاده — Finance Approver | 2026-08-18 | Owner Decision Record | Approved with conditions; Pilot Reward TBD |
+| Provider Shortlist/Contracts | v1.0 | Product + Finance + Operations/Security | 2026-08-18 | Provider Shortlist + Due-diligence | Candidates accepted; vendors/contracts not approved |
 | Operational Architecture ADR | v1.0 | `TBD` Product/Security/Operations | `TBD` | `docs/staging/EXPLORIA_Operational_Architecture_Decision_v1.0.md` | Draft Recommended |
 
 نتیجه هر ردیف فقط با یکی از `Approved`، `Approved with conditions` یا `Rejected` ثبت می‌شود. شرط باید Owner و Due Date داشته باشد. نقص Privacy، داده کودک، P0 Incident Owner، Backup یا Secret Management قابل `Approved with conditions` برای Pilot عمومی نیست.
@@ -173,4 +173,4 @@ Shortlist تاریخ‌دار و Compatibility Gap ارائه‌دهندگان �
 - Providerهای منتخب یا Shortlist مصوب با Owner و سقف هزینه مشخص باشند.
 - هیچ Secret، قرارداد محرمانه یا PII در Git قرار نگرفته باشد.
 
-**نتیجه فعلی:** `NO-GO — OWNER/REGION/CURRENCY RECORDED; LEGAL, SECURITY, OPERATIONS, CAPS AND PROVIDER ACCEPTANCE PENDING`
+**نتیجه فعلی:** `NO-GO — OWNER ROLES/CAPS/CANDIDATES ACCEPTED; LEGAL, SECURITY, OPERATIONS AND VENDOR GATES PENDING`
