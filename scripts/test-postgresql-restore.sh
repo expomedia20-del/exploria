@@ -9,7 +9,7 @@ password="${EXPLORIA_PG_PASSWORD:-}"
 host="${EXPLORIA_PG_HOST:-127.0.0.1}"
 port="${EXPLORIA_PG_PORT:-5432}"
 
-for tool in psql pg_restore; do
+for tool in psql pg_restore sha256sum awk; do
     command -v "$tool" >/dev/null 2>&1 || {
         printf "Required PostgreSQL tool '%s' was not found.\n" "$tool" >&2
         exit 1
@@ -32,6 +32,28 @@ if [[ ! -f "$backup_path" ]]; then
 fi
 
 backup_path="$(cd "$(dirname "$backup_path")" && pwd -P)/$(basename "$backup_path")"
+checksum_path="$backup_path.sha256"
+if [[ ! -f "$checksum_path" ]]; then
+    printf "Backup checksum manifest '%s' does not exist.\n" "$checksum_path" >&2
+    exit 1
+fi
+
+checksum_line_count="$(awk 'NF { count++ } END { print count + 0 }' "$checksum_path")"
+expected_checksum="$(awk 'NF { print $1; exit }' "$checksum_path")"
+manifest_file_name="$(awk 'NF { sub(/^[^[:space:]]+[[:space:]]+/, ""); print; exit }' "$checksum_path")"
+backup_file_name="$(basename "$backup_path")"
+
+if [[ "$checksum_line_count" != '1' || ! "$expected_checksum" =~ ^[[:xdigit:]]{64}$ || "$manifest_file_name" != "$backup_file_name" ]]; then
+    echo 'Backup checksum manifest is invalid.' >&2
+    exit 1
+fi
+
+actual_checksum="$(sha256sum "$backup_path" | awk '{ print $1 }')"
+if [[ "${actual_checksum,,}" != "${expected_checksum,,}" ]]; then
+    echo 'Backup checksum verification failed.' >&2
+    exit 1
+fi
+
 pg_restore --list "$backup_path" >/dev/null
 
 export PGPASSWORD="$password"

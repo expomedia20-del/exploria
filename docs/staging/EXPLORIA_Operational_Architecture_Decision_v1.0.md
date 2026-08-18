@@ -26,7 +26,7 @@
 | Readiness | `app/Services/ProductionReadinessService.php` | فقط غیر-null بودن Log Channel را می‌سنجد؛ Delivery مرکزی، Retention و Alert را اثبات نمی‌کند. |
 | Health | `/up` و `/health` + `scripts/deploy-staging.sh` | Health HTTP و Rollback مبتنی بر Failure موجود است؛ Uptime Monitor بیرونی وجود ندارد. |
 | Queue/Scheduler | `deploy/systemd/*` | Worker پایدار Database Queue و systemd timer آماده‌اند؛ `php artisan schedule:list` فعلاً Taskی نشان نمی‌دهد. |
-| Backup | `scripts/backup-postgresql.*` | `pg_dump` سفارشی، `pg_restore --list` و Permission محدود وجود دارد؛ Dump هنوز محلی است و Upload/Encryption/Retention/Checksum مستقل ندارد. |
+| Backup | `scripts/backup-postgresql.*` | `pg_dump` سفارشی، `pg_restore --list`، Permission محدود و Manifest مستقل SHA-256 وجود دارد؛ Dump هنوز محلی است و Upload/Encryption/Retention ندارد. |
 | Restore | `scripts/test-postgresql-restore.*` | Restore فقط روی DB با پسوند امن و کنترل جدول migrations Fail-Closed است؛ اجرای واقعی بیرونی ثبت نشده است. |
 
 ## 3. اصول قفل‌شده پیشنهادی
@@ -132,6 +132,7 @@ Threshold نهایی پس از Load Test گام 8 تنظیم می‌شود؛ PII
 - انتقال با TLS و ذخیره با Encryption at Rest انجام شود؛ در صورت نبود تضمین Provider، رمزگذاری Client-side مصوب اضافه شود.
 - Retention پیشنهادی Approval Pack: Daily 30 روز، Weekly 12 هفته و Monthly 12 ماه.
 - Deploy فقط با Backup معتبر کمتر از 24 ساعت ادامه یابد؛ این قاعده در `scripts/deploy-staging.sh` موجود است.
+- Restore و Deploy باید در نبود Manifest، قالب نامعتبر یا عدم تطابق SHA-256 به‌صورت Fail-Closed متوقف شوند؛ این کنترل در اسکریپت‌های Windows/Linux موجود است.
 - Restore Drill روی Database ایزوله حداقل ماهانه، قبل از Pilot و قبل از Release پرریسک اجرا شود.
 - Restore موفق فقط «اجرای pg_restore» نیست: Migration state، شمارش رکوردهای کلیدی، Reward reconciliation، Login/Consent/QR Smoke و زمان RTO باید ثبت شود.
 

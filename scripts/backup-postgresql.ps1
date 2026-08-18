@@ -58,4 +58,13 @@ if ($LASTEXITCODE -ne 0) { throw 'Backup archive verification failed.' }
 $backupFile = Get-Item -LiteralPath $backupPath
 if ($backupFile.Length -le 0) { throw 'Backup archive is empty.' }
 
+$checksum = (Get-FileHash -LiteralPath $backupPath -Algorithm SHA256).Hash.ToLowerInvariant()
+$checksumPath = "$backupPath.sha256"
+$checksumRecord = "$checksum  $($backupFile.Name)"
+[System.IO.File]::WriteAllText(
+    $checksumPath,
+    $checksumRecord + [System.Environment]::NewLine,
+    [System.Text.Encoding]::ASCII
+)
+
 Write-Output $backupFile.FullName

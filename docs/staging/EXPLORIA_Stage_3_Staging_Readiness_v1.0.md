@@ -181,6 +181,8 @@ $env:EXPLORIA_PG_RESTORE_DATABASE = '<isolated_restore_test_database>'
 ./scripts/test-postgresql-restore.ps1 -BackupPath '<verified_backup_path>'
 ```
 
+اسکریپت Backup در کنار Archive فایل `<backup_path>.sha256` می‌سازد. Restore و Deploy در نبود Manifest، قالب نامعتبر، نام فایل متفاوت یا عدم تطابق Hash متوقف می‌شوند. این کنترل یکپارچگی جایگزین رمزنگاری، مقصد Off-host یا Restore Drill واقعی نیست.
+
 ### Gate S3-04 — استقرار Linux
 
 متغیرهای Deploy فقط در Session امن اپراتور تنظیم می‌شوند:
@@ -264,6 +266,7 @@ Repository برای تحویل به اپراتور Staging سخت‌گیری ش�
 | Production Readiness در Local | 3 Pass / 11 Fail / `ready=false`؛ Fail-Closed مورد انتظار |
 | Headerهای HTTP محلی | Nosniff، SameOrigin، Referrer Policy و Permissions Policy فعال |
 | Syntax اسکریپت Deploy | `bash -n` موفق |
+| Backup Integrity Guard | تولید Manifest SHA-256 و کنترل Fail-Closed در Restore/Deploy؛ تست استاتیک و Syntax محلی موفق |
 | PostgreSQL Tooling | Server/Client/PHP Extension آماده |
 | PostgreSQL Migration/Test/Backup/Restore | Pending — Credential ایزوله ارائه نشده است |
 | Secret Scan دستی فایل‌های تغییرکرده | هیچ Secret واقعی افزوده نشد |
