@@ -6,7 +6,7 @@
 |---|---|
 | تاریخ ثبت | 2026-08-17 |
 | نوع | Decision Record — تفکیک تصمیم قطعی از توصیه |
-| وضعیت | `OWNER ACCEPTANCE RECORDED 2026-08-18 — INDEPENDENT APPROVALS PENDING` |
+| وضعیت | `OWNER ACCEPTANCE AND ROLE DESIGNATIONS RECORDED — SIGN-OFF EVIDENCE PENDING` |
 | دامنه | نقش‌ها، محل داده، ارز، بودجه و Candidateهای Staging |
 
 این سند جایگزین مشاوره حقوقی، قرارداد Provider یا امضای Go/No-Go نیست. اطلاعات تماس خصوصی، شناسه هویتی، Credential و امضای اسکن‌شده نباید در Repository عمومی ثبت شوند.
@@ -29,9 +29,10 @@
 | Product Owner | علی رحمان سلیمانی‌زاده؛ چون مالک Scope، اولویت، بودجه و تصمیم Go/No-Go است. | اکنون | `OWNER ACCEPTED — 2026-08-18` |
 | Finance Approver | علی رحمان سلیمانی‌زاده برای پروژه شخصی/خودتأمین؛ هر هزینه فقط داخل سقف مصوب و با Invoice. | پیش از خرید Staging | `OWNER ACCEPTED — 2026-08-18` |
 | Privacy/Data Accountable Owner | علی رحمان سلیمانی‌زاده؛ پاسخ‌گوی کسب‌وکار و Data Request، نه جایگزین وکیل. | اکنون | `OWNER CONFIRMED; LEGAL REVIEW PENDING` |
-| Legal Approver | وکیل یا مشاور مستقل آشنا با تجارت الکترونیکی، حریم خصوصی و قراردادهای ایران. | پیش از ورود هر داده واقعی | `BLOCKER — PERSON TBD` |
+| Legal Approver | آقای سیفی، وکیل دادگستری — معرفی‌شده توسط مالک؛ مشخصات حرفه‌ای و Engagement Reference خارج Repository نگهداری می‌شود. | پیش از ورود هر داده واقعی | `ROLE ASSIGNED BY OWNER — WRITTEN ACCEPTANCE/SIGN-OFF PENDING` |
 | Incident Commander | علی رحمان سلیمانی‌زاده فقط برای Pre-Staging؛ پیش از Pilot یک جانشین آموزش‌دیده و کانال On-call مستقل لازم است. | Pre-Staging / Pilot | `OWNER ACCEPTED FOR PRE-STAGING; ALTERNATE BLOCKER BEFORE PILOT` |
-| Operations/Security Owner | فرد یا پیمانکار فنی مستقل و دارای صلاحیت برای Server، Access، Backup، Monitoring و Incident. مالک کسب‌وکار می‌تواند Accountable باشد ولی تأیید فنی مستقل لازم است. | پیش از فعال‌سازی Staging | `BLOCKER — PERSON TBD` |
+| Operations Owner | شرکت مدیا پارس — معرفی‌شده توسط مالک برای Server، DB، Queue، Backup، Monitoring و Incident Operations. | پیش از فعال‌سازی Staging | `ORGANIZATION ASSIGNED — NAMED REPRESENTATIVE/ACCEPTANCE/ON-CALL PENDING` |
+| Security Owner/Approver | متخصص نام‌دار از مدیا پارس یا شخص مستقل برای Access Review، Secret، Incident امنیتی و Risk Acceptance. | پیش از فعال‌سازی Staging | `BLOCKER — NAMED PERSON AND SIGN-OFF TBD` |
 | QA/UAT Lead | فردی غیر از پیاده‌ساز اصلی برای Evidence و Sign-off. | پیش از UAT رسمی | `BLOCKER BEFORE UAT` |
 | Venue/Field و Support Lead | نماینده محل Pilot و مسئول تماس/شکایت. | پیش از Pilot | `BLOCKER BEFORE PILOT` |
 
@@ -87,11 +88,11 @@ Kavenegar در تعرفه رسمی، OTP را برای پلن‌های پیشر�
 
 ## 8. تصمیم‌های بعدی مورد نیاز از مالک
 
-1. معرفی مشاور حقوقی مستقل و متخصص Operations/Security.
-2. دریافت پاسخ مکتوب Liara درباره انتقال بین‌المللی، DPA، RPO/RTO/PITR، MFA/Audit و حذف/خروج داده.
-3. دریافت پاسخ مکتوب Kavenegar درباره محل/مدت نگهداری Mobile و OTP، DPA، MFA، Cost/Rate Cap و Template برای شخص حقیقی.
-4. انتخاب دامنه رسمی برای ایمیل‌های نقش‌محور.
-5. تعیین Provider ایرانی دوم برای Backup و Uptime.
+1. ثبت پذیرش کتبی و Engagement Reference آقای سیفی خارج Repository و دریافت Legal Sign-off روی Privacy/Consent/Retention/Contract.
+2. معرفی نماینده نام‌دار، جانشین و کانال On-call از شرکت مدیا پارس و تعیین Security Approver واجد صلاحیت.
+3. دریافت پاسخ مکتوب Liara درباره انتقال بین‌المللی، DPA، RPO/RTO/PITR، MFA/Audit و حذف/خروج داده.
+4. دریافت پاسخ مکتوب Kavenegar درباره محل/مدت نگهداری Mobile و OTP، DPA، MFA، Cost/Rate Cap و Template برای شخص حقیقی.
+5. انتخاب دامنه رسمی برای ایمیل‌های نقش‌محور و Provider ایرانی دوم برای Backup/Uptime.
 6. تعیین ظرفیت Pilot، سقف Reward هر کاربر و کل Liability فقط پس از طراحی Pilot.
 
-**نتیجه فعلی:** `NO PURCHASE — NO REAL DATA — OWNER ACCEPTANCE RECORDED; VENDOR AND INDEPENDENT APPROVALS PENDING`
+**نتیجه فعلی:** `NO PURCHASE — NO REAL DATA — LEGAL/OPERATIONS ROLES ASSIGNED; WRITTEN SIGN-OFF, SECURITY AND VENDOR GATES PENDING`

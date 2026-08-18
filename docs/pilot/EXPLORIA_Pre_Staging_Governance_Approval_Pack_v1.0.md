@@ -7,7 +7,7 @@
 | نوع سند | Working Approval Pack — غیرجایگزین مشاوره و تأیید حقوقی |
 | تاریخ | 2026-08-16؛ آخرین بازبینی 2026-08-17 |
 | دامنه | Privacy، Retention/Deletion، Incident، RACI، Budget و Provider Approval |
-| وضعیت | `OWNER APPROVALS RECORDED — LEGAL/SECURITY/OPERATIONS/VENDOR GATES PENDING` |
+| وضعیت | `LEGAL/OPERATIONS ROLES ASSIGNED — WRITTEN SIGN-OFF/SECURITY/VENDOR GATES PENDING` |
 | Gate | پیش از خرید Staging، ورود داده واقعی، UAT رسمی یا Pilot |
 
 این سند تصمیم‌های پیشنهادی محافظه‌کارانه، شواهد Repository و فیلدهای امضای لازم را در یک محل جمع می‌کند. وجود این فایل به معنی تأیید Product، Legal، Security، Operations یا Finance نیست. نام، تاریخ و مرجع مصوبه واقعی باید تکمیل شود؛ Secret، قرارداد، شماره تماس خصوصی و امضای اسکن‌شده نباید در Repository ذخیره شوند.
@@ -108,9 +108,9 @@ Shortlist تاریخ‌دار و Compatibility Gap ارائه‌دهندگان �
 | Incident Commander / Pilot Manager | فرمان Incident و ادامه/توقف | علی رحمان سلیمانی‌زاده — فقط موقت برای Pre-Staging | `TBD` | خارج Repository | Owner accepted; alternate required before Pilot |
 | Tech Lead | Code/Deploy/Recovery فنی | `TBD` | `TBD` | خارج Repository | Pending |
 | Privacy/Data Accountable Owner | هدف پردازش، Data Request و پاسخ‌گویی کسب‌وکار | علی رحمان سلیمانی‌زاده — مالک شخص حقیقی | `TBD` | نشانی شخصی خارج Repository | Owner-confirmed; independent Legal review pending |
-| Legal Approver | متن Consent/Privacy، Retention، حقوق کاربر و قرارداد پردازشگر | `TBD — مشاور حقوقی مستقل ایران` | `TBD` | خارج Repository | Blocker before real data |
+| Legal Approver | متن Consent/Privacy، Retention، حقوق کاربر و قرارداد پردازشگر | آقای سیفی — وکیل دادگستری، معرفی‌شده توسط مالک | `TBD` | خارج Repository | Role assigned; written acceptance/sign-off pending |
 | Security Owner | Incident امنیتی، Secret، Access Review و Risk Acceptance فنی | `TBD — متخصص مستقل` | `TBD` | خارج Repository | Blocker before Staging activation |
-| Operations/Infrastructure | Server، DB، Queue، Backup و Monitoring | `TBD` | `TBD` | خارج Repository | Pending |
+| Operations/Infrastructure | Server، DB، Queue، Backup و Monitoring | شرکت مدیا پارس — معرفی‌شده توسط مالک | `TBD` | خارج Repository | Organization assigned; named representative/on-call/sign-off pending |
 | QA/UAT Lead | Evidence، Regression و UAT Sign-off | `TBD` | `TBD` | خارج Repository | Pending |
 | Finance/Commercial | بودجه، Provider Contract و Reward Liability | علی رحمان سلیمانی‌زاده — پروژه خودتأمین | `TBD` | خارج Repository | Owner accepted — caps approved with conditions |
 | Venue/Field Lead | ایمنی، نصب QR و عملیات محل | `TBD` | `TBD` | خارج Repository | Pending |
@@ -152,9 +152,9 @@ Shortlist تاریخ‌دار و Compatibility Gap ارائه‌دهندگان �
 | حوزه | تصمیم/نسخه | Approver واقعی | تاریخ | مرجع مصوبه بیرونی | نتیجه |
 |---|---|---|---|---|---|
 | Product Scope و Privacy Purpose | v1.0 | علی رحمان سلیمانی‌زاده — Product Owner | 2026-08-18 | Owner Decision Record | Approved with Legal conditions |
-| Legal: Consent/Privacy/Child/Data Rights | v1.0 | `TBD` | `TBD` | `TBD` | Pending |
+| Legal: Consent/Privacy/Child/Data Rights | v1.0 | آقای سیفی — وکیل دادگستری، معرفی‌شده توسط مالک | `TBD` | Engagement/Sign-off خارج Repository | Role assigned; decision pending |
 | Retention/Deletion/Legal Hold | v1.0 | `TBD` | `TBD` | `TBD` | Pending |
-| Incident Policy و RACI | v1.0 | `TBD` | `TBD` | `TBD` | Pending |
+| Incident Policy و RACI | v1.0 | Product Owner + شرکت مدیا پارس + Security Approver | `TBD` | Operations acceptance خارج Repository | Operations organization assigned; representatives/sign-off pending |
 | Budget | v1.0 | علی رحمان سلیمانی‌زاده — Finance Approver | 2026-08-18 | Owner Decision Record | Approved with conditions; Pilot Reward TBD |
 | Provider Shortlist/Contracts | v1.0 | Product + Finance + Operations/Security | 2026-08-18 | Provider Shortlist + Due-diligence | Candidates accepted; vendors/contracts not approved |
 | Operational Architecture ADR | v1.0 | `TBD` Product/Security/Operations | `TBD` | `docs/staging/EXPLORIA_Operational_Architecture_Decision_v1.0.md` | Draft Recommended |
@@ -173,4 +173,4 @@ Shortlist تاریخ‌دار و Compatibility Gap ارائه‌دهندگان �
 - Providerهای منتخب یا Shortlist مصوب با Owner و سقف هزینه مشخص باشند.
 - هیچ Secret، قرارداد محرمانه یا PII در Git قرار نگرفته باشد.
 
-**نتیجه فعلی:** `NO-GO — OWNER ROLES/CAPS/CANDIDATES ACCEPTED; LEGAL, SECURITY, OPERATIONS AND VENDOR GATES PENDING`
+**نتیجه فعلی:** `NO-GO — LEGAL/OPERATIONS ROLES ASSIGNED; WRITTEN APPROVALS, SECURITY AND VENDOR GATES PENDING`

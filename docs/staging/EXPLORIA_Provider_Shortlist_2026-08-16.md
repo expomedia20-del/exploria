@@ -153,7 +153,7 @@ Kavenegar، API Key را در URL و پارامترهای `receptor/token/templa
 ## 7. تصمیم‌هایی که هنوز از مالک لازم است
 
 1. تعیین Provider ایرانی دوم مستقل برای Backup و Uptime.
-2. تعیین Operations/Security Owner برای امضای Evidence فنی.
-3. تصمیم نهایی درباره Vendorها فقط پس از پاسخ مکتوب پرسش‌های Due-diligence.
+2. معرفی نماینده نام‌دار و On-call شرکت مدیا پارس و تعیین Security Approver برای امضای Evidence فنی.
+3. دریافت Legal Sign-off آقای سیفی و تصمیم نهایی درباره Vendorها فقط پس از پاسخ مکتوب پرسش‌های Due-diligence.
 
 **Verdict فعلی:** `DUE-DILIGENCE IN PROGRESS — NO PROVIDER APPROVED, NO PURCHASE AUTHORIZED`

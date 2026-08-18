@@ -7,7 +7,7 @@
 | تاریخ | 2026-08-18 |
 | مجوز مالک | Due-diligence بدون خرید برای Liara؛ Sandbox/Quote بدون ارسال واقعی برای Kavenegar |
 | محدودیت قطعی | داده، Log و Backup فقط ایران؛ پرداخت ریالی |
-| وضعیت | `PUBLIC EVIDENCE REVIEWED — WRITTEN VENDOR ANSWERS PENDING` |
+| وضعیت | `LEGAL/OPERATIONS ROLES ASSIGNED — WRITTEN VENDOR ANSWERS AND SIGN-OFFS PENDING` |
 
 این گزارش مجوز خرید، ساخت Account با اطلاعات خصوصی، ورود Credential، ارسال OTP واقعی یا پذیرش قرارداد نیست. ادعاهای بازاریابی به‌تنهایی Evidence عملیاتی محسوب نمی‌شوند.
 
@@ -87,8 +87,9 @@
 خرید یا ساخت Staging فقط وقتی مجاز است که:
 
 - Liara تعهد Iran-only قابل استناد بدهد یا Candidate ایرانی جایگزین انتخاب شود.
-- Operations/Security Owner پاسخ‌ها را بازبینی و Risk Acceptance را امضا کند.
-- Legal Approver قرارداد/DPA/Privacy را تأیید کند.
+- نماینده نام‌دار و مسئول شرکت مدیا پارس پاسخ‌های عملیاتی را بازبینی و Operations Acceptance را امضا کند.
+- Security Approver نام‌دار، Access/Secret/Incident controls و Risk Acceptance را امضا کند.
+- آقای سیفی به‌عنوان Legal Approver معرفی‌شده، قرارداد/DPA/Privacy را کتبی تأیید کند.
 - Provider دوم مستقل ایرانی برای Backup/Uptime انتخاب شود.
 - Quote داخل سقف مصوب باشد و Owner آن را برای خرید مشخص تأیید کند.
 - Sandbox Kavenegar بدون PII واقعی، پس از Domain/Account security و پاسخ‌های Data Retention اجرا شود.
