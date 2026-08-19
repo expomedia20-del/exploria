@@ -253,24 +253,25 @@ Repository برای تحویل به اپراتور Staging سخت‌گیری ش�
 
 | بررسی | نتیجه |
 |---|---|
-| Test Suite محلی | 373 Test / 4799 Assertion / 0 Failure |
+| Test Suite محلی پس از مانور 2026-08-20 | 374 Test / 4820 Assertion / 0 Failure |
 | تست هدفمند Scoped Pause/Resume | 4 Test / 70 Assertion / Pass |
 | GitHub CI روی PR شماره 3 | 4 Check موفق: Quality، PHP 8.4، PHP 8.5 و PostgreSQL |
 | PostgreSQL CI | Migration Fresh، Rollback آخرین Migration، Migration مجدد و Test Suite موفق |
 | ESLint / Prettier / TypeScript | Pass |
 | Pint / PHPStan | Pass / 0 Error |
 | Composer / NPM Audit | 0 Advisory / 0 Vulnerability |
-| Production Build | 2339 Module / Pass |
-| Migration Local | 1 مورد معوق: `2026_08_15_000001_add_reward_governance_controls` |
+| Production Build | Pass در Launch Assurance محلی؛ حدود 50.88 ثانیه |
+| Migration روی SQLite کاری | 1 مورد معوق: `2026_08_15_000001_add_reward_governance_controls`؛ عمداً تغییر داده نشد |
 | Demo Readiness | 19 Pass / 0 Warning / 0 Fail |
-| Production Readiness در Local | 3 Pass / 11 Fail / `ready=false`؛ Fail-Closed مورد انتظار |
+| Production Readiness با PostgreSQL موقت و APP_ENV=local | 6 Pass / 8 Fail / `ready=false`؛ Fail-Closed مورد انتظار |
 | Headerهای HTTP محلی | Nosniff، SameOrigin، Referrer Policy و Permissions Policy فعال |
 | Syntax اسکریپت Deploy | `bash -n` موفق |
 | Backup Integrity Guard | تولید Manifest SHA-256 و کنترل Fail-Closed در Restore/Deploy؛ تست استاتیک و Syntax محلی موفق |
 | PostgreSQL Tooling | Server/Client/PHP Extension آماده |
-| PostgreSQL Migration/Test/Backup/Restore | Pending — Credential ایزوله ارائه نشده است |
+| PostgreSQL Migration/Test/Backup/Restore محلی | 36 Migration، Rollback/Re-apply، 374 Test / 4821 Assertion، Backup/Restore و Tamper Test موفق؛ Evidence: `EXPLORIA_Pre_Staging_Local_Rehearsal_2026-08-20.md` |
+| PostgreSQL Migration/Test/Backup/Restore روی External Staging | Pending — زیرساخت و Credential واقعی ارائه نشده است |
 | Secret Scan دستی فایل‌های تغییرکرده | هیچ Secret واقعی افزوده نشد |
 | تغییر معماری/Role | انجام نشد |
 | Schema/Dependency Hardening | Migration حاکمیت پاداش و به‌روزرسانی Lockfileها در PR شماره 3 ادغام شد |
 
-Full CI و Build روی Codebase ادغام‌شده اجرا شده‌اند. PostgreSQL CI سازگاری Migration و Test Suite را اثبات می‌کند، اما اجرای Runtime Gate، Migration، Reward reconciliation، Backup/Restore و Deployment/Rollback روی Staging مستقل هنوز انجام نشده و تا ارائه زیرساخت و Credential ایزوله، مانع `STAGING LIVE` باقی می‌ماند.
+Full CI، Build و مانور Local Pre-Staging روی PostgreSQL 18 موقت اجرا شدند. Migration، Rollback/Re-apply، Reward reconciliation، Backup/Restore، Tamper Test و Launch Assurance محلی موفق‌اند؛ اما Deployment/Rollback، Providerهای واقعی و همین Drillها روی Staging مستقل هنوز انجام نشده‌اند و تا ارائه زیرساخت و Credential ایزوله، مانع `STAGING LIVE` باقی می‌مانند.

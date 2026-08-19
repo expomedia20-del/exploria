@@ -110,6 +110,12 @@ class EnvironmentBaselineTest extends TestCase
         $this->assertStringContainsString('[string]$HealthUrl', $launchAssuranceScript);
         $this->assertStringContainsString('Local dry run remains production-blocked, as required.', $launchAssuranceScript);
         $this->assertStringContainsString('HealthUrl must use HTTPS outside LocalDryRun mode.', $launchAssuranceScript);
+        $this->assertStringContainsString("\$env:APP_ENV = 'testing'", $launchAssuranceScript);
+        $this->assertStringContainsString('$previousApplicationEnvironment', $launchAssuranceScript);
+        $this->assertStringContainsString('Remove-Item Env:APP_ENV -ErrorAction SilentlyContinue', $launchAssuranceScript);
+        $this->assertStringContainsString('$ciDatabaseEnvironmentSnapshot', $launchAssuranceScript);
+        $this->assertStringContainsString("'DB_PASSWORD'", $launchAssuranceScript);
+        $this->assertStringContainsString('Set-Item "Env:$name" $snapshot.Value', $launchAssuranceScript);
         $this->assertStringContainsString("Resolve-Tool -Name 'composer'", $launchAssuranceScript);
         $this->assertStringContainsString('Composer was not found on PATH or in the local toolchain.', $launchAssuranceScript);
         $this->assertStringContainsString('scripts\test-postgresql.ps1', $launchAssuranceScript);
