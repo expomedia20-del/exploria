@@ -100,6 +100,8 @@ Shortlist تاریخ‌دار و Compatibility Gap ارائه‌دهندگان �
 - تا انتخاب Ticketing Provider، یک Incident Register کنترل‌شده با دسترسی محدود خارج Repository قابل قبول است؛ Spreadsheet عمومی یا پیام‌رسان شخصی Evidence رسمی نیست.
 - مانور Tabletop پیش از Staging و مانور واقعی Pause/Resume روی Staging پیش از Pilot الزامی است.
 
+مانور فنی خودکار با داده مصنوعی در 2026-08-20 انجام و در `docs/staging/EXPLORIA_Incident_Tabletop_Local_Rehearsal_2026-08-20.md` ثبت شد. این Evidence فقط کنترل نرم‌افزاری را اثبات می‌کند و جایگزین Tabletop انسانی، سنجش زمان Ack/Escalation، امضای RACI یا Drill واقعی External Staging نیست.
+
 ## 6. RACI پیشنهادی و فیلدهای نام‌گذاری
 
 | نقش | Accountable/اختیار اصلی | نام واقعی | جانشین | کانال On-call | وضعیت |

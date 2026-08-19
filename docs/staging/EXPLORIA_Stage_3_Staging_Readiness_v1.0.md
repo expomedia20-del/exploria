@@ -255,6 +255,7 @@ Repository برای تحویل به اپراتور Staging سخت‌گیری ش�
 |---|---|
 | Test Suite محلی پس از مانور 2026-08-20 | 374 Test / 4820 Assertion / 0 Failure |
 | تست هدفمند Scoped Pause/Resume | 4 Test / 70 Assertion / Pass |
+| مانور فنی Incident + Readiness | 12 Test / 94 Assertion / Pass؛ Tabletop انسانی و External Staging همچنان Pending |
 | GitHub CI روی PR شماره 3 | 4 Check موفق: Quality، PHP 8.4، PHP 8.5 و PostgreSQL |
 | PostgreSQL CI | Migration Fresh، Rollback آخرین Migration، Migration مجدد و Test Suite موفق |
 | ESLint / Prettier / TypeScript | Pass |
@@ -270,6 +271,7 @@ Repository برای تحویل به اپراتور Staging سخت‌گیری ش�
 | PostgreSQL Tooling | Server/Client/PHP Extension آماده |
 | PostgreSQL Migration/Test/Backup/Restore محلی | 36 Migration، Rollback/Re-apply، 374 Test / 4821 Assertion، Backup/Restore و Tamper Test موفق؛ Evidence: `EXPLORIA_Pre_Staging_Local_Rehearsal_2026-08-20.md` |
 | PostgreSQL Migration/Test/Backup/Restore روی External Staging | Pending — زیرساخت و Credential واقعی ارائه نشده است |
+| Incident Tabletop محلی | Technical Control Drill موفق؛ Evidence: `EXPLORIA_Incident_Tabletop_Local_Rehearsal_2026-08-20.md` |
 | Secret Scan دستی فایل‌های تغییرکرده | هیچ Secret واقعی افزوده نشد |
 | تغییر معماری/Role | انجام نشد |
 | Schema/Dependency Hardening | Migration حاکمیت پاداش و به‌روزرسانی Lockfileها در PR شماره 3 ادغام شد |

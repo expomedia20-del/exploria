@@ -40,6 +40,7 @@
 | Production Readiness با PostgreSQL موقت و APP_ENV=local | 6 Pass / 8 Fail / `ready=false` - Fail-Closed مورد انتظار |
 | Migration روی SQLite کاری | 1 مورد معوق: `2026_08_15_000001_add_reward_governance_controls`؛ عمداً اجرا نشد |
 | مانور Local Pre-Staging PostgreSQL 18 | 36 Migration، Rollback/Re-apply، 374 Test / 4821 Assertion، Reconciliation، Backup/Restore، Tamper Test و Launch Assurance موفق |
+| مانور فنی Incident محلی | 12 Test / 94 Assertion؛ Scoped Pause/Resume، QR/Mission/Reward coordination، Incident linkage، Recovery Evidence و Audit موفق |
 | NPM Audit در 2026-08-16 | 0 Vulnerability |
 | Composer Audit در 2026-08-16 | 0 Advisory |
 
@@ -55,7 +56,7 @@
 | Consent | Consent نسخه‌دار و ثبت پذیرش با زمان و Subject | `/consent`، مدل‌ها و تست‌های Consent | `PILOT_BLOCKED` | متن حقوقی نهایی و سیاست نگهداری/حذف داده |
 | مدل مکان | Venue، Zone، Hub، Touchpoint، پروفایل و فعال‌سازی مکان | `/admin/venues`، `VenueActivationService` | `DEMO_READY` | داده میدانی، مالک هر نقطه و تأیید نصب واقعی |
 | کمپین | Registry، Builder، Blueprint، Activation و نقشه عملیات | `/admin/campaigns`، `/admin/campaign-builder` | `DEMO_READY` | قفل کمپین پایلوت و UAT نقش‌محور |
-| توقف/ازسرگیری عملیاتی | Scoped Pause در سطح Campaign، انسداد هماهنگ QR/Mission/Reward، Incident Reference، Recovery Evidence، Admin Resume Approval و Audit append-only | `CampaignOperationalControlService`، صفحه Campaign و `CampaignOperationalControlTest` | `VERIFIED_LOCAL` | تصویب RACI/Incident Policy و مانور Pause/Resume در Staging |
+| توقف/ازسرگیری عملیاتی | Scoped Pause در سطح Campaign، انسداد هماهنگ QR/Mission/Reward، Incident Reference، Recovery Evidence، Admin Resume Approval، Audit append-only و مانور فنی محلی | `CampaignOperationalControlService`، `CampaignOperationalControlTest` و `docs/staging/EXPLORIA_Incident_Tabletop_Local_Rehearsal_2026-08-20.md` | `VERIFIED_LOCAL` | تصویب RACI/Incident Policy، Tabletop انسانی و مانور Pause/Resume در Staging |
 | QR | Registry، Binding، وضعیت، Scan Landing و کدهای عملیاتی | `/admin/qr-codes`، `/scan/{code}` | `VERIFIED_LOCAL` | قالب دامنه، چاپ، ابعاد و نصب میدانی |
 | Attribution | ثبت Scan/Visit/Event متصل به QR، مکان، کمپین و کاربر/Session | `ScanEvent`، `Visit`، Event Log و تست‌های Feature | `VERIFIED_LOCAL` | Data Dictionary و Baseline پایلوت |
 | داشبورد | خلاصه مدیریتی و پنل‌های عملیاتی نقش‌محور | `/dashboard` و Dashboard Serviceها | `DEMO_READY` | KPI مصوب، مقایسه Baseline و گزارش تصمیم‌ساز |

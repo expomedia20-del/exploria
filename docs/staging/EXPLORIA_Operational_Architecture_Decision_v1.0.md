@@ -27,7 +27,7 @@
 | Health | `/up` و `/health` + `scripts/deploy-staging.sh` | Health HTTP و Rollback مبتنی بر Failure موجود است؛ Uptime Monitor بیرونی وجود ندارد. |
 | Queue/Scheduler | `deploy/systemd/*` | Worker پایدار Database Queue و systemd timer آماده‌اند؛ `php artisan schedule:list` فعلاً Taskی نشان نمی‌دهد. |
 | Backup | `scripts/backup-postgresql.*` | `pg_dump` سفارشی، `pg_restore --list`، Permission محدود و Manifest مستقل SHA-256 وجود دارد؛ Dump هنوز محلی است و Upload/Encryption/Retention ندارد. |
-| Restore | `scripts/test-postgresql-restore.*` | Restore فقط روی DB با پسوند امن و کنترل جدول migrations Fail-Closed است؛ اجرای واقعی بیرونی ثبت نشده است. |
+| Restore | `scripts/test-postgresql-restore.*` | Restore فقط روی DB با پسوند امن، تطبیق Manifest/SHA-256 و کنترل جدول migrations Fail-Closed است؛ مانور محلی PostgreSQL 18 موفق و اجرای واقعی بیرونی ثبت‌نشده است. |
 
 ## 3. اصول قفل‌شده پیشنهادی
 
@@ -148,10 +148,12 @@ Threshold نهایی پس از Load Test گام 8 تنظیم می‌شود؛ PII
 
 ### Gap اجرایی
 
-- اسکریپت فعلی Dump را رمزگذاری، Hash، Upload یا Expire نمی‌کند.
+- اسکریپت فعلی Dump را با Manifest مستقل SHA-256 محافظت می‌کند؛ رمزگذاری، Upload و Expiry هنوز وجود ندارند.
 - Backup Timer/Service و Alert شکست وجود ندارد.
 - Provider Snapshot/PITR، مقصد Off-host و Restore Credential مستقل انتخاب نشده‌اند.
 - Restore خارجی و RPO/RTO واقعی اندازه‌گیری نشده است.
+
+Evidence مانور محلی Migration/Rollback، Backup/Restore و Tamper Test در `docs/staging/EXPLORIA_Pre_Staging_Local_Rehearsal_2026-08-20.md` ثبت شده است؛ این Evidence جایگزین Off-host، Encryption، Provider PITR یا RPO/RTO خارجی نیست.
 
 ## 8. Queue / Cache / Session / Scheduler — ADR-RUNTIME-01
 

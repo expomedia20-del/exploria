@@ -62,6 +62,8 @@
 - [ ] Scoped Pause/Resume یک Campaign با Reason، Incident Reference، Corrective Action، Recovery Evidence، Admin Approval و Audit Trail تمرین شده است.
 - [ ] دستور Launch Assurance متناسب با محیط بدون خطا پایان یافته است.
 
+Evidence محلی 2026-08-20: کنترل فنی Pause/Resume با `12 Test / 94 Assertion` موفق است؛ جزئیات در `docs/staging/EXPLORIA_Incident_Tabletop_Local_Rehearsal_2026-08-20.md`. چک‌باکس‌های Incident عمداً باز می‌مانند تا Tabletop انسانی و اجرای واقعی روی Staging با صاحبان نقش تکمیل شوند.
+
 ### G4 — کنترل روزانه پایلوت
 
 - [ ] جلسه شروع شیفت، وضعیت سامانه و موجودی جایزه ثبت شده است.
@@ -213,5 +215,6 @@
 ## ۱۲. وضعیت تکمیل این بسته
 
 - Gate، Runbook، Incident، KPI و فرم تصمیم آماده شده‌اند.
+- مانور فنی محلی Incident و Scoped Pause/Resume موفق است؛ مانور انسانی، On-call و Staging واقعی هنوز انجام نشده‌اند.
 - مقادیر واقعی عمداً خالی مانده‌اند و باید توسط صاحبان اختیار تکمیل شوند.
 - تا رفع تمام موارد G0 تا G3، این سند مجوز پایلوت عمومی یا Production ایجاد نمی‌کند.
