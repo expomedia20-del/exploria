@@ -24,6 +24,8 @@ Data Inventory اولیه، فرم‌های Sign-off و نقشه Work Itemهای
 
 Shortlist تاریخ‌دار و Compatibility Gap ارائه‌دهندگان در `docs/staging/EXPLORIA_Provider_Shortlist_2026-08-16.md` ثبت شده است. Liara Stack، Kavenegar و IPPanel صرفاً Candidate هستند؛ هیچ Provider تصویب یا خریداری نشده است.
 
+فرم‌های Provider-neutral برای تصمیم‌های Hosting/DB، OTP، Mail، Storage، Monitoring، Backup، Runtime، Budget و Domain در `docs/staging/EXPLORIA_Pre_Server_Provider_Acquisition_Decision_Pack_v1.0.md` نگهداری می‌شوند. قیمت‌ها و شرایط قدیمی فقط Reference هستند و برای خرید باید Quote/پاسخ مکتوب تازه دریافت شود.
+
 تصمیم‌های قطعی مالک و پیشنهادهایی که هنوز نیازمند پذیرش هستند در `docs/pilot/EXPLORIA_Owner_Decision_Record_2026-08-17.md` از یکدیگر تفکیک شده‌اند. ایمیل شخصی اعلام‌شده عمداً در Repository ثبت نشده است.
 
 ## 2. مراجع Canonical و شواهد فعلی

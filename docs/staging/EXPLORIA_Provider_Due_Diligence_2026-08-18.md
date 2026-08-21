@@ -5,12 +5,14 @@
 | فیلد | مقدار |
 |---|---|
 | تاریخ | 2026-08-18 |
-| آخرین تطبیق Repository | 2026-08-21 — `main@3648754` پس از Merge PR #5 |
+| آخرین تطبیق Repository | 2026-08-21 — `main@2e7fa6c` پس از Merge PR #9؛ اطلاعات Vendor همان تاریخ 2026-08-18 است |
 | مجوز مالک | Due-diligence بدون خرید برای Liara؛ Sandbox/Quote بدون ارسال واقعی برای Kavenegar |
 | محدودیت قطعی | داده، Log و Backup فقط ایران؛ پرداخت ریالی |
 | وضعیت | `LEGAL/OPERATIONS ROLES ASSIGNED — WRITTEN VENDOR ANSWERS AND SIGN-OFFS PENDING` |
 
 این گزارش مجوز خرید، ساخت Account با اطلاعات خصوصی، ورود Credential، ارسال OTP واقعی یا پذیرش قرارداد نیست. ادعاهای بازاریابی به‌تنهایی Evidence عملیاتی محسوب نمی‌شوند.
+
+فرم تصمیم Provider-agnostic و الزام Quote/پاسخ تازه در `docs/staging/EXPLORIA_Pre_Server_Provider_Acquisition_Decision_Pack_v1.0.md` ثبت شده است. بررسی Object Storage در این گزارش فقط Candidate evidence است و به معنی نیاز یا Approval S3/Adapter نیست.
 
 ## 2. Verdict اجرایی
 
