@@ -6,7 +6,7 @@
 |---|---|
 | نوع | Working Decision Checklist — غیرجایگزین اسناد Canonical یا Approval رسمی |
 | تاریخ | 2026-08-21 |
-| مبنای Codebase | `main@9abc321` — تا Merge PR #7 |
+| مبنای Codebase | `main@3d4e145` — تا Merge PR #8 |
 | مبنای تطبیق اسناد | `0d20d95` — Post-PR5 readiness reconciliation |
 | Scope فعال | فقط تصمیم‌هایی که پیش از خرید، Provisioning، انتقال Release یا ورود داده واقعی باید بسته شوند |
 | خارج از Scope فعال | اجرای فنی روی سرور، Drillهای Staging، UAT واقعی و عملیات Pilot |
@@ -52,7 +52,7 @@
 
 | ID | Gate | وضعیت | تصمیم مسدودکننده | وضعیت فعلی | برای بسته‌شدن | Approver لازم | مرجع |
 |---|---|---|---|---|---|---|---|
-| `PRE-DEC-07` | D0/D1 | `OPEN` | تصویب ADR عملیاتی Provider-agnostic | `DRAFT RECOMMENDED` | نتیجه رسمی Product/Security/Operations و ثبت شروط/ردها | Product + Security + Operations | Operational ADR §1/§11؛ Approval Pack §9 |
+| `PRE-DEC-07` | D0/D1 | `OPEN — READY FOR DECISION` | تصویب ADR عملیاتی Provider-agnostic | ممیزی و Approval Record آماده است؛ ADR همچنان `DRAFT RECOMMENDED` است و Storage backend/Provider را پیش‌فرض نمی‌گیرد | رأی مستقل همه بخش‌ها توسط Product/Security/Operations، External Evidence Reference و شروط دارای Owner/Due Date | Product + Security + Operations | Operational ADR §1/§5/§11؛ Operational ADR Approval Record؛ Approval Pack §9 |
 | `PRE-DEC-08` | D1 | `CONDITIONAL HOLD` | Hosting و PostgreSQL مستقل | Liara فقط Candidate و `CONDITIONAL HOLD` است؛ تعهد Iran-only، DPA، MFA/Audit، PITR/RPO/RTO و Export پاسخ مکتوب ندارد | انتخاب یا رد Candidate، Quote، Region قراردادی، جداسازی محیط، Owner و Exit Plan | Product + Finance + Legal + Security + Operations/DBA | Due-diligence §3/§8؛ Approval Pack §8 |
 | `PRE-DEC-09` | D0/D1 | `PENDING DUE-DILIGENCE` | OTP Provider و مدل Integration | Kavenegar Candidate اول است؛ Retention/DPA/MFA/Cost Cap و سازگاری Adapter باز است | Provider/Plan، پاسخ‌های قراردادی، Owner، سقف هزینه و تصمیم صریح درباره Adapter اختصاصی | Product + Commercial/Finance + Legal + Security + Tech | Due-diligence §4/§7؛ Owner Record §7 |
 | `PRE-DEC-10` | D0/D1 | `OPEN` | Transactional Mail و Domain/Stream | SMTP در Laravel موجود و Gate Fail-Closed است؛ Provider/Plan/Domain/DPA مشخص نیست | Provider/Plan، Owner، Domain/From/Return-Path، TLS، SPF/DKIM/DMARC، Bounce/Suppression و Budget | Product + Operations + Legal/Security | Approval Pack §8؛ Operational ADR `ADR-MAIL-01` |
