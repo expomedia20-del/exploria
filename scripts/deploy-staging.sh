@@ -26,7 +26,7 @@ fi
 [[ "$health_url" == */up ]] || fail 'EXPLORIA_HEALTH_URL must end with /up.'
 [[ "$backup_max_age_minutes" =~ ^[1-9][0-9]*$ ]] || fail 'EXPLORIA_BACKUP_MAX_AGE_MINUTES must be a positive integer.'
 
-for tool in git php composer npm curl tar pg_restore awk; do
+for tool in git php composer npm curl tar pg_restore sha256sum awk; do
     command -v "$tool" >/dev/null 2>&1 || fail "required tool '$tool' was not found."
 done
 
@@ -40,6 +40,20 @@ shared_storage_path="$shared_path/storage"
 [[ -f "$environment_path" ]] || fail "shared environment file '$environment_path' is missing."
 [[ -d "$shared_storage_path" ]] || fail "shared storage directory '$shared_storage_path' is missing."
 [[ -f "$verified_backup_path" ]] || fail 'EXPLORIA_VERIFIED_BACKUP_PATH must point to a verified PostgreSQL archive.'
+backup_checksum_path="$verified_backup_path.sha256"
+[[ -f "$backup_checksum_path" ]] || fail 'the PostgreSQL backup checksum manifest is missing.'
+
+checksum_line_count="$(awk 'NF { count++ } END { print count + 0 }' "$backup_checksum_path")"
+expected_backup_checksum="$(awk 'NF { print $1; exit }' "$backup_checksum_path")"
+manifest_backup_name="$(awk 'NF { sub(/^[^[:space:]]+[[:space:]]+/, ""); print; exit }' "$backup_checksum_path")"
+verified_backup_name="$(basename "$verified_backup_path")"
+
+[[ "$checksum_line_count" == '1' ]] || fail 'the PostgreSQL backup checksum manifest must contain one record.'
+[[ "$expected_backup_checksum" =~ ^[[:xdigit:]]{64}$ ]] || fail 'the PostgreSQL backup checksum is invalid.'
+[[ "$manifest_backup_name" == "$verified_backup_name" ]] || fail 'the PostgreSQL backup checksum manifest references another archive.'
+
+actual_backup_checksum="$(sha256sum "$verified_backup_path" | awk '{ print $1 }')"
+[[ "${actual_backup_checksum,,}" == "${expected_backup_checksum,,}" ]] || fail 'the PostgreSQL backup checksum verification failed.'
 pg_restore --list "$verified_backup_path" >/dev/null || fail 'the PostgreSQL backup archive is invalid.'
 
 read_environment_value() {

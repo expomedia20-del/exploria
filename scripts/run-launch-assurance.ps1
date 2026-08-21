@@ -164,16 +164,57 @@ if (-not [string]::IsNullOrWhiteSpace($HealthUrl)) {
 }
 
 if (-not $SkipCi) {
-    if ($composer) {
-        Invoke-Step -Name 'Full application CI' -Command {
-            & $composer ci:check
+    $hadApplicationEnvironment = Test-Path Env:APP_ENV
+    $previousApplicationEnvironment = $env:APP_ENV
+    $ciDatabaseEnvironmentNames = @(
+        'DB_CONNECTION',
+        'DB_URL',
+        'DB_HOST',
+        'DB_PORT',
+        'DB_DATABASE',
+        'DB_USERNAME',
+        'DB_PASSWORD'
+    )
+    $ciDatabaseEnvironmentSnapshot = @{}
+
+    foreach ($name in $ciDatabaseEnvironmentNames) {
+        $ciDatabaseEnvironmentSnapshot[$name] = @{
+            Exists = Test-Path "Env:$name"
+            Value = (Get-Item "Env:$name" -ErrorAction SilentlyContinue).Value
         }
-    } elseif (Test-Path -LiteralPath $composerPhar -PathType Leaf) {
-        Invoke-Step -Name 'Full application CI' -Command {
-            & $php $composerPhar ci:check
+        Remove-Item "Env:$name" -ErrorAction SilentlyContinue
+    }
+
+    try {
+        $env:APP_ENV = 'testing'
+
+        if ($composer) {
+            Invoke-Step -Name 'Full application CI' -Command {
+                & $composer ci:check
+            }
+        } elseif (Test-Path -LiteralPath $composerPhar -PathType Leaf) {
+            Invoke-Step -Name 'Full application CI' -Command {
+                & $php $composerPhar ci:check
+            }
+        } else {
+            throw 'Composer was not found on PATH or in the local toolchain.'
         }
-    } else {
-        throw 'Composer was not found on PATH or in the local toolchain.'
+    } finally {
+        if ($hadApplicationEnvironment) {
+            $env:APP_ENV = $previousApplicationEnvironment
+        } else {
+            Remove-Item Env:APP_ENV -ErrorAction SilentlyContinue
+        }
+
+        foreach ($name in $ciDatabaseEnvironmentNames) {
+            $snapshot = $ciDatabaseEnvironmentSnapshot[$name]
+
+            if ($snapshot.Exists) {
+                Set-Item "Env:$name" $snapshot.Value
+            } else {
+                Remove-Item "Env:$name" -ErrorAction SilentlyContinue
+            }
+        }
     }
 }
 

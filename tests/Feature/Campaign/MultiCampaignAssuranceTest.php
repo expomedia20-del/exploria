@@ -156,6 +156,19 @@ class MultiCampaignAssuranceTest extends TestCase
         $this->assertStringContainsString('active_campaign_variety', Artisan::output());
     }
 
+    public function test_assurance_fails_closed_without_query_errors_for_an_unknown_venue(): void
+    {
+        $report = app(MultiCampaignAssuranceService::class)->report('unknown-venue', 2, true);
+        $checks = collect($report['checks'])->keyBy('key');
+
+        $this->assertFalse($report['summary']['ready']);
+        $this->assertSame('venue:unknown-venue', $report['summary']['scope']);
+        $this->assertSame(0, $report['summary']['activeCampaigns']);
+        $this->assertSame('fail', $checks['active_campaign_variety']['status']);
+        $this->assertSame('fail', $checks['active_qr_campaign_coverage']['status']);
+        $this->assertSame('fail', $checks['executed_mission_campaigns']['status']);
+    }
+
     private function visitForQr(User $visitor, QrCode $qr): Visit
     {
         return Visit::query()->create([

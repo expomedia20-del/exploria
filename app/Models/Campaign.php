@@ -85,4 +85,17 @@ class Campaign extends Model
     {
         return $this->hasMany(CampaignSponsorship::class);
     }
+
+    public function isOperationallyPaused(): bool
+    {
+        return data_get($this->metadata, 'operational_control.state') === 'paused';
+    }
+
+    /** @return array<string, mixed>|null */
+    public function operationalControl(): ?array
+    {
+        $control = data_get($this->metadata, 'operational_control');
+
+        return is_array($control) ? $control : null;
+    }
 }

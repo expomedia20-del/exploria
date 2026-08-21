@@ -41,6 +41,28 @@ if (-not (Test-Path -LiteralPath $resolvedBackupPath -PathType Leaf)) {
     throw "Backup archive '$resolvedBackupPath' does not exist."
 }
 
+$checksumPath = "$resolvedBackupPath.sha256"
+if (-not (Test-Path -LiteralPath $checksumPath -PathType Leaf)) {
+    throw "Backup checksum manifest '$checksumPath' does not exist."
+}
+
+$checksumLines = @(Get-Content -LiteralPath $checksumPath | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+if ($checksumLines.Count -ne 1 -or $checksumLines[0] -notmatch '^([a-fA-F0-9]{64})\s{2}(.+)$') {
+    throw 'Backup checksum manifest is invalid.'
+}
+
+$expectedChecksum = $Matches[1].ToLowerInvariant()
+$manifestFileName = $Matches[2]
+$backupFileName = [System.IO.Path]::GetFileName($resolvedBackupPath)
+if ($manifestFileName -ne $backupFileName) {
+    throw 'Backup checksum manifest does not reference the selected archive.'
+}
+
+$actualChecksum = (Get-FileHash -LiteralPath $resolvedBackupPath -Algorithm SHA256).Hash.ToLowerInvariant()
+if ($actualChecksum -ne $expectedChecksum) {
+    throw 'Backup checksum verification failed.'
+}
+
 $psql = Get-PostgresTool 'psql.exe'
 $pgRestore = Get-PostgresTool 'pg_restore.exe'
 

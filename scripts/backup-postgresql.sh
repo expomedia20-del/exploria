@@ -10,7 +10,7 @@ host="${EXPLORIA_PG_HOST:-127.0.0.1}"
 port="${EXPLORIA_PG_PORT:-5432}"
 output_directory="${1:-${EXPLORIA_BACKUP_DIRECTORY:-}}"
 
-for tool in psql pg_dump pg_restore; do
+for tool in psql pg_dump pg_restore sha256sum; do
     command -v "$tool" >/dev/null 2>&1 || {
         printf "Required PostgreSQL tool '%s' was not found.\n" "$tool" >&2
         exit 1
@@ -54,5 +54,13 @@ if [[ ! -s "$backup_path" ]]; then
     echo 'Backup archive is empty.' >&2
     exit 1
 fi
+
+backup_file_name="$(basename "$backup_path")"
+checksum_path="$backup_path.sha256"
+(
+    cd "$output_directory"
+    sha256sum "$backup_file_name" >"$backup_file_name.sha256"
+)
+chmod 600 "$backup_path" "$checksum_path"
 
 printf '%s\n' "$backup_path"

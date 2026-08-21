@@ -64,7 +64,7 @@ class RewardGovernanceService
     {
         return DB::transaction(function () use ($metadata, $reward, $user): UserReward {
             $lockedReward = RewardDefinition::query()
-                ->with(['costOwnerFinancialAccount', 'inventoryAllocations.partnerAccount'])
+                ->with(['campaign:id,status', 'costOwnerFinancialAccount', 'inventoryAllocations.partnerAccount'])
                 ->lockForUpdate()
                 ->findOrFail($reward->id);
 
@@ -80,6 +80,10 @@ class RewardGovernanceService
 
             $this->assertConfiguration($lockedReward);
             $this->assertIssuanceWindow($lockedReward);
+
+            if ($lockedReward->campaign?->status !== RecordStatus::Active) {
+                throw ValidationException::withMessages(['campaign' => 'کمپین این پاداش فعال نیست و صدور جدید متوقف است.']);
+            }
 
             if ($lockedReward->status !== RecordStatus::Active) {
                 throw ValidationException::withMessages(['reward' => 'این پاداش در وضعیت قابل صدور نیست.']);

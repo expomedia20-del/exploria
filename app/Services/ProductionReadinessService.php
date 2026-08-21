@@ -7,6 +7,7 @@ use App\Enums\RecordStatus;
 use App\Infrastructure\Otp\HttpOtpProvider;
 use App\Infrastructure\Otp\LocalFixedOtpProvider;
 use App\Infrastructure\Otp\UnavailableOtpProvider;
+use App\Models\Campaign;
 use App\Models\RewardDefinition;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Migrations\Migrator;
@@ -33,6 +34,7 @@ class ProductionReadinessService
         $environment ??= app()->environment();
         [$databaseRuntimeReady, $databaseRuntimeStatus] = $this->databaseRuntimeStatus($checkDatabaseRuntime);
         [$rewardGovernanceReady, $rewardGovernanceStatus] = $this->rewardGovernanceStatus($checkDatabaseRuntime, $databaseRuntimeReady);
+        [$operationalControlReady, $operationalControlStatus] = $this->operationalControlStatus($checkDatabaseRuntime, $databaseRuntimeReady);
         [$otpProviderReady, $otpProviderStatus] = $this->otpProviderStatus();
 
         $checks = [
@@ -84,6 +86,13 @@ class ProductionReadinessService
                 $rewardGovernanceReady,
                 $rewardGovernanceStatus,
                 'همه پاداش‌های فعال باید مالک هزینه، موجودی، ظرفیت و محدودیت صدور معتبر داشته باشند.',
+            ),
+            $this->check(
+                'operational_pause',
+                'توقف عملیاتی فعال',
+                $operationalControlReady,
+                $operationalControlStatus,
+                'پیش از استقرار یا Go-Live، هیچ Campaign نباید در وضعیت توقف عملیاتی باقی مانده باشد.',
             ),
             $this->check(
                 'otp',
@@ -251,6 +260,42 @@ class ProductionReadinessService
             ];
         } catch (Throwable) {
             return [false, 'reward-governance-check-failed'];
+        }
+    }
+
+    /**
+     * @return array{bool, string|array{pausedCampaigns: int, pausedCampaignCodes: list<string>}}
+     */
+    private function operationalControlStatus(bool $shouldCheck, bool $databaseRuntimeReady): array
+    {
+        if (! $shouldCheck) {
+            return [true, 'skipped-for-isolated-test'];
+        }
+
+        if (! $databaseRuntimeReady) {
+            return [false, 'database-runtime-not-ready'];
+        }
+
+        try {
+            $pausedCampaignCodes = [];
+
+            foreach (Campaign::query()->get(['code', 'metadata']) as $campaign) {
+                if ($campaign->isOperationallyPaused()) {
+                    $pausedCampaignCodes[] = $campaign->code;
+                }
+            }
+
+            sort($pausedCampaignCodes);
+
+            return [
+                $pausedCampaignCodes === [],
+                [
+                    'pausedCampaigns' => count($pausedCampaignCodes),
+                    'pausedCampaignCodes' => $pausedCampaignCodes,
+                ],
+            ];
+        } catch (Throwable) {
+            return [false, 'operational-control-check-failed'];
         }
     }
 
