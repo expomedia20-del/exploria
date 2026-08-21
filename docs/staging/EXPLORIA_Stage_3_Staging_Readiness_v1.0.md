@@ -158,6 +158,8 @@ Deploy به‌صورت Release-based انجام می‌شود، Revision و زم
 
 بسته ثبت تصمیم و Approval این Gate در `docs/pilot/EXPLORIA_Pre_Staging_Governance_Approval_Pack_v1.0.md` آماده شده است. تا تکمیل Approver، تاریخ، مرجع مصوبه، بودجه و Provider واقعی، Gate `S3-01` همچنان Fail باقی می‌ماند.
 
+فهرست واحد تصمیم‌های فعال پیش از انتقال و TBDهای موکول‌شده به پیش از UAT/Pilot در `docs/pilot/EXPLORIA_Pre_Server_Decision_Checklist_v1.0.md` ثبت شده است؛ این Checklist هیچ اجرای فنی روی سرور را PASS نمی‌کند.
+
 معماری Provider-agnostic پیشنهادی Mail/Storage/Monitoring/Backup در `docs/staging/EXPLORIA_Operational_Architecture_Decision_v1.0.md` ثبت شده است؛ این ADR تا عبور گام 3 و انتخاب Provider واقعی Draft است.
 
 Candidateهای Provider، منابع رسمی و Gapهای Compatibility در `docs/staging/EXPLORIA_Provider_Shortlist_2026-08-16.md` ثبت شده‌اند؛ Shortlist مجوز خرید یا Approval نیست.

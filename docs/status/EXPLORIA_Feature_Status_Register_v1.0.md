@@ -83,6 +83,8 @@
 
 ## 5. Blockerهای رسمی پیش از پایلوت
 
+Decision Checklist تجمیعی برای تفکیک تصمیم‌های لازم پیش از انتقال از اقدامات قابل‌انجام بعد از ایجاد Staging در `docs/pilot/EXPLORIA_Pre_Server_Decision_Checklist_v1.0.md` ثبت شده است.
+
 1. Pilot Charter در `docs/pilot/EXPLORIA_EcoPark_Pilot_Charter_v0.1.md` تدوین شده است؛ قفل نهایی تاریخ، اشخاص، KPI، بودجه و RACI به تأیید Product Owner نیاز دارد.
 2. Staging مستقل با HTTPS و PostgreSQL ایزوله؛ اجرای Migration، Reward reconciliation، Backup/Restore و Deployment/Rollback Drill در همان محیط.
 3. Provider واقعی OTP و آزمون E2E واقعی OTP، Mail و Storage.
