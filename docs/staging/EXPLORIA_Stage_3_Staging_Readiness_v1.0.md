@@ -7,6 +7,7 @@
 | نوع سند | Working Staging Readiness Record - غیرجایگزین اسناد Canonical |
 | مرحله | Stage 3 — Staging & Security |
 | تاریخ Snapshot | 2026-08-21 |
+| Commit مبنا | `3648754` — Merge PR #5 (`hardening/staging-admission-gates`) |
 | وضعیت | `CONDITIONAL COMPLETE — REPOSITORY READY, EXTERNAL STAGING NOT PROVISIONED` |
 | Scope | آماده‌سازی Repository و تمرین Fail-Closed؛ بدون استقرار عمومی |
 | مجوز Production/Pilot | صادر نشده است |
@@ -157,6 +158,8 @@ Deploy به‌صورت Release-based انجام می‌شود، Revision و زم
 
 بسته ثبت تصمیم و Approval این Gate در `docs/pilot/EXPLORIA_Pre_Staging_Governance_Approval_Pack_v1.0.md` آماده شده است. تا تکمیل Approver، تاریخ، مرجع مصوبه، بودجه و Provider واقعی، Gate `S3-01` همچنان Fail باقی می‌ماند.
 
+فهرست واحد تصمیم‌های فعال پیش از انتقال و TBDهای موکول‌شده به پیش از UAT/Pilot در `docs/pilot/EXPLORIA_Pre_Server_Decision_Checklist_v1.0.md` ثبت شده است؛ این Checklist هیچ اجرای فنی روی سرور را PASS نمی‌کند.
+
 معماری Provider-agnostic پیشنهادی Mail/Storage/Monitoring/Backup در `docs/staging/EXPLORIA_Operational_Architecture_Decision_v1.0.md` ثبت شده است؛ این ADR تا عبور گام 3 و انتخاب Provider واقعی Draft است.
 
 Candidateهای Provider، منابع رسمی و Gapهای Compatibility در `docs/staging/EXPLORIA_Provider_Shortlist_2026-08-16.md` ثبت شده‌اند؛ Shortlist مجوز خرید یا Approval نیست.
@@ -298,6 +301,6 @@ Repository برای تحویل به اپراتور Staging سخت‌گیری ش�
 | Incident Tabletop محلی | Technical Control Drill موفق؛ Evidence: `EXPLORIA_Incident_Tabletop_Local_Rehearsal_2026-08-20.md` |
 | Secret Scan دستی فایل‌های تغییرکرده | هیچ Secret واقعی افزوده نشد |
 | تغییر معماری/Role | انجام نشد |
-| Schema/Dependency Hardening | Migration حاکمیت پاداش و Lockfileهای PR شماره 3 حفظ شد؛ در Hardening جاری Schema یا Dependency جدید افزوده نشد |
+| Schema/Dependency Hardening | Migration حاکمیت پاداش و Lockfileهای PR شماره 3 حفظ شد؛ در PR شماره 5 هیچ Schema یا Dependency جدید افزوده نشد |
 
 Full CI، Build و مانور Local Pre-Staging روی PostgreSQL 18 موقت اجرا شدند. Migration، Rollback/Re-apply، Reward reconciliation، Backup/Restore، Tamper Test و Launch Assurance محلی موفق‌اند؛ اما Deployment/Rollback، Providerهای واقعی و همین Drillها روی Staging مستقل هنوز انجام نشده‌اند و تا ارائه زیرساخت و Credential ایزوله، مانع `STAGING LIVE` باقی می‌مانند.

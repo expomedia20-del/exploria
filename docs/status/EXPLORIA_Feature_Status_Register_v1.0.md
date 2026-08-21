@@ -8,7 +8,7 @@
 | تاریخ Snapshot | 2026-08-21 |
 | Codebase | Laravel + React Monolith / Inertia-style |
 | شاخه مبنا | `main` |
-| Commit مبنا | `05e2c88` — Merge PR #4 |
+| Commit مبنا | `3648754` — Merge PR #5 (`hardening/staging-admission-gates`) |
 | هدف | تفکیک روشن قابلیت‌های آماده، نمایشی، مسدود پیش از پایلوت و خارج از Scope |
 
 این رجیستر وضعیت اجرایی Codebase را ثبت می‌کند و جایگزین BRD، FRD، Scope Lock، Backlog یا اسناد Governance مصوب نیست. در صورت تعارض، سلسله‌مراتب سند 21 اعمال می‌شود.
@@ -82,6 +82,8 @@
 | Analytics/Settlement پیشرفته | اجزای پایه داده/مالی وجود دارد؛ موتور کامل نهایی نیست | Scope Lock و Backlog | `OUT_OF_SCOPE` | پس از گزارش و Decision Gate پایلوت |
 
 ## 5. Blockerهای رسمی پیش از پایلوت
+
+Decision Checklist تجمیعی برای تفکیک تصمیم‌های لازم پیش از انتقال از اقدامات قابل‌انجام بعد از ایجاد Staging در `docs/pilot/EXPLORIA_Pre_Server_Decision_Checklist_v1.0.md` ثبت شده است.
 
 1. Pilot Charter در `docs/pilot/EXPLORIA_EcoPark_Pilot_Charter_v0.1.md` تدوین شده است؛ قفل نهایی تاریخ، اشخاص، KPI، بودجه و RACI به تأیید Product Owner نیاز دارد.
 2. Staging مستقل با HTTPS و PostgreSQL ایزوله؛ اجرای Migration، Reward reconciliation، Backup/Restore و Deployment/Rollback Drill در همان محیط.

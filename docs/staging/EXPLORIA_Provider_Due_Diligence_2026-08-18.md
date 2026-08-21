@@ -5,6 +5,7 @@
 | فیلد | مقدار |
 |---|---|
 | تاریخ | 2026-08-18 |
+| آخرین تطبیق Repository | 2026-08-21 — `main@3648754` پس از Merge PR #5 |
 | مجوز مالک | Due-diligence بدون خرید برای Liara؛ Sandbox/Quote بدون ارسال واقعی برای Kavenegar |
 | محدودیت قطعی | داده، Log و Backup فقط ایران؛ پرداخت ریالی |
 | وضعیت | `LEGAL/OPERATIONS ROLES ASSIGNED — WRITTEN VENDOR ANSWERS AND SIGN-OFFS PENDING` |
@@ -55,7 +56,7 @@
 | حوزه | Evidence Repository | وضعیت |
 |---|---|---|
 | OTP | `app/Infrastructure/Otp/HttpOtpProvider.php:34` و `.env.staging.example:56` | Adapter Kavenegar وجود ندارد؛ تغییر بعد از Vendor approval و CR فنی محدود لازم است. |
-| Mail | `config/mail.php:40` و `.env.staging.example:41` | SMTP موجود است، اما Staging فعلاً `MAIL_MAILER=log` دارد؛ فعال‌سازی فقط پس از Credential/Domain/E2E. |
+| Mail | `config/mail.php:40` و `.env.staging.example:41` | SMTP موجود است؛ الگوی Staging مقدار `MAIL_MAILER` را عمداً خالی می‌گذارد و Gate بدون Mailer واقعی Fail-Closed می‌شود. فعال‌سازی فقط پس از Provider/Credential/Domain/E2E مجاز است. |
 | Storage | `config/filesystems.php:50` و `app/Services/StandaloneAdvertisingService.php:200` | Config S3 موجود است، ولی Adapter S3 نصب نیست و Service از Disk `public` استفاده می‌کند. |
 | Backup | `scripts/backup-postgresql.sh` و `scripts/backup-postgresql.ps1` | Dump معتبر و Manifest مستقل SHA-256 ساخته می‌شود و Restore/Deploy در نبود یا عدم تطابق آن Fail-Closed است؛ Upload، Encryption و Lifecycle هنوز وجود ندارد. |
 | Restore | `scripts/test-postgresql-restore.sh:24` و `.ps1:35` | Fail-closed naming وجود دارد؛ Drill خارجی و RTO/RPO Evidence ندارد. |

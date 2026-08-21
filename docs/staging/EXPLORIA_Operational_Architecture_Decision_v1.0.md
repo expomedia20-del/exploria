@@ -6,6 +6,7 @@
 |---|---|
 | نوع | Architecture Decision Record — Provider-agnostic |
 | تاریخ | 2026-08-16 |
+| آخرین تطبیق Repository | 2026-08-21 — `main@3648754` پس از Merge PR #5 |
 | وضعیت | `DRAFT RECOMMENDED — STEP 3 APPROVAL PENDING` |
 | دامنه | Staging مستقل و Production آینده |
 | معماری Canonical | Laravel + React Monolith در یک Repository |
@@ -17,13 +18,13 @@
 
 | حوزه | Evidence Repository | وضعیت واقعی |
 |---|---|---|
-| Mail | `config/mail.php` و `.env.staging.example` | Transportهای Laravel موجودند، اما Staging روی `MAIL_MAILER=log` است و Provider/E2E واقعی ندارد. |
+| Mail | `config/mail.php` و `.env.staging.example` | Transportهای Laravel موجودند؛ الگوی Staging مقدار `MAIL_MAILER` را عمداً خالی می‌گذارد تا بدون انتخاب Mailer واقعی Fail-Closed شود. Provider/E2E واقعی هنوز وجود ندارد. |
 | Auth Mail | تست‌های `PasswordResetTest` و `VerificationNotificationTest` | Notification در Test پوشش دارد؛ Delivery، SPF/DKIM/DMARC، Bounce و UAT Mailbox اثبات نشده‌اند. |
 | Storage | `config/filesystems.php` | Local/Public و Config مربوط به S3 موجود است. |
 | Upload | `app/Services/StandaloneAdvertisingService.php` | Asset تبلیغ روی Disk ثابت `public` ذخیره می‌شود؛ تغییر `FILESYSTEM_DISK` آن را به Object Storage منتقل نمی‌کند. |
 | S3 Adapter | `composer.json` و `composer.lock` | `league/flysystem-aws-s3-v3` و `aws/aws-sdk-php` نصب/Lock نشده‌اند؛ Config به‌تنهایی قابلیت عملیاتی نیست. |
-| Logging | `config/logging.php` | Single/Daily/Stderr/Syslog/Papertrail تعریف شده؛ Environment فعلی `stack,single` است و مقصد مرکزی/Alert ندارد. |
-| Readiness | `app/Services/ProductionReadinessService.php` | فقط غیر-null بودن Log Channel را می‌سنجد؛ Delivery مرکزی، Retention و Alert را اثبات نمی‌کند. |
+| Logging | `config/logging.php` و `.env.staging.example` | Single/Daily/Stderr/Syslog/Papertrail تعریف شده‌اند؛ الگوی Staging از `stack,stderr` استفاده می‌کند، اما مقصد مرکزی/Alert واقعی هنوز وجود ندارد. |
+| Readiness | `app/Services/ProductionReadinessService.php` و `app/Services/OperationalEvidenceService.php` | Sinkهای صرفاً محلی رد می‌شوند و Evidence تازه Monitoring/Alert/On-call الزامی است؛ Delivery واقعی مرکزی هنوز فقط روی Staging خارجی قابل اثبات است. |
 | Health | `/up` و `/health` + `scripts/deploy-staging.sh` | Health HTTP و Rollback مبتنی بر Failure موجود است؛ Uptime Monitor بیرونی وجود ندارد. |
 | Queue/Scheduler | `deploy/systemd/*` | Worker پایدار Database Queue و systemd timer آماده‌اند؛ `php artisan schedule:list` فعلاً Taskی نشان نمی‌دهد. |
 | Backup | `scripts/backup-postgresql.*` | `pg_dump` سفارشی، `pg_restore --list`، Permission محدود و Manifest مستقل SHA-256 وجود دارد؛ Dump هنوز محلی است و Upload/Encryption/Retention ندارد. |
@@ -59,11 +60,11 @@
 
 ### Gap اجرایی
 
-- `.env.staging.example` هنوز Mail را `log` معرفی می‌کند.
-- Production Readiness هنوز Mail Transport واقعی را Gate نمی‌کند.
+- `.env.staging.example` مقدار Mailer را عمداً خالی می‌گذارد؛ Provider، Credential و تنظیم واقعی Staging هنوز انتخاب/اعمال نشده‌اند.
+- Production Readiness اکنون Mailer واقعی ثبت‌شده، Transport غیرمحلی و Evidence تازه را Gate می‌کند؛ Delivery بیرونی هنوز اثبات نشده است.
 - E2E و Runbook خطای Mail وجود ندارد.
 
-این Gapها پس از Provider Approval و در Work Item مستقل اصلاح می‌شوند؛ این ADR به‌تنهایی مجوز تغییر Config نیست.
+Hardening سطح Repository در PR #5 تکمیل شد؛ Gapهای Provider، Credential، E2E و Runbook پس از Provider Approval و در Work Item مستقل بسته می‌شوند. این ADR به‌تنهایی مجوز تغییر Config نیست.
 
 ## 5. تصمیم Storage — ADR-STORAGE-01
 
@@ -119,7 +120,7 @@ Threshold نهایی پس از Load Test گام 8 تنظیم می‌شود؛ PII
 ### Gap اجرایی
 
 - مقصد مرکزی، Agent، Dashboard، Synthetic Probe، Alert Channel و On-call واقعی وجود ندارد.
-- Readiness فعلی Delivery/Alert را چک نمی‌کند.
+- Readiness اکنون Sink محلی-only را رد و Evidence Delivery/Alert/On-call را الزامی می‌کند؛ وجود واقعی این زیرساخت هنوز روی Staging خارجی اثبات نشده است.
 - هیچ Task زمان‌بندی‌شده‌ای برای اثبات Scheduler تعریف نشده است؛ افزودن Job نمایشی بدون نیاز Domain مجاز نیست. برای E2E، یک Task عملیاتی واقعی مانند Prune مصوب Retention لازم است.
 
 ## 7. تصمیم Backup/Restore — ADR-BACKUP-01

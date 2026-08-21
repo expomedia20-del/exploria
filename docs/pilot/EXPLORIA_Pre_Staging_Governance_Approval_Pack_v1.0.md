@@ -12,6 +12,8 @@
 
 این سند تصمیم‌های پیشنهادی محافظه‌کارانه، شواهد Repository و فیلدهای امضای لازم را در یک محل جمع می‌کند. وجود این فایل به معنی تأیید Product، Legal، Security، Operations یا Finance نیست. نام، تاریخ و مرجع مصوبه واقعی باید تکمیل شود؛ Secret، قرارداد، شماره تماس خصوصی و امضای اسکن‌شده نباید در Repository ذخیره شوند.
 
+رجیستر تجمیعی TBDهای مسدودکننده، Gate هر تصمیم و تفکیک موارد فعال پیش از انتقال از اقدامات بعد از Staging در `docs/pilot/EXPLORIA_Pre_Server_Decision_Checklist_v1.0.md` نگهداری می‌شود.
+
 توصیه فنی Provider-agnostic برای Mail، Storage، Monitoring، Backup و Runtime در `docs/staging/EXPLORIA_Operational_Architecture_Decision_v1.0.md` ثبت شده و تا تکمیل همین Approval Pack در وضعیت `DRAFT RECOMMENDED` باقی می‌ماند.
 
 Shortlist تاریخ‌دار و Compatibility Gap ارائه‌دهندگان در `docs/staging/EXPLORIA_Provider_Shortlist_2026-08-16.md` ثبت شده است. Liara Stack، Kavenegar و IPPanel صرفاً Candidate هستند؛ هیچ Provider تصویب یا خریداری نشده است.
