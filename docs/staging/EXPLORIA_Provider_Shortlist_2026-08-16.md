@@ -5,12 +5,14 @@
 | فیلد | مقدار |
 |---|---|
 | تاریخ بررسی | 2026-08-16؛ بازبینی قیمت/تصمیم مالک 2026-08-17 |
-| آخرین تطبیق Repository | 2026-08-21 — `main@3648754` پس از Merge PR #5 |
+| آخرین تطبیق Repository | 2026-08-21 — `main@2e7fa6c` پس از Merge PR #9؛ قیمت/شرایط Vendor بازبینی مجدد نشده‌اند |
 | نوع | Decision Support — نه Approval و نه مجوز خرید |
 | وضعیت | `CANDIDATES ACCEPTED FOR DUE-DILIGENCE — VENDOR APPROVAL/PURCHASE PENDING` |
 | تصمیم مالک | محل داده و Backup فقط ایران؛ بودجه و پرداخت فعلاً ریالی؛ Provider خارجی برای داده/Log/Backup واجد شرایط نیست. |
 
 قیمت، SLA و شرایط قرارداد ممکن است تغییر کنند. فقط صفحه رسمی Product/Documentation در تاریخ بالا بررسی شده است؛ Quote، DPA، Data Region، مالیات، Egress، شرایط حذف و امکان خرید باید پیش از Approval دوباره کنترل شوند.
+
+این Shortlist Requirement ایجاد نمی‌کند. به‌ویژه Object Storage/S3 فقط در صورت تصمیم `PRE-DEC-11` و Adapter فقط پس از مجوز Dependency قابل انتخاب است. رکورد تصمیم مستقل در `docs/staging/EXPLORIA_Pre_Server_Provider_Acquisition_Decision_Pack_v1.0.md` نگهداری می‌شود.
 
 Product Owner در 2026-08-18 انجام Due-diligence Liara و Sandbox/Quote کاوه‌نگار را پذیرفت. نتیجه تفصیلی در `docs/staging/EXPLORIA_Provider_Due_Diligence_2026-08-18.md` نشان می‌دهد Liara به علت بند انتقال/دسترسی بین‌المللی Privacy Policy فعلاً `CONDITIONAL HOLD` است.
 
