@@ -289,6 +289,12 @@ Route::get('/admin/partners', [PartnerRegistryController::class, 'page'])
 Route::get('/admin/campaigns', [CampaignRegistryController::class, 'page'])
     ->middleware(['auth', 'role:admin,regional_admin,operator,viewer,hub_manager'])
     ->name('admin.campaigns.page');
+Route::post('/admin/campaigns/{campaign}/pause', [CampaignRegistryController::class, 'pause'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.campaigns.pause');
+Route::post('/admin/campaigns/{campaign}/resume', [CampaignRegistryController::class, 'resume'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.campaigns.resume');
 
 Route::get('/admin/campaign-builder', [CampaignBuilderController::class, 'page'])
     ->middleware(['auth', 'role:admin,regional_admin,operator,viewer,hub_manager'])
@@ -554,6 +560,12 @@ Route::post('/api/v1/admin/campaigns/{campaign}/archive', [CampaignRegistryContr
 Route::post('/api/v1/admin/campaigns/{campaign}/restore', [CampaignRegistryController::class, 'restore'])
     ->middleware(['auth', 'role:admin,operator'])
     ->name('admin.campaigns.api.restore');
+Route::post('/api/v1/admin/campaigns/{campaign}/pause', [CampaignRegistryController::class, 'pause'])
+    ->middleware(['auth', 'role:admin,operator'])
+    ->name('admin.campaigns.api.pause');
+Route::post('/api/v1/admin/campaigns/{campaign}/resume', [CampaignRegistryController::class, 'resume'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('admin.campaigns.api.resume');
 
 Route::post('/api/v1/admin/rewards/{reward}/approve', [RewardApprovalController::class, 'approve'])
     ->middleware(['auth', 'role:admin,operator,hub_manager'])

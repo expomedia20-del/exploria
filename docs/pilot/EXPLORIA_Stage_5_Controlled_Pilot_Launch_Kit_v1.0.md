@@ -20,7 +20,7 @@
 
 - `EXPLORIA_EcoPark_Pilot_Charter_v0.1.md`: Charter پیشنهادی و Gateهای G0 تا G5.
 - `../staging/EXPLORIA_Stage_3_Staging_Readiness_v1.0.md`: وضعیت آمادگی Staging و وابستگی‌های خارجی.
-- `../uat/EXPLORIA_Stage_4_UAT_Dry_Run_Report_v1.0.md`: نتیجه مانور UAT مرحله ۴.
+- `../uat/EXPLORIA_Stage_4_UAT_Dry_Run_v1.0.md`: نتیجه مانور UAT مرحله ۴.
 - `../ECOPARK_PILOT_OPERATIONAL_PLAYBOOK.md`: مسیر عملیات روز اجرا و سناریوهای خطا.
 - `../features/POSTGRESQL_BACKUP_RESTORE_RUNBOOK.md`: ضوابط Backup و Restore ایمن.
 - `.env.staging.example`: قرارداد پیکربندی Staging بدون Secret.
@@ -59,7 +59,10 @@
 - [ ] یک مسیر QR تا Mission، Reward و Redemption انتهابه‌انتها ثبت شده است.
 - [ ] کنترل دسترسی نقش‌ها، 403، QR نامعتبر و خطای OTP بررسی شده‌اند.
 - [ ] مانور Incident و Escalation حداقل یک‌بار اجرا شده است.
+- [ ] Scoped Pause/Resume یک Campaign با Reason، Incident Reference، Corrective Action، Recovery Evidence، Admin Approval و Audit Trail تمرین شده است.
 - [ ] دستور Launch Assurance متناسب با محیط بدون خطا پایان یافته است.
+
+Evidence محلی 2026-08-20: کنترل فنی Pause/Resume با `12 Test / 94 Assertion` موفق است؛ جزئیات در `docs/staging/EXPLORIA_Incident_Tabletop_Local_Rehearsal_2026-08-20.md`. چک‌باکس‌های Incident عمداً باز می‌مانند تا Tabletop انسانی و اجرای واقعی روی Staging با صاحبان نقش تکمیل شوند.
 
 ### G4 — کنترل روزانه پایلوت
 
@@ -212,5 +215,6 @@
 ## ۱۲. وضعیت تکمیل این بسته
 
 - Gate، Runbook، Incident، KPI و فرم تصمیم آماده شده‌اند.
+- مانور فنی محلی Incident و Scoped Pause/Resume موفق است؛ مانور انسانی، On-call و Staging واقعی هنوز انجام نشده‌اند.
 - مقادیر واقعی عمداً خالی مانده‌اند و باید توسط صاحبان اختیار تکمیل شوند.
 - تا رفع تمام موارد G0 تا G3، این سند مجوز پایلوت عمومی یا Production ایجاد نمی‌کند.

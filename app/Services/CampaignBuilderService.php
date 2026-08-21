@@ -45,6 +45,10 @@ class CampaignBuilderService
             throw ValidationException::withMessages(['campaign' => 'کمپین انتخاب‌شده در دسترس نیست.']);
         }
 
+        if ($campaign->isOperationallyPaused()) {
+            throw ValidationException::withMessages(['campaign' => 'کمپین در توقف عملیاتی است و فعال‌سازی فقط از مسیر تأییدشده ازسرگیری مجاز است.']);
+        }
+
         $readiness = $this->launchReadiness($campaign, $this->counts($campaign));
 
         if (! $readiness['canActivate']) {

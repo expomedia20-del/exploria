@@ -175,7 +175,7 @@ class MissionFlowService
     private function ensureMissionCanBeUsed(User $user, Visit $visit, MissionInstance $mission): void
     {
         $this->ensureVisitOwner($user, $visit);
-        $mission->loadMissing('missionTemplate');
+        $mission->loadMissing(['campaign:id,status', 'missionTemplate']);
 
         if ($mission->campaign_id !== $visit->campaign_id || $mission->venue_id !== $visit->venue_id) {
             throw ValidationException::withMessages([
@@ -185,7 +185,7 @@ class MissionFlowService
 
         if (! $this->isMissionActive($mission)) {
             throw ValidationException::withMessages([
-                'mission' => 'این ماموریت فعال یا در بازه زمانی معتبر نیست.',
+                'mission' => 'این ماموریت یا کمپین آن فعال و در بازه زمانی معتبر نیست.',
             ]);
         }
 
@@ -215,7 +215,7 @@ class MissionFlowService
     private function missionsForVisit(Visit $visit): EloquentCollection
     {
         return MissionInstance::query()
-            ->with(['missionTemplate', 'hub:id,code,name', 'touchpoint:id,code,label', 'treasure:id,mission_instance_id,code,name'])
+            ->with(['campaign:id,status', 'missionTemplate', 'hub:id,code,name', 'touchpoint:id,code,label', 'treasure:id,mission_instance_id,code,name'])
             ->where('campaign_id', $visit->campaign_id)
             ->where('venue_id', $visit->venue_id)
             ->orderBy('created_at')
@@ -293,6 +293,7 @@ class MissionFlowService
         $now = now();
 
         return $mission->status === RecordStatus::Active
+            && $mission->campaign?->status === RecordStatus::Active
             && $mission->missionTemplate->status === RecordStatus::Active
             && (! $mission->starts_at || $mission->starts_at->lessThanOrEqualTo($now))
             && (! $mission->ends_at || $mission->ends_at->isFuture());

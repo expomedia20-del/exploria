@@ -101,10 +101,11 @@ export EXPLORIA_PG_PASSWORD='...'
 export EXPLORIA_BACKUP_DIRECTORY='/srv/secure-backups/exploria'
 
 backup_path="$(./scripts/backup-postgresql.sh)"
+test -f "$backup_path.sha256"
 pg_restore --list "$backup_path" >/dev/null
 ```
 
-استقرار بدون Archive معتبر و جدید رد می‌شود. حداکثر عمر پیش‌فرض Backup برای استقرار ۱۴۴۰ دقیقه است.
+استقرار بدون Archive معتبر و جدید یا بدون Manifest معتبر SHA-256 رد می‌شود. اسکریپت Deploy پیش از Migration نام فایل و Hash واقعی را با Manifest تطبیق می‌دهد. حداکثر عمر پیش‌فرض Backup برای استقرار ۱۴۴۰ دقیقه است.
 
 ## اجرای استقرار اتمیک Staging
 
@@ -123,7 +124,7 @@ export EXPLORIA_VERIFIED_BACKUP_PATH="$backup_path"
 
 اسکریپت این کنترل‌ها را به‌ترتیب انجام می‌دهد:
 
-1. رد اجرای root، مسیر گسترده، URL بدون HTTPS، Repository کثیف و Backup نامعتبر؛
+1. رد اجرای root، مسیر گسترده، URL بدون HTTPS، Repository کثیف و Backup فاقد Manifest/Hash معتبر؛
 2. Fetch و استخراج دقیق Commit انتخاب‌شده در یک Release جدید؛
 3. اتصال `.env` و `storage` مشترک؛
 4. نصب وابستگی Production و Build رابط؛

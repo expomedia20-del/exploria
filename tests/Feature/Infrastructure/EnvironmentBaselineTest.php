@@ -24,6 +24,7 @@ class EnvironmentBaselineTest extends TestCase
         $this->assertStringContainsString('APP_URL=https://', $stagingEnvironment);
         $this->assertStringContainsString('DB_CONNECTION=pgsql', $stagingEnvironment);
         $this->assertStringContainsString('QUEUE_CONNECTION=database', $stagingEnvironment);
+        $this->assertStringContainsString('CACHE_STORE=database', $stagingEnvironment);
         $this->assertStringContainsString('SESSION_DRIVER=database', $stagingEnvironment);
         $this->assertStringContainsString('SESSION_ENCRYPT=true', $stagingEnvironment);
         $this->assertStringContainsString('SESSION_SECURE_COOKIE=true', $stagingEnvironment);
@@ -31,6 +32,10 @@ class EnvironmentBaselineTest extends TestCase
         $this->assertStringContainsString('SESSION_SAME_SITE=lax', $stagingEnvironment);
         $this->assertStringContainsString('OTP_DRIVER=http', $stagingEnvironment);
         $this->assertStringContainsString('OTP_HTTP_TOKEN=', $stagingEnvironment);
+        $this->assertStringContainsString('LOG_STACK=stderr', $stagingEnvironment);
+        $this->assertStringContainsString("MAIL_MAILER=\n", str_replace("\r\n", "\n", $stagingEnvironment));
+        $this->assertStringContainsString('EXPLORIA_OPERATIONAL_EVIDENCE_PATH=', $stagingEnvironment);
+        $this->assertStringContainsString('EXPLORIA_OPERATIONAL_EVIDENCE_MAX_AGE_MINUTES=1440', $stagingEnvironment);
         $this->assertStringNotContainsString('OTP_HTTP_TOKEN=sk_', $stagingEnvironment);
     }
 
@@ -85,14 +90,21 @@ class EnvironmentBaselineTest extends TestCase
         $this->assertIsString($linuxRestoreScript);
         $this->assertIsString($launchAssuranceScript);
         $this->assertStringContainsString('$pgRestore --list', $backupScript);
+        $this->assertStringContainsString('Get-FileHash -LiteralPath $backupPath -Algorithm SHA256', $backupScript);
+        $this->assertStringContainsString('$backupPath.sha256', $backupScript);
         $this->assertStringContainsString('EXPLORIA_PG_BIN', $backupScript);
         $this->assertStringContainsString('EXPLORIA_PG_BIN', $restoreScript);
+        $this->assertStringContainsString('Backup checksum verification failed.', $restoreScript);
+        $this->assertStringContainsString('$resolvedBackupPath.sha256', $restoreScript);
         $this->assertStringContainsString('must end with _restore_test or -restore-test', $restoreScript);
         $this->assertStringContainsString('--clean --if-exists --exit-on-error', $restoreScript);
         $this->assertStringContainsString('set -Eeuo pipefail', $linuxBackupScript);
         $this->assertStringContainsString('umask 077', $linuxBackupScript);
         $this->assertStringContainsString('pg_restore --list', $linuxBackupScript);
+        $this->assertStringContainsString('sha256sum "$backup_file_name"', $linuxBackupScript);
+        $this->assertStringContainsString('$backup_path.sha256', $linuxBackupScript);
         $this->assertStringContainsString('must end with _restore_test or -restore-test', $linuxRestoreScript);
+        $this->assertStringContainsString('Backup checksum verification failed.', $linuxRestoreScript);
         $this->assertStringContainsString('--clean', $linuxRestoreScript);
         $this->assertStringContainsString('--if-exists', $linuxRestoreScript);
         $this->assertStringContainsString('--exit-on-error', $linuxRestoreScript);
@@ -103,6 +115,12 @@ class EnvironmentBaselineTest extends TestCase
         $this->assertStringContainsString('[string]$HealthUrl', $launchAssuranceScript);
         $this->assertStringContainsString('Local dry run remains production-blocked, as required.', $launchAssuranceScript);
         $this->assertStringContainsString('HealthUrl must use HTTPS outside LocalDryRun mode.', $launchAssuranceScript);
+        $this->assertStringContainsString("\$env:APP_ENV = 'testing'", $launchAssuranceScript);
+        $this->assertStringContainsString('$previousApplicationEnvironment', $launchAssuranceScript);
+        $this->assertStringContainsString('Remove-Item Env:APP_ENV -ErrorAction SilentlyContinue', $launchAssuranceScript);
+        $this->assertStringContainsString('$ciDatabaseEnvironmentSnapshot', $launchAssuranceScript);
+        $this->assertStringContainsString("'DB_PASSWORD'", $launchAssuranceScript);
+        $this->assertStringContainsString('Set-Item "Env:$name" $snapshot.Value', $launchAssuranceScript);
         $this->assertStringContainsString("Resolve-Tool -Name 'composer'", $launchAssuranceScript);
         $this->assertStringContainsString('Composer was not found on PATH or in the local toolchain.', $launchAssuranceScript);
         $this->assertStringContainsString('scripts\test-postgresql.ps1', $launchAssuranceScript);
@@ -136,6 +154,8 @@ class EnvironmentBaselineTest extends TestCase
         $this->assertStringContainsString('EXPLORIA_DEPLOY_REF', $deployScript);
         $this->assertStringContainsString('EXPLORIA_HEALTH_URL', $deployScript);
         $this->assertStringContainsString('EXPLORIA_VERIFIED_BACKUP_PATH', $deployScript);
+        $this->assertStringContainsString('the PostgreSQL backup checksum manifest is missing', $deployScript);
+        $this->assertStringContainsString('the PostgreSQL backup checksum verification failed', $deployScript);
         $this->assertStringContainsString("app_environment\" == 'staging'", $deployScript);
         $this->assertStringContainsString("app_debug\" == 'false'", $deployScript);
         $this->assertStringContainsString("database_connection\" == 'pgsql'", $deployScript);
@@ -145,6 +165,12 @@ class EnvironmentBaselineTest extends TestCase
         $this->assertStringContainsString("otp_driver\" == 'http'", $deployScript);
         $this->assertStringContainsString('OTP_HTTP_ENDPOINT must be a valid HTTPS URL', $deployScript);
         $this->assertStringContainsString('OTP_HTTP_TOKEN must be configured outside the repository', $deployScript);
+        $this->assertStringContainsString('MAIL_MAILER must select a real configured transport', $deployScript);
+        $this->assertStringContainsString('LOG_CHANNEL must select an operational sink', $deployScript);
+        $this->assertStringContainsString('LOG_STACK must include an operational sink', $deployScript);
+        $this->assertStringContainsString('EXPLORIA_OPERATIONAL_EVIDENCE_PATH must be an absolute path', $deployScript);
+        $this->assertStringContainsString('the external operational evidence pack is missing', $deployScript);
+        $this->assertStringContainsString('the operational evidence pack must be stored outside the repository', $deployScript);
         $this->assertStringContainsString('EXPLORIA_HEALTH_URL must match APP_URL plus /up', $deployScript);
         $this->assertStringContainsString('git status --porcelain', $deployScript);
         $this->assertStringContainsString('git archive', $deployScript);

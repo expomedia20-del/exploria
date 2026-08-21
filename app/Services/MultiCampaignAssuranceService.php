@@ -33,7 +33,11 @@ class MultiCampaignAssuranceService
         $campaignQuery = Campaign::query()->where('status', RecordStatus::Active);
 
         if ($venueCode) {
-            $campaignQuery->where('venue_id', $venue instanceof Venue ? $venue->id : '__missing_venue__');
+            if ($venue instanceof Venue) {
+                $campaignQuery->where('venue_id', $venue->id);
+            } else {
+                $campaignQuery->whereRaw('1 = 0');
+            }
         }
 
         $campaigns = $campaignQuery->orderBy('created_at')->get(['id', 'code', 'name', 'campaign_type', 'venue_id']);
