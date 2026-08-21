@@ -89,6 +89,11 @@ session_same_site="$(read_environment_value SESSION_SAME_SITE)"
 otp_driver="$(read_environment_value OTP_DRIVER)"
 otp_http_endpoint="$(read_environment_value OTP_HTTP_ENDPOINT)"
 otp_http_token="$(read_environment_value OTP_HTTP_TOKEN)"
+mail_mailer="$(read_environment_value MAIL_MAILER)"
+log_channel="$(read_environment_value LOG_CHANNEL)"
+log_stack="$(read_environment_value LOG_STACK)"
+operational_evidence_path="$(read_environment_value EXPLORIA_OPERATIONAL_EVIDENCE_PATH)"
+operational_evidence_max_age_minutes="$(read_environment_value EXPLORIA_OPERATIONAL_EVIDENCE_MAX_AGE_MINUTES)"
 
 [[ "$app_environment" == 'staging' ]] || fail 'shared .env must contain APP_ENV=staging.'
 [[ "$app_debug" == 'false' ]] || fail 'shared .env must contain APP_DEBUG=false.'
@@ -106,6 +111,36 @@ otp_http_token="$(read_environment_value OTP_HTTP_TOKEN)"
 [[ "$otp_driver" == 'http' ]] || fail 'shared OTP_DRIVER must use the configured HTTP provider.'
 [[ "$otp_http_endpoint" =~ ^https://[^/[:space:]]+(/[^[:space:]]*)?$ ]] || fail 'shared OTP_HTTP_ENDPOINT must be a valid HTTPS URL.'
 [[ "$otp_http_token" =~ [^[:space:]] ]] || fail 'shared OTP_HTTP_TOKEN must be configured outside the repository.'
+[[ -n "$mail_mailer" && "$mail_mailer" != 'array' && "$mail_mailer" != 'log' ]] || fail 'shared MAIL_MAILER must select a real configured transport.'
+[[ -n "$log_channel" && "$log_channel" != 'daily' && "$log_channel" != 'null' && "$log_channel" != 'single' ]] || fail 'shared LOG_CHANNEL must select an operational sink.'
+
+if [[ "$log_channel" == 'stack' ]]; then
+    operational_log_sink=false
+    IFS=',' read -ra configured_log_sinks <<<"$log_stack"
+
+    for configured_log_sink in "${configured_log_sinks[@]}"; do
+        configured_log_sink="${configured_log_sink//[[:space:]]/}"
+
+        if [[ -n "$configured_log_sink" && "$configured_log_sink" != 'daily' && "$configured_log_sink" != 'null' && "$configured_log_sink" != 'single' ]]; then
+            operational_log_sink=true
+            break
+        fi
+    done
+
+    [[ "$operational_log_sink" == true ]] || fail 'shared LOG_STACK must include an operational sink.'
+fi
+
+[[ "$operational_evidence_path" == /* ]] || fail 'shared EXPLORIA_OPERATIONAL_EVIDENCE_PATH must be an absolute path.'
+[[ -f "$operational_evidence_path" ]] || fail 'the external operational evidence pack is missing.'
+[[ "$operational_evidence_max_age_minutes" =~ ^[1-9][0-9]*$ ]] || fail 'EXPLORIA_OPERATIONAL_EVIDENCE_MAX_AGE_MINUTES must be a positive integer.'
+
+resolved_operational_evidence_path="$(readlink -f "$operational_evidence_path")"
+
+case "$resolved_operational_evidence_path" in
+    "$repository_root"/*)
+        fail 'the operational evidence pack must be stored outside the repository.'
+        ;;
+esac
 
 if ! find "$verified_backup_path" -mmin "-$backup_max_age_minutes" -print -quit | grep -q .; then
     fail "the verified backup is older than $backup_max_age_minutes minutes."
