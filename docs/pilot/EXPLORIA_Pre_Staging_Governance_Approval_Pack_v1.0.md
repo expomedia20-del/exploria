@@ -16,6 +16,8 @@
 
 Data Inventory اولیه، فرم‌های Sign-off و نقشه Work Itemهای مشروط برای `PRE-DEC-01..03` در `docs/pilot/EXPLORIA_Legal_Privacy_Retention_Decision_Pack_v1.0.md` نگهداری می‌شود. این بسته فقط ورودی تصمیم را آماده می‌کند و تا ثبت Evidence بیرونی هیچ ردیفی را Approved نمی‌کند.
 
+ممیزی RACI، Incident و Secret/Access، فرم Human Tabletop و Work Itemهای مشروط `PRE-DEC-04..06` در `docs/pilot/EXPLORIA_Operations_Security_Incident_Decision_Pack_v1.0.md` نگهداری می‌شوند. قابلیت 2FA یا Pause/Resume محلی به‌تنهایی معادل Governance عملیاتی نیست.
+
 توصیه فنی Provider-agnostic برای Mail، Storage، Monitoring، Backup و Runtime در `docs/staging/EXPLORIA_Operational_Architecture_Decision_v1.0.md` ثبت شده و تا تکمیل همین Approval Pack در وضعیت `DRAFT RECOMMENDED` باقی می‌ماند.
 
 Shortlist تاریخ‌دار و Compatibility Gap ارائه‌دهندگان در `docs/staging/EXPLORIA_Provider_Shortlist_2026-08-16.md` ثبت شده است. Liara Stack، Kavenegar و IPPanel صرفاً Candidate هستند؛ هیچ Provider تصویب یا خریداری نشده است.
@@ -37,6 +39,8 @@ Shortlist تاریخ‌دار و Compatibility Gap ارائه‌دهندگان �
 - ممیزی رابطه‌ها نشان می‌دهد `consent_logs.user_id` حذف User را محدود می‌کند، در حالی که روابط دیگر ترکیبی از Cascade و Null-on-delete هستند؛ تست حذف فعلی فقط User بدون سابقه عملیاتی را پوشش می‌دهد.
 - `marketing_leads.mobile` در Model فعلی رمزگذاری یا Hidden نشده است؛ استفاده واقعی آن تا تصمیم Notice/Consent، دسترسی و Retention باز می‌ماند.
 - اجرای `php artisan schedule:list` در 2026-08-21 هیچ Task واقعی نشان نداد؛ Retention/Prune هنوز نباید بدون تصویب ماتریس ساخته شود.
+- غیرفعال‌سازی Access فعلی فقط `user_access_scopes` را Inactive می‌کند و Account Login یا دسترسی Global ناشی از Role پایه را قطع نمی‌کند؛ Revocation کامل تا تصویب Account lifecycle یک Work Item باز است.
+- 2FA و Passkey در Application موجودند، اما الزام MFA برای نقش‌های privileged، Recovery و Exception process تصویب/اعمال نشده‌اند.
 - Scoped Pause/Resume با Incident Reference و Audit محلی وجود دارد: `app/Services/CampaignOperationalControlService.php` و `docs/features/SAFE_05_06_SCOPED_PAUSE_RESUME_DECISION_2026-08-16.md`.
 - Entity/Workflow عمومی Incident در Codebase وجود ندارد؛ برای Pilot حداقل امن، Incident Register کنترل‌شده بیرون سامانه مرجع است و شناسه آن در Pause/Resume ثبت می‌شود.
 
