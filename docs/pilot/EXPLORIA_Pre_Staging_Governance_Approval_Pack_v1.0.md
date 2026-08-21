@@ -20,6 +20,8 @@ Data Inventory اولیه، فرم‌های Sign-off و نقشه Work Itemهای
 
 توصیه فنی Provider-agnostic برای Mail، Storage، Monitoring، Backup و Runtime در `docs/staging/EXPLORIA_Operational_Architecture_Decision_v1.0.md` ثبت شده و تا تکمیل همین Approval Pack در وضعیت `DRAFT RECOMMENDED` باقی می‌ماند.
 
+رکورد رأی بخش‌به‌بخش `PRE-DEC-07` و تفکیک Approval معماری از Provider activation در `docs/staging/EXPLORIA_Operational_Architecture_Approval_Record_v1.0.md` نگهداری می‌شود. Storage backend، S3 Adapter و Vendor در این رکورد پیش‌فرض یا تصویب نمی‌شوند.
+
 Shortlist تاریخ‌دار و Compatibility Gap ارائه‌دهندگان در `docs/staging/EXPLORIA_Provider_Shortlist_2026-08-16.md` ثبت شده است. Liara Stack، Kavenegar و IPPanel صرفاً Candidate هستند؛ هیچ Provider تصویب یا خریداری نشده است.
 
 تصمیم‌های قطعی مالک و پیشنهادهایی که هنوز نیازمند پذیرش هستند در `docs/pilot/EXPLORIA_Owner_Decision_Record_2026-08-17.md` از یکدیگر تفکیک شده‌اند. ایمیل شخصی اعلام‌شده عمداً در Repository ثبت نشده است.

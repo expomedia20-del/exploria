@@ -6,13 +6,15 @@
 |---|---|
 | نوع | Architecture Decision Record — Provider-agnostic |
 | تاریخ | 2026-08-16 |
-| آخرین تطبیق Repository | 2026-08-21 — `main@3648754` پس از Merge PR #5 |
+| آخرین تطبیق Repository | 2026-08-21 — `main@3d4e145` پس از Merge PR #8 |
 | وضعیت | `DRAFT RECOMMENDED — STEP 3 APPROVAL PENDING` |
 | دامنه | Staging مستقل و Production آینده |
 | معماری Canonical | Laravel + React Monolith در یک Repository |
 | اثر بر Production | تا عبور Approvalها و Drillهای Staging، `NO-GO` |
 
 این ADR فناوری و الگوی عملیاتی را تعیین می‌کند، نه Vendor را. نام Provider، Region، Contract، DPA، SLA و Budget در `docs/pilot/EXPLORIA_Pre_Staging_Governance_Approval_Pack_v1.0.md` تصویب می‌شود. این تصمیم Microservice، Repository جدید، Kubernetes یا Redis را وارد معماری MVP نمی‌کند.
+
+رأی مستقل Product، Security و Operations برای `PRE-DEC-07` در `docs/staging/EXPLORIA_Operational_Architecture_Approval_Record_v1.0.md` ثبت می‌شود. آماده‌بودن آن رکورد، Approval محسوب نمی‌شود.
 
 ## 2. Evidence وضعیت فعلی
 
@@ -70,22 +72,22 @@ Hardening سطح Repository در PR #5 تکمیل شد؛ Gapهای Provider، Cr
 
 ### تصمیم پیشنهادی
 
-- Assetهای Uploadشده در Staging/Pilot/Production روی Object Storage سازگار با S3 نگهداری شوند؛ Local/Public فقط برای Local/Test یا Cache غیرحیاتی باشد.
-- Bucket برنامه و Bucket Backup در دو Scope یا حساب دسترسی مستقل باشند.
+- Assetهای Uploadشده در Staging/Pilot/Production روی Storage پایدار و خارج از Release نگهداری شوند؛ Backend نهایی در `PRE-DEC-11` بر اساس Requirement مصوب انتخاب می‌شود.
+- Application Storage و Backup باید Failure Domain یا Scope دسترسی مستقل داشته باشند؛ Application Runtime نباید مجوز حذف Backup داشته باشد.
 - دسترسی پیش‌فرض Private باشد. فقط Asset تأییدشده تبلیغاتی از مسیر URL کنترل‌شده/CDN عمومی شود.
 - Encryption at Rest، TLS، Versioning/Lifecycle، محدودیت MIME/Size، Malware Review عملیاتی و حذف Asset هنگام حذف/رد محتوا الزامی است.
-- Keyها به Least Privilege محدود شوند: برنامه نباید مجوز حذف Backup و Backup Agent نباید دسترسی Application Runtime داشته باشد.
+- اتصال Application از Laravel Disk abstraction استفاده کند؛ Persistent filesystem مستقل از Release یا Object Storage فقط پس از تصمیم `PRE-DEC-11` مجاز است.
 
 ### سازگاری و Gap
 
 - Laravel Disk abstraction با معماری Canonical سازگار است.
 - Service تبلیغات Disk `public` را Hardcode کرده و باید به Disk قابل تنظیم اختصاصی مانند `media` منتقل شود.
-- Adapter S3 نصب نیست؛ افزودن آن Dependency کنترل‌شده و نیازمند Review/Composer Audit است.
+- Adapter S3 نصب نیست و در Baseline الزامی نشده است؛ فقط اگر Object Storage در `PRE-DEC-11` تصویب شود، افزودن Adapter یک Dependency کنترل‌شده با Review/Composer Audit خواهد بود.
 - URLهای موجود Public Local باید در Migration محتوا/Regression بررسی شوند؛ تغییر بدون Drill می‌تواند رفتار نمایش تبلیغ را تغییر دهد.
 
 ### Evidence لازم
 
-1. Upload/Read/Delete فایل تست روی Staging و اثبات Private-by-default.
+1. Upload/Read/Delete فایل تست روی Backend مصوب Staging و اثبات Private-by-default.
 2. دسترسی عمومی فقط به Asset تأییدشده و رد Object Key حدس‌زده‌شده.
 3. Lifecycle و حذف واقعی، Audit و بازیابی نسخه در سناریوی خطا.
 4. E2E صفحه تبلیغ/نمایشگر پس از تغییر Disk.
@@ -192,6 +194,6 @@ Provider با نقص Security/Ownership/Export حتی با امتیاز کل ب�
 
 ## 11. Exit Gate تصمیم معماری
 
-این ADR فقط وقتی `APPROVED` می‌شود که Product، Security و Operations آن را تأیید و Provider Register حداقل برای Staging تکمیل کنند. اجرای واقعی هر قابلیت در گام‌های 5 تا 8 Evidence مستقل می‌خواهد.
+این ADR در سطح `APPROVED BASELINE` فقط وقتی تصویب می‌شود که Product، Security و Operations همه تصمیم‌های مستقل رکورد Approval را تأیید یا با شروط دارای Owner/Due Date بپذیرند. تکمیل Provider Register شرط انتخاب و فعال‌سازی Provider در `PRE-DEC-08..16` است، نه شرط رأی معماری `PRE-DEC-07`؛ بنابراین Approval معماری هیچ Provider، خرید، Dependency یا Config واقعی را مجاز نمی‌کند. اجرای واقعی هر قابلیت در گام‌های 5 تا 8 Evidence مستقل می‌خواهد.
 
 **نتیجه فعلی:** `DRAFT RECOMMENDED — TECHNICAL BASELINE DEFINED; PROVIDER, BUDGET AND FORMAL APPROVAL PENDING`
