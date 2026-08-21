@@ -14,6 +14,8 @@
 
 رجیستر تجمیعی TBDهای مسدودکننده، Gate هر تصمیم و تفکیک موارد فعال پیش از انتقال از اقدامات بعد از Staging در `docs/pilot/EXPLORIA_Pre_Server_Decision_Checklist_v1.0.md` نگهداری می‌شود.
 
+Data Inventory اولیه، فرم‌های Sign-off و نقشه Work Itemهای مشروط برای `PRE-DEC-01..03` در `docs/pilot/EXPLORIA_Legal_Privacy_Retention_Decision_Pack_v1.0.md` نگهداری می‌شود. این بسته فقط ورودی تصمیم را آماده می‌کند و تا ثبت Evidence بیرونی هیچ ردیفی را Approved نمی‌کند.
+
 توصیه فنی Provider-agnostic برای Mail، Storage، Monitoring، Backup و Runtime در `docs/staging/EXPLORIA_Operational_Architecture_Decision_v1.0.md` ثبت شده و تا تکمیل همین Approval Pack در وضعیت `DRAFT RECOMMENDED` باقی می‌ماند.
 
 Shortlist تاریخ‌دار و Compatibility Gap ارائه‌دهندگان در `docs/staging/EXPLORIA_Provider_Shortlist_2026-08-16.md` ثبت شده است. Liara Stack، Kavenegar و IPPanel صرفاً Candidate هستند؛ هیچ Provider تصویب یا خریداری نشده است.
@@ -32,6 +34,9 @@ Shortlist تاریخ‌دار و Compatibility Gap ارائه‌دهندگان �
 - Mobile در `User` و `OtpRequest` رمزگذاری و Hash مستقل نگهداری می‌شود: `app/Models/User.php` و `app/Models/OtpRequest.php`.
 - Scan/Event فقط Hash نشست، IP و User-Agent را نگهداری می‌کند: `app/Actions/Events/RecordQrScanEventAction.php` و Migration مربوط به `scan_events`/`event_log`.
 - حذف حساب خودکار Laravel موجود است، اما حذف/ناشناس‌سازی همه روابط Pilot با داده واقعی هنوز Drill و Evidence ندارد: `app/Http/Controllers/Settings/ProfileController.php` و `tests/Feature/Settings/ProfileUpdateTest.php`.
+- ممیزی رابطه‌ها نشان می‌دهد `consent_logs.user_id` حذف User را محدود می‌کند، در حالی که روابط دیگر ترکیبی از Cascade و Null-on-delete هستند؛ تست حذف فعلی فقط User بدون سابقه عملیاتی را پوشش می‌دهد.
+- `marketing_leads.mobile` در Model فعلی رمزگذاری یا Hidden نشده است؛ استفاده واقعی آن تا تصمیم Notice/Consent، دسترسی و Retention باز می‌ماند.
+- اجرای `php artisan schedule:list` در 2026-08-21 هیچ Task واقعی نشان نداد؛ Retention/Prune هنوز نباید بدون تصویب ماتریس ساخته شود.
 - Scoped Pause/Resume با Incident Reference و Audit محلی وجود دارد: `app/Services/CampaignOperationalControlService.php` و `docs/features/SAFE_05_06_SCOPED_PAUSE_RESUME_DECISION_2026-08-16.md`.
 - Entity/Workflow عمومی Incident در Codebase وجود ندارد؛ برای Pilot حداقل امن، Incident Register کنترل‌شده بیرون سامانه مرجع است و شناسه آن در Pause/Resume ثبت می‌شود.
 

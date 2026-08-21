@@ -6,7 +6,7 @@
 |---|---|
 | نوع | Working Decision Checklist — غیرجایگزین اسناد Canonical یا Approval رسمی |
 | تاریخ | 2026-08-21 |
-| مبنای Codebase | `main@3648754` — Merge PR #5 |
+| مبنای Codebase | `main@3e0dce9` — Merge PR #5، PR #6 و Quality Gate dependency update |
 | مبنای تطبیق اسناد | `0d20d95` — Post-PR5 readiness reconciliation |
 | Scope فعال | فقط تصمیم‌هایی که پیش از خرید، Provisioning، انتقال Release یا ورود داده واقعی باید بسته شوند |
 | خارج از Scope فعال | اجرای فنی روی سرور، Drillهای Staging، UAT واقعی و عملیات Pilot |
@@ -14,6 +14,8 @@
 | Production/Pilot | `NO-GO` |
 
 این سند همه TBDهای مسدودکننده را در یک رجیستر عملیاتی جمع می‌کند. وجود ردیف یا علامت‌گذاری آن به معنی Approval نیست. نام تماس خصوصی، Credential، Token، قرارداد محرمانه، امضای اسکن‌شده یا PII نباید در Repository ثبت شود؛ فقط شناسه Evidence غیرحساس مجاز است.
+
+بستهٔ اجرایی جمع‌آوری تصمیم و Evidence برای سه ردیف نخست در `docs/pilot/EXPLORIA_Legal_Privacy_Retention_Decision_Pack_v1.0.md` آماده شده است. آماده‌بودن فرم‌ها وضعیت `PRE-DEC-01..03` را تغییر نمی‌دهد؛ این ردیف‌ها تا Sign-off بیرونی همچنان باز هستند.
 
 ## 2. Gate و قواعد بستن تصمیم
 
@@ -37,9 +39,9 @@
 
 | ID | Gate | وضعیت | تصمیم مسدودکننده | وضعیت فعلی | برای بسته‌شدن | Approver لازم | مرجع |
 |---|---|---|---|---|---|---|---|
-| `PRE-DEC-01` | D1 | `PARTIAL` | پذیرش کتبی نقش Legal Approver | آقای سیفی معرفی شده؛ پذیرش/Sign-off مکتوب Pending است | Engagement Reference غیرحساس، تاریخ پذیرش و محدوده Review | Legal + Product | Approval Pack §6/§9؛ Owner Record §3/§8 |
-| `PRE-DEC-02` | D0/D1 | `OPEN` | متن نهایی Privacy، Consent، سیاست کودک/اهلیت و Data Rights | متن Seed فقط Demo است؛ تصمیم حقوقی نهایی وجود ندارد | نسخه مصوب، Data Controller و Contact رسمی، هدف‌ها، Processorها، Withdraw و سیاست کودک | Legal + Product + Venue/Security حسب موضوع | Approval Pack §3/§9؛ `OD-002`؛ Pilot Charter `PO-PILOT-09` |
-| `PRE-DEC-03` | D0/D1 | `OPEN` | Retention، Deletion، Legal Hold و SLA درخواست داده | ماتریس فقط Proposed است؛ Job/Anonymization/Restore-safe deletion وجود ندارد | تصویب مدت‌ها و Exceptions، Owner/SLA و تعیین Work Itemهای فنی | Legal + Privacy Owner + Security + Finance حسب داده | Approval Pack §4/§9 |
+| `PRE-DEC-01` | D1 | `PARTIAL` | پذیرش کتبی نقش Legal Approver | نقش معرفی شده و فرم پذیرش آماده است؛ پذیرش/Sign-off مکتوب Pending است | Engagement Reference غیرحساس، تاریخ پذیرش و محدوده Review | Legal + Product | Legal/Privacy/Retention Pack §4؛ Approval Pack §6/§9؛ Owner Record §3/§8 |
+| `PRE-DEC-02` | D0/D1 | `OPEN` | متن نهایی Privacy، Consent، سیاست کودک/اهلیت و Data Rights | ممیزی داده و فرم تصمیم آماده است؛ متن Seed فقط Demo است و تصمیم حقوقی نهایی وجود ندارد | نسخه مصوب، Data Controller و Contact رسمی، هدف‌ها، Processorها، Withdraw و سیاست کودک | Legal + Product + Venue/Security حسب موضوع | Legal/Privacy/Retention Pack §3/§5؛ Approval Pack §3/§9؛ `OD-002`؛ Pilot Charter `PO-PILOT-09` |
+| `PRE-DEC-03` | D0/D1 | `OPEN` | Retention، Deletion، Legal Hold و SLA درخواست داده | Data Inventory اولیه و فرم تصمیم آماده است؛ ماتریس فقط Proposed است و Job/Anonymization/Restore-safe deletion وجود ندارد | تصویب مدت‌ها و Exceptions، Owner/SLA و تعیین Work Itemهای فنی | Legal + Privacy Owner + Security + Finance حسب داده | Legal/Privacy/Retention Pack §3/§6/§7؛ Approval Pack §4/§9 |
 | `PRE-DEC-04` | D1 | `PARTIAL` | RACI فنی و عملیاتی پیش از Handoff | Product/Finance/Privacy Owner مشخص‌اند؛ Tech Lead و Security Owner نام‌دار نیستند؛ مدیا پارس نماینده و On-call نام‌دار ندارد | Tech Lead، Security Approver، نماینده Operations، جانشین‌ها و کانال امن تماس خارج Repository | Product + Operations + Security | Approval Pack §6؛ Owner Record §3 |
 | `PRE-DEC-05` | D1 | `PARTIAL` | Incident Policy، اختیار Pause/Resume و Incident Register | کنترل نرم‌افزاری محلی موجود است؛ Policy/RACI انسانی و Register رسمی تصویب نشده‌اند | Severity/SLA، Incident Commander، جانشین، Register کنترل‌شده، Escalation و Sign-off | Product + Operations + Security + Legal | Approval Pack §5/§9 |
 | `PRE-DEC-06` | D1 | `OPEN` | Secret و Access Governance | ممنوعیت Secret در Git قفل است؛ Secret Store/Password Manager، MFA، Recovery، Rotation و Revocation عملیاتی تعیین نشده‌اند | ابزار/فرآیند مصوب، Account Owner، جانشین، MFA، Rotation/Revocation و Access Review | Security + Operations | Owner Record §4؛ Due-diligence §3/§4 |
