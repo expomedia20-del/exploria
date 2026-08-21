@@ -5,10 +5,10 @@
 | فیلد | مقدار |
 |---|---|
 | نوع سند | Working Status Snapshot - غیرجایگزین اسناد Canonical |
-| تاریخ Snapshot | 2026-08-16 |
+| تاریخ Snapshot | 2026-08-21 |
 | Codebase | Laravel + React Monolith / Inertia-style |
 | شاخه مبنا | `main` |
-| Commit مبنا | `a9a9e45` — Merge PR #3 |
+| Commit مبنا | `05e2c88` — Merge PR #4 |
 | هدف | تفکیک روشن قابلیت‌های آماده، نمایشی، مسدود پیش از پایلوت و خارج از Scope |
 
 این رجیستر وضعیت اجرایی Codebase را ثبت می‌کند و جایگزین BRD، FRD، Scope Lock، Backlog یا اسناد Governance مصوب نیست. در صورت تعارض، سلسله‌مراتب سند 21 اعمال می‌شود.
@@ -30,14 +30,14 @@
 | Routeهای ثبت‌شده | 242 |
 | صفحات React | 51 |
 | Modelهای Laravel | 52 |
-| Serviceهای Domain/Application | 36 |
+| Serviceهای Domain/Application | 37 |
 | فایل‌های تست PHP | 62 |
-| نتیجه Test Suite محلی | 374 Test / 4820 Assertion / 0 Failure |
+| نتیجه Test Suite محلی | 381 Test / 4881 Assertion / 0 Failure |
 | CI روی PR شماره 3 | 4 Check موفق: Quality، PHP 8.4، PHP 8.5 و PostgreSQL |
 | تحلیل ایستا و کیفیت | PHPStan 0 Error؛ ESLint، TypeScript، Pint و Prettier موفق |
 | Build تولیدی | Launch Assurance محلی 2026-08-20: موفق؛ حدود 50.88 ثانیه |
 | Demo Readiness | 19 Pass / 0 Warning / 0 Fail |
-| Production Readiness با PostgreSQL موقت و APP_ENV=local | 6 Pass / 8 Fail / `ready=false` - Fail-Closed مورد انتظار |
+| Production Readiness در محیط کاری Local | 1 Pass / 17 Fail / `ready=false` - Mail، Storage Evidence، Monitoring، Queue، Cache Evidence، Session Evidence و Scheduler نیز Fail-Closed |
 | Migration روی SQLite کاری | 1 مورد معوق: `2026_08_15_000001_add_reward_governance_controls`؛ عمداً اجرا نشد |
 | مانور Local Pre-Staging PostgreSQL 18 | 36 Migration، Rollback/Re-apply، 374 Test / 4821 Assertion، Reconciliation، Backup/Restore، Tamper Test و Launch Assurance موفق |
 | مانور فنی Incident محلی | 12 Test / 94 Assertion؛ Scoped Pause/Resume، QR/Mission/Reward coordination، Incident linkage، Recovery Evidence و Audit موفق |
@@ -73,8 +73,9 @@
 | پشتیبانی | راهنمای نقش، صفحه Support و مسیرهای دسترسی مشترک | `/admin/support`، `/admin/users/guide` | `DEMO_READY` | SLA، Ticket/Complaint Workflow و Escalation واقعی |
 | چرخه دمو | چک‌لیست 72 ساعت، روز اجرا، خروجی فروش و Stress Demo | `/admin/demo-cycle`، Readiness Serviceها | `DEMO_READY` | تبدیل چک‌لیست Demo به Runbook پایلوت مصوب |
 | PostgreSQL | Server/Client و CI با PostgreSQL 18؛ مانور موقت محلی شامل Migration، Rollback/Re-apply، Reconciliation، Backup/Restore و Tamper Test موفق است | `.github/workflows/tests.yml`، `phpunit.pgsql.xml`، اسکریپت‌ها و `docs/staging/EXPLORIA_Pre_Staging_Local_Rehearsal_2026-08-20.md` | `PILOT_BLOCKED` | تکرار همین Drillها روی Staging واقعی و مستقل |
-| استقرار | Release-based Deploy، Backup Gate با SHA-256 Fail-Closed، Rollback، `/up` و Preflight امنیت Session/OTP | `scripts/deploy-staging.sh` و `docs/staging/EXPLORIA_Stage_3_Staging_Readiness_v1.0.md` | `PRODUCTION_BLOCKED` | Provisioning سرور/دامنه، Backup رمزگذاری‌شده Off-host و اجرای واقعی Backup/Restore و Deployment Drill |
-| Logging/Monitoring | Application Log، Event/Audit پایه و Production Readiness Check | Logging Config و Audit Actionها | `PRODUCTION_BLOCKED` | Retention، Central Logging، Metrics و Alerting |
+| استقرار | Release-based Deploy، Backup Gate با SHA-256، Rollback، `/up`، Preflight امنیت Session/OTP و الزام Evidence Pack بیرون Repository | `scripts/deploy-staging.sh`، `OperationalEvidenceService` و سند Stage 3 | `PRODUCTION_BLOCKED` | Provisioning، Evidence واقعی هفت حوزه، Backup رمزگذاری‌شده Off-host و Deployment/Rollback Drill |
+| Mail/Storage/Runtime | Gateهای Mail واقعی، Storage Probe، Queue/Cache ثبت‌شده، Session Backend و Scheduler Task بدون تحمیل Provider | `ProductionReadinessService` و تست‌های Infrastructure | `PRODUCTION_BLOCKED` | E2E واقعی Mail/Storage و Evidence Worker/Cache/Session/Scheduler در Staging |
+| Logging/Monitoring | Sink محلی-only رد می‌شود و Monitoring به Evidence مرکزی/Alert/On-call نیاز دارد | Logging Config، Operational Evidence و Audit Actionها | `PRODUCTION_BLOCKED` | Central Logging، Retention، Metrics، Alerting و مانور On-call واقعی |
 | Offline | پیام خطا/Retry و Fallback محدود؛ Sync کامل پیاده‌سازی نشده است | تصمیم OD-006 و Scope Lock | `OUT_OF_SCOPE` | Change Request پس از اثبات نیاز پایلوت |
 | حقوقی و Data Governance | مالک و سقف‌ها پذیرفته شده‌اند؛ آقای سیفی Legal Approver و شرکت مدیا پارس Operations Owner معرفی شده‌اند، اما امضای کتبی، Security Approver و Vendor Contract هنوز نهایی نیست | OD-002، OD-009، Approval Pack، Owner Decision Record و `EXPLORIA_Provider_Due_Diligence_2026-08-18.md` | `PILOT_BLOCKED` | Legal/Operations sign-off، نماینده/On-call مدیا پارس، Security Approver، پاسخ Vendor، متن حقوقی، دامنه رسمی، جانشین Incident و Provider دوم ایرانی |
 | Native/Microservices | در معماری MVP وجود ندارد | Framework-20 و PCG-01 | `OUT_OF_SCOPE` | فقط با Change Request و تصمیم معماری آینده |
@@ -89,13 +90,13 @@
 5. QR Domain/Print/Installation Plan و داده میدانی تأییدشده.
 6. Reward Budget، Anti-Fraud، مسئول تأمین و Redemption Policy.
 7. تصویب RACI/Incident Policy و اجرای مانور Scoped Pause/Resume روی Staging؛ حداقل فنی، Incident Linkage و Audit Trail در Local پیاده‌سازی شده است.
-8. Queue، Cache، Session و Scheduler پایدار و راستی‌آزمایی‌شده در Staging.
+8. Queue، Cache، Session و Scheduler پایدار و راستی‌آزمایی‌شده در Staging، همراه Evidence Pack تازه و بیرون Repository.
 9. Central Monitoring، Logging، Alerting، On-call و Runbook Incident مصوب.
 10. UAT رسمی روی Staging و صورت‌جلسه امضاشده Go/No-Go.
 
 ## 6. نتیجه Stage 3
 
-آمادگی Repository برای Staging با وضعیت `CONDITIONAL COMPLETE` ثبت شد. Session رمزنگاری‌شده، OTP فقط روی Endpoint معتبر HTTPS، Preflight استقرار، Headerهای Nginx، Runbook عملیاتی، Gate حاکمیت پاداش و PostgreSQL CI آماده‌اند. استقرار بیرونی انجام نشده است، زیرا سرور، دامنه/TLS، PostgreSQL Credential، Providerهای واقعی و سامانه Monitoring/Backup واقعی ارائه نشده‌اند. این وضعیت مجوز Production یا Pilot نیست.
+آمادگی Repository برای Staging با وضعیت `CONDITIONAL COMPLETE` ثبت شد. Session رمزنگاری‌شده، OTP فقط روی Endpoint معتبر HTTPS، Preflight استقرار، Headerهای Nginx، Runbook عملیاتی، Gate حاکمیت پاداش و PostgreSQL CI آماده‌اند. Admission Gate اکنون Mail، Storage، Monitoring، Queue، Cache، Session و Scheduler را بدون Evidence بیرونی PASS نمی‌کند. استقرار بیرونی انجام نشده است، زیرا سرور، دامنه/TLS، PostgreSQL Credential، Providerهای واقعی و سامانه Monitoring/Backup واقعی ارائه نشده‌اند. این وضعیت مجوز Production یا Pilot نیست.
 
 مرجع Evidence: `docs/staging/EXPLORIA_Stage_3_Staging_Readiness_v1.0.md`
 
