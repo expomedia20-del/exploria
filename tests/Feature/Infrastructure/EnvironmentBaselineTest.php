@@ -24,6 +24,7 @@ class EnvironmentBaselineTest extends TestCase
         $this->assertStringContainsString('APP_URL=https://', $stagingEnvironment);
         $this->assertStringContainsString('DB_CONNECTION=pgsql', $stagingEnvironment);
         $this->assertStringContainsString('QUEUE_CONNECTION=database', $stagingEnvironment);
+        $this->assertStringContainsString('CACHE_STORE=database', $stagingEnvironment);
         $this->assertStringContainsString('SESSION_DRIVER=database', $stagingEnvironment);
         $this->assertStringContainsString('SESSION_ENCRYPT=true', $stagingEnvironment);
         $this->assertStringContainsString('SESSION_SECURE_COOKIE=true', $stagingEnvironment);
@@ -31,6 +32,10 @@ class EnvironmentBaselineTest extends TestCase
         $this->assertStringContainsString('SESSION_SAME_SITE=lax', $stagingEnvironment);
         $this->assertStringContainsString('OTP_DRIVER=http', $stagingEnvironment);
         $this->assertStringContainsString('OTP_HTTP_TOKEN=', $stagingEnvironment);
+        $this->assertStringContainsString('LOG_STACK=stderr', $stagingEnvironment);
+        $this->assertStringContainsString("MAIL_MAILER=\n", str_replace("\r\n", "\n", $stagingEnvironment));
+        $this->assertStringContainsString('EXPLORIA_OPERATIONAL_EVIDENCE_PATH=', $stagingEnvironment);
+        $this->assertStringContainsString('EXPLORIA_OPERATIONAL_EVIDENCE_MAX_AGE_MINUTES=1440', $stagingEnvironment);
         $this->assertStringNotContainsString('OTP_HTTP_TOKEN=sk_', $stagingEnvironment);
     }
 
@@ -160,6 +165,12 @@ class EnvironmentBaselineTest extends TestCase
         $this->assertStringContainsString("otp_driver\" == 'http'", $deployScript);
         $this->assertStringContainsString('OTP_HTTP_ENDPOINT must be a valid HTTPS URL', $deployScript);
         $this->assertStringContainsString('OTP_HTTP_TOKEN must be configured outside the repository', $deployScript);
+        $this->assertStringContainsString('MAIL_MAILER must select a real configured transport', $deployScript);
+        $this->assertStringContainsString('LOG_CHANNEL must select an operational sink', $deployScript);
+        $this->assertStringContainsString('LOG_STACK must include an operational sink', $deployScript);
+        $this->assertStringContainsString('EXPLORIA_OPERATIONAL_EVIDENCE_PATH must be an absolute path', $deployScript);
+        $this->assertStringContainsString('the external operational evidence pack is missing', $deployScript);
+        $this->assertStringContainsString('the operational evidence pack must be stored outside the repository', $deployScript);
         $this->assertStringContainsString('EXPLORIA_HEALTH_URL must match APP_URL plus /up', $deployScript);
         $this->assertStringContainsString('git status --porcelain', $deployScript);
         $this->assertStringContainsString('git archive', $deployScript);

@@ -9,8 +9,16 @@ use App\Infrastructure\Otp\LocalFixedOtpProvider;
 use App\Infrastructure\Otp\UnavailableOtpProvider;
 use App\Models\Campaign;
 use App\Models\RewardDefinition;
+use Illuminate\Cache\CacheManager;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Migrations\Migrator;
+use Illuminate\Filesystem\FilesystemManager;
+use Illuminate\Log\LogManager;
+use Illuminate\Mail\MailManager;
+use Illuminate\Queue\QueueManager;
+use Illuminate\Session\SessionManager;
+use Illuminate\Support\Str;
 use Throwable;
 
 class ProductionReadinessService
@@ -20,6 +28,14 @@ class ProductionReadinessService
         private readonly Migrator $migrator,
         private readonly OtpProvider $otpProvider,
         private readonly RewardGovernanceService $rewardGovernance,
+        private readonly OperationalEvidenceService $operationalEvidence,
+        private readonly CacheManager $cache,
+        private readonly FilesystemManager $filesystems,
+        private readonly Schedule $schedule,
+        private readonly MailManager $mail,
+        private readonly LogManager $log,
+        private readonly QueueManager $queue,
+        private readonly SessionManager $sessions,
     ) {}
 
     /**
@@ -36,6 +52,14 @@ class ProductionReadinessService
         [$rewardGovernanceReady, $rewardGovernanceStatus] = $this->rewardGovernanceStatus($checkDatabaseRuntime, $databaseRuntimeReady);
         [$operationalControlReady, $operationalControlStatus] = $this->operationalControlStatus($checkDatabaseRuntime, $databaseRuntimeReady);
         [$otpProviderReady, $otpProviderStatus] = $this->otpProviderStatus();
+        $evidence = $this->operationalEvidence->report($environment);
+        [$mailReady, $mailStatus] = $this->mailConfigurationStatus();
+        [$storageReady, $storageStatus] = $this->storageStatus($checkDatabaseRuntime);
+        [$monitoringReady, $monitoringStatus] = $this->monitoringConfigurationStatus();
+        [$queueReady, $queueStatus] = $this->queueStatus($checkDatabaseRuntime);
+        [$cacheReady, $cacheStatus] = $this->cacheStatus($checkDatabaseRuntime);
+        [$sessionReady, $sessionStatus] = $this->sessionStatus($checkDatabaseRuntime);
+        [$schedulerReady, $schedulerStatus] = $this->schedulerStatus($checkDatabaseRuntime);
 
         $checks = [
             $this->check(
@@ -81,6 +105,13 @@ class ProductionReadinessService
                 'اتصال دیتابیس باید برقرار و همه Migrationها اجرا شده باشند.',
             ),
             $this->check(
+                'operational_evidence',
+                'بسته شواهد عملیاتی',
+                $evidence['valid'],
+                $evidence['status'],
+                'بسته Evidence تازه، معتبر، مخصوص همین محیط و خارج از Repository برای همه کنترل‌های عملیاتی لازم است.',
+            ),
+            $this->check(
                 'reward_governance',
                 'حاکمیت پاداش فعال',
                 $rewardGovernanceReady,
@@ -102,25 +133,64 @@ class ProductionReadinessService
                 'یک Provider واقعی و غیرمحلی باید برای OtpProvider ثبت شده باشد.',
             ),
             $this->check(
+                'mail',
+                'ارسال Mail عملیاتی',
+                $mailReady && $evidence['checks']['mail'],
+                [
+                    'configuration' => $mailStatus,
+                    'evidence' => $this->evidenceStatus($evidence, 'mail'),
+                ],
+                'Mail باید از Transport واقعی و غیرمحلی استفاده کند و آزمون E2E بیرونی تازه داشته باشد.',
+            ),
+            $this->check(
+                'storage',
+                'ذخیره‌سازی عملیاتی',
+                $storageReady && $evidence['checks']['storage'],
+                [
+                    'runtime' => $storageStatus,
+                    'evidence' => $this->evidenceStatus($evidence, 'storage'),
+                ],
+                'Diskهای مورد استفاده برنامه باید Write/Read/Delete موفق و آزمون E2E بیرونی تازه داشته باشند.',
+            ),
+            $this->check(
+                'monitoring',
+                'Monitoring و Alerting',
+                $monitoringReady && $evidence['checks']['monitoring'],
+                [
+                    'configuration' => $monitoringStatus,
+                    'evidence' => $this->evidenceStatus($evidence, 'monitoring'),
+                ],
+                'Log باید به Sink عملیاتی متصل باشد و Central Monitoring، Alerting و On-call با Evidence تازه اثبات شوند.',
+            ),
+            $this->check(
                 'queue',
                 'صف پردازش',
-                ! in_array(config('queue.default'), ['sync', 'null'], true),
-                config('queue.default'),
-                'QUEUE_CONNECTION باید یک صف پایدار مانند database یا redis باشد.',
+                $queueReady && $evidence['checks']['queue'],
+                [
+                    'runtime' => $queueStatus,
+                    'evidence' => $this->evidenceStatus($evidence, 'queue'),
+                ],
+                'Queue باید Connection معتبر، Backend پایدار، زیرساخت Runtime و Evidence Worker/Retry/Failure داشته باشد.',
             ),
             $this->check(
                 'cache',
                 'ذخیره‌ساز Cache',
-                ! in_array(config('cache.default'), ['array', 'null'], true),
-                config('cache.default'),
-                'CACHE_STORE باید در استقرار پایدار باشد.',
+                $cacheReady && $evidence['checks']['cache'],
+                [
+                    'runtime' => $cacheStatus,
+                    'evidence' => $this->evidenceStatus($evidence, 'cache'),
+                ],
+                'Cache باید Store معتبر، Round-trip موفق و Evidence عملیاتی تازه داشته باشد.',
             ),
             $this->check(
                 'session_driver',
                 'ذخیره‌ساز Session',
-                in_array(config('session.driver'), ['database', 'redis'], true),
-                config('session.driver'),
-                'SESSION_DRIVER باید database یا redis باشد.',
+                $sessionReady && $evidence['checks']['session'],
+                [
+                    'runtime' => $sessionStatus,
+                    'evidence' => $this->evidenceStatus($evidence, 'session'),
+                ],
+                'Session باید Backend معتبر و قابل دسترس و Evidence ماندگاری بین Deployها داشته باشد.',
             ),
             $this->check(
                 'secure_cookie',
@@ -138,11 +208,14 @@ class ProductionReadinessService
                 'SESSION_SECURE_COOKIE، SESSION_HTTP_ONLY و SESSION_ENCRYPT باید فعال و SESSION_SAME_SITE برابر lax یا strict باشد.',
             ),
             $this->check(
-                'logging',
-                'ثبت رویداد عملیاتی',
-                config('logging.default') !== 'null',
-                config('logging.default'),
-                'LOG_CHANNEL نباید null باشد.',
+                'scheduler',
+                'Scheduler عملیاتی',
+                $schedulerReady && $evidence['checks']['scheduler'],
+                [
+                    'runtime' => $schedulerStatus,
+                    'evidence' => $this->evidenceStatus($evidence, 'scheduler'),
+                ],
+                'Scheduler باید Task واقعی مصوب و Evidence اجرای موفق و Alert شکست داشته باشد.',
             ),
         ];
 
@@ -187,7 +260,7 @@ class ProductionReadinessService
     private function databaseRuntimeStatus(bool $shouldCheck): array
     {
         if (! $shouldCheck) {
-            return [true, 'skipped-for-isolated-test'];
+            return [false, 'not-checked'];
         }
 
         try {
@@ -215,7 +288,7 @@ class ProductionReadinessService
     private function rewardGovernanceStatus(bool $shouldCheck, bool $databaseRuntimeReady): array
     {
         if (! $shouldCheck) {
-            return [true, 'skipped-for-isolated-test'];
+            return [false, 'not-checked'];
         }
 
         if (! $databaseRuntimeReady) {
@@ -269,7 +342,7 @@ class ProductionReadinessService
     private function operationalControlStatus(bool $shouldCheck, bool $databaseRuntimeReady): array
     {
         if (! $shouldCheck) {
-            return [true, 'skipped-for-isolated-test'];
+            return [false, 'not-checked'];
         }
 
         if (! $databaseRuntimeReady) {
@@ -329,5 +402,463 @@ class ProductionReadinessService
         }
 
         return [true, class_basename($this->otpProvider)];
+    }
+
+    /**
+     * @param  array{valid: bool, status: string, checks: array<string, bool>}  $evidence
+     */
+    private function evidenceStatus(array $evidence, string $key): string
+    {
+        return ($evidence['checks'][$key] ?? false) ? 'verified' : $evidence['status'];
+    }
+
+    /**
+     * @return array{bool, array{mailer: string, transport: string, from: string}}
+     */
+    private function mailConfigurationStatus(): array
+    {
+        $mailer = config('mail.default');
+        $from = config('mail.from.address');
+        [$mailerReady, $transport] = is_string($mailer) && trim($mailer) !== ''
+            ? $this->mailerStatus($mailer)
+            : [false, 'missing'];
+        $fromReady = is_string($from) && filter_var($from, FILTER_VALIDATE_EMAIL) !== false;
+
+        if ($mailerReady) {
+            try {
+                $this->mail->mailer($mailer)->getSymfonyTransport();
+            } catch (Throwable) {
+                $mailerReady = false;
+                $transport = 'unresolvable';
+            }
+        }
+
+        return [
+            $mailerReady && $fromReady,
+            [
+                'mailer' => is_string($mailer) && trim($mailer) !== '' ? $mailer : 'missing',
+                'transport' => $transport,
+                'from' => $fromReady ? 'configured' : 'missing-or-invalid',
+            ],
+        ];
+    }
+
+    /**
+     * @param  list<string>  $visited
+     * @return array{bool, string}
+     */
+    private function mailerStatus(string $mailer, array $visited = []): array
+    {
+        if (in_array($mailer, $visited, true)) {
+            return [false, 'cyclic'];
+        }
+
+        $configuration = config("mail.mailers.{$mailer}");
+
+        if (! is_array($configuration)) {
+            return [false, 'unregistered'];
+        }
+
+        $transport = $configuration['transport'] ?? null;
+
+        if (! is_string($transport) || in_array($transport, ['', 'array', 'log', 'null'], true)) {
+            return [false, is_string($transport) && $transport !== '' ? $transport : 'missing'];
+        }
+
+        if (! in_array($transport, ['failover', 'roundrobin'], true)) {
+            return [true, $transport];
+        }
+
+        $children = $configuration['mailers'] ?? null;
+
+        if (! is_array($children) || $children === []) {
+            return [false, "{$transport}-empty"];
+        }
+
+        foreach ($children as $child) {
+            if (! is_string($child) || ! $this->mailerStatus($child, [...$visited, $mailer])[0]) {
+                return [false, "{$transport}-unsafe"];
+            }
+        }
+
+        return [true, $transport];
+    }
+
+    /**
+     * @return array{bool, array<string, string>}
+     */
+    private function storageStatus(bool $shouldCheck): array
+    {
+        $configuredDisks = config('production_readiness.storage_disks');
+
+        if (! is_array($configuredDisks) || $configuredDisks === []) {
+            return [false, ['configuration' => 'missing']];
+        }
+
+        $status = [];
+        $ready = true;
+
+        foreach ($configuredDisks as $disk) {
+            if (! is_string($disk) || trim($disk) === '') {
+                $ready = false;
+                $status['unknown'] = 'invalid-disk-name';
+
+                continue;
+            }
+
+            $configuration = config("filesystems.disks.{$disk}");
+            $driver = is_array($configuration) ? ($configuration['driver'] ?? null) : null;
+
+            if (! is_string($driver) || in_array($driver, ['', 'array', 'memory', 'null'], true)) {
+                $ready = false;
+                $status[$disk] = 'unregistered-or-ephemeral';
+
+                continue;
+            }
+
+            if (! $shouldCheck) {
+                $ready = false;
+                $status[$disk] = 'not-checked';
+
+                continue;
+            }
+
+            $probePath = 'readiness-probes/'.Str::uuid().'.txt';
+            $probeValue = 'exploria-storage-readiness';
+
+            try {
+                $filesystem = $this->filesystems->disk($disk);
+                $stored = $filesystem->put($probePath, $probeValue);
+                $readBack = $stored ? $filesystem->get($probePath) : null;
+                $deleted = $stored ? $filesystem->delete($probePath) : false;
+                $passed = $stored && $readBack === $probeValue && $deleted && ! $filesystem->exists($probePath);
+                $ready = $ready && $passed;
+                $status[$disk] = $passed ? 'write-read-delete-ok' : 'probe-failed';
+            } catch (Throwable) {
+                $ready = false;
+                $status[$disk] = 'probe-failed';
+
+                try {
+                    $this->filesystems->disk($disk)->delete($probePath);
+                } catch (Throwable) {
+                    // The readiness result is already fail-closed.
+                }
+            }
+        }
+
+        return [$ready, $status];
+    }
+
+    /**
+     * @return array{bool, array{channel: string, sink: string}}
+     */
+    private function monitoringConfigurationStatus(): array
+    {
+        $channel = config('logging.default');
+        [$ready, $sink] = is_string($channel) && trim($channel) !== ''
+            ? $this->loggingChannelStatus($channel)
+            : [false, 'missing'];
+
+        if ($ready) {
+            try {
+                $this->log->channel($channel);
+            } catch (Throwable) {
+                $ready = false;
+                $sink = 'unresolvable';
+            }
+        }
+
+        return [
+            $ready,
+            [
+                'channel' => is_string($channel) && trim($channel) !== '' ? $channel : 'missing',
+                'sink' => $sink,
+            ],
+        ];
+    }
+
+    /**
+     * @param  list<string>  $visited
+     * @return array{bool, string}
+     */
+    private function loggingChannelStatus(string $channel, array $visited = []): array
+    {
+        if (in_array($channel, $visited, true)) {
+            return [false, 'cyclic'];
+        }
+
+        $configuration = config("logging.channels.{$channel}");
+
+        if (! is_array($configuration)) {
+            return [false, 'unregistered'];
+        }
+
+        $driver = $configuration['driver'] ?? null;
+
+        if (! is_string($driver) || ! in_array($driver, [
+            'custom',
+            'daily',
+            'errorlog',
+            'monolog',
+            'null',
+            'single',
+            'slack',
+            'stack',
+            'syslog',
+        ], true)) {
+            return [false, is_string($driver) && $driver !== '' ? 'unsupported' : 'missing'];
+        }
+
+        if (in_array($driver, ['daily', 'null', 'single'], true)) {
+            return [false, $driver];
+        }
+
+        if ($driver !== 'stack') {
+            return [true, $driver];
+        }
+
+        $children = $configuration['channels'] ?? null;
+
+        if (! is_array($children) || $children === []) {
+            return [false, 'stack-empty'];
+        }
+
+        foreach ($children as $child) {
+            if (is_string($child) && $this->loggingChannelStatus($child, [...$visited, $channel])[0]) {
+                return [true, 'stack-with-operational-sink'];
+            }
+        }
+
+        return [false, 'stack-local-only'];
+    }
+
+    /**
+     * @return array{bool, array{connection: string, driver: string, runtime: string}}
+     */
+    private function queueStatus(bool $shouldCheck): array
+    {
+        $connection = config('queue.default');
+        [$configured, $driver] = is_string($connection) && trim($connection) !== ''
+            ? $this->queueConnectionStatus($connection)
+            : [false, 'missing'];
+        $runtime = 'not-checked';
+        $runtimeReady = false;
+
+        if ($configured && $shouldCheck) {
+            try {
+                $queue = $this->queue->connection($connection);
+                $queue->size();
+
+                if ($driver === 'database') {
+                    $databaseConnection = config("queue.connections.{$connection}.connection") ?: config('database.default');
+                    $table = config("queue.connections.{$connection}.table");
+                    $failedDriver = config('queue.failed.driver');
+                    $failedTable = config('queue.failed.table');
+                    $schema = $this->database->connection($databaseConnection)->getSchemaBuilder();
+                    $failedReady = match ($failedDriver) {
+                        'database-uuids' => is_string($failedTable)
+                            && $this->database
+                                ->connection(config('queue.failed.database') ?: config('database.default'))
+                                ->getSchemaBuilder()
+                                ->hasTable($failedTable),
+                        'dynamodb', 'file' => true,
+                        default => false,
+                    };
+                    $runtimeReady = is_string($table)
+                        && $schema->hasTable($table)
+                        && $failedReady;
+                    $runtime = $runtimeReady ? 'tables-ready' : 'queue-or-failed-table-missing';
+                } else {
+                    $runtimeReady = true;
+                    $runtime = 'backend-reachable';
+                }
+            } catch (Throwable) {
+                $runtime = 'backend-unavailable';
+            }
+        }
+
+        return [
+            $configured && $runtimeReady,
+            [
+                'connection' => is_string($connection) && trim($connection) !== '' ? $connection : 'missing',
+                'driver' => $driver,
+                'runtime' => $runtime,
+            ],
+        ];
+    }
+
+    /**
+     * @param  list<string>  $visited
+     * @return array{bool, string}
+     */
+    private function queueConnectionStatus(string $connection, array $visited = []): array
+    {
+        if (in_array($connection, $visited, true)) {
+            return [false, 'cyclic'];
+        }
+
+        $configuration = config("queue.connections.{$connection}");
+
+        if (! is_array($configuration)) {
+            return [false, 'unregistered'];
+        }
+
+        $driver = $configuration['driver'] ?? null;
+
+        if (! is_string($driver) || in_array($driver, ['', 'background', 'deferred', 'null', 'sync'], true)) {
+            return [false, is_string($driver) && $driver !== '' ? $driver : 'missing'];
+        }
+
+        if ($driver !== 'failover') {
+            return [true, $driver];
+        }
+
+        $children = $configuration['connections'] ?? null;
+
+        if (! is_array($children) || $children === []) {
+            return [false, 'failover-empty'];
+        }
+
+        foreach ($children as $child) {
+            if (! is_string($child) || ! $this->queueConnectionStatus($child, [...$visited, $connection])[0]) {
+                return [false, 'failover-unsafe'];
+            }
+        }
+
+        return [true, 'failover'];
+    }
+
+    /**
+     * @return array{bool, array{store: string, driver: string, runtime: string}}
+     */
+    private function cacheStatus(bool $shouldCheck): array
+    {
+        $store = config('cache.default');
+        [$configured, $driver] = is_string($store) && trim($store) !== ''
+            ? $this->cacheStoreStatus($store)
+            : [false, 'missing'];
+        $runtime = 'not-checked';
+        $runtimeReady = false;
+
+        if ($configured && $shouldCheck) {
+            $probeKey = 'exploria:readiness:'.Str::uuid();
+            $probeValue = 'cache-round-trip';
+
+            try {
+                $repository = $this->cache->store($store);
+                $repository->put($probeKey, $probeValue, 60);
+                $runtimeReady = $repository->get($probeKey) === $probeValue;
+                $repository->forget($probeKey);
+                $runtimeReady = $runtimeReady && ! $repository->has($probeKey);
+                $runtime = $runtimeReady ? 'write-read-delete-ok' : 'probe-failed';
+            } catch (Throwable) {
+                $runtime = 'backend-unavailable';
+            }
+        }
+
+        return [
+            $configured && $runtimeReady,
+            [
+                'store' => is_string($store) && trim($store) !== '' ? $store : 'missing',
+                'driver' => $driver,
+                'runtime' => $runtime,
+            ],
+        ];
+    }
+
+    /**
+     * @param  list<string>  $visited
+     * @return array{bool, string}
+     */
+    private function cacheStoreStatus(string $store, array $visited = []): array
+    {
+        if (in_array($store, $visited, true)) {
+            return [false, 'cyclic'];
+        }
+
+        $configuration = config("cache.stores.{$store}");
+
+        if (! is_array($configuration)) {
+            return [false, 'unregistered'];
+        }
+
+        $driver = $configuration['driver'] ?? null;
+
+        if (! is_string($driver) || in_array($driver, ['', 'array', 'null'], true)) {
+            return [false, is_string($driver) && $driver !== '' ? $driver : 'missing'];
+        }
+
+        if ($driver !== 'failover') {
+            return [true, $driver];
+        }
+
+        $children = $configuration['stores'] ?? null;
+
+        if (! is_array($children) || $children === []) {
+            return [false, 'failover-empty'];
+        }
+
+        foreach ($children as $child) {
+            if (! is_string($child) || ! $this->cacheStoreStatus($child, [...$visited, $store])[0]) {
+                return [false, 'failover-unsafe'];
+            }
+        }
+
+        return [true, 'failover'];
+    }
+
+    /**
+     * @return array{bool, array{driver: string, runtime: string}}
+     */
+    private function sessionStatus(bool $shouldCheck): array
+    {
+        $driver = config('session.driver');
+        $configured = is_string($driver) && in_array($driver, ['database', 'redis'], true);
+        $runtimeReady = false;
+        $runtime = 'not-checked';
+
+        if ($configured && $shouldCheck) {
+            $probeId = 'exploria-readiness-'.Str::uuid();
+            $probeValue = 'session-round-trip';
+
+            try {
+                $handler = $this->sessions->driver()->getHandler();
+                $written = $handler->write($probeId, $probeValue);
+                $readBack = $handler->read($probeId);
+                $destroyed = $handler->destroy($probeId);
+                $runtimeReady = $written && $readBack === $probeValue && $destroyed;
+                $runtime = $runtimeReady ? 'write-read-delete-ok' : 'probe-failed';
+            } catch (Throwable) {
+                $runtime = 'backend-unavailable';
+            }
+        }
+
+        return [
+            $configured && $runtimeReady,
+            [
+                'driver' => is_string($driver) && trim($driver) !== '' ? $driver : 'missing',
+                'runtime' => $runtime,
+            ],
+        ];
+    }
+
+    /**
+     * @return array{bool, array{tasks: int, runtime: string}}
+     */
+    private function schedulerStatus(bool $shouldCheck): array
+    {
+        if (! $shouldCheck) {
+            return [false, ['tasks' => count($this->schedule->events()), 'runtime' => 'not-checked']];
+        }
+
+        $tasks = count($this->schedule->events());
+
+        return [
+            $tasks > 0,
+            [
+                'tasks' => $tasks,
+                'runtime' => $tasks > 0 ? 'task-registered' : 'no-real-task-registered',
+            ],
+        ];
     }
 }
