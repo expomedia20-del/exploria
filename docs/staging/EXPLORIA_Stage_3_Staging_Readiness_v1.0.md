@@ -277,7 +277,7 @@ Repository برای تحویل به اپراتور Staging سخت‌گیری ش�
 
 | بررسی | نتیجه |
 |---|---|
-| Test Suite محلی پس از Hardening 2026-08-21 | 381 Test / 4881 Assertion / 0 Failure |
+| Test Suite محلی پس از Hardening 2026-08-21 | 385 Test / 4900 Assertion / 0 Failure |
 | تست هدفمند Scoped Pause/Resume | 4 Test / 70 Assertion / Pass |
 | مانور فنی Incident + Readiness | 12 Test / 94 Assertion / Pass؛ Tabletop انسانی و External Staging همچنان Pending |
 | GitHub CI روی PR شماره 3 | 4 Check موفق: Quality، PHP 8.4، PHP 8.5 و PostgreSQL |

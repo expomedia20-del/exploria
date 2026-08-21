@@ -32,7 +32,7 @@
 | Modelهای Laravel | 52 |
 | Serviceهای Domain/Application | 37 |
 | فایل‌های تست PHP | 62 |
-| نتیجه Test Suite محلی | 381 Test / 4881 Assertion / 0 Failure |
+| نتیجه Test Suite محلی | 385 Test / 4900 Assertion / 0 Failure |
 | CI روی PR شماره 3 | 4 Check موفق: Quality، PHP 8.4، PHP 8.5 و PostgreSQL |
 | تحلیل ایستا و کیفیت | PHPStan 0 Error؛ ESLint، TypeScript، Pint و Prettier موفق |
 | Build تولیدی | Launch Assurance محلی 2026-08-20: موفق؛ حدود 50.88 ثانیه |
