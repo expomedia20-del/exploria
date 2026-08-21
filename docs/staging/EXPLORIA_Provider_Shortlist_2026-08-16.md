@@ -5,6 +5,7 @@
 | فیلد | مقدار |
 |---|---|
 | تاریخ بررسی | 2026-08-16؛ بازبینی قیمت/تصمیم مالک 2026-08-17 |
+| آخرین تطبیق Repository | 2026-08-21 — `main@3648754` پس از Merge PR #5 |
 | نوع | Decision Support — نه Approval و نه مجوز خرید |
 | وضعیت | `CANDIDATES ACCEPTED FOR DUE-DILIGENCE — VENDOR APPROVAL/PURCHASE PENDING` |
 | تصمیم مالک | محل داده و Backup فقط ایران؛ بودجه و پرداخت فعلاً ریالی؛ Provider خارجی برای داده/Log/Backup واجد شرایط نیست. |
@@ -101,14 +102,14 @@ Kavenegar، API Key را در URL و پارامترهای `receptor/token/templa
 ### Mail
 
 - SMTP بدون Dependency جدید قابل استفاده است.
-- `.env.staging.example` روی `MAIL_MAILER=log` است؛ پس از Approval باید Fail-Closed شود.
-- Production Readiness فعلی Mail واقعی را Gate نمی‌کند.
+- `.env.staging.example` مقدار `MAIL_MAILER` را عمداً خالی می‌گذارد و بدون انتخاب Mailer واقعی Fail-Closed می‌شود.
+- Production Readiness اکنون Mailer ثبت‌شده، Transport غیرمحلی و Evidence تازه را Gate می‌کند؛ Provider و E2E واقعی همچنان Pending هستند.
 
 ### Monitoring/Backup
 
 - Metrics داخلی Provider جایگزین Synthetic Probe بیرونی و On-call نیست.
 - Backup خودکار Provider جایگزین Dump قابل دانلود و Restore مستقل نیست.
-- اسکریپت فعلی Upload، Encryption Client-side، SHA-256 Manifest و Lifecycle ندارد.
+- اسکریپت فعلی Manifest مستقل SHA-256 و کنترل یکپارچگی Fail-Closed دارد؛ Upload، Encryption Client-side و Lifecycle بیرونی هنوز وجود ندارند.
 
 ## 5. Due-diligence پرسش‌های اجباری
 

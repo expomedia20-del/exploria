@@ -8,7 +8,7 @@
 | تاریخ Snapshot | 2026-08-21 |
 | Codebase | Laravel + React Monolith / Inertia-style |
 | شاخه مبنا | `main` |
-| Commit مبنا | `05e2c88` — Merge PR #4 |
+| Commit مبنا | `3648754` — Merge PR #5 (`hardening/staging-admission-gates`) |
 | هدف | تفکیک روشن قابلیت‌های آماده، نمایشی، مسدود پیش از پایلوت و خارج از Scope |
 
 این رجیستر وضعیت اجرایی Codebase را ثبت می‌کند و جایگزین BRD، FRD، Scope Lock، Backlog یا اسناد Governance مصوب نیست. در صورت تعارض، سلسله‌مراتب سند 21 اعمال می‌شود.
