@@ -14,6 +14,10 @@ use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Migrations\Migrator;
 use Illuminate\Filesystem\FilesystemManager;
+use Illuminate\Log\LogManager;
+use Illuminate\Mail\MailManager;
+use Illuminate\Queue\QueueManager;
+use Illuminate\Session\SessionManager;
 use Illuminate\Support\Str;
 use Throwable;
 
@@ -28,6 +32,10 @@ class ProductionReadinessService
         private readonly CacheManager $cache,
         private readonly FilesystemManager $filesystems,
         private readonly Schedule $schedule,
+        private readonly MailManager $mail,
+        private readonly LogManager $log,
+        private readonly QueueManager $queue,
+        private readonly SessionManager $sessions,
     ) {}
 
     /**
@@ -416,6 +424,15 @@ class ProductionReadinessService
             : [false, 'missing'];
         $fromReady = is_string($from) && filter_var($from, FILTER_VALIDATE_EMAIL) !== false;
 
+        if ($mailerReady) {
+            try {
+                $this->mail->mailer($mailer)->getSymfonyTransport();
+            } catch (Throwable) {
+                $mailerReady = false;
+                $transport = 'unresolvable';
+            }
+        }
+
         return [
             $mailerReady && $fromReady,
             [
@@ -542,6 +559,15 @@ class ProductionReadinessService
             ? $this->loggingChannelStatus($channel)
             : [false, 'missing'];
 
+        if ($ready) {
+            try {
+                $this->log->channel($channel);
+            } catch (Throwable) {
+                $ready = false;
+                $sink = 'unresolvable';
+            }
+        }
+
         return [
             $ready,
             [
@@ -569,8 +595,22 @@ class ProductionReadinessService
 
         $driver = $configuration['driver'] ?? null;
 
-        if (! is_string($driver) || in_array($driver, ['', 'daily', 'null', 'single'], true)) {
-            return [false, is_string($driver) && $driver !== '' ? $driver : 'missing'];
+        if (! is_string($driver) || ! in_array($driver, [
+            'custom',
+            'daily',
+            'errorlog',
+            'monolog',
+            'null',
+            'single',
+            'slack',
+            'stack',
+            'syslog',
+        ], true)) {
+            return [false, is_string($driver) && $driver !== '' ? 'unsupported' : 'missing'];
+        }
+
+        if (in_array($driver, ['daily', 'null', 'single'], true)) {
+            return [false, $driver];
         }
 
         if ($driver !== 'stack') {
@@ -605,25 +645,35 @@ class ProductionReadinessService
         $runtimeReady = false;
 
         if ($configured && $shouldCheck) {
-            if ($driver === 'database') {
-                try {
+            try {
+                $queue = $this->queue->connection($connection);
+                $queue->size();
+
+                if ($driver === 'database') {
                     $databaseConnection = config("queue.connections.{$connection}.connection") ?: config('database.default');
                     $table = config("queue.connections.{$connection}.table");
                     $failedDriver = config('queue.failed.driver');
                     $failedTable = config('queue.failed.table');
                     $schema = $this->database->connection($databaseConnection)->getSchemaBuilder();
+                    $failedReady = match ($failedDriver) {
+                        'database-uuids' => is_string($failedTable)
+                            && $this->database
+                                ->connection(config('queue.failed.database') ?: config('database.default'))
+                                ->getSchemaBuilder()
+                                ->hasTable($failedTable),
+                        'dynamodb', 'file' => true,
+                        default => false,
+                    };
                     $runtimeReady = is_string($table)
                         && $schema->hasTable($table)
-                        && $failedDriver !== 'null'
-                        && is_string($failedTable)
-                        && $schema->hasTable($failedTable);
+                        && $failedReady;
                     $runtime = $runtimeReady ? 'tables-ready' : 'queue-or-failed-table-missing';
-                } catch (Throwable) {
-                    $runtime = 'backend-unavailable';
+                } else {
+                    $runtimeReady = true;
+                    $runtime = 'backend-reachable';
                 }
-            } else {
-                $runtimeReady = true;
-                $runtime = 'external-runtime-covered-by-evidence';
+            } catch (Throwable) {
+                $runtime = 'backend-unavailable';
             }
         }
 
@@ -768,19 +818,18 @@ class ProductionReadinessService
         $runtime = 'not-checked';
 
         if ($configured && $shouldCheck) {
-            if ($driver === 'database') {
-                try {
-                    $connection = config('session.connection') ?: config('database.default');
-                    $table = config('session.table');
-                    $runtimeReady = is_string($table)
-                        && $this->database->connection($connection)->getSchemaBuilder()->hasTable($table);
-                    $runtime = $runtimeReady ? 'table-ready' : 'session-table-missing';
-                } catch (Throwable) {
-                    $runtime = 'backend-unavailable';
-                }
-            } else {
-                $runtimeReady = true;
-                $runtime = 'external-runtime-covered-by-evidence';
+            $probeId = 'exploria-readiness-'.Str::uuid();
+            $probeValue = 'session-round-trip';
+
+            try {
+                $handler = $this->sessions->driver()->getHandler();
+                $written = $handler->write($probeId, $probeValue);
+                $readBack = $handler->read($probeId);
+                $destroyed = $handler->destroy($probeId);
+                $runtimeReady = $written && $readBack === $probeValue && $destroyed;
+                $runtime = $runtimeReady ? 'write-read-delete-ok' : 'probe-failed';
+            } catch (Throwable) {
+                $runtime = 'backend-unavailable';
             }
         }
 

@@ -48,8 +48,7 @@ class ProductionReadinessTest extends TestCase
             'session.http_only' => true,
             'session.encrypt' => true,
             'session.same_site' => 'lax',
-            'mail.default' => 'provider-mailer',
-            'mail.mailers.provider-mailer' => ['transport' => 'provider-transport'],
+            'mail.default' => 'smtp',
             'logging.default' => 'stderr',
             'production_readiness.evidence_path' => null,
         ]);
@@ -212,6 +211,35 @@ class ProductionReadinessTest extends TestCase
         $this->assertSame('failover-unsafe', $mailCheck['actual']['configuration']['transport']);
     }
 
+    public function test_an_arbitrary_registered_mail_transport_cannot_create_a_false_pass(): void
+    {
+        $this->useValidOperationalEvidence();
+        config([
+            'mail.default' => 'invented-mailer',
+            'mail.mailers.invented-mailer' => ['transport' => 'invented-transport'],
+        ]);
+
+        $report = app(ProductionReadinessService::class)->report('staging', false);
+        $mailCheck = collect($report['checks'])->firstWhere('key', 'mail');
+
+        $this->assertIsArray($mailCheck);
+        $this->assertSame('fail', $mailCheck['status']);
+        $this->assertSame('unresolvable', $mailCheck['actual']['configuration']['transport']);
+    }
+
+    public function test_a_resolvable_nonlocal_mailer_with_valid_evidence_passes_only_the_mail_gate(): void
+    {
+        $this->useValidOperationalEvidence();
+        config(['mail.default' => 'smtp']);
+
+        $report = app(ProductionReadinessService::class)->report('staging', false);
+        $mailCheck = collect($report['checks'])->firstWhere('key', 'mail');
+
+        $this->assertIsArray($mailCheck);
+        $this->assertSame('pass', $mailCheck['status']);
+        $this->assertFalse($report['summary']['ready']);
+    }
+
     public function test_unregistered_queue_and_cache_names_cannot_create_a_false_pass(): void
     {
         $this->useValidOperationalEvidence();
@@ -232,6 +260,28 @@ class ProductionReadinessTest extends TestCase
         $this->assertSame('unregistered', $cacheCheck['actual']['runtime']['driver']);
     }
 
+    public function test_arbitrary_registered_queue_and_cache_drivers_cannot_create_a_false_pass(): void
+    {
+        $this->useValidOperationalEvidence();
+        config([
+            'queue.default' => 'invented-queue',
+            'queue.connections.invented-queue' => ['driver' => 'invented-driver'],
+            'cache.default' => 'invented-cache',
+            'cache.stores.invented-cache' => ['driver' => 'invented-driver'],
+        ]);
+
+        $report = app(ProductionReadinessService::class)->report('staging', true);
+        $queueCheck = collect($report['checks'])->firstWhere('key', 'queue');
+        $cacheCheck = collect($report['checks'])->firstWhere('key', 'cache');
+
+        $this->assertIsArray($queueCheck);
+        $this->assertIsArray($cacheCheck);
+        $this->assertSame('fail', $queueCheck['status']);
+        $this->assertSame('backend-unavailable', $queueCheck['actual']['runtime']['runtime']);
+        $this->assertSame('fail', $cacheCheck['status']);
+        $this->assertSame('backend-unavailable', $cacheCheck['actual']['runtime']['runtime']);
+    }
+
     public function test_local_only_logging_cannot_satisfy_monitoring(): void
     {
         $this->useValidOperationalEvidence();
@@ -246,6 +296,22 @@ class ProductionReadinessTest extends TestCase
         $this->assertIsArray($monitoringCheck);
         $this->assertSame('fail', $monitoringCheck['status']);
         $this->assertSame('stack-local-only', $monitoringCheck['actual']['configuration']['sink']);
+    }
+
+    public function test_an_arbitrary_logging_driver_cannot_satisfy_monitoring(): void
+    {
+        $this->useValidOperationalEvidence();
+        config([
+            'logging.default' => 'invented-channel',
+            'logging.channels.invented-channel' => ['driver' => 'invented-driver'],
+        ]);
+
+        $report = app(ProductionReadinessService::class)->report('staging', false);
+        $monitoringCheck = collect($report['checks'])->firstWhere('key', 'monitoring');
+
+        $this->assertIsArray($monitoringCheck);
+        $this->assertSame('fail', $monitoringCheck['status']);
+        $this->assertSame('unsupported', $monitoringCheck['actual']['configuration']['sink']);
     }
 
     public function test_storage_and_cache_require_successful_runtime_probes(): void
